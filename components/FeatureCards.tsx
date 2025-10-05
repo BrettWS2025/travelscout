@@ -11,7 +11,7 @@ export function FeatureCards(){
         <article key={title} className="card p-6">
           <Icon className="w-6 h-6" />
           <h3 className="mt-3 text-xl font-semibold">{title}</h3>
-          <p className="text-[var(--muted)]">{blurb}</p>
+          <p style={{color:"var(--muted)"}}>{blurb}</p>
         </article>
       ))}
     </section>

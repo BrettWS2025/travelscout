@@ -1,5 +1,5 @@
-import type { Config } from "tailwindcss";
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -7,11 +7,8 @@ const config: Config = {
         display: ['ui-sans-serif', 'system-ui'],
         body: ['Inter', 'ui-sans-serif', 'system-ui']
       },
-      boxShadow: {
-        soft: "0 10px 25px rgba(0,0,0,0.08)"
-      }
+      boxShadow: { soft: "0 10px 25px rgba(0,0,0,0.08)" }
     },
   },
   plugins: [],
 };
-export default config;

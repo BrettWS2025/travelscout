@@ -2,7 +2,7 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="mt-16 py-10 border-t border-white/10">
-      <div className="container grid md:grid-cols-3 gap-6 text-sm text-[var(--muted)]">
+      <div className="container grid md:grid-cols-3 gap-6 text-sm" style={{color:"var(--muted)"}}>
         <div>
           <h3 className="text-white font-semibold mb-2">About</h3>
           <p>Independent travel comparisons, guides and tools to help Kiwis travel smarter.</p>
@@ -24,7 +24,9 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <div className="container mt-6 text-xs text-[var(--muted)]">© {new Date().getFullYear()} TravelScout</div>
+      <div className="container mt-6 text-xs" style={{color:"var(--muted)"}}>
+        © {new Date().getFullYear()} TravelScout
+      </div>
     </footer>
   );
 }

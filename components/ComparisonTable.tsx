@@ -4,7 +4,7 @@ export function ComparisonTable(){
     <div className="overflow-x-auto">
       <table className="min-w-full text-left border-separate border-spacing-y-2">
         <thead>
-          <tr className="text-sm text-[var(--muted)]">
+          <tr className="text-sm" style={{color:"var(--muted)"}}>
             <th className="px-4 py-2">Product</th>
             <th className="px-4 py-2">FX Fee</th>
             <th className="px-4 py-2">ATM Fee</th>

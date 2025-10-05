@@ -1,9 +1,7 @@
-/* Tailwind layers (leave these at the top) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens (CSS variables) */
 :root {
   --bg: #0b1020;
   --card: #111936;
@@ -13,8 +11,8 @@
   --brand: #44ff9a;
 }
 
-/* Basic layout */
 html, body, #__next { height: 100%; }
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -22,14 +20,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utility classes we used in markup, implemented as plain CSS */
 .container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
 
 .card {
   background: var(--card);
   border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 1rem; /* ~ rounded-2xl */
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08); /* shadow-soft */
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 .badge {
@@ -38,7 +35,7 @@ body {
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
   background: rgba(255,255,255,0.10);
 }
 
