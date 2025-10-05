@@ -48,6 +48,6 @@ body {
 .link:hover { color: var(--accent); }
 
 header.sticky.top-0 .container {
-  padding-top: 4rem;   /* default was py-4 ≈ 1rem */
-  padding-bottom: 4rem;
+  padding-top: 3rem;   /* default was py-4 ≈ 1rem */
+  padding-bottom: 3rem;
 }
