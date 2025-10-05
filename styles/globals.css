@@ -3,12 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --bg: #0b1020;
-  --card: #111936;
-  --text: #e8ecff;
-  --muted: #9aa3b2;
-  --accent: #6ee7ff;
-  --brand: #44ff9a;
+  /* softened from #0b1020 / #111936 */
+  --bg:   #121A2E;  /* lighter background */
+  --card: #1A2440;  /* stays darker than bg so cards pop */
+  --text: #EAF1FF;  /* a touch softer than pure white */
+  --muted:#9AA3B2;
+  --accent:#6EE7FF;
+  --brand: #44FF9A;
 }
 
 html, body, #__next { height: 100%; }
@@ -45,3 +46,8 @@ body {
   text-underline-offset: 4px;
 }
 .link:hover { color: var(--accent); }
+
+header.sticky.top-0 .container {
+  padding-top: 4rem;   /* default was py-4 ≈ 1rem */
+  padding-bottom: 4rem;
+}
