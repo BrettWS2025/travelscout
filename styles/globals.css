@@ -51,7 +51,7 @@ header.sticky.top-0 .container {
   padding-bottom: 2rem;
 }
 
-main, section, .card, .overflow-x-auto {
+main, section, .overflow-x-auto {
   position: relative;
   z-index: 0;
 }
