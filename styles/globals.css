@@ -50,3 +50,8 @@ header.sticky.top-0 .container {
   padding-top: 2rem;   /* default was py-4 ≈ 1rem */
   padding-bottom: 2rem;
 }
+
+main, section, .card, .overflow-x-auto {
+  position: relative;
+  z-index: 0;
+}
