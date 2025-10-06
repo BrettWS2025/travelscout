@@ -189,14 +189,13 @@ export function Navbar() {
   const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>({});
 
   return (
-<header
-  className="fixed inset-x-0 top-0 z-[1000] backdrop-blur border-b"
-  style={{
-    background: "rgba(22, 34, 58, 0.85)",
-    borderColor: "rgba(255,255,255,0.08)",
-    color: "var(--text)",
-    isolation: "isolate"
-  }}
+    <header
+      className="sticky top-0 z-50 backdrop-blur border-b"
+      style={{
+        background: "rgba(22, 34, 58, 0.85)", // translucent var(--bg) (#16223A)
+        borderColor: "rgba(255,255,255,0.08)",
+        color: "var(--text)",
+      }}
     >
       <div className="container flex items-center justify-between py-4">
         {/* Logo 1.5× bigger */}
