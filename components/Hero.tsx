@@ -10,7 +10,7 @@ export function Hero() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link className="px-5 py-3 rounded-2xl" style={{background:"var(--brand)", color:"#000", boxShadow:"0 10px 25px rgba(0,0,0,0.08)"}} href="/(product)/compare">Start comparing</Link>
-          <Link className="px-5 py-3 rounded-2xl border" style={{background:"rgba(255,255,255,0.10)", borderColor:"rgba(255,255,255,0.10)"}} href="/(marketing)/guides">Explore guides</Link>
+          <Link className="px-5 py-3 rounded-2xl" style={{background:"var(--brand)", color:"#000", boxShadow:"0 10px 25px rgba(0,0,0,0.08)"}} href="/(marketing)/guides">Explore guides</Link>
         </div>
       </div>
       <div className="h-64 md:h-full rounded-2xl border" style={{background:"linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))", borderColor:"rgba(255,255,255,0.10)"}} />
