@@ -79,9 +79,10 @@ function NavDropdown({ section }: { section: MenuSection }) {
     >
       <Link
         href={section.href}
-        className="flex items-center gap-2 hover:text-[color:var(--accent)]"
+        className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
         aria-haspopup="menu"
         aria-expanded={open}
+        style={{ color: "var(--text)" }}
       >
         <Icon className="w-4 h-4" />
         {section.label}
@@ -93,11 +94,16 @@ function NavDropdown({ section }: { section: MenuSection }) {
           className="absolute left-0 top-full mt-2 w-64 card p-3"
           role="menu"
           aria-label={section.label}
+          style={{ color: "var(--text)" }}
         >
           <ul className="space-y-1">
             {section.items.map((it) => (
               <li key={it.href}>
-                <Link className="block px-2 py-1 rounded hover:bg-black/5" href={it.href}>
+                <Link
+                  className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                  href={it.href}
+                  style={{ color: "var(--text)" }}
+                >
                   {it.label}
                 </Link>
               </li>
@@ -115,12 +121,16 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b"
-      style={{ borderColor: "rgba(0,0,0,0.08)" }}
+      className="sticky top-0 z-50 backdrop-blur border-b"
+      style={{
+        background: "rgba(22, 34, 58, 0.85)", // translucent var(--bg) ~ #16223A
+        borderColor: "rgba(255,255,255,0.08)",
+        color: "var(--text)",
+      }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo 1.5x bigger */}
-        <Link href="/" className="flex items-center gap-2">
+        {/* Logo 1.5× bigger */}
+        <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
           <Plane className="w-9 h-9" />
           <span className="font-semibold tracking-wide text-xl">TravelScout</span>
         </Link>
@@ -138,6 +148,7 @@ export function Navbar() {
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
+          style={{ color: "var(--text)" }}
         >
           ☰
         </button>
@@ -146,18 +157,23 @@ export function Navbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
-          <div className="card p-2">
+          <div className="card p-2" style={{ color: "var(--text)" }}>
             {MENU.map((section) => {
               const Icon = section.icon;
               const isOpen = !!expanded[section.key];
               return (
-                <div key={section.key} className="border-b last:border-none" style={{borderColor:"rgba(0,0,0,0.08)"}}>
+                <div
+                  key={section.key}
+                  className="border-b last:border-none"
+                  style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                >
                   <button
                     className="w-full flex items-center justify-between px-3 py-3"
                     onClick={() =>
                       setExpanded((prev) => ({ ...prev, [section.key]: !prev[section.key] }))
                     }
                     aria-expanded={isOpen}
+                    style={{ color: "var(--text)" }}
                   >
                     <span className="flex items-center gap-2">
                       <Icon className="w-4 h-4" /> {section.label}
@@ -166,13 +182,16 @@ export function Navbar() {
                   </button>
                   {isOpen && (
                     <ul className="px-3 pb-3 space-y-2">
-                      {/* Top-level link */}
                       <li>
-                        <Link className="link" href={section.href}>Overview</Link>
+                        <Link className="link" href={section.href}>
+                          Overview
+                        </Link>
                       </li>
                       {section.items.map((it) => (
                         <li key={it.href}>
-                          <Link className="block" href={it.href}>{it.label}</Link>
+                          <Link className="block" href={it.href} style={{ color: "var(--text)" }}>
+                            {it.label}
+                          </Link>
                         </li>
                       ))}
                     </ul>
