@@ -11,7 +11,7 @@
   --brand: #44FF9A;
 }
 
-html, body, #__next { height: 100%; }
+html, body, #__next { min-height: 100%; height: auto; }
 
 body {
   background: var(--bg);
