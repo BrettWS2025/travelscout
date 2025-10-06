@@ -14,9 +14,9 @@ type MenuItem = { label: string; href: string };
 type MenuSection = {
   key: string;
   label: string;
-  href: string; // main page
+  href: string;
   icon: React.ComponentType<{ className?: string }>;
-  items: MenuItem[]; // dropdown links
+  items: MenuItem[];
 };
 
 const MENU: MenuSection[] = [
@@ -72,8 +72,9 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const [open, setOpen] = useState(false);
   const Icon = section.icon;
   return (
+    // pb-2 extends the hover box down; no more “falling through the gap”
     <div
-      className="relative"
+      className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -91,7 +92,8 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-2 w-64 card p-3"
+          // Removed mt-2, add -mt-px for 1px overlap (no dead space)
+          className="absolute left-0 top-full -mt-px w-64 card p-3"
           role="menu"
           aria-label={section.label}
           style={{ color: "var(--text)" }}
@@ -123,7 +125,8 @@ export function Navbar() {
     <header
       className="sticky top-0 z-50 backdrop-blur border-b"
       style={{
-        background: "rgba(22, 34, 58, 0.85)", // translucent var(--bg) ~ #16223A
+        // matches your palette: --bg = #16223A
+        background: "rgba(22, 34, 58, 0.85)",
         borderColor: "rgba(255,255,255,0.08)",
         color: "var(--text)",
       }}
@@ -135,14 +138,14 @@ export function Navbar() {
           <span className="font-semibold tracking-wide text-xl">TravelScout</span>
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop */}
         <nav className="hidden md:flex items-center gap-6">
           {MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
         </nav>
 
-        {/* Mobile burger */}
+        {/* Mobile toggle */}
         <button
           className="md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
