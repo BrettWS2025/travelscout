@@ -3,11 +3,10 @@
 @tailwind utilities;
 
 :root {
-  /* softened from #0b1020 / #111936 */
-  --bg:   #121A2E;  /* lighter background */
-  --card: #1A2440;  /* stays darker than bg so cards pop */
-  --text: #EAF1FF;  /* a touch softer than pure white */
-  --muted:#9AA3B2;
+  --bg:   #16223A;  /* lighter background */
+  --card: #1E2C4B;  /* keep card a bit darker than bg for depth */
+  --text: #EEF3FF;  /* soft off-white for comfy contrast */
+  --muted:#A2ABBA;
   --accent:#6EE7FF;
   --brand: #44FF9A;
 }
