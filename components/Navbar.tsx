@@ -8,13 +8,19 @@ import {
   Percent,
   Lightbulb,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
-type MenuItem = { label: string; href: string };
+type MenuItem = {
+  label: string;
+  href?: string;
+  items?: MenuItem[]; // nested submenu
+};
+
 type MenuSection = {
   key: string;
   label: string;
-  href: string;
+  href: string; // main page for the section
   icon: React.ComponentType<{ className?: string }>;
   items: MenuItem[];
 };
@@ -38,9 +44,20 @@ const MENU: MenuSection[] = [
     href: "/(marketing)/guides",
     icon: Compass,
     items: [
+      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
-      { label: "Destination Guides", href: "/(marketing)/guides#destinations" },
+      // nested submenu: Guides > Destinations > Kaitaia
+      {
+        label: "Destinations",
+        href: "/guides/destinations", // optional, keep if you’ll have an overview page
+        items: [
+          { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
+          // add more destinations here later:
+          // { label: "Queenstown", href: "/guides/destinations/queenstown" },
+          // { label: "Rarotonga", href: "/guides/destinations/rarotonga" },
+        ],
+      },
     ],
   },
   {
@@ -68,11 +85,57 @@ const MENU: MenuSection[] = [
   },
 ];
 
+function SubmenuItem({ item }: { item: MenuItem }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li
+      className="relative pb-2"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <div className="flex items-center justify-between px-2 py-1 rounded">
+        <Link
+          href={item.href ?? "#"}
+          className="flex-1 transition-colors hover:text-[var(--accent)]"
+          style={{ color: "var(--text)" }}
+        >
+          {item.label}
+        </Link>
+        {item.items && <ChevronRight className="w-4 h-4 opacity-70" />}
+      </div>
+
+      {item.items && open && (
+        <div
+          className="absolute left-full top-0 -ml-px w-64 card p-3 z-50"
+          role="menu"
+          aria-label={item.label}
+          style={{ color: "var(--text)" }}
+        >
+          <ul className="space-y-1">
+            {item.items.map((child) => (
+              <li key={child.label}>
+                <Link
+                  href={child.href ?? "#"}
+                  className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                  style={{ color: "var(--text)" }}
+                >
+                  {child.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </li>
+  );
+}
+
 function NavDropdown({ section }: { section: MenuSection }) {
   const [open, setOpen] = useState(false);
   const Icon = section.icon;
+
   return (
-    // pb-2 extends the hover box down; no more “falling through the gap”
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -92,24 +155,27 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
       {open && (
         <div
-          // Removed mt-2, add -mt-px for 1px overlap (no dead space)
-          className="absolute left-0 top-full -mt-px w-64 card p-3"
+          className="absolute left-0 top-full -mt-px w-72 card p-3 z-50"
           role="menu"
           aria-label={section.label}
           style={{ color: "var(--text)" }}
         >
           <ul className="space-y-1">
-            {section.items.map((it) => (
-              <li key={it.href}>
-                <Link
-                  className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
-                  href={it.href}
-                  style={{ color: "var(--text)" }}
-                >
-                  {it.label}
-                </Link>
-              </li>
-            ))}
+            {section.items.map((it) =>
+              it.items ? (
+                <SubmenuItem key={it.label} item={it} />
+              ) : (
+                <li key={it.label}>
+                  <Link
+                    className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                    href={it.href ?? "#"}
+                    style={{ color: "var(--text)" }}
+                  >
+                    {it.label}
+                  </Link>
+                </li>
+              )
+            )}
           </ul>
         </div>
       )}
@@ -120,13 +186,13 @@ function NavDropdown({ section }: { section: MenuSection }) {
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>({});
 
   return (
     <header
       className="sticky top-0 z-50 backdrop-blur border-b"
       style={{
-        // matches your palette: --bg = #16223A
-        background: "rgba(22, 34, 58, 0.85)",
+        background: "rgba(22, 34, 58, 0.85)", // translucent var(--bg) (#16223A)
         borderColor: "rgba(255,255,255,0.08)",
         color: "var(--text)",
       }}
@@ -138,14 +204,14 @@ export function Navbar() {
           <span className="font-semibold tracking-wide text-xl">TravelScout</span>
         </Link>
 
-        {/* Desktop */}
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           {MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
         </nav>
 
-        {/* Mobile toggle */}
+        {/* Mobile burger */}
         <button
           className="md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
@@ -183,6 +249,7 @@ export function Navbar() {
                     </span>
                     <ChevronDown className={`w-4 h-4 transition ${isOpen ? "rotate-180" : ""}`} />
                   </button>
+
                   {isOpen && (
                     <ul className="px-3 pb-3 space-y-2">
                       <li>
@@ -190,13 +257,49 @@ export function Navbar() {
                           Overview
                         </Link>
                       </li>
-                      {section.items.map((it) => (
-                        <li key={it.href}>
-                          <Link className="block" href={it.href} style={{ color: "var(--text)" }}>
-                            {it.label}
-                          </Link>
-                        </li>
-                      ))}
+
+                      {section.items.map((it) => {
+                        const key = `${section.key}:${it.label}`;
+                        const hasChildren = !!it.items?.length;
+                        const open = !!expandedNested[key];
+
+                        if (!hasChildren) {
+                          return (
+                            <li key={key}>
+                              <Link className="block" href={it.href ?? "#"} style={{ color: "var(--text)" }}>
+                                {it.label}
+                              </Link>
+                            </li>
+                          );
+                        }
+
+                        return (
+                          <li key={key} className="border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
+                            <button
+                              className="w-full flex items-center justify-between py-2"
+                              onClick={() =>
+                                setExpandedNested((prev) => ({ ...prev, [key]: !prev[key] }))
+                              }
+                              aria-expanded={open}
+                              style={{ color: "var(--text)" }}
+                            >
+                              <span>{it.label}</span>
+                              <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+                            </button>
+                            {open && (
+                              <ul className="pl-3 space-y-2">
+                                {it.items!.map((child) => (
+                                  <li key={child.label}>
+                                    <Link className="block" href={child.href ?? "#"} style={{ color: "var(--text)" }}>
+                                      {child.label}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
