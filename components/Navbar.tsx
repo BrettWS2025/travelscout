@@ -190,12 +190,12 @@ export function Navbar() {
 
   return (
 <header
-  className="sticky top-0 z-[1000] backdrop-blur border-b"
+  className="fixed inset-x-0 top-0 z-[1000] backdrop-blur border-b"
   style={{
-    background: "rgba(22, 34, 58, 0.85)",        // your --bg translucent
+    background: "rgba(22, 34, 58, 0.85)",
     borderColor: "rgba(255,255,255,0.08)",
     color: "var(--text)",
-    isolation: "isolate"                          // ensures z-index wins
+    isolation: "isolate"
   }}
     >
       <div className="container flex items-center justify-between py-4">
