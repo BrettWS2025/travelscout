@@ -190,12 +190,15 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur border-b"
-      style={{
-        background: "rgba(22, 34, 58, 0.85)", // translucent var(--bg) (#16223A)
-        borderColor: "rgba(255,255,255,0.08)",
-        color: "var(--text)",
-      }}
+  className="sticky top-0 z-[1000]"                // stays stuck and above everything
+  style={{
+    background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
+    WebkitBackdropFilter: "saturate(160%) blur(12px)",
+    backdropFilter: "saturate(160%) blur(12px)",    // glass effect
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
+    color: "var(--text)",
+    isolation: "isolate",                           // makes its own stacking context (prevents bleed)
+  }}
     >
       <div className="container flex items-center justify-between py-4">
         {/* Logo 1.5× bigger */}
