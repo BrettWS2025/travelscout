@@ -1,10 +1,10 @@
+import FilterableProducts, { type FilterSpec } from "@/components/FilterableProducts";
 import type { ProductOffer } from "@/lib/products";
-import CompareClient from "./CompareClient";
+import { type ProductsColumn } from "@/components/ComparisonTable";
 
 export const metadata = { title: "Compare" };
 
-// You can fetch real data here on the server;
-// for now, sample rows are fine.
+// Sample data (fetch real data here server-side)
 const rows: ProductOffer[] = [
   {
     id: "cruise-001",
@@ -44,11 +44,29 @@ const rows: ProductOffer[] = [
   },
 ];
 
+// Choose 1–10 columns
+const columns: ProductsColumn[] = [
+  { key: "vendor",    header: "Agency", sortable: true },
+  { key: "brand",     header: "Cruise Line", sortable: true },
+  { key: "price",     header: "Price", align: "right", sortable: true },
+  { key: "dateRange", header: "Dates", sortable: true },
+  { key: "link" }, // icon-only
+];
+
+// Declarative filters (JSON only)
+const filters: FilterSpec[] = [
+  { key: "q",      kind: "search",   label: "Search", fields: ["vendor", "brand", "title"] },
+  { key: "vendor", kind: "select",   label: "Agency", field: "vendor" },
+  { key: "brand",  kind: "select",   label: "Cruise line", field: "brand" },
+  { key: "price",  kind: "range",    label: "Price (min–max)", field: "priceMin", min: 0, max: 5000, step: 50 },
+  { key: "dates",  kind: "dateRange",label: "Departing", startField: "startDate", endField: "endDate" },
+];
+
 export default function Page() {
   return (
     <section className="space-y-6">
       <h1 className="text-3xl font-bold">Compare Cruise Deals</h1>
-      <CompareClient rows={rows} />
+      <FilterableProducts rows={rows} columns={columns} filters={filters} />
     </section>
   );
 }
