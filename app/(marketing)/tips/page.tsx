@@ -3,7 +3,7 @@ export default function Deals() {
   return (
     <section className="space-y-4">
       <h1 className="text-3xl font-bold">Deals</h1>
-      <p className="text-[color:var(--muted)]">Verified travel deals and mistake fares with clear 'gotchas'.</p>
+      <p className="text-[color:var(--muted)]">Verified travel tips and mistake fares with clear 'gotchas'.</p>
       <div className="grid md:grid-cols-3 gap-4">
         {Array.from({length:6}).map((_,i)=> (
           <article key={i} className="card p-4">
