@@ -29,7 +29,7 @@ const MENU: MenuSection[] = [
   {
     key: "compare",
     label: "Compare",
-    href: "/(product)/compare",
+    href: "/compare",
     icon: PanelsTopLeft,
     items: [
       { label: "Travel Cards", href: "/(product)/compare#cards" },
