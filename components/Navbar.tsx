@@ -41,7 +41,7 @@ const MENU: MenuSection[] = [
   {
     key: "guides",
     label: "Guides",
-    href: "/(marketing)/guides",
+    href: "/guides",
     icon: Compass,
     items: [
       // regular links
@@ -63,7 +63,7 @@ const MENU: MenuSection[] = [
   {
     key: "deals",
     label: "Deals",
-    href: "/(marketing)/top-deals",
+    href: "/top-deals",
     icon: Percent,
     items: [
       { label: "Top Deals", href: "/(marketing)/top-deals" },
@@ -74,7 +74,7 @@ const MENU: MenuSection[] = [
   {
     key: "tips",
     label: "Tips",
-    href: "/(marketing)/tips",
+    href: "/tips",
     icon: Lightbulb,
     items: [
       { label: "Packing", href: "/(marketing)/tips#packing" },
