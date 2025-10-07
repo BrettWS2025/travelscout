@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import type { ProductOffer } from "@/lib/types/products";
+import type { ProductOffer } from "@/lib/products";
 import { formatCurrency, formatDateRange } from "@/lib/utils/format";
 import { ArrowUpRight } from "lucide-react";
 
