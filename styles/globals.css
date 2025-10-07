@@ -1,43 +1,121 @@
-/* Inputs: keep white bg + black text. On hover, use WHITE border (not green). */
-.input:hover {
-  border-color: #ffffff;        /* was var(--brand) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:   #16223A;  /* lighter background */
+  --card: #1E2C4B;  /* keep card a bit darker than bg for depth */
+  --text: #EEF3FF;  /* soft off-white for comfy contrast */
+  --muted:#A2ABBA;
+  --accent:#6EE7FF; /* cyan accent (links etc.) */
+  --brand:#44FF9A;  /* GREEN – use this for focus/hover on inputs/buttons */
 }
 
-/* Keep the green focus ring for accessibility */
+html, body, #__next { min-height: 100%; height: auto; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background: rgba(255,255,255,0.10);
+}
+
+.link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 4px;
+}
+.link:hover { color: var(--accent); }
+
+header.sticky.top-0 .container {
+  padding-top: 2rem;   /* default was py-4 ≈ 1rem */
+  padding-bottom: 2rem;
+}
+
+main, section, .overflow-x-auto {
+  position: relative;
+  z-index: 0;
+}
+
+/* ----------------------------- */
+/* Inputs used in FilterBar, etc */
+/* ----------------------------- */
+
+/* Base input for text, select, number, date… */
+.input {
+  /* layout */
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+
+  /* colors (force light control on dark site) */
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #d1d5db; /* gray-300 */
+  caret-color: var(--brand);
+
+  /* UX */
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms, background-color 120ms, color 120ms;
+}
+
+.input::placeholder { color: #6b7280; } /* gray-500 */
+
+.input:hover {
+  border-color: var(--brand);
+}
+
 .input:focus,
 .input:focus-visible {
   border-color: var(--brand);
+  /* green glow ring; rgba(68,255,154,0.35) */
   box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.35);
 }
 
-/* Reusable button styles (match your front-page green) */
-.btn {
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 600;
-  transition: transform 120ms, box-shadow 120ms, background-color 120ms, color 120ms, border-color 120ms;
+/* Make multi-select comfortable height */
+select.input[multiple] { height: 7rem; }
+
+/* Checkbox/Radio accent should match brand green */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand);
 }
 
-.btn:active {
-  transform: translateY(1px);
+/* Disabled state */
+.input:disabled,
+select.input:disabled {
+  background: #f3f4f6; /* gray-100 */
+  color: #9ca3af;      /* gray-400 */
+  border-color: #e5e7eb;
+  cursor: not-allowed;
 }
 
-/* Solid brand-green button */
-.btn-brand {
-  background: var(--brand);     /* #44FF9A */
-  color: #0b1b2f;               /* dark text for contrast on the neon green */
-  border: 1px solid transparent;
-  box-shadow: 0 6px 18px rgba(68, 255, 154, 0.22);
+/* Remove Safari yellow autofill and unify colors */
+input.input:-webkit-autofill,
+input.input:-webkit-autofill:hover,
+input.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
 }
 
-.btn-brand:hover {
-  box-shadow: 0 8px 22px rgba(68, 255, 154, 0.32);
-  filter: saturate(110%);
-}
-
-.btn-brand:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
-}
+/* Optional: compact labels in filter rows */
+.filter-label { color: #6b7280; font-size: 0.875rem; }
