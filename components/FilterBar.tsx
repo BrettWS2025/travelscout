@@ -8,17 +8,17 @@ export type FilterKind = "search" | "select" | "multi" | "range" | "dateRange" |
 export type FilterOption = { value: string; label: string };
 
 export type FilterConfig<T> = {
-  key: string;                          // unique id (e.g., "vendor", "brand", "q", "maxPrice")
+  key: string;                          // unique id
   label?: string;                       // visible label
   kind: FilterKind;
   placeholder?: string;                 // for search
-  options?: FilterOption[] | ((rows: T[]) => FilterOption[]); // select/multi options
-  getValue?: (row: T) => any;           // derive value from a row (used for auto options & default predicates)
-  min?: number;                         // range (min)
-  max?: number;                         // range (max)
-  step?: number;                        // range step
-  format?: (n: number) => string;       // range display format
-  predicate?: (row: T, value: any) => boolean; // custom filter logic (overrides default)
+  options?: FilterOption[] | ((rows: T[]) => FilterOption[]);
+  getValue?: (row: T) => any;
+  min?: number;
+  max?: number;
+  step?: number;
+  format?: (n: number) => string;
+  predicate?: (row: T, value: any) => boolean;
 };
 
 export type FilterState = Record<string, any>;
@@ -33,11 +33,7 @@ function coerceNum(n: any): number | null {
   return Number.isFinite(x) ? x : null;
 }
 
-/**
- * Apply filters to rows (pure function).
- * - If a filter's state is empty/undefined, it's skipped.
- * - You can override per-filter logic with `predicate`.
- */
+/** Apply filters to rows (pure) */
 export function applyFilters<T>(rows: T[], configs: FilterConfig<T>[], state: FilterState): T[] {
   return rows.filter((row) =>
     configs.every((cfg) => {
@@ -73,7 +69,6 @@ export function applyFilters<T>(rows: T[], configs: FilterConfig<T>[], state: Fi
           return vals.includes(String(v ?? ""));
         }
         case "range": {
-          // numeric range: { min?: number; max?: number }
           const min = coerceNum(value?.min);
           const max = coerceNum(value?.max);
           const num = coerceNum(v);
@@ -83,25 +78,21 @@ export function applyFilters<T>(rows: T[], configs: FilterConfig<T>[], state: Fi
           return true;
         }
         case "dateRange": {
-          // value: { start?: "YYYY-MM-DD", end?: "YYYY-MM-DD" }
           const start = value?.start ? Date.parse(value.start) : null;
           const end = value?.end ? Date.parse(value.end) : null;
-          // Try to read row window: {startDate,endDate} from getValue or assume it's an object.
           const rv = v || {};
           const rowStart = rv.start ?? rv.startDate ?? null;
           const rowEnd = rv.end ?? rv.endDate ?? null;
           const rs = rowStart ? Date.parse(rowStart) : null;
           const re = rowEnd ? Date.parse(rowEnd) : null;
 
-          // If row has only one date (start), compare to that; if both, check overlap
-          if (start && rs && rs < start && (!re || re < start)) return false; // entirely before start
-          if (end && re && re > end && (!rs || rs > end)) return false;       // entirely after end
-          if (start && rs && rs < start && re == null) return false;          // start-only row before start
-          if (end && rs && rs > end && re == null) return false;              // start-only row after end
+          if (start && rs && rs < start && (!re || re < start)) return false;
+          if (end && re && re > end && (!rs || rs > end)) return false;
+          if (start && rs && rs < start && re == null) return false;
+          if (end && rs && rs > end && re == null) return false;
           return true;
         }
         case "checkbox": {
-          // value: boolean – if true, require truthy getValue(row)
           return value ? Boolean(v) : true;
         }
         default:
@@ -280,9 +271,9 @@ export default function FilterBar<T>({
       </div>
 
       <div className="flex items-center gap-3">
-<button type="button" className="btn btn-brand" onClick={() => onChange({})}>
-  Clear
-</button>
+        <button type="button" className="btn btn-brand" onClick={() => onChange({})}>
+          Clear
+        </button>
         {onReset && (
           <button
             type="button"
