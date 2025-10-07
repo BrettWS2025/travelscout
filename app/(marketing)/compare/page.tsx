@@ -8,7 +8,7 @@ const rows: ProductOffer[] = []; // empty is fine
 
 const columns: ProductsColumn[] = [
   { key: "vendor",    header: "Agency" },
-  { key: "brand",     header: "Brand" },
+  { key: "brand",     header: "Cruise Line" },
   { key: "price",     header: "Price", align: "right", sortable: true },
   { key: "dateRange", header: "Dates", sortable: true },
   { key: "link" }, // no visible header
