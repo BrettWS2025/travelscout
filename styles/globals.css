@@ -79,8 +79,9 @@ main, section, .overflow-x-auto {
 
 .input::placeholder { color: #6b7280; } /* gray-500 */
 
+/* hover: white border (not green) */
 .input:hover {
-  border-color: var(--brand);
+  border-color: #ffffff;
 }
 
 .input:focus,
@@ -119,3 +120,36 @@ input.input:-webkit-autofill:focus {
 
 /* Optional: compact labels in filter rows */
 .filter-label { color: #6b7280; font-size: 0.875rem; }
+
+/* ----------------------------- */
+/* Buttons (Clear button, etc.)  */
+/* ----------------------------- */
+
+.btn {
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  transition: transform 120ms, box-shadow 120ms, background-color 120ms, color 120ms, border-color 120ms;
+  border: 1px solid transparent;
+}
+
+.btn:active { transform: translateY(1px); }
+
+/* Solid brand-green button (matches front-page button) */
+.btn-brand {
+  background: var(--brand);
+  color: #0b1b2f; /* dark text for contrast */
+  box-shadow: 0 6px 18px rgba(68, 255, 154, 0.22);
+}
+
+.btn-brand:hover {
+  box-shadow: 0 8px 22px rgba(68, 255, 154, 0.32);
+  filter: saturate(110%);
+}
+
+.btn-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
+}
