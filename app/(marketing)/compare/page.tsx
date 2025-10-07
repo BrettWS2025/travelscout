@@ -1,5 +1,5 @@
 import { FilterBar } from "@/components/FilterBar";
-import { ComparisonTable } from "@/components/ComparisonTable";
+import { ProductsTable } from "@/components/ComparisonTable";
 
 export const metadata = { title: "Compare" };
 
