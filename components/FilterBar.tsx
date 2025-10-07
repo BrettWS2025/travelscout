@@ -280,14 +280,9 @@ export default function FilterBar<T>({
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="rounded-lg border px-3 py-2 text-sm hover:bg-white/10"
-          onClick={() => onChange({})}
-          aria-label="Clear all filters"
-        >
-          Clear
-        </button>
+<button type="button" className="btn btn-brand" onClick={() => onChange({})}>
+  Clear
+</button>
         {onReset && (
           <button
             type="button"
