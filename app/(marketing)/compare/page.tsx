@@ -15,7 +15,7 @@ const rows: ProductOffer[] = [
     startDate: "2025-11-01",
     endDate: "2026-02-28",
     dateText: "Nov 2025 – Feb 2026",
-    url: "/deals/cruise-deals#cruise-001",
+    url: "https://www.houseoftravel.co.nz/cruises",
   },
   {
     id: "cruise-002",
