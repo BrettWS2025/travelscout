@@ -1,6 +1,6 @@
 import { Hero } from "@/components/Hero";
 import { FeatureCards } from "@/components/FeatureCards";
-import { ComparisonTable } from "@/components/ComparisonTable";
+import ProductsTable from "@/components/ComparisonTable";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
 
