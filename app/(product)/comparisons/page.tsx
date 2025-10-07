@@ -8,7 +8,7 @@ export default function Compare() {
     <section className="space-y-6">
       <h1 className="text-3xl font-bold">Compare Travel Cards</h1>
       <FilterBar />
-      <ComparisonTable />
+      <ProductsTable rows={rows} columns={columns} />
     </section>
   );
 }
