@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg:   #16223A;  /* lighter background */
-  --card: #1E2C4B;  /* keep card a bit darker than bg for depth */
-  --text: #EEF3FF;  /* soft off-white for comfy contrast */
+  --bg:   #16223A;
+  --card: #1E2C4B;
+  --text: #EEF3FF;
   --muted:#A2ABBA;
-  --accent:#6EE7FF; /* cyan accent (links etc.) */
-  --brand:#44FF9A;  /* GREEN – use this for focus/hover on inputs/buttons */
+  --accent:#6EE7FF; /* cyan for links */
+  --brand:#44FF9A;  /* green for primary buttons */
 }
 
 html, body, #__next { min-height: 100%; height: auto; }
@@ -46,15 +46,9 @@ body {
 }
 .link:hover { color: var(--accent); }
 
-header.sticky.top-0 .container {
-  padding-top: 2rem;   /* default was py-4 ≈ 1rem */
-  padding-bottom: 2rem;
-}
+header.sticky.top-0 .container { padding-top: 2rem; padding-bottom: 2rem; }
 
-main, section, .overflow-x-auto {
-  position: relative;
-  z-index: 0;
-}
+main, section, .overflow-x-auto { position: relative; z-index: 0; }
 
 /* ----------------------------- */
 /* Inputs used in FilterBar, etc */
@@ -62,39 +56,32 @@ main, section, .overflow-x-auto {
 
 /* Base input for text, select, number, date… */
 .input {
-  /* layout */
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-
-  /* colors (force light control on dark site) */
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid #d1d5db; /* gray-300 */
-  caret-color: var(--brand);
-
-  /* UX */
+  background: #ffffff;       /* white field */
+  color: #000000;            /* black text */
+  border: 1px solid #d1d5db; /* gray-300 border */
+  caret-color: #000000;      /* black caret (no green) */
   outline: none;
   transition: border-color 120ms, box-shadow 120ms, background-color 120ms, color 120ms;
 }
 
 .input::placeholder { color: #6b7280; } /* gray-500 */
 
-/* hover: white border (not green) */
-.input:hover {
-  border-color: #ffffff;
-}
+/* Hover: keep neutral (white border), no green */
+.input:hover { border-color: #ffffff; }
 
+/* Focus: keep neutral (white border), subtle white glow, no green */
 .input:focus,
 .input:focus-visible {
-  border-color: var(--brand);
-  /* green glow ring; rgba(68,255,154,0.35) */
-  box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.35);
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
 }
 
-/* Make multi-select comfortable height */
+/* Multi-select comfortable height */
 select.input[multiple] { height: 7rem; }
 
-/* Checkbox/Radio accent should match brand green */
+/* Checkbox/Radio accent (can keep brand if you like) */
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--brand);
@@ -118,7 +105,7 @@ input.input:-webkit-autofill:focus {
   box-shadow: 0 0 0px 1000px #ffffff inset;
 }
 
-/* Optional: compact labels in filter rows */
+/* Optional: compact labels */
 .filter-label { color: #6b7280; font-size: 0.875rem; }
 
 /* ----------------------------- */
@@ -137,7 +124,7 @@ input.input:-webkit-autofill:focus {
 
 .btn:active { transform: translateY(1px); }
 
-/* Solid brand-green button (matches front-page button) */
+/* Solid brand-green button (matches front page) */
 .btn-brand {
   background: var(--brand);
   color: #0b1b2f; /* dark text for contrast */
