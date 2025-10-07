@@ -16,7 +16,7 @@ export default function Home() {
         <p style={{color:"var(--muted)"}} className="mb-4">
           Curated, unbiased, always up-to-date.
         </p>
-        <ComparisonTable />
+        <ProductsTable />
       </section>
 
       {/* New: Top Destinations (shows further down the page) */}
