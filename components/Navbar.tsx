@@ -36,6 +36,7 @@ const MENU: MenuSection[] = [
       { label: "Travel Insurance", href: "/(product)/compare#insurance" },
       { label: "Airport Lounges", href: "/(product)/compare#lounges" },
       { label: "Airpoints Cards", href: "/(product)/compare#airpoints" },
+      { label: "Travel Agencies, OTAs and Direct", href: "/(marketing)/compare/travel-agencies-otas-and-direct" },
     ],
   },
   {
