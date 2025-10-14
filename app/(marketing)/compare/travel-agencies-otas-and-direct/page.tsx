@@ -8,55 +8,59 @@ export const metadata = {
 };
 
 type ChannelRow = ProductOffer & {
+  // convenience fields we’ll map onto existing ProductOffer keys
   cost?: string;
   protections?: string;
   afterSales?: string;
-  inventory?: string;
-  transparency?: string;
+  inventoryText?: string;
+  transparencyText?: string;
 };
 
-// Note: ProductOffer requires `id`, `vendor`, and `url`
+// NOTE: ProductOffer requires id, vendor, and url. We map our textual values
+// to existing keys used by ComparisonTable’s default cells so we don’t pass
+// any custom cell functions from a Server Component to a Client Component.
 const rows: ChannelRow[] = [
   {
     id: "agency",
     vendor: "Travel Agencies",
     url: "#",
-    cost: "—",
-    protections: "—",
-    afterSales: "—",
-    inventory: "—",
-    transparency: "—",
+    // Map our fields to existing display keys
+    priceText: "—",                 // shows under the "Cost" (price) column
+    policy: "—",                    // shows under "Consumer Protections"
+    title: "—",                     // shows under "After Sales Service"
+    destination: "—",               // shows under "Inventory"
+    brand: "—",                     // shows under "Transparency"
   },
   {
     id: "ota",
     vendor: "OTAs",
     url: "#",
-    cost: "—",
-    protections: "—",
-    afterSales: "—",
-    inventory: "—",
-    transparency: "—",
+    priceText: "—",
+    policy: "—",
+    title: "—",
+    destination: "—",
+    brand: "—",
   },
   {
     id: "direct",
     vendor: "Direct Booking",
     url: "#",
-    cost: "—",
-    protections: "—",
-    afterSales: "—",
-    inventory: "—",
-    transparency: "—",
+    priceText: "—",
+    policy: "—",
+    title: "—",
+    destination: "—",
+    brand: "—",
   },
 ];
 
-// IMPORTANT: give each column a UNIQUE ColumnKey to avoid duplicate React keys
+// Columns use built-in keys so we avoid custom render functions (safe for RSC).
 const columns: ProductsColumn[] = [
   { key: "vendor",      header: "Comparison",           sortable: false },
-  { key: "price",       header: "Cost",                 sortable: false, cell: r => (r as ChannelRow).cost ?? "—" },
-  { key: "policy",      header: "Consumer Protections", sortable: false, cell: r => (r as ChannelRow).protections ?? "—" },
-  { key: "rating",      header: "After Sales Service",  sortable: false, cell: r => (r as ChannelRow).afterSales ?? "—" },
-  { key: "destination", header: "Inventory",            sortable: false, cell: r => (r as ChannelRow).inventory ?? "—" },
-  { key: "title",       header: "Transparency",         sortable: false, cell: r => (r as ChannelRow).transparency ?? "—" },
+  { key: "price",       header: "Cost",                 sortable: false, align: "left" },
+  { key: "policy",      header: "Consumer Protections", sortable: false },
+  { key: "title",       header: "After Sales Service",  sortable: false },
+  { key: "destination", header: "Inventory",            sortable: false },
+  { key: "brand",       header: "Transparency",         sortable: false },
 ];
 
 export default function Page() {
@@ -71,30 +75,24 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Table on dark background using the shared component */}
-      <div className="onDarkTable">
-        <ComparisonTable rows={rows} columns={columns} maxColumns={6} emptyText="No comparison rows yet." />
-      </div>
+      {/* Shared table on dark background: now uses the new `tone` prop */}
+      <ComparisonTable
+        rows={rows}
+        columns={columns}
+        maxColumns={6}
+        emptyText="No comparison rows yet."
+        tone="onDark"
+      />
 
-      {/* Editorial content below the table */}
+      {/* Editorial section below the table */}
       <article className="space-y-4" style={{ color: "var(--text)" }}>
         <h2 className="text-2xl font-semibold">How these channels compare</h2>
         <p style={{ color: "var(--muted)" }}>
           Add your commentary here. You might cover how pricing is set (base fare, fees, commissions),
           who is responsible when things go wrong, what after‑sales support looks like, refund/change rules,
-          the breadth of inventory exposed by each channel, and overall price/transparency differences.
+          the breadth of inventory each channel shows, and overall price/transparency differences.
         </p>
       </article>
-
-      {/* Page-scoped overrides to enforce white fonts via your theme vars, without touching the table component */}
-      <style jsx>{`
-        .onDarkTable :global(thead) { background: transparent; }
-        .onDarkTable :global(thead tr),
-        .onDarkTable :global(th),
-        .onDarkTable :global(td) { color: var(--text); }
-        .onDarkTable :global(.text-gray-600) { color: var(--text); }
-        .onDarkTable :global(.text-gray-500) { color: var(--muted); }
-      `}</style>
     </section>
   );
 }
