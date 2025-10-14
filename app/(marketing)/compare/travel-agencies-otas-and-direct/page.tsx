@@ -3,7 +3,8 @@ import type { ProductOffer } from "@/lib/products";
 
 export const metadata = {
   title: "Travel Agencies, OTAs and Direct — Compare",
-  description: "High-level comparison of travel agencies, online travel agencies (OTAs), and booking direct.",
+  description:
+    "High-level comparison of travel agencies, online travel agencies (OTAs), and booking direct.",
 };
 
 type ChannelRow = ProductOffer & {
@@ -14,10 +15,12 @@ type ChannelRow = ProductOffer & {
   transparency?: string;
 };
 
+// Note: ProductOffer requires `id`, `vendor`, and `url`
 const rows: ChannelRow[] = [
   {
     id: "agency",
     vendor: "Travel Agencies",
+    url: "#",
     cost: "—",
     protections: "—",
     afterSales: "—",
@@ -27,6 +30,7 @@ const rows: ChannelRow[] = [
   {
     id: "ota",
     vendor: "OTAs",
+    url: "#",
     cost: "—",
     protections: "—",
     afterSales: "—",
@@ -36,6 +40,7 @@ const rows: ChannelRow[] = [
   {
     id: "direct",
     vendor: "Direct Booking",
+    url: "#",
     cost: "—",
     protections: "—",
     afterSales: "—",
@@ -44,15 +49,14 @@ const rows: ChannelRow[] = [
   },
 ];
 
-// Use ComparisonTable’s column model; we provide custom cells to show our fields.
-// Keys are from the component’s union and are fine even if not used for sorting.
+// IMPORTANT: give each column a UNIQUE ColumnKey to avoid duplicate React keys
 const columns: ProductsColumn[] = [
-  { key: "vendor", header: "Comparison", sortable: false },
-  { key: "price", header: "Cost", sortable: false, cell: (row) => (row as ChannelRow).cost ?? "—" },
-  { key: "policy", header: "Consumer Protections", sortable: false, cell: (row) => (row as ChannelRow).protections ?? "—" },
-  { key: "policy", header: "After Sales Service", sortable: false, cell: (row) => (row as ChannelRow).afterSales ?? "—" },
-  { key: "policy", header: "Inventory", sortable: false, cell: (row) => (row as ChannelRow).inventory ?? "—" },
-  { key: "policy", header: "Transparency", sortable: false, cell: (row) => (row as ChannelRow).transparency ?? "—" },
+  { key: "vendor",      header: "Comparison",           sortable: false },
+  { key: "price",       header: "Cost",                 sortable: false, cell: r => (r as ChannelRow).cost ?? "—" },
+  { key: "policy",      header: "Consumer Protections", sortable: false, cell: r => (r as ChannelRow).protections ?? "—" },
+  { key: "rating",      header: "After Sales Service",  sortable: false, cell: r => (r as ChannelRow).afterSales ?? "—" },
+  { key: "destination", header: "Inventory",            sortable: false, cell: r => (r as ChannelRow).inventory ?? "—" },
+  { key: "title",       header: "Transparency",         sortable: false, cell: r => (r as ChannelRow).transparency ?? "—" },
 ];
 
 export default function Page() {
@@ -67,24 +71,30 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Comparison table using the shared component, on a dark background */}
-      <ComparisonTable
-        rows={rows}
-        columns={columns}
-        maxColumns={6}
-        emptyText="No comparison rows yet."
-        tone="onDark"
-      />
+      {/* Table on dark background using the shared component */}
+      <div className="onDarkTable">
+        <ComparisonTable rows={rows} columns={columns} maxColumns={6} emptyText="No comparison rows yet." />
+      </div>
 
-      {/* Editorial section below the table */}
+      {/* Editorial content below the table */}
       <article className="space-y-4" style={{ color: "var(--text)" }}>
         <h2 className="text-2xl font-semibold">How these channels compare</h2>
         <p style={{ color: "var(--muted)" }}>
           Add your commentary here. You might cover how pricing is set (base fare, fees, commissions),
-          who is responsible when things go wrong, after‑sales support, refund/change rules, how much
-          inventory each channel shows, and price/transparency differences.
+          who is responsible when things go wrong, what after‑sales support looks like, refund/change rules,
+          the breadth of inventory exposed by each channel, and overall price/transparency differences.
         </p>
       </article>
+
+      {/* Page-scoped overrides to enforce white fonts via your theme vars, without touching the table component */}
+      <style jsx>{`
+        .onDarkTable :global(thead) { background: transparent; }
+        .onDarkTable :global(thead tr),
+        .onDarkTable :global(th),
+        .onDarkTable :global(td) { color: var(--text); }
+        .onDarkTable :global(.text-gray-600) { color: var(--text); }
+        .onDarkTable :global(.text-gray-500) { color: var(--muted); }
+      `}</style>
     </section>
   );
 }
