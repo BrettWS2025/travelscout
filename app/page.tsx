@@ -84,7 +84,7 @@ const popularComparisonColumns: ProductsColumn[] = [
   { key: "price",       header: "Cost",               sortable: false, align: "left" },
   { key: "title",       header: "Add Ons",            sortable: false },
   { key: "policy",      header: "Vibe Check",         sortable: false },
-  { key: "destination", header: "Cabins",             sortable: false },
+ // { key: "destination", header: "Cabins",             sortable: false },
   { key: "brand",       header: "Free wifi",          sortable: false },
   // Rightmost link column — no visible header, right-aligned, shows the word "link"
   { key: "link", header: "", sortable: false, align: "right", widthClass: "whitespace-nowrap" },
