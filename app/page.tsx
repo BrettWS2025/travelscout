@@ -93,7 +93,7 @@ const popularComparisonColumns: ProductsColumn[] = [
   { key: "vendor",      header: "Cruise Line",      sortable: false },
   { key: "price",       header: "Cost",             sortable: false, align: "left" },
   { key: "policy",      header: "Vibe Check",       sortable: false },
-  { key: "title",       header: "Lux Level",        sortable: false },
+  { key: "title",       header: "Top Destination",  sortable: false },
   { key: "destination", header: "Onboard Services", sortable: false },
   { key: "brand",       header: "Free wifi",        sortable: false },
   // Rightmost link column — no visible header, right-aligned, shows the word "link"
