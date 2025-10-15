@@ -47,15 +47,7 @@ const popularComparisonColumns: ProductsColumn[] = [
   { key: "destination", header: "Onboard Services", sortable: false },
   { key: "brand",       header: "Free wifi",        sortable: false },
   // Rightmost link column — no visible header, right-aligned, shows the word "link"
-  { 
-    key: "link",
-    header: "",
-    sortable: false,
-    align: "right",
-    linkLabel: "Link",
-    linkLabelClassName: "font-bold", // ← bold text like headers
-    widthClass: "whitespace-nowrap"
-  },
+  { key: "link", header: "", sortable: false, align: "right", widthClass: "whitespace-nowrap" },
 ];
 
 export default function Home() {
