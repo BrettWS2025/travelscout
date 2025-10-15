@@ -49,6 +49,7 @@ const popularComparisonColumns: ProductsColumn[] = [
   { key: "title",       header: "Lux Level",            sortable: false },
   { key: "destination", header: "Onboard Services",     sortable: false },
   { key: "brand",       header: "Free wifi",            sortable: false },
+  { key: "link",        header: "",                     sortable: false }
 ];
 
 export default function Home() {
