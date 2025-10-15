@@ -82,7 +82,7 @@ const popularComparisonRows: ProductOffer[] = [
 const popularComparisonColumns: ProductsColumn[] = [
   { key: "vendor",      header: "Cruise Line",        sortable: false },
   { key: "price",       header: "Cost",               sortable: false, align: "left" },
-  { key: "title",       header: "Inclusions/Add Ons", sortable: false },
+  { key: "title",       header: "Add Ons",            sortable: false },
   { key: "policy",      header: "Vibe Check",         sortable: false },
   { key: "destination", header: "Cabins",             sortable: false },
   { key: "brand",       header: "Free wifi",          sortable: false },
