@@ -110,7 +110,8 @@ export default function Home() {
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
-          Curated, unbiased, always up-to-date.
+          These ratings are out of 10 and should provide you with a starting point when searching for what kind of cruise you want.
+          All ratings are independent and unbiased. I receive no form of compensation from these suppliers.
         </p>
         <ProductsTable
           rows={popularComparisonRows}
