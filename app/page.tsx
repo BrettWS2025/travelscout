@@ -5,29 +5,50 @@ import type { ProductOffer } from "@/lib/products";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
 
-// Minimal placeholder data for the "Popular Comparisons" table.
-// You can leave this empty and it will show the built-in empty state.
+// Popular Comparisons — same 6-column layout as the Agencies/OTAs/Direct table.
+// Placeholder rows included so the table renders immediately (edit when ready).
 const popularComparisonRows: ProductOffer[] = [
-  // Example rows (delete or replace):
-  // {
-  //   id: "cmp-001",
-  //   vendor: "TravelScout",
-  //   brand: "Air NZ vs Qantas",
-  //   title: "AKL → SYD (Economy)",
-  //   priceMin: 329,
-  //   currency: "NZD",
-  //   dateText: "Oct–Dec 2025",
-  //   url: "/compare/flights#akl-syd-economy",
-  // },
+  {
+    id: "cmp-agencies",
+    vendor: "Travel Agencies",
+    url: "#",
+    priceText: "—",   // Cost
+    policy: "—",      // Consumer Protections
+    title: "—",       // After Sales Service
+    destination: "—", // Inventory
+    brand: "—",       // Transparency
+  },
+  {
+    id: "cmp-otas",
+    vendor: "OTAs",
+    url: "#",
+    priceText: "—",
+    policy: "—",
+    title: "—",
+    destination: "—",
+    brand: "—",
+  },
+  {
+    id: "cmp-direct",
+    vendor: "Direct Booking",
+    url: "#",
+    priceText: "—",
+    policy: "—",
+    title: "—",
+    destination: "—",
+    brand: "—",
+  },
 ];
 
+// Six columns matching the travel agencies/OTAs/direct page.
+// We map to existing keys so no custom cell renderers are needed (keeps this page as an RSC).
 const popularComparisonColumns: ProductsColumn[] = [
-  { key: "title",     header: "Comparison", sortable: true },
-  { key: "brand",     header: "Variant" },
-  { key: "vendor",    header: "Source" },
-  { key: "price",     header: "From", sortable: true, align: "right" },
-  { key: "dateRange", header: "Dates", sortable: true },
-  { key: "link" }, // no visible header (icon-only link)
+  { key: "vendor",      header: "Comparison",           sortable: false },
+  { key: "price",       header: "Cost",                 sortable: false, align: "left" },
+  { key: "policy",      header: "Consumer Protections", sortable: false },
+  { key: "title",       header: "After Sales Service",  sortable: false },
+  { key: "destination", header: "Inventory",            sortable: false },
+  { key: "brand",       header: "Transparency",         sortable: false },
 ];
 
 export default function Home() {
@@ -36,7 +57,7 @@ export default function Home() {
       <Hero />
       <FeatureCards />
 
-      {/* Existing: Popular Comparisons */}
+      {/* Popular Comparisons — now matches the 6-column layout and uses tone="onDark" */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Popular Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
@@ -45,10 +66,13 @@ export default function Home() {
         <ProductsTable
           rows={popularComparisonRows}
           columns={popularComparisonColumns}
+          maxColumns={6}
+          emptyText="No comparison rows yet."
+          tone="onDark"
         />
       </section>
 
-      {/* New: Top Destinations (shows further down the page) */}
+      {/* Top Destinations */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Top Destinations</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
@@ -57,7 +81,7 @@ export default function Home() {
         <TopDestinationsTable />
       </section>
 
-      {/* New: Top Deals */}
+      {/* Top Deals */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Top Deals</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
