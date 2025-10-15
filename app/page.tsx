@@ -52,7 +52,7 @@ const popularComparisonColumns: ProductsColumn[] = [
     header: "",
     sortable: false,
     align: "right",
-    linkLabel: "link",
+    linkLabel: "Link",
     linkLabelClassName: "font-bold", // ← bold text like headers
     widthClass: "whitespace-nowrap"
   },
