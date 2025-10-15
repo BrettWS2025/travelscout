@@ -108,7 +108,7 @@ export default function Home() {
 
       {/* Popular Comparisons */}
       <section className="card p-6">
-        <h2 className="text-2xl font-semibold mb-2">Popular Comparisons</h2>
+        <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
           Curated, unbiased, always up-to-date.
         </p>
