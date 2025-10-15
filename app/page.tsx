@@ -5,22 +5,21 @@ import type { ProductOffer } from "@/lib/products";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
 
-// Popular Comparisons — same 6-column layout as the Agencies/OTAs/Direct table.
-// Placeholder rows included so the table renders immediately (edit when ready).
+// Popular Comparisons — same 6 base columns + a right-aligned "link" column.
 const popularComparisonRows: ProductOffer[] = [
   {
     id: "cmp-Princess",
     vendor: "Princess Cruises",
     url: "#",
     priceText: "—",   // Cost
-    policy: "—",      // Consumer Protections
-    title: "—",       // After Sales Service
-    destination: "—", // Inventory
-    brand: "—",       // Transparency
+    policy: "—",      // Vibe Check / Consumer Protections
+    title: "—",       // Lux Level / After Sales Service
+    destination: "—", // Onboard Services / Inventory
+    brand: "—",       // Free wifi / Transparency
   },
   {
     id: "cmp-NCL",
-    vendor: "Nowegion Cruise Lines",
+    vendor: "Nowegion Cruise Lines", // (typo left as-is per your example)
     url: "#",
     priceText: "—",
     policy: "—",
@@ -40,16 +39,15 @@ const popularComparisonRows: ProductOffer[] = [
   },
 ];
 
-// Six columns matching the travel agencies/OTAs/direct page.
-// We map to existing keys so no custom cell renderers are needed (keeps this page as an RSC).
 const popularComparisonColumns: ProductsColumn[] = [
-  { key: "vendor",      header: "Cruise Line",          sortable: false },
-  { key: "price",       header: "Cost",                 sortable: false, align: "left" },
-  { key: "policy",      header: "Vibe Check",           sortable: false },
-  { key: "title",       header: "Lux Level",            sortable: false },
-  { key: "destination", header: "Onboard Services",     sortable: false },
-  { key: "brand",       header: "Free wifi",            sortable: false },
-  { key: "link",        header: "",                     sortable: false }
+  { key: "vendor",      header: "Cruise Line",      sortable: false },
+  { key: "price",       header: "Cost",             sortable: false, align: "left" },
+  { key: "policy",      header: "Vibe Check",       sortable: false },
+  { key: "title",       header: "Lux Level",        sortable: false },
+  { key: "destination", header: "Onboard Services", sortable: false },
+  { key: "brand",       header: "Free wifi",        sortable: false },
+  // Rightmost link column — no visible header, right-aligned, shows the word "link"
+  { key: "link",        header: "", sortable: false, align: "right", linkLabel: "link", widthClass: "whitespace-nowrap" },
 ];
 
 export default function Home() {
@@ -58,7 +56,7 @@ export default function Home() {
       <Hero />
       <FeatureCards />
 
-      {/* Popular Comparisons — now matches the 6-column layout and uses tone="onDark" */}
+      {/* Popular Comparisons */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Popular Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
@@ -67,7 +65,8 @@ export default function Home() {
         <ProductsTable
           rows={popularComparisonRows}
           columns={popularComparisonColumns}
-          maxColumns={6}
+          // Show all 7 columns (or omit this prop entirely)
+          maxColumns={7}
           emptyText="No comparison rows yet."
           tone="onDark"
         />
