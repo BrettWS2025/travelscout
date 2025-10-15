@@ -27,7 +27,7 @@ export type ColumnKey =
   | "stops"
   | "policy"
   | "rating"
-  | "link"; // special: renders a link, no visible header by default
+  | "link"; // special: renders a link; typically no visible header
 
 export type ProductsColumn = {
   key: ColumnKey;
@@ -36,6 +36,8 @@ export type ProductsColumn = {
   align?: "left" | "center" | "right";
   widthClass?: string; // e.g. "w-24"
   cell?: (row: ProductOffer) => React.ReactNode; // custom render override (client-only)
+  /** If key === "link" and you provide this, the cell renders this text instead of the icon. */
+  linkLabel?: string;
 };
 
 type SortState = { key: ColumnKey | null; dir: "asc" | "desc" };
@@ -112,10 +114,26 @@ function defaultCellText(row: ProductOffer, key: ColumnKey): string {
   }
 }
 
-function defaultCell(row: ProductOffer, key: ColumnKey): React.ReactNode {
+function defaultCell(row: ProductOffer, col: ProductsColumn): React.ReactNode {
+  const key = col.key;
   switch (key) {
     case "link":
-      return row.url ? (
+      if (!row.url) return "—";
+      // If a column-level label is provided, render that text; otherwise keep the icon-only default.
+      if (col.linkLabel) {
+        return (
+          <Link
+            href={row.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            aria-label="Open link"
+          >
+            {col.linkLabel}
+          </Link>
+        );
+      }
+      return (
         <Link
           href={row.url}
           target="_blank"
@@ -125,8 +143,6 @@ function defaultCell(row: ProductOffer, key: ColumnKey): React.ReactNode {
           <span className="sr-only">Open</span>
           <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
         </Link>
-      ) : (
-        "—"
       );
     case "price":
       return <span>{formatPrice(row)}</span>;
@@ -209,13 +225,15 @@ export default function ProductsTable({
     );
   }
 
+  const headerTextClass = tone === "onDark" ? "" : "text-gray-600";
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left">
         {/* Header */}
         <thead className={tone === "onDark" ? undefined : "bg-gray-50"}>
           <tr
-            className="text-sm"
+            className={`text-sm ${headerTextClass}`}
             style={tone === "onDark" ? { color: "var(--text)" } : undefined}
           >
             {visibleCols.map((c, ci) => {
@@ -257,7 +275,7 @@ export default function ProductsTable({
           {sorted.length === 0 && (
             <tr>
               <td
-                className="px-4 py-8 text-center"
+                className={`px-4 py-8 text-center ${tone === "onDark" ? "" : "text-gray-500"}`}
                 style={tone === "onDark" ? { color: "var(--muted)" } : undefined}
                 colSpan={visibleCols.length}
               >
@@ -269,7 +287,7 @@ export default function ProductsTable({
           {sorted.map((row) => (
             <tr key={row.id} className="text-sm">
               {visibleCols.map((c, ci) => {
-                const content = c.cell ? c.cell(row) : defaultCell(row, c.key);
+                const content = c.cell ? c.cell(row) : defaultCell(row, c);
                 const align = c.align ?? (c.key === "price" ? "right" : "left");
                 return (
                   <td
