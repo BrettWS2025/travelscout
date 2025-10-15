@@ -9,8 +9,8 @@ import { TopDealsTable } from "@/components/TopDealsTable";
 // Placeholder rows included so the table renders immediately (edit when ready).
 const popularComparisonRows: ProductOffer[] = [
   {
-    id: "cmp-agencies",
-    vendor: "Travel Agencies",
+    id: "cmp-Princess",
+    vendor: "Princess Cruises",
     url: "#",
     priceText: "—",   // Cost
     policy: "—",      // Consumer Protections
@@ -19,8 +19,8 @@ const popularComparisonRows: ProductOffer[] = [
     brand: "—",       // Transparency
   },
   {
-    id: "cmp-otas",
-    vendor: "OTAs",
+    id: "cmp-NCL",
+    vendor: "Nowegion Cruise Lines",
     url: "#",
     priceText: "—",
     policy: "—",
@@ -29,9 +29,9 @@ const popularComparisonRows: ProductOffer[] = [
     brand: "—",
   },
   {
-    id: "cmp-direct",
-    vendor: "Direct Booking",
-    url: "#",
+    id: "cmp-Carnival",
+    vendor: "Carnival Cruise Lines",
+    url: "https://www.carnival.com/",
     priceText: "—",
     policy: "—",
     title: "—",
@@ -43,12 +43,12 @@ const popularComparisonRows: ProductOffer[] = [
 // Six columns matching the travel agencies/OTAs/direct page.
 // We map to existing keys so no custom cell renderers are needed (keeps this page as an RSC).
 const popularComparisonColumns: ProductsColumn[] = [
-  { key: "vendor",      header: "Comparison",           sortable: false },
+  { key: "vendor",      header: "Cruise Line",          sortable: false },
   { key: "price",       header: "Cost",                 sortable: false, align: "left" },
-  { key: "policy",      header: "Consumer Protections", sortable: false },
-  { key: "title",       header: "After Sales Service",  sortable: false },
-  { key: "destination", header: "Inventory",            sortable: false },
-  { key: "brand",       header: "Transparency",         sortable: false },
+  { key: "policy",      header: "Vibe Check",           sortable: false },
+  { key: "title",       header: "Lux Level",            sortable: false },
+  { key: "destination", header: "Onboard Services",     sortable: false },
+  { key: "brand",       header: "Free wifi",            sortable: false },
 ];
 
 export default function Home() {
