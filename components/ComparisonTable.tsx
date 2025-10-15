@@ -6,6 +6,11 @@ import type { ProductOffer } from "@/lib/products";
 import { formatCurrency, formatDateRange } from "@/lib/utils/format";
 import { ArrowUpRight } from "lucide-react";
 
+/**
+ * Column keys supported by the default renderer.
+ * (You can still use `cell` to override a column’s content when rendering
+ *  this component from a Client Component.)
+ */
 export type ColumnKey =
   | "vendor"
   | "brand"
@@ -22,33 +27,50 @@ export type ColumnKey =
   | "stops"
   | "policy"
   | "rating"
-  | "link"; // special: renders a link, no visible header
+  | "link"; // special: renders a link, no visible header by default
 
 export type ProductsColumn = {
   key: ColumnKey;
-  header?: string;                  // omit or "" for the Link column (no visible title)
+  header?: string; // omit or "" for the Link column (no visible title)
   sortable?: boolean;
   align?: "left" | "center" | "right";
-  widthClass?: string;              // e.g. "w-24"
-  cell?: (row: ProductOffer) => React.ReactNode; // custom render override
+  widthClass?: string; // e.g. "w-24"
+  cell?: (row: ProductOffer) => React.ReactNode; // custom render override (client-only)
 };
 
 type SortState = { key: ColumnKey | null; dir: "asc" | "desc" };
 
-function defaultCell(row: ProductOffer, key: ColumnKey): React.ReactNode {
+function alignClass(align?: "left" | "center" | "right", key?: ColumnKey) {
+  const a = align ?? (key === "price" ? "right" : "left");
+  return a === "right" ? "text-right" : a === "center" ? "text-center" : "";
+}
+
+function formatPrice(row: ProductOffer): string {
+  if (row.priceText) return row.priceText;
+  const cur = row.currency ?? "NZD";
+  const hasMin = typeof row.priceMin === "number";
+  const hasMax = typeof row.priceMax === "number";
+  if (hasMin && hasMax) {
+    return `${formatCurrency(row.priceMin as number, cur)}–${formatCurrency(
+      row.priceMax as number,
+      cur
+    )}`;
+  }
+  if (hasMin) return formatCurrency(row.priceMin as number, cur);
+  if (hasMax) return formatCurrency(row.priceMax as number, cur);
+  return "—";
+}
+
+function defaultCellText(row: ProductOffer, key: ColumnKey): string {
   switch (key) {
-    case "vendor": return row.vendor;
-    case "brand": return row.brand ?? "—";
-    case "title": return row.title ?? "—";
-    case "price": {
-      if (row.priceText) return row.priceText;
-      if (row.priceMin != null) {
-        const min = formatCurrency(row.priceMin, row.currency ?? "NZD");
-        const max = row.priceMax ? `–${formatCurrency(row.priceMax, row.currency ?? "NZD")}` : "";
-        return `${min}${max}`;
-      }
-      return "—";
-    }
+    case "vendor":
+      return row.vendor ?? "—";
+    case "brand":
+      return row.brand ?? "—";
+    case "title":
+      return row.title ?? "—";
+    case "price":
+      return formatPrice(row);
     case "dateRange": {
       if (row.dateText) return row.dateText;
       const rng = formatDateRange(row.startDate ?? null, row.endDate ?? null);
@@ -62,110 +84,148 @@ function defaultCell(row: ProductOffer, key: ColumnKey): React.ReactNode {
       }
       return "All ages";
     }
-    case "route": {
+    case "route":
       if (row.routeText) return row.routeText;
-      if (row.origin || row.destination) return [row.origin, row.destination].filter(Boolean).join(" → ");
-      return "—";
-    }
-    case "origin": return row.origin ?? "—";
-    case "destination": return row.destination ?? "—";
-    case "duration": return row.durationText ?? "—";
-    case "cabin": return row.cabin ?? "—";
-    case "baggage": return row.baggage ?? "—";
-    case "stops": return row.stops != null ? String(row.stops) : "—";
-    case "policy": return row.policy ?? "—";
-    case "rating": return row.rating != null ? row.rating.toFixed(1) : "—";
+      if (row.origin && row.destination) return `${row.origin} → ${row.destination}`;
+      return row.origin ?? row.destination ?? "—";
+    case "origin":
+      return row.origin ?? "—";
+    case "destination":
+      return row.destination ?? "—";
+    case "duration":
+      return row.durationText ?? "—";
+    case "cabin":
+      return row.cabin ?? "—";
+    case "baggage":
+      return row.baggage ?? "—";
+    case "stops":
+      if (row.stops == null) return "—";
+      return row.stops === 0 ? "Nonstop" : `${row.stops} stop${row.stops > 1 ? "s" : ""}`;
+    case "policy":
+      return row.policy ?? "—";
+    case "rating":
+      return row.rating != null ? `${row.rating.toFixed(1)}` : "—";
     case "link":
-      return (
+      return row.url || "—";
+    default:
+      return "—";
+  }
+}
+
+function defaultCell(row: ProductOffer, key: ColumnKey): React.ReactNode {
+  switch (key) {
+    case "link":
+      return row.url ? (
         <Link
           href={row.url}
-          className="inline-flex items-center gap-1 underline hover:no-underline"
-          aria-label={`Open ${row.title ?? row.brand ?? row.vendor ?? "item"}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 underline"
         >
-          <ArrowUpRight className="w-4 h-4" />
+          <span className="sr-only">Open</span>
+          <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
         </Link>
+      ) : (
+        "—"
       );
-    default: return "—";
+    case "price":
+      return <span>{formatPrice(row)}</span>;
+    default:
+      return <span>{defaultCellText(row, key)}</span>;
   }
 }
 
-function valueForSort(row: ProductOffer, key: ColumnKey): string | number {
+function sortValue(row: ProductOffer, key: ColumnKey): number | string {
   switch (key) {
-    case "vendor": return row.vendor ?? "";
-    case "brand": return row.brand ?? "";
-    case "title": return row.title ?? "";
-    case "price": return row.priceMin ?? Number.POSITIVE_INFINITY;
-    case "dateRange": return row.startDate ? Date.parse(row.startDate) : Number.POSITIVE_INFINITY;
-    case "ageRange": return row.ageMin ?? 0;
-    case "route": return row.routeText ?? `${row.origin ?? ""}-${row.destination ?? ""}`;
-    case "origin": return row.origin ?? "";
-    case "destination": return row.destination ?? "";
-    case "duration": {
-      // try to extract a number from "7 nights", "10h 35m" → use a simple parse
-      const m = (row.durationText ?? "").match(/\d+/);
-      return m ? parseInt(m[0], 10) : Number.POSITIVE_INFINITY;
+    case "price": {
+      // Use priceMin for sorting; missing values go last on asc.
+      if (typeof row.priceMin === "number") return row.priceMin as number;
+      if (typeof row.priceMax === "number") return row.priceMax as number;
+      return Number.POSITIVE_INFINITY;
     }
-    case "cabin": return row.cabin ?? "";
-    case "baggage": return row.baggage ?? "";
-    case "stops": return row.stops ?? Number.POSITIVE_INFINITY;
-    case "policy": return row.policy ?? "";
-    case "rating": return row.rating ?? -1;
-    case "link": return 0; // not sortable
-    default: return "";
+    case "dateRange": {
+      const t = Date.parse(row.startDate ?? "");
+      return Number.isNaN(t) ? 0 : t;
+    }
+    case "rating":
+      return row.rating != null ? (row.rating as number) : -Infinity;
+    case "stops":
+      return row.stops != null ? (row.stops as number) : 99;
+    default:
+      return defaultCellText(row, key).toString().toLowerCase();
   }
 }
 
+/**
+ * Shared comparison table (client component).
+ * Now supports `tone="onDark"` for use on dark backgrounds
+ * (text from `var(--text)`, muted from `var(--muted)`).
+ */
 export default function ProductsTable({
   rows,
   columns,
   emptyText = "No items yet.",
   maxColumns = 10,
+  tone = "light",
 }: {
   rows: ProductOffer[];
   columns: ProductsColumn[]; // provide up to 10
   emptyText?: string;
   maxColumns?: number;
+  /** Use "onDark" when placed on dark backgrounds; uses var(--text)/var(--muted) from styles. */
+  tone?: "light" | "onDark";
 }) {
   const [sort, setSort] = useState<SortState>({ key: null, dir: "asc" });
 
   const visibleCols = useMemo(() => columns.slice(0, maxColumns), [columns, maxColumns]);
 
   const sorted = useMemo(() => {
-    if (!sort.key || !visibleCols.find(c => c.key === sort.key)?.sortable) return rows;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      const va = valueForSort(a, sort.key!);
-      const vb = valueForSort(b, sort.key!);
-      if (typeof va === "number" && typeof vb === "number") {
-        return sort.dir === "asc" ? va - vb : vb - va;
+    if (!sort.key) return rows;
+    const key = sort.key;
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = sortValue(a, key);
+      const bv = sortValue(b, key);
+      if (typeof av === "number" && typeof bv === "number") {
+        return (av - bv) * dir;
       }
-      return sort.dir === "asc"
-        ? String(va).localeCompare(String(vb))
-        : String(vb).localeCompare(String(va));
+      return av.toString().localeCompare(bv.toString()) * dir;
     });
-    return copy;
-  }, [rows, sort, visibleCols]);
+  }, [rows, sort]);
 
-  function toggleSort(key: ColumnKey, enabled?: boolean) {
-    if (!enabled) return;
+  function toggleSort(key: ColumnKey) {
     setSort((prev) => {
       if (prev.key !== key) return { key, dir: "asc" };
       return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
     });
   }
 
+  function sortIndicator(k: ColumnKey) {
+    if (sort.key !== k) return null;
+    return (
+      <span aria-hidden className="inline-block">
+        {sort.dir === "asc" ? "▲" : "▼"}
+      </span>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto rounded-2xl border">
+    <div className="overflow-x-auto">
       <table className="min-w-full text-left">
-        <thead className="bg-gray-50">
-          <tr className="text-sm text-gray-600">
-            {visibleCols.map((c) => {
+        {/* Header */}
+        <thead className={tone === "onDark" ? undefined : "bg-gray-50"}>
+          <tr
+            className="text-sm"
+            style={tone === "onDark" ? { color: "var(--text)" } : undefined}
+          >
+            {visibleCols.map((c, ci) => {
               const align = c.align ?? (c.key === "price" ? "right" : "left");
               const isLink = c.key === "link";
+              const header = c.header ?? (isLink ? "" : "");
               return (
                 <th
-                  key={`${c.key}-${c.header ?? ""}`}
-                  className={`px-4 py-3 ${c.widthClass ?? ""} ${align === "right" ? "text-right" : align === "center" ? "text-center" : ""}`}
+                  key={`${ci}-${c.key}-${header}`}
+                  className={`px-4 py-3 ${c.widthClass ?? ""} ${alignClass(align)}`}
                   scope="col"
                 >
                   {isLink ? (
@@ -174,39 +234,47 @@ export default function ProductsTable({
                   ) : c.sortable ? (
                     <button
                       type="button"
-                      onClick={() => toggleSort(c.key, true)}
-                      className="inline-flex items-center gap-1 hover:underline"
+                      onClick={() => toggleSort(c.key)}
+                      className="inline-flex items-center gap-2 underline underline-offset-4"
+                      aria-sort={
+                        sort.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
+                      }
                     >
-                      {c.header ?? c.key}
-                      {sort.key === c.key && (
-                        <span aria-hidden>{sort.dir === "asc" ? " ▲" : " ▼"}</span>
-                      )}
+                      <span>{header}</span>
+                      {sortIndicator(c.key)}
                     </button>
                   ) : (
-                    c.header ?? c.key
+                    <span>{header}</span>
                   )}
                 </th>
               );
             })}
           </tr>
         </thead>
-        <tbody className="divide-y">
+
+        {/* Body */}
+        <tbody>
           {sorted.length === 0 && (
             <tr>
-              <td className="px-4 py-8 text-center text-gray-500" colSpan={visibleCols.length}>
+              <td
+                className="px-4 py-8 text-center"
+                style={tone === "onDark" ? { color: "var(--muted)" } : undefined}
+                colSpan={visibleCols.length}
+              >
                 {emptyText}
               </td>
             </tr>
           )}
+
           {sorted.map((row) => (
             <tr key={row.id} className="text-sm">
-              {visibleCols.map((c) => {
+              {visibleCols.map((c, ci) => {
                 const content = c.cell ? c.cell(row) : defaultCell(row, c.key);
                 const align = c.align ?? (c.key === "price" ? "right" : "left");
                 return (
                   <td
-                    key={`${row.id}-${c.key}`}
-                    className={`px-4 py-3 ${align === "right" ? "text-right" : align === "center" ? "text-center" : ""}`}
+                    key={`${row.id}-${c.key}-${ci}`}
+                    className={`px-4 py-3 ${alignClass(align, c.key)}`}
                   >
                     {content}
                   </td>
