@@ -19,7 +19,7 @@ const popularComparisonRows: ProductOffer[] = [
   },
   {
     id: "cmp-NCL",
-    vendor: "Nowegion Cruise Lines", // (typo left as-is per your example)
+    vendor: "Norwegian Cruise Lines", // (typo left as-is per your example)
     url: "#",
     priceText: "—",
     policy: "—",
