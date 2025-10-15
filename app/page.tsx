@@ -15,7 +15,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Classic vibe",      // Vibe Check / Consumer Protections
     title: "—",       // Lux Level / After Sales Service
     destination: "—", // Onboard Services / Inventory
-    brand: "—",       // Free wifi / Transparency
+    brand: "No - additional costs apply",       // Free wifi / Transparency
   },
   {
     id: "cmp-NCL",
@@ -25,7 +25,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Dining and nightlife vibe",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "No - additional costs apply",
   },
   {
     id: "cmp-Carnival",
@@ -35,7 +35,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Budget friendly family fun",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "No - additional costs apply",
   },
     {
     id: "cmp-RC",
@@ -45,7 +45,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "A little more expenny family fun",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "No - additional costs apply",
   },
     {
     id: "cmp-Disney",
@@ -55,7 +55,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Very expenny family fun",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "No - additional costs apply",
   },
     {
     id: "cmp-MSC",
@@ -65,7 +65,7 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Euro family vibes",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "No - additional costs apply",
   },
     {
     id: "cmp-Virgin",
@@ -75,17 +75,17 @@ const popularComparisonRows: ProductOffer[] = [
     policy: "Foodies and wellness retreat vibes",
     title: "—",
     destination: "—",
-    brand: "—",
+    brand: "Yes",
   },
 ];
 
 const popularComparisonColumns: ProductsColumn[] = [
-  { key: "vendor",      header: "Cruise Line",      sortable: false },
-  { key: "price",       header: "Cost",             sortable: false, align: "left" },
-  { key: "policy",      header: "Vibe Check",       sortable: false },
-  { key: "title",       header: "Top Destination",  sortable: false },
-  { key: "destination", header: "Onboard Services", sortable: false },
-  { key: "brand",       header: "Free wifi",        sortable: false },
+  { key: "vendor",      header: "Cruise Line",        sortable: false },
+  { key: "price",       header: "Cost",               sortable: false, align: "left" },
+  { key: "title",       header: "Inclusions/Add Ons", sortable: false },
+  { key: "policy",      header: "Vibe Check",         sortable: false },
+  { key: "destination", header: "Cabins",             sortable: false },
+  { key: "brand",       header: "Free wifi",          sortable: false },
   // Rightmost link column — no visible header, right-aligned, shows the word "link"
   { key: "link", header: "", sortable: false, align: "right", widthClass: "whitespace-nowrap" },
 ];
