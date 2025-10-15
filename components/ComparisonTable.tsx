@@ -38,6 +38,7 @@ export type ProductsColumn = {
   cell?: (row: ProductOffer) => React.ReactNode; // custom render override (client-only)
   /** If key === "link" and you provide this, the cell renders this text instead of the icon. */
   linkLabel?: string;
+  linkLabelClassName?: string;
 };
 
 type SortState = { key: ColumnKey | null; dir: "asc" | "desc" };
@@ -126,7 +127,7 @@ function defaultCell(row: ProductOffer, col: ProductsColumn): React.ReactNode {
             href={row.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline"
+            className={`underline ${col.linkLabelClassName ?? ""}`}
             aria-label="Open link"
           >
             {col.linkLabel}
