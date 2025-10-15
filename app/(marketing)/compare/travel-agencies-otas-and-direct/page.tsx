@@ -1,38 +1,25 @@
-import ComparisonTable, { type ProductsColumn } from "@/components/ComparisonTable";
+import { Hero } from "@/components/Hero";
+import { FeatureCards } from "@/components/FeatureCards";
+import ProductsTable, { type ProductsColumn } from "@/components/ComparisonTable";
 import type { ProductOffer } from "@/lib/products";
+import { TopDestinationsTable } from "@/components/TopDestinationsTable";
+import { TopDealsTable } from "@/components/TopDealsTable";
 
-export const metadata = {
-  title: "Travel Agencies, OTAs and Direct — Compare",
-  description:
-    "High-level comparison of travel agencies, online travel agencies (OTAs), and booking direct.",
-};
-
-type ChannelRow = ProductOffer & {
-  // convenience fields we’ll map onto existing ProductOffer keys
-  cost?: string;
-  protections?: string;
-  afterSales?: string;
-  inventoryText?: string;
-  transparencyText?: string;
-};
-
-// NOTE: ProductOffer requires id, vendor, and url. We map our textual values
-// to existing keys used by ComparisonTable’s default cells so we don’t pass
-// any custom cell functions from a Server Component to a Client Component.
-const rows: ChannelRow[] = [
+// Popular Comparisons — same 6-column layout as the Agencies/OTAs/Direct table.
+// Placeholder rows included so the table renders immediately (edit when ready).
+const popularComparisonRows: ProductOffer[] = [
   {
-    id: "agency",
+    id: "cmp-agencies",
     vendor: "Travel Agencies",
     url: "#",
-    // Map our fields to existing display keys
-    priceText: "—",                 // shows under the "Cost" (price) column
-    policy: "—",                    // shows under "Consumer Protections"
-    title: "—",                     // shows under "After Sales Service"
-    destination: "—",               // shows under "Inventory"
-    brand: "—",                     // shows under "Transparency"
+    priceText: "—",   // Cost
+    policy: "—",      // Consumer Protections
+    title: "—",       // After Sales Service
+    destination: "—", // Inventory
+    brand: "—",       // Transparency
   },
   {
-    id: "ota",
+    id: "cmp-otas",
     vendor: "OTAs",
     url: "#",
     priceText: "—",
@@ -42,7 +29,7 @@ const rows: ChannelRow[] = [
     brand: "—",
   },
   {
-    id: "direct",
+    id: "cmp-direct",
     vendor: "Direct Booking",
     url: "#",
     priceText: "—",
@@ -53,8 +40,9 @@ const rows: ChannelRow[] = [
   },
 ];
 
-// Columns use built-in keys so we avoid custom render functions (safe for RSC).
-const columns: ProductsColumn[] = [
+// Six columns matching the travel agencies/OTAs/direct page.
+// We map to existing keys so no custom cell renderers are needed (keeps this page as an RSC).
+const popularComparisonColumns: ProductsColumn[] = [
   { key: "vendor",      header: "Comparison",           sortable: false },
   { key: "price",       header: "Cost",                 sortable: false, align: "left" },
   { key: "policy",      header: "Consumer Protections", sortable: false },
@@ -63,36 +51,44 @@ const columns: ProductsColumn[] = [
   { key: "brand",       header: "Transparency",         sortable: false },
 ];
 
-export default function Page() {
+export default function Home() {
   return (
-    <section className="space-y-8">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold" style={{ color: "var(--text)" }}>
-          Travel Agencies, OTAs and Direct
-        </h1>
-        <p className="text-sm" style={{ color: "var(--muted)" }}>
-          A top‑level look at the differences between agency, OTA, and direct booking channels.
-        </p>
-      </header>
+    <div className="space-y-12">
+      <Hero />
+      <FeatureCards />
 
-      {/* Shared table on dark background: now uses the new `tone` prop */}
-      <ComparisonTable
-        rows={rows}
-        columns={columns}
-        maxColumns={6}
-        emptyText="No comparison rows yet."
-        tone="onDark"
-      />
-
-      {/* Editorial section below the table */}
-      <article className="space-y-4" style={{ color: "var(--text)" }}>
-        <h2 className="text-2xl font-semibold">How these channels compare</h2>
-        <p style={{ color: "var(--muted)" }}>
-          Add your commentary here. You might cover how pricing is set (base fare, fees, commissions),
-          who is responsible when things go wrong, what after‑sales support looks like, refund/change rules,
-          the breadth of inventory each channel shows, and overall price/transparency differences.
+      {/* Popular Comparisons — now matches the 6-column layout and uses tone="onDark" */}
+      <section className="card p-6">
+        <h2 className="text-2xl font-semibold mb-2">Popular Comparisons</h2>
+        <p style={{ color: "var(--muted)" }} className="mb-4">
+          Curated, unbiased, always up-to-date.
         </p>
-      </article>
-    </section>
+        <ProductsTable
+          rows={popularComparisonRows}
+          columns={popularComparisonColumns}
+          maxColumns={6}
+          emptyText="No comparison rows yet."
+          tone="onDark"
+        />
+      </section>
+
+      {/* Top Destinations */}
+      <section className="card p-6">
+        <h2 className="text-2xl font-semibold mb-2">Top Destinations</h2>
+        <p style={{ color: "var(--muted)" }} className="mb-4">
+          Best seasons, ballpark 7-day costs, and why they’re worth the trip.
+        </p>
+        <TopDestinationsTable />
+      </section>
+
+      {/* Top Deals */}
+      <section className="card p-6">
+        <h2 className="text-2xl font-semibold mb-2">Top Deals</h2>
+        <p style={{ color: "var(--muted)" }} className="mb-4">
+          Hand-picked fares and promos with the key caveats.
+        </p>
+        <TopDealsTable />
+      </section>
+    </div>
   );
 }
