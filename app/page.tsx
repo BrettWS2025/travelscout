@@ -100,7 +100,7 @@ export default function Home() {
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
-          Cruising season is here and we are bring you the best information to ensure you know what you are getting into before you go to sea!
+          Cruising season is here and we are bringing you the best information to ensure you know what you are getting into before you set sail!
         </p>
         <ProductsTable
           rows={popularComparisonRows}
