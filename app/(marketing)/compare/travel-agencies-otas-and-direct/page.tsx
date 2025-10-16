@@ -60,6 +60,9 @@ export default function Page() {
         <h1 className="text-3xl font-bold" style={{ color: "var(--text)" }}>
           Travel Agencies, OTAs and Direct
         </h1>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          A top-level look at the differences between agency, OTA, and direct booking channels.
+        </p>
       </header>
 
       {/* Shared table on dark background */}
@@ -124,7 +127,7 @@ export default function Page() {
             <div className="grid gap-2 md:grid-cols-2">
               <div>
                 <p className="font-semibold">Pros</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Offloads research and booking responsibility</li>
                   <li>Vast range of products</li>
                   <li>Tailored itineraries to your preferences and budget</li>
@@ -135,7 +138,7 @@ export default function Page() {
               </div>
               <div>
                 <p className="font-semibold">Cons</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Can take time with back-and-forth</li>
                   <li>Pricing can be less transparent (often packaged)</li>
                   <li>Talking to someone may feel anxiety-inducing for some</li>
@@ -152,7 +155,7 @@ export default function Page() {
             <div className="grid gap-2 md:grid-cols-2">
               <div>
                 <p className="font-semibold">Pros</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Vast inventory (including apartments and holiday homes)</li>
                   <li>Highly competitive prices</li>
                   <li>Flight + Hotel/Car packages can be great value</li>
@@ -160,7 +163,7 @@ export default function Page() {
               </div>
               <div>
                 <p className="font-semibold">Cons</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Limited access to some airline product types (e.g., Air NZ’s Seat-only/Seat+Bag)</li>
                   <li>After-sales service is limited (or absent)</li>
                   <li>Rules often stricter for changes or refunds</li>
@@ -176,7 +179,7 @@ export default function Page() {
             <div className="grid gap-2 md:grid-cols-2">
               <div>
                 <p className="font-semibold">Pros</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Loyalty points, status upgrades, and perks</li>
                   <li>Rules are clear and obvious</li>
                   <li>Fastest refunds</li>
@@ -185,7 +188,7 @@ export default function Page() {
               </div>
               <div>
                 <p className="font-semibold">Cons</p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 list-muted">
                   <li>Price comparisons require checking many individual sites</li>
                   <li>Fewer bundles and packages</li>
                   <li>Some suppliers don’t cater to NZ time zones; support can be hard to reach</li>
