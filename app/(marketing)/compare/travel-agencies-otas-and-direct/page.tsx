@@ -60,9 +60,6 @@ export default function Page() {
         <h1 className="text-3xl font-bold" style={{ color: "var(--text)" }}>
           Travel Agencies, OTAs and Direct
         </h1>
-        <p className="text-sm" style={{ color: "var(--muted)" }}>
-          A top-level look at the differences between agency, OTA, and direct booking channels.
-        </p>
       </header>
 
       {/* Shared table on dark background */}
