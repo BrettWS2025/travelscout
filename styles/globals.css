@@ -140,3 +140,7 @@ input.input:-webkit-autofill:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
 }
+
+/* Muted list text & bullets for dark sections */
+.list-muted { color: var(--muted); }
+.list-muted li::marker { color: var(--muted); }
