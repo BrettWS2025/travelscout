@@ -92,7 +92,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
       {"id": "ins-ami", "provider": "AMI", "basic": 489.0, "comprehensive": 530.0, "multiTrip": 1734.0, "other": null, "url": "https://www.ami.co.nz/travel-insurance"},
       {"id": "ins-nib", "provider": "NIB", "basic": 313.0, "comprehensive": 614.0, "multiTrip": null, "other": null, "url": "https://www.nibtravel.co.nz/"},
       {"id": "ins-hot-mix-n-match-allianz", "provider": "HoT Mix n Match - Allianz", "basic": 320, "comprehensive": 355.57, "multiTrip": 1791.93, "other": "No Cruise Add ons for Basic Policies", "url": "https://www.mixandmatch.co.nz/insurance"},
-      {"id": "ins-air-nz-insurance-covermore", "provider": "Air NZ Insurance - Covermore", "basic": null, "comprehensive": null, "multiTrip": 1960.0, "other": "Cruise Add Ons Unavailable", "url": "https://insurance.airnewzealand.co.nz/"},
+      {"id": "ins-air-nz-insurance-covermore", "provider": "Air NZ Insurance - Covermore", "basic": null, "comprehensive": 414.00, "multiTrip": 1960.0, "other": "Cruise Add Ons Unavailable", "url": "https://insurance.airnewzealand.co.nz/"},
     ],
   },
 ];
