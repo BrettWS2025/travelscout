@@ -32,10 +32,11 @@ const MENU: MenuSection[] = [
     href: "/compare",
     icon: PanelsTopLeft,
     items: [
-      { label: "Travel Cards", href: "/(product)/compare#cards" },
+      { label: "Airlines", href: "/(product)/compare#airpoints" },
+      { label: "Hotels", href: "/(product)/compare#cards" }
+      { label: "Rental Cars", href: "/(product)/compare#lounges" },
+      { label: "Attractions", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
-      { label: "Airport Lounges", href: "/(product)/compare#lounges" },
-      { label: "Airpoints Cards", href: "/(product)/compare#airpoints" },
       { label: "Travel Agencies, OTAs and Direct Bookings", href: "/compare/travel-agencies-otas-and-direct" },
     ],
   },
