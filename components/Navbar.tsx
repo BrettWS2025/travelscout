@@ -140,4 +140,187 @@ function SubmenuItem({ item }: { item: MenuItem }) {
   );
 }
 
-fun
+function NavDropdown({ section }: { section: MenuSection }) {
+  const [open, setOpen] = useState(false);
+  const Icon = section.icon;
+
+  return (
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
+    <div
+      className="relative pb-2"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Link
+        href={section.href}
+        className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        style={{ color: "var(--text)" }}
+      >
+        <Icon className="w-4 h-4" />
+        {section.label}
+        <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+      </Link>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full -mt-px w-72 card p-3 z-50"
+          role="menu"
+          aria-label={section.label}
+          style={{ color: "var(--text)" }}
+        >
+          <ul className="space-y-1">
+            {section.items.map((it) =>
+              it.items ? (
+                <SubmenuItem key={it.label} item={it} />
+              ) : (
+                <li key={it.label}>
+                  <Link
+                    className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                    href={it.href ?? "#"}
+                    style={{ color: "var(--text)" }}
+                  >
+                    {it.label}
+                  </Link>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>({});
+
+  return (
+    <header
+      className="sticky top-0 z-[1000]"
+      style={{
+        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
+        WebkitBackdropFilter: "saturate(160%) blur(12px)",
+        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        color: "var(--text)",
+        isolation: "isolate",                           // its own stacking context
+      }}
+    >
+      <div className="container flex items-center justify-between py-4">
+        {/* Logo 1.5× bigger */}
+        <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
+          <Plane className="w-9 h-9" />
+          <span className="font-semibold tracking-wide text-xl">TravelScout</span>
+        </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          {VISIBLE_MENU.map((section) => (
+            <NavDropdown key={section.key} section={section} />
+          ))}
+        </nav>
+
+        {/* Mobile burger */}
+        <button
+          className="md:hidden"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+          style={{ color: "var(--text)" }}
+        >
+          ☰
+        </button>
+      </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden container pb-4">
+          <div className="card p-2" style={{ color: "var(--text)" }}>
+            {VISIBLE_MENU.map((section) => {
+              const Icon = section.icon;
+              const isOpen = !!expanded[section.key];
+              return (
+                <div
+                  key={section.key}
+                  className="border-b last:border-none"
+                  style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                >
+                  <button
+                    className="w-full flex items-center justify-between px-3 py-3"
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [section.key]: !prev[section.key] }))
+                    }
+                    aria-expanded={isOpen}
+                    style={{ color: "var(--text)" }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon className="w-4 h-4" /> {section.label}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {isOpen && (
+                    <ul className="px-3 pb-3 space-y-2">
+                      <li>
+                        <Link className="link" href={section.href}>
+                          Overview
+                        </Link>
+                      </li>
+
+                      {section.items.map((it) => {
+                        const key = `${section.key}:${it.label}`;
+                        const hasChildren = !!it.items?.length;
+                        const open = !!expandedNested[key];
+
+                        if (!hasChildren) {
+                          return (
+                            <li key={key}>
+                              <Link className="block" href={it.href ?? "#"} style={{ color: "var(--text)" }}>
+                                {it.label}
+                              </Link>
+                            </li>
+                          );
+                        }
+
+                        return (
+                          <li key={key} className="border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
+                            <button
+                              className="w-full flex items-center justify-between py-2"
+                              onClick={() =>
+                                setExpandedNested((prev) => ({ ...prev, [key]: !prev[key] }))
+                              }
+                              aria-expanded={open}
+                              style={{ color: "var(--text)" }}
+                            >
+                              <span>{it.label}</span>
+                              <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+                            </button>
+                            {open && (
+                              <ul className="pl-3 space-y-2">
+                                {it.items!.map((child) => (
+                                  <li key={child.label}>
+                                    <Link className="block" href={child.href ?? "#"} style={{ color: "var(--text)" }}>
+                                      {child.label}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
