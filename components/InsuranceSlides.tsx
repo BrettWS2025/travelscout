@@ -13,14 +13,27 @@ type Props = {
 
 type WithIns = ProductOffer & { _ins: InsuranceRow };
 
-function toOfferRows(rows: InsuranceRow[]): WithIns[] {
+/** Map insurance rows to ProductOffer rows for the table. Also copy `basic` → `priceMin` so table sort works. */
+function toOfferRows(rows: InsuranceRow[], currency: string): WithIns[] {
   return rows.map((r) => ({
     id: r.id,
     vendor: r.provider,
     url: r.url ?? "#",
-    // everything else lives under _ins for custom cells
+    // enable built-in price sorting on the "price" column:
+    priceMin: typeof r.basic === "number" ? r.basic : undefined,
+    currency,
+    // keep the original row for custom cell renderers:
     _ins: r,
   })) as WithIns[];
+}
+
+/** Sort by basic ascending; nulls last. */
+function byBasicAsc(a: InsuranceRow, b: InsuranceRow): number {
+  const av = a.basic;
+  const bv = b.basic;
+  const ai = av == null ? Infinity : av;
+  const bi = bv == null ? Infinity : bv;
+  return ai - bi;
 }
 
 export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
@@ -28,14 +41,20 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
   const total = slides.length;
   const slide = slides[i];
 
-  const rows: WithIns[] = useMemo(() => toOfferRows(slide.rows), [slide]);
+  // Sort the active slide’s rows by basic (cheapest → most expensive), nulls last
+  const rows: WithIns[] = useMemo(() => {
+    const sorted = [...slide.rows].sort(byBasicAsc);
+    return toOfferRows(sorted, currency);
+  }, [slide, currency]);
+
   const columns: ProductsColumn[] = useMemo(() => {
     return [
       { key: "vendor", header: "Provider", sortable: true },
       {
         key: "price",
-        header: "Basic",
+        header: slide.basicLabel || "Basic",
         align: "right",
+        sortable: true, // now works via priceMin we set above
         cell: (row) => {
           const v = (row as WithIns)._ins.basic;
           return v != null ? formatCurrency(v, currency) : "—";
@@ -45,6 +64,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
         key: "rating",
         header: "Comprehensive",
         align: "right",
+        // keep read-only here; could also copy to a numeric field to enable sorting if you want
         cell: (row) => {
           const v = (row as WithIns)._ins.comprehensive;
           return v != null ? formatCurrency(v, currency) : "—";
@@ -62,7 +82,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
       {
         key: "title",
         header: "Other Info",
-        cell: (row) => ( (row as WithIns)._ins.other ?? "—"),
+        cell: (row) => (row as WithIns)._ins.other ?? "—",
       },
       // icon-only link at far right, no header
       { key: "link", header: "", align: "right" },
@@ -121,9 +141,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
             key={s.title}
             type="button"
             onClick={() => go(idx)}
-            className={`px-2 py-1 rounded ${
-              idx === i ? "bg-white/20" : "bg-white/10"
-            }`}
+            className={`px-2 py-1 rounded ${idx === i ? "bg-white/20" : "bg-white/10"}`}
             aria-current={idx === i ? "page" : undefined}
             aria-label={`Go to ${s.title}`}
             title={s.title}
