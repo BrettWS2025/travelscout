@@ -13,27 +13,34 @@ type Props = {
 
 type WithIns = ProductOffer & { _ins: InsuranceRow };
 
-/** Map insurance rows to ProductOffer rows for the table. Also copy `basic` → `priceMin` so table sort works. */
+/** Sort by `basic` ascending; nulls last. */
+function byBasicAsc(a: InsuranceRow, b: InsuranceRow): number {
+  const av = a.basic == null ? Infinity : a.basic;
+  const bv = b.basic == null ? Infinity : b.basic;
+  return av - bv;
+}
+
+/** Map insurance rows to ProductOffer for table + enable numeric sorting. */
 function toOfferRows(rows: InsuranceRow[], currency: string): WithIns[] {
   return rows.map((r) => ({
     id: r.id,
     vendor: r.provider,
     url: r.url ?? "#",
-    // enable built-in price sorting on the "price" column:
+
+    // Enable built-in numeric sorting on the columns:
+    // - "price" uses priceMin
     priceMin: typeof r.basic === "number" ? r.basic : undefined,
     currency,
-    // keep the original row for custom cell renderers:
+
+    // - "rating" numeric sort (we store comprehensive here)
+    rating: typeof r.comprehensive === "number" ? r.comprehensive : undefined,
+
+    // - "stops" numeric sort (we store multiTrip here)
+    stops: typeof r.multiTrip === "number" ? r.multiTrip : undefined,
+
+    // keep original row for display in custom cells
     _ins: r,
   })) as WithIns[];
-}
-
-/** Sort by basic ascending; nulls last. */
-function byBasicAsc(a: InsuranceRow, b: InsuranceRow): number {
-  const av = a.basic;
-  const bv = b.basic;
-  const ai = av == null ? Infinity : av;
-  const bi = bv == null ? Infinity : bv;
-  return ai - bi;
 }
 
 export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
@@ -41,7 +48,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
   const total = slides.length;
   const slide = slides[i];
 
-  // Sort the active slide’s rows by basic (cheapest → most expensive), nulls last
+  // Initial order: cheapest (by Basic) → most expensive
   const rows: WithIns[] = useMemo(() => {
     const sorted = [...slide.rows].sort(byBasicAsc);
     return toOfferRows(sorted, currency);
@@ -49,43 +56,55 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
 
   const columns: ProductsColumn[] = useMemo(() => {
     return [
+      // A–Z / Z–A
       { key: "vendor", header: "Provider", sortable: true },
+
+      // Basic — numeric sort via priceMin
       {
         key: "price",
         header: slide.basicLabel || "Basic",
         align: "right",
-        sortable: true, // now works via priceMin we set above
+        sortable: true,
         cell: (row) => {
           const v = (row as WithIns)._ins.basic;
           return v != null ? formatCurrency(v, currency) : "—";
         },
       },
+
+      // Comprehensive — numeric sort via row.rating
       {
         key: "rating",
         header: "Comprehensive",
         align: "right",
-        // keep read-only here; could also copy to a numeric field to enable sorting if you want
+        sortable: true,
         cell: (row) => {
           const v = (row as WithIns)._ins.comprehensive;
           return v != null ? formatCurrency(v, currency) : "—";
         },
       },
+
+      // Multi Trip — numeric sort via row.stops
       {
-        key: "destination",
+        key: "stops",
         header: "Multi Trip",
         align: "right",
+        sortable: true,
         cell: (row) => {
           const v = (row as WithIns)._ins.multiTrip;
           return v != null ? formatCurrency(v, currency) : "—";
         },
       },
+
+      // Other Info — NOT sortable (as requested)
       {
         key: "title",
         header: "Other Info",
+        sortable: false,
         cell: (row) => (row as WithIns)._ins.other ?? "—",
       },
-      // icon-only link at far right, no header
-      { key: "link", header: "", align: "right" },
+
+      // Icon-only link at far right (keep unsortable to avoid a blank header button)
+      { key: "link", header: "", align: "right", sortable: false },
     ];
   }, [slide, currency]);
 
@@ -125,7 +144,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
         {slide.title}
       </h3>
 
-      {/* Table (dark tone to keep header/empty text white via your theme) */}
+      {/* Table */}
       <ComparisonTable
         rows={rows}
         columns={columns}
