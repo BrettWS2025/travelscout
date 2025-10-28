@@ -11,7 +11,7 @@ export type InsuranceRow = {
 export type InsuranceSlide = { title: string; basicLabel: string; rows: InsuranceRow[] };
 export const INSURANCE_SLIDES: InsuranceSlide[] = [
   {
-    title: "4 to Fiji x7",
+    title: "Family of 4 to Fiji for a week",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 108.28, "comprehensive": 188.18, "multiTrip": 1005.17, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -25,11 +25,10 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
       {"id": "ins-nib", "provider": "NIB", "basic": 153.0, "comprehensive": 304.0, "multiTrip": null, "other": null, "url": "https://www.nibtravel.co.nz/"},
       {"id": "ins-hot-mix-n-match-allianz", "provider": "HoT Mix n Match - Allianz", "basic": 185.15, "comprehensive": 192.26, "multiTrip": 1026.98, "other": null, "url": "https://www.mixandmatch.co.nz/insurance"},
       {"id": "ins-air-nz-insurance-covermore", "provider": "Air NZ Insurance - Covermore", "basic": null, "comprehensive": 218.0, "multiTrip": 1044.0, "other": null, "url": "https://insurance.airnewzealand.co.nz/"},
-      {"id": "ins-excess-200", "provider": "Excess $200", "basic": null, "comprehensive": null, "multiTrip": null, "other": null, "url": null},
     ],
   },
   {
-    title: "2 to Europe x10",
+    title: "A couple in Europe for 10 days",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 155.91, "comprehensive": 253.2, "multiTrip": 941.29, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -46,7 +45,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "5 to USA x8",
+    title: "A family of 5 to the USA for 8 Days",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 253.47, "comprehensive": 411.7, "multiTrip": 1702.97, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -63,7 +62,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "2 to SoutheastAsia x14",
+    title: "A trip for 2 to Southeast Asia for 14 Nights",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 181.7, "comprehensive": 295.08, "multiTrip": 925.67, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -80,8 +79,8 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "2 to Caribbean Cruise x7",
-    basicLabel: "Basic/Standard",
+    title: "A couple of a Caribbean Cruise for 7 Nights",
+    basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": null, "comprehensive": 347.0, "multiTrip": 1718.65, "other": null, "url": "https://www.allianztravel.co.nz/"},
       {"id": "ins-tower", "provider": "Tower", "basic": 220.0, "comprehensive": 316.0, "multiTrip": 1194.0, "other": "No Cruise Add ons", "url": "https://www.tower.co.nz/travelinsurance/"},
