@@ -28,7 +28,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "A couple in Europe for 10 days",
+    title: "A Couple in Europe for 10 days",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 155.91, "comprehensive": 253.2, "multiTrip": 941.29, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -45,7 +45,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "A family of 5 to the USA for 8 Days",
+    title: "A Family of 5 to the USA for 8 Days",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 253.47, "comprehensive": 411.7, "multiTrip": 1702.97, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -62,7 +62,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "A trip for 2 to Southeast Asia for 14 Nights",
+    title: "A Trip for 2 to Southeast Asia for 14 Nights",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": 181.7, "comprehensive": 295.08, "multiTrip": 925.67, "other": null, "url": "https://www.allianztravel.co.nz/"},
@@ -79,7 +79,7 @@ export const INSURANCE_SLIDES: InsuranceSlide[] = [
     ],
   },
   {
-    title: "A couple of a Caribbean Cruise for 7 Nights",
+    title: "A Couple on a Caribbean Cruise for 7 Nights",
     basicLabel: "Basic",
     rows: [
       {"id": "ins-allianz", "provider": "Allianz", "basic": null, "comprehensive": 347.0, "multiTrip": 1718.65, "other": null, "url": "https://www.allianztravel.co.nz/"},
