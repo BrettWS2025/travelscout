@@ -33,7 +33,7 @@ const MENU: MenuSection[] = [
     icon: PanelsTopLeft,
     items: [
       { label: "Airlines", href: "/(product)/compare#airpoints" },
-      { label: "Hotels", href: "/(product)/compare#cards" }
+      { label: "Hotels", href: "/(product)/compare#cards" },
       { label: "Rental Cars", href: "/(product)/compare#lounges" },
       { label: "Attractions", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
