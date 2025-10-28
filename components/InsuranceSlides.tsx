@@ -34,7 +34,7 @@ export default function InsuranceSlides({ slides, currency = "NZD" }: Props) {
       { key: "vendor", header: "Provider", sortable: true },
       {
         key: "price",
-        header: slide.basicLabel || "Basic",
+        header: "Basic",
         align: "right",
         cell: (row) => {
           const v = (row as WithIns)._ins.basic;
