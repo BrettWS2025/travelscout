@@ -92,11 +92,11 @@ export default function DomesticFlightBookingTimingChart({
   dark = true,
   data = DEFAULT_POINTS,
 }: Props) {
-  // Theme tokens (no hard-coded colors; fallbacks where helpful)
+  // Theme tokens
   const text = dark ? "var(--text)" : "#1f2937";
   const muted = dark ? "var(--muted)" : "#6b7280";
-  const accent1 = "var(--accent)";            // Air New Zealand line & area
-  const accent2 = "var(--accent-2, #7dd3fc)"; // Jetstar line (fallback cyan)
+  const accent1 = "var(--accent)";              // Air New Zealand line & area
+  const accent2 = "var(--jetstar, #ff6f00)";    // Jetstar orange (add --jetstar to theme if desired)
   const grid = dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)";
 
   // Build separate series for smoothing
@@ -183,7 +183,10 @@ export default function DomesticFlightBookingTimingChart({
       </div>
 
       {/* Chart */}
-      <div className="relative w-full h-[280px] md:h-[360px] rounded-2xl overflow-hidden" style={{ background: dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.02)" }}>
+      <div
+        className="relative w-full h-[280px] md:h-[360px] rounded-2xl overflow-hidden"
+        style={{ background: dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.02)" }}
+      >
         {minObj && (
           <div
             className="absolute top-3 right-3 text-xs md:text-sm px-2.5 py-1.5 rounded-full"
@@ -274,39 +277,19 @@ export default function DomesticFlightBookingTimingChart({
         </ResponsiveContainer>
       </div>
 
-      {/* Legend */}
-<div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: muted }}>
-  {/* Air NZ: solid line */}
-  <span className="inline-flex items-center gap-2">
-    <svg width="18" height="8" aria-hidden="true">
-      <line x1="1" y1="4" x2="17" y2="4" stroke={accent1} strokeWidth="3" />
-    </svg>
-    Air New Zealand
-  </span>
-
-  {/* Jetstar: dashed line */}
-  <span className="inline-flex items-center gap-2">
-    <svg width="18" height="8" aria-hidden="true">
-      <line
-        x1="1"
-        y1="4"
-        x2="17"
-        y2="4"
-        stroke={accent2}
-        strokeWidth="3"
-        strokeDasharray="6 6"
-      />
-    </svg>
-    Jetstar
-  </span>
-
-  {/* Band explainer */}
-  <span className="inline-flex items-center gap-2">
-    <span
-      className="inline-block w-4 h-4 rounded-sm"
-      style={{ background: "var(--accent)", opacity: 0.25 }}
-    />
-    Best booking window (cheapest of the two)
+      {/* Legend — dot markers; Jetstar = orange */}
+      <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: muted }}>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block w-3.5 h-3.5 rounded-full" style={{ background: accent1 }} />
+          Air New Zealand
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block w-3.5 h-3.5 rounded-full" style={{ background: accent2 }} />
+          Jetstar
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.25 }} />
+          Best booking window (cheapest of the two)
         </span>
       </div>
     </div>
