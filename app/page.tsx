@@ -108,18 +108,29 @@ export default function Home() {
       <Hero />
       <FeatureCards />
 
-      {/* When to Book (Domestic) — uses the component's built-in data */}
+      {/* When to Book – sliding gallery */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
-          When to Book (Domestic)
+          When to Book
         </h2>
         <p className="mb-4" style={{ color: "var(--muted)" }}>
-          Smoothed daily prices with the best booking window highlighted.
+          We smooth historic prices and highlight the cheapest booking window.
         </p>
-        <DomesticFlightBookingTimingChart currency="NZD" dark />
-        {/* If you later want to pass custom data, you can do:
-            <DomesticFlightBookingTimingChart data={mySeries} currency="NZD" dark />
-        */}
+
+        <WhenToBookCarousel
+          items={[
+            {
+              key: "domestic",
+              title: "Domestic (NZ)",
+              node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
+            },
+            {
+              key: "aus-pacific",
+              title: "Australia & Pacific",
+              node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
+            },
+          ]}
+        />
       </section>
 
       {/* Cruise Comparisons */}
