@@ -15,38 +15,53 @@ import {
   ReferenceDot,
 } from "recharts";
 
-/** Input shape: one point per “days before departure” */
+/** One point per 10-day bucket of "days before departure" */
 export type PricePoint = { daysOut: number; price: number };
 
 type Props = {
-  /** Optional. If omitted, we use DEFAULT_POINTS below */
+  /** Optional. If omitted, we use DEFAULT_POINTS (your dataset, binned by 10 days). */
   data?: PricePoint[];
   currency?: string; // e.g. "NZD"
   dark?: boolean;    // when placed on dark cards
 };
 
-/** Built-in sample data so the component works standalone */
+/** YOUR DATA, binned to 10-day increments (mean of each 10-day range) */
 const DEFAULT_POINTS: PricePoint[] = [
-  { daysOut: 180, price: 320 }, { daysOut: 170, price: 300 }, { daysOut: 160, price: 285 },
-  { daysOut: 150, price: 270 }, { daysOut: 140, price: 260 }, { daysOut: 130, price: 245 },
-  { daysOut: 120, price: 230 }, { daysOut: 110, price: 220 }, { daysOut: 100, price: 210 },
-  { daysOut:  90, price: 200 }, { daysOut:  80, price: 195 }, { daysOut:  70, price: 190 },
-  { daysOut:  60, price: 180 }, { daysOut:  50, price: 175 }, { daysOut:  40, price: 170 },
-  { daysOut:  30, price: 165 }, { daysOut:  20, price: 160 }, { daysOut:  10, price: 175 },
+  { daysOut: 0,   price: 286.28 },
+  { daysOut: 10,  price: 232.30 },
+  { daysOut: 20,  price: 201.79 },
+  { daysOut: 30,  price: 189.35 },
+  { daysOut: 40,  price: 176.53 },
+  { daysOut: 50,  price: 172.52 },
+  { daysOut: 60,  price: 167.08 },
+  { daysOut: 70,  price: 162.03 },
+  { daysOut: 80,  price: 162.43 },
+  { daysOut: 90,  price: 159.03 },
+  { daysOut: 100, price: 159.20 },
+  { daysOut: 110, price: 157.22 },
+  { daysOut: 120, price: 152.91 },
+  { daysOut: 130, price: 149.67 },
+  { daysOut: 140, price: 148.15 },
+  { daysOut: 150, price: 155.44 },
+  { daysOut: 160, price: 159.46 },
+  { daysOut: 170, price: 141.18 },
 ];
 
 const fmtCurrency = (v: number, currency = "NZD") =>
-  new Intl.NumberFormat("en-NZ", { style: "currency", currency, maximumFractionDigits: 0 }).format(
-    Math.max(0, v || 0)
-  );
+  new Intl.NumberFormat("en-NZ", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, v || 0));
 
-/** Simple 7-day moving average to smooth noisy price series */
-function smooth(points: PricePoint[], window = 7): PricePoint[] {
+/** Light smoothing (3-point window suits 10-day buckets) */
+function smooth(points: PricePoint[], window = 3): PricePoint[] {
   if (points.length <= window) return points;
+  const half = Math.floor(window / 2);
   const out: PricePoint[] = [];
   for (let i = 0; i < points.length; i++) {
-    const s = Math.max(0, i - Math.floor(window / 2));
-    const e = Math.min(points.length, i + Math.ceil(window / 2));
+    const s = Math.max(0, i - half);
+    const e = Math.min(points.length, i + half + 1);
     const slice = points.slice(s, e);
     const avg = slice.reduce((a, p) => a + p.price, 0) / slice.length;
     out.push({ daysOut: points[i].daysOut, price: avg });
@@ -54,7 +69,7 @@ function smooth(points: PricePoint[], window = 7): PricePoint[] {
   return out;
 }
 
-/** pick the min of the smoothed curve and define a “sweet spot” window around it */
+/** Find the absolute min and define a “sweet spot” window around it */
 function findSweetSpot(points: PricePoint[], padDays = 14) {
   if (!points.length) return { minIdx: 0, start: 0, end: 0 };
   let minIdx = 0;
@@ -69,8 +84,7 @@ function findSweetSpot(points: PricePoint[], padDays = 14) {
 function daysToWeeksLabel(a: number, b: number) {
   const aw = Math.round(a / 7);
   const bw = Math.round(b / 7);
-  if (aw === bw) return `${aw} weeks out`;
-  return `${aw}–${bw} weeks out`;
+  return aw === bw ? `${aw} weeks out` : `${aw}–${bw} weeks out`;
 }
 
 export default function DomesticFlightBookingTimingChart({
@@ -79,28 +93,25 @@ export default function DomesticFlightBookingTimingChart({
   dark = true,
 }: Props) {
   // Use provided data or the built-in defaults
-  const input = data && data.length ? data : DEFAULT_POINTS;
+  const input = data?.length ? data : DEFAULT_POINTS;
 
   // Defensive: sort by daysOut ascending
-  const sorted = useMemo(
-    () => [...input].sort((a, b) => a.daysOut - b.daysOut),
-    [input]
-  );
+  const sorted = useMemo(() => [...input].sort((a, b) => a.daysOut - b.daysOut), [input]);
 
-  const smoothed = useMemo(() => smooth(sorted, 7), [sorted]);
-  const { minIdx, start, end } = useMemo(() => findSweetSpot(smoothed, 14), [smoothed]); // ~2-week halo
+  const smoothed = useMemo(() => smooth(sorted, 3), [sorted]);
+  const { minIdx, start, end } = useMemo(() => findSweetSpot(smoothed, 14), [smoothed]);
   const minPoint = smoothed[minIdx];
 
   const header = smoothed.length
     ? `Best time to book: ${daysToWeeksLabel(start, end)}`
     : "Best time to book";
 
-  // Theme tokens (work on dark cards)
+  // Theme tokens (works on dark cards)
   const text = dark ? "var(--text)" : "#1f2937";
   const muted = dark ? "var(--muted)" : "#6b7280";
-  const accent = "var(--accent)";        // your brand accent
+  const accent = "var(--accent)";
   const grid = dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)";
-  const fillAccent = "var(--accent)";    // works in SVG
+  const fillAccent = "var(--accent)";
   const fillGlow = dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.02)";
 
   const showBand = smoothed.length > 0 && end > start;
@@ -142,10 +153,7 @@ export default function DomesticFlightBookingTimingChart({
         )}
 
         <ResponsiveContainer>
-          <AreaChart
-            data={smoothed}
-            margin={{ top: 16, right: 16, left: 8, bottom: 8 }}
-          >
+          <AreaChart data={smoothed} margin={{ top: 16, right: 16, left: 8, bottom: 8 }}>
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={fillAccent} stopOpacity={0.35} />
@@ -183,46 +191,19 @@ export default function DomesticFlightBookingTimingChart({
             />
 
             {/* Glow/area under line */}
-            <Area
-              type="monotone"
-              dataKey="price"
-              stroke="none"
-              fill="url(#priceGradient)"
-              isAnimationActive={false}
-            />
+            <Area type="monotone" dataKey="price" stroke="none" fill="url(#priceGradient)" isAnimationActive={false} />
 
             {/* Trend line */}
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke={accent}
-              strokeWidth={3}
-              dot={false}
-              isAnimationActive={false}
-            />
+            <Line type="monotone" dataKey="price" stroke={accent} strokeWidth={3} dot={false} isAnimationActive={false} />
 
-            {/* Sweet-spot highlight band (rendered AFTER line/area so it sits on top) */}
+            {/* Sweet-spot highlight band (rendered after line/area so it sits on top) */}
             {showBand && (
-              <ReferenceArea
-                x1={start}
-                x2={end}
-                fill={fillAccent}
-                fillOpacity={0.18}
-                stroke={fillAccent}
-                strokeOpacity={0.28}
-              />
+              <ReferenceArea x1={start} x2={end} fill={fillAccent} fillOpacity={0.18} stroke={fillAccent} strokeOpacity={0.28} />
             )}
 
             {/* Dot at absolute min */}
             {minPoint && (
-              <ReferenceDot
-                x={minPoint.daysOut}
-                y={minPoint.price}
-                r={5}
-                fill={accent}
-                stroke="white"
-                strokeWidth={1.5}
-              />
+              <ReferenceDot x={minPoint.daysOut} y={minPoint.price} r={5} fill={accent} stroke="white" strokeWidth={1.5} />
             )}
           </AreaChart>
         </ResponsiveContainer>
@@ -235,11 +216,11 @@ export default function DomesticFlightBookingTimingChart({
             className="inline-block w-4 h-2 rounded"
             style={{ background: "linear-gradient(180deg, var(--accent) 0%, transparent 100%)", opacity: 0.6 }}
           />
-          Average price
+          Average price (smoothed)
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.25 }} />
-          Best Time to Book
+          Best booking window
         </span>
       </div>
     </div>
