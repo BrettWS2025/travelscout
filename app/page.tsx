@@ -5,10 +5,17 @@ import type { ProductOffer } from "@/lib/products";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
 
-// Load the client chart safely in an RSC page
+
+import WhenToBookCarousel from "@/components/WhenToBookCarousel";
+
+// Client-only charts (Recharts)
 import dynamic from "next/dynamic";
 const DomesticFlightBookingTimingChart = dynamic(
   () => import("@/components/DomesticFlightBookingTimingChart"),
+  { ssr: false }
+);
+const AusPacificFlightBookingTimingChart = dynamic(
+  () => import("@/components/AusPacificFlightBookingTimingChart"),
   { ssr: false }
 );
 
