@@ -1,3 +1,4 @@
+// components/DomesticFlightBookingTimingChart.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -18,10 +19,21 @@ import {
 export type PricePoint = { daysOut: number; price: number };
 
 type Props = {
-  data: PricePoint[];
+  /** Optional. If omitted, we use DEFAULT_POINTS below */
+  data?: PricePoint[];
   currency?: string; // e.g. "NZD"
   dark?: boolean;    // when placed on dark cards
 };
+
+/** Built-in sample data so the component works standalone */
+const DEFAULT_POINTS: PricePoint[] = [
+  { daysOut: 180, price: 320 }, { daysOut: 170, price: 300 }, { daysOut: 160, price: 285 },
+  { daysOut: 150, price: 270 }, { daysOut: 140, price: 260 }, { daysOut: 130, price: 245 },
+  { daysOut: 120, price: 230 }, { daysOut: 110, price: 220 }, { daysOut: 100, price: 210 },
+  { daysOut:  90, price: 200 }, { daysOut:  80, price: 195 }, { daysOut:  70, price: 190 },
+  { daysOut:  60, price: 180 }, { daysOut:  50, price: 175 }, { daysOut:  40, price: 170 },
+  { daysOut:  30, price: 165 }, { daysOut:  20, price: 160 }, { daysOut:  10, price: 175 },
+];
 
 const fmtCurrency = (v: number, currency = "NZD") =>
   new Intl.NumberFormat("en-NZ", { style: "currency", currency, maximumFractionDigits: 0 }).format(
@@ -43,7 +55,7 @@ function smooth(points: PricePoint[], window = 7): PricePoint[] {
 }
 
 /** pick the min of the smoothed curve and define a “sweet spot” window around it */
-function findSweetSpot(points: PricePoint[], padDays = 10) {
+function findSweetSpot(points: PricePoint[], padDays = 14) {
   if (!points.length) return { minIdx: 0, start: 0, end: 0 };
   let minIdx = 0;
   for (let i = 1; i < points.length; i++) {
@@ -61,11 +73,18 @@ function daysToWeeksLabel(a: number, b: number) {
   return `${aw}–${bw} weeks out`;
 }
 
-export default function FlightBookingTimingChart({ data, currency = "NZD", dark = true }: Props) {
+export default function DomesticFlightBookingTimingChart({
+  data,
+  currency = "NZD",
+  dark = true,
+}: Props) {
+  // Use provided data or the built-in defaults
+  const input = data && data.length ? data : DEFAULT_POINTS;
+
   // Defensive: sort by daysOut ascending
   const sorted = useMemo(
-    () => [...data].sort((a, b) => a.daysOut - b.daysOut),
-    [data]
+    () => [...input].sort((a, b) => a.daysOut - b.daysOut),
+    [input]
   );
 
   const smoothed = useMemo(() => smooth(sorted, 7), [sorted]);
@@ -84,6 +103,8 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
   const fillAccent = "var(--accent)";    // works in SVG
   const fillGlow = dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.02)";
 
+  const showBand = smoothed.length > 0 && end > start;
+
   return (
     <div className="space-y-3">
       {/* Headline card */}
@@ -101,9 +122,30 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
       </div>
 
       {/* Chart */}
-      <div className="w-full h-[280px] md:h-[360px] rounded-2xl overflow-hidden" style={{ background: fillGlow }}>
+      <div
+        className="relative w-full h-[280px] md:h-[360px] rounded-2xl overflow-hidden"
+        style={{ background: fillGlow }}
+      >
+        {/* Overlay badge so the “Best booking window” is always visible */}
+        {showBand && (
+          <div
+            className="absolute top-3 right-3 text-xs md:text-sm px-2.5 py-1.5 rounded-full"
+            style={{
+              background: "rgba(255,255,255,.14)",
+              border: "1px solid rgba(255,255,255,.18)",
+              color: text,
+              backdropFilter: "saturate(160%) blur(6px)",
+            }}
+          >
+            Best booking window: {daysToWeeksLabel(start, end)}
+          </div>
+        )}
+
         <ResponsiveContainer>
-          <AreaChart data={smoothed} margin={{ top: 16, right: 16, left: 8, bottom: 8 }}>
+          <AreaChart
+            data={smoothed}
+            margin={{ top: 16, right: 16, left: 8, bottom: 8 }}
+          >
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={fillAccent} stopOpacity={0.35} />
@@ -114,6 +156,8 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
             <CartesianGrid stroke={grid} vertical={false} />
             <XAxis
               dataKey="daysOut"
+              type="number"
+              domain={["dataMin", "dataMax"]}
               stroke={muted}
               tick={{ fill: muted, fontSize: 12 }}
               tickFormatter={(d) => `${d}`}
@@ -138,18 +182,6 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
               labelFormatter={(d) => `${d} days out`}
             />
 
-            {/* Sweet-spot highlight band */}
-            {smoothed.length > 0 && (
-              <ReferenceArea
-                x1={start}
-                x2={end}
-                fill={fillAccent}
-                fillOpacity={0.12}
-                stroke={fillAccent}
-                strokeOpacity={0.18}
-              />
-            )}
-
             {/* Glow/area under line */}
             <Area
               type="monotone"
@@ -168,6 +200,18 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
               dot={false}
               isAnimationActive={false}
             />
+
+            {/* Sweet-spot highlight band (rendered AFTER line/area so it sits on top) */}
+            {showBand && (
+              <ReferenceArea
+                x1={start}
+                x2={end}
+                fill={fillAccent}
+                fillOpacity={0.18}
+                stroke={fillAccent}
+                strokeOpacity={0.28}
+              />
+            )}
 
             {/* Dot at absolute min */}
             {minPoint && (
@@ -191,11 +235,11 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
             className="inline-block w-4 h-2 rounded"
             style={{ background: "linear-gradient(180deg, var(--accent) 0%, transparent 100%)", opacity: 0.6 }}
           />
-          Average Price
+          Average price
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.2 }} />
-          best-booking window
+          <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.25 }} />
+          Best Time to Book
         </span>
       </div>
     </div>
