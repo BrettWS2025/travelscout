@@ -156,7 +156,7 @@ export default function AusPacificFlightBookingTimingChart({
                 color: text,
               }}
               labelStyle={{ color: muted }}
-              formatter={(value: any) => [fmtCurrency(value as number, currency), "Smoothed price"]}
+              formatter={(value: any) => [fmtCurrency(value as number, currency), "Average price"]}
               labelFormatter={(d) => `${d} days out`}
             />
 
