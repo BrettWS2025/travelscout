@@ -8,7 +8,6 @@ import { TopDealsTable } from "@/components/TopDealsTable";
 
 import WhenToBookCarousel from "@/components/WhenToBookCarousel";
 
-// Client-only charts (Recharts)
 import dynamic from "next/dynamic";
 const DomesticFlightBookingTimingChart = dynamic(
   () => import("@/components/DomesticFlightBookingTimingChart"),
@@ -16,6 +15,11 @@ const DomesticFlightBookingTimingChart = dynamic(
 );
 const AusPacificFlightBookingTimingChart = dynamic(
   () => import("@/components/AusPacificFlightBookingTimingChart"),
+  { ssr: false }
+);
+// NEW: International
+const InternationalFlightBookingTimingChart = dynamic(
+  () => import("@/components/InternationalFlightBookingTimingChart"),
   { ssr: false }
 );
 
@@ -109,29 +113,34 @@ export default function Home() {
       <FeatureCards />
 
       {/* When to Book – sliding gallery */}
-      <section className="card p-6">
-        <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
-          When to Book
-        </h2>
-        <p className="mb-4" style={{ color: "var(--muted)" }}>
-          We smooth historic prices and highlight the cheapest booking window.
-        </p>
+  <section className="card p-6">
+  <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
+    When to Book
+  </h2>
+  <p className="mb-4" style={{ color: "var(--muted)" }}>
+    We smooth historic prices and highlight the cheapest booking window.
+  </p>
 
-        <WhenToBookCarousel
-          items={[
-            {
-              key: "domestic",
-              title: "Domestic (NZ)",
-              node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
-            },
-            {
-              key: "aus-pacific",
-              title: "Australia & Pacific",
-              node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
-            },
-          ]}
-        />
-      </section>
+  <WhenToBookCarousel
+    items={[
+      {
+        key: "domestic",
+        title: "Domestic (NZ)",
+        node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
+      },
+      {
+        key: "aus-pacific",
+        title: "Australia & Pacific",
+        node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
+      },
+      {
+        key: "international",
+        title: "International (select cabin)",
+        node: <InternationalFlightBookingTimingChart currency="NZD" dark />,
+      },
+    ]}
+  />
+  </section>
 
       {/* Cruise Comparisons */}
       <section className="card p-6">
