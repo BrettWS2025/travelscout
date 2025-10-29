@@ -38,11 +38,6 @@ const DEFAULT_POINTS: PricePoint[] = [
   { daysOut: 100, price: 384.81376743 },
   { daysOut: 110, price: 442.90193125 },
   { daysOut: 120, price: 399.63411272 },
-  { daysOut: 130, price: 415.99310880 },
-  { daysOut: 140, price: 440.04200000 },
-  { daysOut: 150, price: 411.79111110 },
-  { daysOut: 160, price: 459.76277778 },
-  { daysOut: 170, price: 282.85500000 },
 ];
 
 const fmtCurrency = (v: number, currency = "NZD") =>
