@@ -275,21 +275,38 @@ export default function DomesticFlightBookingTimingChart({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: muted }}>
-        <span className="inline-flex items-center gap-2">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ background: accent1 }} />
-          Air New Zealand
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span
-            className="inline-block w-3 h-3 rounded-full"
-            style={{ background: accent2, outline: `2px dashed ${accent2}`, outlineOffset: 2 }}
-          />
-          Jetstar
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.25 }} />
-          Best booking window (cheapest of the two)
+<div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: muted }}>
+  {/* Air NZ: solid line */}
+  <span className="inline-flex items-center gap-2">
+    <svg width="18" height="8" aria-hidden="true">
+      <line x1="1" y1="4" x2="17" y2="4" stroke={accent1} strokeWidth="3" />
+    </svg>
+    Air New Zealand
+  </span>
+
+  {/* Jetstar: dashed line */}
+  <span className="inline-flex items-center gap-2">
+    <svg width="18" height="8" aria-hidden="true">
+      <line
+        x1="1"
+        y1="4"
+        x2="17"
+        y2="4"
+        stroke={accent2}
+        strokeWidth="3"
+        strokeDasharray="6 6"
+      />
+    </svg>
+    Jetstar
+  </span>
+
+  {/* Band explainer */}
+  <span className="inline-flex items-center gap-2">
+    <span
+      className="inline-block w-4 h-4 rounded-sm"
+      style={{ background: "var(--accent)", opacity: 0.25 }}
+    />
+    Best booking window (cheapest of the two)
         </span>
       </div>
     </div>
