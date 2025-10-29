@@ -115,27 +115,27 @@ export default function Home() {
       {/* When to Book – sliding gallery */}
   <section className="card p-6">
   <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
-    When to Book
+    Best Time to Book
   </h2>
   <p className="mb-4" style={{ color: "var(--muted)" }}>
-    We smooth historic prices and highlight the cheapest booking window.
+    We analysed over 200,000 flights this year to bring you the best times to book to get the best deals
   </p>
 
   <WhenToBookCarousel
     items={[
       {
         key: "domestic",
-        title: "Domestic (NZ)",
+        title: "Domestic New Zealand",
         node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
       },
       {
         key: "aus-pacific",
-        title: "Australia & Pacific",
+        title: "Australia & Pacific Islands",
         node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
       },
       {
         key: "international",
-        title: "International (select cabin)",
+        title: "International",
         node: <InternationalFlightBookingTimingChart currency="NZD" dark />,
       },
     ]}
