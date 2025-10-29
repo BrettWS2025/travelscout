@@ -240,7 +240,7 @@ export default function InternationalFlightBookingTimingChart({
                 color: text,
               }}
               labelStyle={{ color: muted }}
-              formatter={(value: any) => [fmtCurrency(value as number, currency), `${labels[tab]} (smoothed)`]}
+              formatter={(value: any) => [fmtCurrency(value as number, currency), `${labels[tab]}`]}
               labelFormatter={(d) => `${d} days out`}
             />
 
