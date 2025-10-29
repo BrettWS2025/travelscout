@@ -191,7 +191,7 @@ export default function FlightBookingTimingChart({ data, currency = "NZD", dark 
             className="inline-block w-4 h-2 rounded"
             style={{ background: "linear-gradient(180deg, var(--accent) 0%, transparent 100%)", opacity: 0.6 }}
           />
-          price trend
+          Average Price
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="inline-block w-4 h-4 rounded-sm" style={{ background: "var(--accent)", opacity: 0.2 }} />
