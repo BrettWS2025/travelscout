@@ -39,11 +39,6 @@ const DEFAULT_POINTS: DuoPoint[] = [
   { daysOut: 100, anz: 159.688, jet: 87.571 },
   { daysOut: 110, anz: 159.711, jet: 71.852 },
   { daysOut: 120, anz: 158.518, jet: 80.788 },
-  { daysOut: 130, anz: 153.336, jet: 103.516 },
-  { daysOut: 140, anz: 163.017, jet: 89.376 },
-  { daysOut: 150, anz: 154.834, jet: 94.36 },
-  { daysOut: 160, anz: 162.325, jet: 69.280 },
-  { daysOut: 170, anz: 166.123, jet: 74.39 },
 ];
 
 const fmtCurrency = (v: number, currency = "NZD") =>
