@@ -5,7 +5,15 @@ import type { ProductOffer } from "@/lib/products";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
 
-// Popular Comparisons — same 6 base columns + a right-aligned "link" column.
+// 🔽 Load the client chart safely in an RSC page
+import dynamic from "next/dynamic";
+import type { PricePoint } from "@/components/DomesticFlightBookingTimingChart";
+const DomesticFlightBookingTimingChart = dynamic(
+  () => import("@/components/DomesticFlightBookingTimingChart"),
+  { ssr: false }
+);
+
+// --- Popular Comparisons (Cruises) ---
 const popularComparisonRows: ProductOffer[] = [
   {
     id: "cmp-Princess",
@@ -13,13 +21,13 @@ const popularComparisonRows: ProductOffer[] = [
     url: "#",
     priceText: "$$",   // Cost
     policy: "Classic vibe",      // Vibe Check / Consumer Protections
-    title: "Princess Plus/Premier - $$-$$$",       // Lux Level / After Sales Service
-    destination: "—", // Onboard Services / Inventory
-    brand: "No - additional costs apply",       // Free wifi / Transparency
+    title: "Princess Plus/Premier - $$-$$$",       // Add Ons
+    destination: "—",
+    brand: "No - additional costs apply",          // Free wifi
   },
   {
     id: "cmp-NCL",
-    vendor: "Norwegian Cruise Lines", // (typo left as-is per your example)
+    vendor: "Norwegian Cruise Lines",
     url: "#",
     priceText: "$$",
     policy: "Dining and nightlife vibe",
@@ -37,7 +45,7 @@ const popularComparisonRows: ProductOffer[] = [
     destination: "—",
     brand: "No - additional costs apply",
   },
-    {
+  {
     id: "cmp-RC",
     vendor: "Royal Caribbean",
     url: "#",
@@ -47,7 +55,7 @@ const popularComparisonRows: ProductOffer[] = [
     destination: "—",
     brand: "No - additional costs apply",
   },
-    {
+  {
     id: "cmp-Disney",
     vendor: "Disney Cruise Line",
     url: "#",
@@ -57,7 +65,7 @@ const popularComparisonRows: ProductOffer[] = [
     destination: "—",
     brand: "No - additional costs apply",
   },
-    {
+  {
     id: "cmp-MSC",
     vendor: "MSC Cruises",
     url: "#",
@@ -67,7 +75,7 @@ const popularComparisonRows: ProductOffer[] = [
     destination: "—",
     brand: "No - additional costs apply",
   },
-    {
+  {
     id: "cmp-Virgin",
     vendor: "Virgin Voyages",
     url: "#",
@@ -80,14 +88,22 @@ const popularComparisonRows: ProductOffer[] = [
 ];
 
 const popularComparisonColumns: ProductsColumn[] = [
-  { key: "vendor",      header: "Cruise Line",        sortable: false },
-  { key: "price",       header: "Cost",               sortable: false, align: "left" },
-  { key: "title",       header: "Add Ons",            sortable: false },
-  { key: "policy",      header: "Vibe Check",         sortable: false },
- // { key: "destination", header: "Cabins",             sortable: false },
-  { key: "brand",       header: "Free wifi",          sortable: false },
-  // Rightmost link column — no visible header, right-aligned, shows the word "link"
-  { key: "link", header: "", sortable: false, align: "right", widthClass: "whitespace-nowrap" },
+  { key: "vendor",      header: "Cruise Line",  sortable: false },
+  { key: "price",       header: "Cost",         sortable: false, align: "left" },
+  { key: "title",       header: "Add Ons",      sortable: false },
+  { key: "policy",      header: "Vibe Check",   sortable: false },
+  { key: "brand",       header: "Free wifi",    sortable: false },
+  { key: "link",        header: "",             sortable: false, align: "right", widthClass: "whitespace-nowrap" },
+];
+
+// --- Sample data for the new chart (replace with your real series anytime) ---
+const domesticSeries: PricePoint[] = [
+  { daysOut: 180, price: 320 }, { daysOut: 170, price: 300 }, { daysOut: 160, price: 285 },
+  { daysOut: 150, price: 270 }, { daysOut: 140, price: 260 }, { daysOut: 130, price: 245 },
+  { daysOut: 120, price: 230 }, { daysOut: 110, price: 220 }, { daysOut: 100, price: 210 },
+  { daysOut:  90, price: 200 }, { daysOut:  80, price: 195 }, { daysOut:  70, price: 190 },
+  { daysOut:  60, price: 180 }, { daysOut:  50, price: 175 }, { daysOut:  40, price: 170 },
+  { daysOut:  30, price: 165 }, { daysOut:  20, price: 160 }, { daysOut:  10, price: 175 },
 ];
 
 export default function Home() {
@@ -96,7 +112,18 @@ export default function Home() {
       <Hero />
       <FeatureCards />
 
-      {/* Popular Comparisons */}
+      {/* NEW: Domestic Flight Timing card (between FeatureCards and Cruise Comparisons) */}
+      <section className="card p-6">
+        <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
+          When to Book (Domestic)
+        </h2>
+        <p className="mb-4" style={{ color: "var(--muted)" }}>
+          Smoothed daily prices with the best booking window highlighted.
+        </p>
+        <DomesticFlightBookingTimingChart data={domesticSeries} currency="NZD" dark />
+      </section>
+
+      {/* Cruise Comparisons */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
@@ -105,7 +132,6 @@ export default function Home() {
         <ProductsTable
           rows={popularComparisonRows}
           columns={popularComparisonColumns}
-          // Show all 7 columns (or omit this prop entirely)
           maxColumns={7}
           emptyText="No comparison rows yet."
           tone="onDark"
@@ -122,7 +148,7 @@ export default function Home() {
         <TopDestinationsTable />
       </section>
 
-      {/* Top Deals */}
+      {/* Top Airlines (keeps your table component for now) */}
       <section className="card p-6">
         <h2 className="text-2xl font-semibold mb-2">Top Airlines</h2>
         <p style={{ color: "var(--muted)" }} className="mb-4">
