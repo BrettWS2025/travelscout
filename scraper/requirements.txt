@@ -1,0 +1,4 @@
+scrapy==2.11.1
+orjson==3.10.7
+rapidfuzz==3.9.6
+pydantic==2.9.2
