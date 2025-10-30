@@ -36,7 +36,7 @@ const MENU: MenuSection[] = [
       { label: "Hotels", href: "/(product)/compare#cards" },
       { label: "Rental Cars", href: "/(product)/compare#lounges" },
       { label: "Cruising", href: "/(product)/compare#lounges" },
-      { label: "Attractions", href: "/(product)/compare#lounges" },
+      { label: "Tours", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
       { label: "Travel Agencies, OTAs and Direct Bookings", href: "/compare/travel-agencies-otas-and-direct" },
     ],
