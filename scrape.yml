@@ -1,0 +1,59 @@
+name: Crawl Travel Packages Nightly
+
+on:
+  schedule:
+    - cron: "25 12 * * *"   # 12:25 UTC (~01:25 NZT during DST). Adjust if needed.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          pip install -r scraper/requirements.txt
+
+      - name: Crawl sources
+        working-directory: scraper
+        run: |
+          mkdir -p out
+          scrapy crawl worldtravellers -O out/worldtravellers.raw.jsonl || true
+          scrapy crawl flightcentre    -O out/flightcentre.raw.jsonl    || true
+          scrapy crawl houseoftravel   -O out/houseoftravel.raw.jsonl   || true
+          scrapy crawl helloworld      -O out/helloworld.raw.jsonl      || true
+
+      - name: Normalize & dedupe
+        working-directory: scraper
+        run: |
+          python scripts/normalize.py out/worldtravellers.raw.jsonl out/worldtravellers.norm.jsonl || true
+          python scripts/normalize.py out/flightcentre.raw.jsonl    out/flightcentre.norm.jsonl    || true
+          python scripts/normalize.py out/houseoftravel.raw.jsonl   out/houseoftravel.norm.jsonl   || true
+          python scripts/normalize.py out/helloworld.raw.jsonl      out/helloworld.norm.jsonl      || true
+
+          python scripts/dedupe.py out/worldtravellers.norm.jsonl out/worldtravellers.dedupe.jsonl || true
+          python scripts/dedupe.py out/flightcentre.norm.jsonl    out/flightcentre.dedupe.jsonl    || true
+          python scripts/dedupe.py out/houseoftravel.norm.jsonl   out/houseoftravel.dedupe.jsonl   || true
+          python scripts/dedupe.py out/helloworld.norm.jsonl      out/helloworld.dedupe.jsonl      || true
+
+          cat out/*.dedupe.jsonl > out/packages.all.jsonl
+          python scripts/fx_apply.py out/packages.all.jsonl out/packages.final.jsonl
+
+      - name: Commit dataset into public/data
+        run: |
+          mkdir -p public/data
+          cp scraper/out/packages.final.jsonl public/data/packages.final.jsonl
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/packages.final.jsonl
+          git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
+          git push
