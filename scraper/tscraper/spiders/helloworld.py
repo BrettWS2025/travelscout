@@ -6,7 +6,7 @@ BASE = "https://www.helloworld.co.nz"
 class HelloWorldSpider(scrapy.Spider):
     name = "helloworld"
     allowed_domains = ["helloworld.co.nz"]
-    start_urls = [f"{BASE}/browse-deals"]
+    start_urls = [f"{BASE}/holidays"]
 
     def parse(self, response):
         for href in response.xpath("//a[contains(@href, '/deal/') or contains(@href,'/deals/') or contains(@href,'/holidays/')]/@href").getall():
