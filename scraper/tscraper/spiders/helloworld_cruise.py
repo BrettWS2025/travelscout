@@ -5,15 +5,14 @@ from tscraper.utils import (parse_jsonld, price_from_jsonld, title_from_jsonld,
     parse_price_text, parse_nights, parse_sale_end, build_item,
     filter_links, page_has_price_signal)
 
-BASE = "https://helloworld.co.nz"
-ALLOW = [r"^/deal/\d+/[a-z0-9-]+/?$", r"^/deal/[a-z0-9-]+/?$",
-         r"^/holidays/(?!$|top-deals)([a-z0-9-]+/){1,3}[a-z0-9-]+/?$"]
-DENY = [r"^/holidays/?$", r"/holidays/top-deals/?$", r"^/$"]
+BASE = "https://helloworld.gocruising.co.nz"
+ALLOW = [r"^/cruise/[a-z0-9-]+-DIS\d+/?$"]
+DENY = [r"^/$"]
 
-class HelloworldDealsSpider(scrapy.Spider):
-    name = "helloworld"
-    allowed_domains = ["helloworld.co.nz"]
-    start_urls = [f"{BASE}/holidays/south-pacific/top-deals", f"{BASE}/deals", f"{BASE}/holidays"]
+class HelloworldCruiseSpider(scrapy.Spider):
+    name = "helloworld_cruise"
+    allowed_domains = ["helloworld.gocruising.co.nz"]
+    start_urls = [f"{BASE}/"]
     custom_settings = {"DOWNLOAD_DELAY": 1.0}
 
     def parse(self, response):

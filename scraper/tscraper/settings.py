@@ -17,11 +17,11 @@ FEED_EXPORT_ENCODING = "utf-8"
 LOG_LEVEL = "INFO"
 
 
-# Extra politeness
-CONCURRENT_REQUESTS_PER_DOMAIN = 3
-AUTOTHROTTLE_START_DELAY = 3.0
-AUTOTHROTTLE_TARGET_CONCURRENCY = 0.7
-AUTOTHROTTLE_MAX_DELAY = 60.0
-DOWNLOAD_DELAY = 2.0
-RANDOMIZE_DOWNLOAD_DELAY = True
-RETRY_TIMES = 2
+# --- Playwright for JS-rendered sites (Flight Centre) ---
+TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+PLAYWRIGHT_BROWSER_TYPE = "chromium"
+PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT = 15000
