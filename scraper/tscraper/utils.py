@@ -23,8 +23,7 @@ def parse_jsonld(response_text: str) -> List[Dict[str, Any]]:
             continue
     return out
 
-def price_from_jsonld(objs: List[Dict[str, Any]]) -> (Optional[float], Optional[str], Optional[str]):
-    # returns (price, currency, price_valid_until)
+def price_from_jsonld(objs: List[Dict[str, Any]]):
     def coerce_float(x):
         try: return float(x)
         except: return None
@@ -44,28 +43,16 @@ def price_from_jsonld(objs: List[Dict[str, Any]]) -> (Optional[float], Optional[
                 if price: return price, ccy, pvu
     return None, None, None
 
-def title_from_jsonld(objs: List[Dict[str, Any]]) -> Optional[str]:
+def title_from_jsonld(objs: List[Dict[str, Any]]):
     for obj in objs:
         n = obj.get("name")
         if isinstance(n, str) and len(n.strip())>0:
             return n.strip()
     return None
 
-def pick_detail_links(sel: Selector, allow_patterns: List[str]) -> List[str]:
-    hrefs = sel.xpath("//a/@href").getall()
-    keep = []
-    for h in hrefs:
-        for pat in allow_patterns:
-            if re.search(pat, h):
-                keep.append(h)
-                break
-    return list(dict.fromkeys(keep))
-
 def parse_price_text(text: str) -> Optional[float]:
-    # Must be anchored to currency to avoid matching day counts
     if not any(c in text for c in CURRENCY_SIGNS):
         return None
-    # Accept "From $1,999", "$3,245 per person", "NZD 1,299"
     m = re.search(r"(?:NZD\s*)?\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)", text.replace(",", ""))
     if m:
         try: return float(m.group(1))
@@ -80,10 +67,8 @@ def parse_nights(text: str) -> Optional[int]:
     return None
 
 def parse_sale_end(text: str) -> Optional[str]:
-    # Normalize common pattern "Sale ends December 2, 2025"
     m = re.search(r"sale\s*(?:ends|to|until)\s*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})", text, re.I)
     if m:
-        # Leave as captured string; downstream can normalize to ISO if needed
         return m.group(1).strip()
     return None
 
@@ -93,11 +78,9 @@ def infer_price_basis(text: str) -> Optional[str]:
     return None
 
 def extract_destinations_from_text(text: str) -> List[str]:
-    # Very light heuristic: look for comma/pipe separated capitalized tokens, exclude generic words
     candidates = re.findall(r"\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\b", text)
     stop = set(["Sale", "Ends", "From", "Deal", "Deals", "Package", "Holiday", "Holidays"])
     out = [c for c in candidates if c not in stop]
-    # unique keep order
     seen = set(); uniq = []
     for c in out:
         if c not in seen:
@@ -117,7 +100,6 @@ def build_item(source: str, url: str, title: str, price: Optional[float],
         includes["flights"] = True
     elif re.search(r"land\s*only|hotel\s*only", page_text, re.I):
         includes["flights"] = False
-
     if re.search(r"accommodation|hotel", page_text, re.I):
         includes["hotel"] = True
 
@@ -142,3 +124,39 @@ def build_item(source: str, url: str, title: str, price: Optional[float],
         "hotel": hotel or None,
         "sale_ends_at": sale_ends_at,
     }
+
+# --- link filters + content gate ---
+from urllib.parse import urljoin, urlparse
+
+def _norm_path(href: str) -> str:
+    try:
+        u = urlparse(href)
+        if u.scheme or u.netloc:
+            return u.path
+        return href
+    except Exception:
+        return href
+
+def filter_links(base_url: str, hrefs: List[str], allow_patterns: List[str], deny_patterns: List[str]) -> List[str]:
+    keep = []
+    for h in hrefs:
+        path = _norm_path(h) or ""
+        if any(re.search(p, path) for p in deny_patterns):
+            continue
+        if any(re.search(p, path) for p in allow_patterns):
+            keep.append(urljoin(base_url, h))
+    seen = set(); out = []
+    for k in keep:
+        if k not in seen:
+            out.append(k); seen.add(k)
+    return out
+
+def page_has_price_signal(response_text: str) -> bool:
+    objs = parse_jsonld(response_text)
+    price, ccy, _ = price_from_jsonld(objs)
+    if price and (ccy or price > 0):
+        return True
+    txt = " ".join(Selector(text=response_text).xpath("//body//text()").getall())
+    if parse_price_text(txt):
+        return True
+    return False

@@ -30,7 +30,6 @@ def is_valid_record(rec: dict) -> bool:
 def coverage(records):
     total = len(records) or 1
     def pct(v): return round(100.0 * v / total, 1)
-    by_src = {}
     from collections import defaultdict
     buckets = defaultdict(list)
     for r in records:
@@ -40,10 +39,10 @@ def coverage(records):
     def has_dur_or_nights(r): return ((r.get("duration_days") or 0) > 0) or ((r.get("nights") or 0) > 0)
     def has_dest(r): return isinstance(r.get("destinations"), list) and len(r["destinations"])>0
 
-    out_by_src = {}
+    by_src = {}
     for s, rows in sorted(buckets.items()):
         st = len(rows) or 1
-        out_by_src[s] = {
+        by_src[s] = {
             "count": len(rows),
             "price_nzd_present_pct": round(100.0 * sum(1 for r in rows if has_price(r))/st, 1),
             "duration_or_nights_present_pct": round(100.0 * sum(1 for r in rows if has_dur_or_nights(r))/st, 1),
@@ -55,7 +54,7 @@ def coverage(records):
         "price_nzd_present_pct": pct(sum(1 for r in records if has_price(r))),
         "duration_or_nights_present_pct": pct(sum(1 for r in records if has_dur_or_nights(r))),
         "destinations_present_pct": pct(sum(1 for r in records if has_dest(r))),
-        "by_source": out_by_src,
+        "by_source": by_src,
     }
     return cov
 
