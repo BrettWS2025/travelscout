@@ -1,36 +1,56 @@
+import scrapy, hashlib, re
+from tscraper.items import PackageItem
 
-import re
-import scrapy
-from tscraper.utils import (parse_jsonld, price_from_jsonld, title_from_jsonld,
-    parse_price_text, parse_nights, parse_sale_end, build_item,
-    filter_links, page_has_price_signal)
+BASE = "https://www.helloworld.co.nz"
 
-BASE = "https://helloworld.co.nz"
-ALLOW = [r"^/deal/\d+/[a-z0-9-]+/?$", r"^/deal/[a-z0-9-]+/?$",
-         r"^/holidays/(?!$|top-deals)([a-z0-9-]+/){1,3}[a-z0-9-]+/?$"]
-DENY = [r"^/holidays/?$", r"/holidays/top-deals/?$", r"^/$"]
-
-class HelloworldDealsSpider(scrapy.Spider):
+class HelloWorldSpider(scrapy.Spider):
     name = "helloworld"
     allowed_domains = ["helloworld.co.nz"]
-    start_urls = [f"{BASE}/holidays/south-pacific/top-deals", f"{BASE}/deals", f"{BASE}/holidays"]
-    custom_settings = {"DOWNLOAD_DELAY": 1.0}
+    start_urls = [f"{BASE}/holidays"]
 
     def parse(self, response):
-        hrefs = response.xpath("//a/@href").getall()
-        for url in filter_links(response.url, hrefs, ALLOW, DENY):
-            yield scrapy.Request(url, callback=self.parse_detail, dont_filter=True)
-        for nxt in response.css("a[rel='next']::attr(href), a.pagination__link::attr(href)").getall():
-            yield response.follow(nxt, callback=self.parse)
+        for href in response.xpath("//a[contains(@href, '/deal/') or contains(@href,'/deals/') or contains(@href,'/holidays/')]/@href").getall():
+            yield response.follow(href, callback=self.parse_detail)
+
+        next_page = response.css("a[rel='next']::attr(href)").get()
+        if next_page:
+            yield response.follow(next_page, callback=self.parse)
 
     def parse_detail(self, response):
-        txt = " ".join(response.xpath("//body//text()").getall())
-        if not (page_has_price_signal(response.text) or (parse_price_text(txt) and parse_price_text(txt) >= 99)):
-            return
-        objs = parse_jsonld(response.text)
-        title = title_from_jsonld(objs) or (response.css("h1::text").get() or "").strip() or (response.css("title::text").get() or "").strip()
-        price, currency, pvu = price_from_jsonld(objs)
-        if not price: price = parse_price_text(txt)
-        nights = parse_nights(txt)
-        sale_end = pvu or parse_sale_end(txt)
-        yield build_item("helloworld", response.url, title, price, currency, nights, sale_end, txt)
+        title = (response.css("h1::text").get() or "").strip()
+        text = " ".join(t.strip() for t in response.css("body ::text").getall())
+        price = self._num(text)
+        nights = self._int(r"(\d+)\s*nights?", text)
+        days = self._int(r"(\d+)\s*days?", text)
+        duration_days = days or (nights + 1 if nights else 0)
+
+        item = PackageItem(
+            package_id=self._pid(response.url, title, price),
+            source="helloworld",
+            url=response.url,
+            title=title,
+            duration_days=duration_days,
+            nights=nights,
+            price=price,
+            currency="NZD",
+            price_basis="per_person",
+            includes={"flights": "flight" in text.lower(), "hotel": "night" in text.lower()},
+            hotel={"name": None, "stars": None, "room_type": None},
+            sale_ends_at=self._sale(text),
+        )
+        yield item.model_dump()
+
+    def _pid(self, url, title, price):
+        return hashlib.md5(f"{url}|{title}|{price}".encode()).hexdigest()
+
+    def _num(self, s):
+        m = re.search(r"(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)", s.replace(",", ""))
+        return float(m.group(1)) if m else 0.0
+
+    def _int(self, pat, s):
+        m = re.search(pat, s, re.I)
+        return int(m.group(1)) if m else None
+
+    def _sale(self, text):
+        m = re.search(r"(sale\s*ends\s*[A-Za-z0-9 ,]+)", text, re.I)
+        return m.group(1) if m else None

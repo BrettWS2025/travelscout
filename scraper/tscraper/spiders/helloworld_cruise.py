@@ -1,9 +1,7 @@
 
-import re
 import scrapy
-from tscraper.utils import (parse_jsonld, price_from_jsonld, title_from_jsonld,
-    parse_price_text, parse_nights, parse_sale_end, build_item,
-    filter_links, page_has_price_signal)
+from tscraper.utils import (parse_jsonld, price_from_jsonld, title_from_jsonld, parse_price_text,
+    parse_nights, parse_sale_end, build_item, filter_links, page_has_price_signal, extract_price_from_scripts)
 
 BASE = "https://helloworld.gocruising.co.nz"
 ALLOW = [r"^/cruise/[a-z0-9-]+-DIS\d+/?$"]
@@ -24,12 +22,11 @@ class HelloworldCruiseSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         txt = " ".join(response.xpath("//body//text()").getall())
-        if not (page_has_price_signal(response.text) or (parse_price_text(txt) and parse_price_text(txt) >= 99)):
-            return
         objs = parse_jsonld(response.text)
         title = title_from_jsonld(objs) or (response.css("h1::text").get() or "").strip() or (response.css("title::text").get() or "").strip()
-        price, currency, pvu = price_from_jsonld(objs)
-        if not price: price = parse_price_text(txt)
+        p1, currency, pvu = price_from_jsonld(objs)
+        price = p1 or extract_price_from_scripts(response.text) or parse_price_text(" ".join(response.css("[class*='price'], .price ::text").getall())) or parse_price_text(txt)
+        if not price or price < 99: return
         nights = parse_nights(txt)
         sale_end = pvu or parse_sale_end(txt)
         yield build_item("helloworld", response.url, title, price, currency, nights, sale_end, txt)
