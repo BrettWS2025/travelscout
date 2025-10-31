@@ -14,7 +14,9 @@
     "react-dom": "18.2.0",
     "lucide-react": "0.441.0",
     "classnames": "2.5.1",
-    "recharts": "^2"
+    "recharts": "^2",
+    "@vercel/analytics": "latest",
+    "@vercel/speed-insights": "latest"
   },
   "devDependencies": {
     "autoprefixer": "10.4.20",
