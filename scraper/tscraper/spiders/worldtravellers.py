@@ -34,7 +34,8 @@ class WorldTravellersSpider(scrapy.Spider):
         return re.sub(r"[\u00A0\u202F\s]+", " ", (s or "").strip())
 
     def _has_currency_marker(self, t: str) -> bool:
-        return bool(re.search(r"(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)", t, re.I))
+        # include common variants: $ / NZ$ / AU$ / US$ / codes
+        return bool(re.search(r"(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)", t or "", re.I))
 
     def _parse_price_text(self, text: str):
         """
@@ -43,16 +44,13 @@ class WorldTravellersSpider(scrapy.Spider):
         """
         if not text:
             return None
-        # Normalise & strip thousand separators
         t = self._norm_space(text)
         if not self._has_currency_marker(t):
             return None
-
-        # Remove spaces between currency and amount (AU$ 7 770 -> AU$7770)
+        # normalise thousand separators and stray spaces after $
         t = t.replace(",", "")
         t = re.sub(r"(?<=\$)\s+", "", t)
-
-        # Prefer patterns with a currency sign or code near the number
+        # AU$7,770  |  $5125   |  USD 1999.00
         m = re.search(
             r"(?:NZD|AUD|USD)?\s*(?:NZ\$|AU\$|US\$|\$)\s*([0-9]{3,7}(?:\.[0-9]{1,2})?)"
             r"|(?:NZD|AUD|USD)\s*([0-9]{3,7}(?:\.[0-9]{1,2})?)",
@@ -186,30 +184,35 @@ class WorldTravellersSpider(scrapy.Spider):
         # Title
         title = self._norm_space(response.css("h1::text, .c-hero__title::text").get())
 
-        # Hero subtext (contains days + route like "12 Nights | Lautoka to Sydney")
+        # Hero subtext (often "12 Nights | Lautoka to Sydney")
         hero_subtext = self._norm_space(" ".join(response.css(".c-hero__subtext ::text").getall()))
 
         # -------- PRICE: robust, currency-aware ----------
-        # 1) Old selector used on many pages
+        # 1) Legacy selector used on many pages
         price_text_1 = self._norm_space(" ".join(response.css("span.deal-details__value ::text").getall()))
 
-        # 2) Nearest text after a 'Priced From' label (dt/dd or heading/sibling)
+        # 2) 'Priced From' label → accept immediate text node OR first block sibling
         price_text_2 = self._norm_space(" ".join(
             response.xpath(
                 # dl/dt -> dd
                 "//dl[contains(@class,'deal-details')]//dt[contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following-sibling::dd[1]//text()"
                 " | "
-                # h3/h4 'Priced From' then first sibling block
+                # heading 'Priced From' -> immediate following text node
+                "//*[self::h3 or self::h4][contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following::text()[1]"
+                " | "
+                # heading 'Priced From' -> first element block then its text
                 "//*[self::h3 or self::h4][contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
             ).getall()
         ))
 
-        # 3) Text inside the 'Pricing' section (first 20 descendants after the heading)
+        # 3) Text inside the 'Pricing' section (scan deeper to be safe)
         pricing_section = self._norm_space(" ".join(
-            response.xpath("//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=20]//text()").getall()
+            response.xpath(
+                "//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=60]//text()"
+            ).getall()
         ))
 
-        # 4) Body fallback: ONLY if a currency marker is in the body (avoid '2024/2026' years)
+        # 4) Body fallback ONLY if a currency marker exists
         body_text = self._norm_space(" ".join(response.xpath("//body//text()").getall()))
         body_price_text = body_text if self._has_currency_marker(body_text) else ""
 
