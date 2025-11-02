@@ -20,7 +20,7 @@ DENY = [
 class WorldTravellersSpider(scrapy.Spider):
     name = "worldtravellers"
     allowed_domains = ["worldtravellers.co.nz"]
-    start_urls = [f"{BASE}/deals"]
+    start_urls = [f"{BASE}/deals", f"{BASE}/deals/cruise"]
     custom_settings = {"DOWNLOAD_DELAY": 0.8}
 
     # ----------------------------
@@ -30,15 +30,42 @@ class WorldTravellersSpider(scrapy.Spider):
         return hashlib.md5(f"{url}|{title}|{price}".encode()).hexdigest()
 
     def _norm_space(self, s: str) -> str:
+        # collapse spaces incl. NBSP/thin space
         return re.sub(r"[\u00A0\u202F\s]+", " ", (s or "").strip())
+
+    def _has_currency_marker(self, t: str) -> bool:
+        return bool(re.search(r"(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)", t, re.I))
 
     def _parse_price_text(self, text: str):
         """
-        Extract numeric price from text like 'AU$7,770 per person' or '$5,125'.
+        Extract numeric price but ONLY if currency markers are present.
+        Accepts: $7,770 | NZD 7,770 | AU$7,770 | USD 1,999.00
         """
-        t = self._norm_space(text).replace(",", "")
-        m = re.search(r"\$?\s*([0-9]{2,7}(?:\.[0-9]{1,2})?)", t)
-        return float(m.group(1)) if m else None
+        if not text:
+            return None
+        # Normalise & strip thousand separators
+        t = self._norm_space(text)
+        if not self._has_currency_marker(t):
+            return None
+
+        # Remove spaces between currency and amount (AU$ 7 770 -> AU$7770)
+        t = t.replace(",", "")
+        t = re.sub(r"(?<=\$)\s+", "", t)
+
+        # Prefer patterns with a currency sign or code near the number
+        m = re.search(
+            r"(?:NZD|AUD|USD)?\s*(?:NZ\$|AU\$|US\$|\$)\s*([0-9]{3,7}(?:\.[0-9]{1,2})?)"
+            r"|(?:NZD|AUD|USD)\s*([0-9]{3,7}(?:\.[0-9]{1,2})?)",
+            t,
+            re.I,
+        )
+        if not m:
+            return None
+        amt = m.group(1) or m.group(2)
+        try:
+            return float(amt)
+        except Exception:
+            return None
 
     def _detect_currency(self, *texts):
         blob = " ".join(self._norm_space(t) for t in texts if t)
@@ -53,10 +80,9 @@ class WorldTravellersSpider(scrapy.Spider):
 
     def _extract_days_nights(self, body_text: str, hero_sub: str):
         """
-        Prefer 'X days' from the hero subtext; else look in the body for 'X days' / 'X nights'.
+        Prefer 'X days' / 'X Nights' from the hero subtext; else look in body.
         Nights = days - 1 (if days present).
         """
-        # hero like: "8 days | Vienna to Zurich" OR "12 Nights | Lautoka to Sydney"
         t = f"{hero_sub} {body_text}"
         m_days = re.search(r"(\d{1,3})\s*days?", t, re.I)
         m_nights = re.search(r"(\d{1,3})\s*nights?", t, re.I)
@@ -70,11 +96,11 @@ class WorldTravellersSpider(scrapy.Spider):
 
     def _extract_destinations(self, response, hero_sub: str):
         """
-        Try to parse destinations from hero 'CityA to CityB'.
-        Fallback: pull last path segment from /deals/... URL.
+        Parse destinations from hero 'CityA to CityB' (cruise often has this).
+        Fallback: last path segment from /deals/... URL.
         """
         t = self._norm_space(hero_sub)
-        # strip common non-destination words found in hero subtext
+        # Common noise words
         t = re.sub(r"\b(round\s*trip|roundtrip)\b", "", t, flags=re.I)
 
         dests = []
@@ -82,7 +108,7 @@ class WorldTravellersSpider(scrapy.Spider):
             after_bar = t.split("|", 1)[1].strip()
             parts = re.split(r"\s+to\s+|\s*-\s*", after_bar, flags=re.I)
             for p in parts:
-                p = re.sub(r"[^A-Za-z\s'\-&,]", "", p).strip()
+                p = re.sub(r"[^A-Za-z\s'\-&,()]", "", p).strip()
                 p = re.sub(r"\s{2,}", " ", p)
                 if p and len(p) > 1:
                     dests.append(p)
@@ -93,11 +119,10 @@ class WorldTravellersSpider(scrapy.Spider):
             segs = [s for s in segments if s not in ("deals", "cruise")]
             if segs:
                 tail = segs[-1].replace("-", " ")
-                tail = re.sub(r"\b(on|with|sale|and|the|in|to|from)\b", "", tail, flags=re.I).strip()
+                tail = re.sub(r"\b(on|with|sale|and|the|in|to|from|pp)\b", "", tail, flags=re.I).strip()
                 if tail:
                     dests.append(tail.title())
 
-        # de-dup while preserving order
         seen = set(); unique = []
         for d in dests:
             if d not in seen:
@@ -106,18 +131,22 @@ class WorldTravellersSpider(scrapy.Spider):
 
     def _extract_inclusions(self, response):
         """
-        Pull bullets under "What's Included" (first UL after that H2).
+        Pull bullets under headings like:
+        "What's Included" / "Inclusions" / "Included".
         """
         ul = response.xpath(
-            "//h2[normalize-space(translate(., \"’\", \"'\"))='What’s Included' or "
-            "normalize-space(.)=\"What's Included\"]/following::ul[1]/li//text()"
+            "("
+            "//h2[normalize-space(.)=\"What's Included\" or contains(translate(., 'INCLUSIONS', 'inclusions'),'inclusions') or contains(translate(., 'INCLUDED', 'included'),'included')]"
+            "|//h3[normalize-space(.)=\"What's Included\" or contains(translate(., 'INCLUSIONS', 'inclusions'),'inclusions') or contains(translate(., 'INCLUDED', 'included'),'included')]"
+            ")"
+            "/following::ul[1]/li//text()"
         ).getall()
         bullets = [self._norm_space(x) for x in ul if self._norm_space(x)]
         return {"raw": bullets} if bullets else {}
 
     def _extract_sale_end(self, response):
         """
-        'Sale Ends' sometimes appears as a small field in Deal Details.
+        'Sale Ends' appears occasionally near Deal Details.
         """
         txt = self._norm_space(" ".join(
             response.xpath("//*[self::h3 or self::h4][contains(translate(., 'SALE ENDS', 'sale ends'), 'sale ends')]/following::*[1]//text()").getall()
@@ -132,7 +161,6 @@ class WorldTravellersSpider(scrapy.Spider):
             path = p.path if (p.scheme or p.netloc) else href
         except Exception:
             path = href
-
         if any(re.search(d, path) for d in DENY):
             return False
         return any(re.search(a, path) for a in ALLOW)
@@ -151,33 +179,46 @@ class WorldTravellersSpider(scrapy.Spider):
         if next_page:
             yield response.follow(next_page, callback=self.parse)
 
+    # ----------------------------
+    # Detail
+    # ----------------------------
     def parse_detail(self, response):
         # Title
         title = self._norm_space(response.css("h1::text, .c-hero__title::text").get())
 
-        # Hero subtext (contains days + route like "8 days | Vienna to Zurich" or "12 Nights | Lautoka to Sydney")
+        # Hero subtext (contains days + route like "12 Nights | Lautoka to Sydney")
         hero_subtext = self._norm_space(" ".join(response.css(".c-hero__subtext ::text").getall()))
 
-        # --- PRICE: multiple robust fallbacks ---
-        # 1) Old selector (many deals pages)
+        # -------- PRICE: robust, currency-aware ----------
+        # 1) Old selector used on many pages
         price_text_1 = self._norm_space(" ".join(response.css("span.deal-details__value ::text").getall()))
-        # 2) Immediately after a 'Priced From' H3/H4 label
+
+        # 2) Nearest text after a 'Priced From' label (dt/dd or heading/sibling)
         price_text_2 = self._norm_space(" ".join(
-            response.xpath("//*[self::h3 or self::h4][contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following::*[1]//*[self::span or self::p or self::strong or self::em or self::div]//text() | \
-                            /*[self::h3 or self::h4][contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following::*[1]/text()").getall()
+            response.xpath(
+                # dl/dt -> dd
+                "//dl[contains(@class,'deal-details')]//dt[contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following-sibling::dd[1]//text()"
+                " | "
+                # h3/h4 'Priced From' then first sibling block
+                "//*[self::h3 or self::h4][contains(translate(., 'PRICED FROM', 'priced from'), 'priced from')]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
+            ).getall()
         ))
-        # 3) First price found under a 'Pricing' section
+
+        # 3) Text inside the 'Pricing' section (first 20 descendants after the heading)
         pricing_section = self._norm_space(" ".join(
             response.xpath("//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=20]//text()").getall()
         ))
-        # 4) Body fallback (guarded by keywords)
-        body_text = self._norm_space(" ".join(response.xpath("//body//text()").getall()))
 
+        # 4) Body fallback: ONLY if a currency marker is in the body (avoid '2024/2026' years)
+        body_text = self._norm_space(" ".join(response.xpath("//body//text()").getall()))
+        body_price_text = body_text if self._has_currency_marker(body_text) else ""
+
+        # Calculate price using the first valid source
         price = (
             self._parse_price_text(price_text_1)
             or self._parse_price_text(price_text_2)
-            or (self._parse_price_text(pricing_section) if pricing_section else None)
-            or (self._parse_price_text(body_text) if re.search(r"(priced\s*from|per\s*person)", body_text, re.I) else None)
+            or self._parse_price_text(pricing_section)
+            or self._parse_price_text(body_price_text)
         )
 
         # Basis detection (prefer near-price text, then body)
@@ -187,19 +228,13 @@ class WorldTravellersSpider(scrapy.Spider):
         # Currency detection
         currency = self._detect_currency(price_text_1, price_text_2, pricing_section, body_text)
 
-        # Duration/nights
+        # -------- Duration / Destinations / Inclusions / Sale Ends ----------
         nights, duration_days = self._extract_days_nights(body_text, hero_subtext)
-
-        # Destinations
         destinations = self._extract_destinations(response, hero_subtext)
-
-        # Inclusions
         includes = self._extract_inclusions(response)
-
-        # Sale Ends (when present)
         sale_ends_at = self._extract_sale_end(response)
 
-        # Guard: keep only pages with a sensible price
+        # Keep only sensible prices
         if not (isinstance(price, (int, float)) and price >= 99):
             return
 
@@ -208,7 +243,7 @@ class WorldTravellersSpider(scrapy.Spider):
             source="worldtravellers",
             url=response.url,
             title=title,
-            destinations=destinations,           # e.g. ["Lautoka", "Sydney"] or ["Tahiti & Society Islands"]
+            destinations=destinations,           # e.g. ["Papeete", "Society Islands"] or ["Lautoka", "Sydney"]
             duration_days=duration_days,         # e.g. 13 when 12 nights
             nights=nights,                       # e.g. 12
             price=price,                         # numeric price
