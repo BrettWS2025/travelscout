@@ -45,7 +45,7 @@ jobs:
           mkdir -p out
 
           # Default set for scheduled runs (includes helloworld_cruise)
-          DEFAULT="worldtravellers houseoftravel helloworld helloworld_cruise flightcentre"
+          DEFAULT="worldtravellers houseoftravel helloworld helloworld_cruise flightcentre_sitemap flightcentre"
           SPIDERS="${INPUT_SPIDERS:-$DEFAULT}"
 
           echo "Running spiders: $SPIDERS"
