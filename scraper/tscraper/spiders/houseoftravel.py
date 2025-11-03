@@ -25,7 +25,11 @@ class HouseOfTravelSpider(scrapy.Spider):
     name = "houseoftravel"
     allowed_domains = ["houseoftravel.co.nz"]
     start_urls = [f"{BASE}/deals", f"{BASE}/holidays", f"{BASE}/cruises"]
-    custom_settings = {"DOWNLOAD_DELAY": 0.7}
+    custom_settings = {
+    "DOWNLOAD_DELAY": 0.7,
+    "AUTOTHROTTLE_ENABLED": True,
+    "CLOSESPIDER_TIMEOUT": 1800,  # keep runs bounded
+}
 
     # ----------------------------
     # Helpers
@@ -184,7 +188,10 @@ class HouseOfTravelSpider(scrapy.Spider):
                 yield response.follow(href, callback=self.parse_detail)
 
         # pagination (common 'next' rel across templates)
-        next_page = response.css("a[rel='next']::attr(href), a.pagination__next::attr(href)").get()
+        next_page = response.css(
+    "a[rel='next']::attr(href), a.pagination__next::attr(href), "
+    ".pagination__link--next::attr(href), .pager__next::attr(href)"
+    ).get()
         if next_page:
             yield response.follow(next_page, callback=self.parse)
 
