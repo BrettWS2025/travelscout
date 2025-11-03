@@ -1,4 +1,5 @@
 import re
+import json
 import hashlib
 import scrapy
 from urllib.parse import urlparse
@@ -21,7 +22,15 @@ class WorldTravellersSpider(scrapy.Spider):
     name = "worldtravellers"
     allowed_domains = ["worldtravellers.co.nz"]
     start_urls = [f"{BASE}/deals", f"{BASE}/deals/cruise"]
-    custom_settings = {"DOWNLOAD_DELAY": 0.8}
+    # keep runs polite and bounded without slowing too much
+    custom_settings = {
+        "ROBOTSTXT_OBEY": True,
+        "DOWNLOAD_DELAY": 0.8,
+        "AUTOTHROTTLE_ENABLED": True,
+        "CLOSESPIDER_TIMEOUT": 1800,   # ~30 minutes hard stop
+        "RETRY_TIMES": 1,
+        "LOGSTATS_INTERVAL": 30,
+    }
 
     # ----------------------------
     # Helpers
@@ -78,7 +87,7 @@ class WorldTravellersSpider(scrapy.Spider):
 
     def _extract_days_nights(self, body_text: str, hero_sub: str):
         """
-        Prefer 'X days' / 'X Nights' from the hero subtext; else look in body.
+        Prefer 'X days' / 'X nights' from the hero subtext; else look in body.
         Nights = days - 1 (if days present).
         """
         t = f"{hero_sub} {body_text}"
@@ -151,6 +160,32 @@ class WorldTravellersSpider(scrapy.Spider):
         ))
         return txt or None
 
+    def _extract_price_from_ldjson(self, response):
+        """
+        Look for schema.org Offers (Offer / AggregateOffer) in JSON-LD.
+        """
+        for node in response.xpath("//script[@type='application/ld+json']/text()").getall():
+            try:
+                data = json.loads(node.strip())
+            except Exception:
+                continue
+            objs = data if isinstance(data, list) else [data]
+            for obj in objs:
+                offers = obj.get("offers") or obj.get("aggregateOffer")
+                if not offers:
+                    continue
+                offers = offers if isinstance(offers, list) else [offers]
+                for off in offers:
+                    price = off.get("price") or off.get("lowPrice") or off.get("highPrice")
+                    currency = (off.get("priceCurrency") or "").upper() or None
+                    if price:
+                        try:
+                            price_f = float(str(price).replace(",", ""))
+                            return price_f, currency
+                        except Exception:
+                            continue
+        return None, None
+
     def _allowed_link(self, href: str) -> bool:
         if not href:
             return False
@@ -172,8 +207,10 @@ class WorldTravellersSpider(scrapy.Spider):
             if self._allowed_link(href):
                 yield response.follow(href, callback=self.parse_detail)
 
-        # pagination
-        next_page = response.css('a[rel="next"]::attr(href)').get()
+        # pagination: include a couple more common variants
+        next_page = response.css(
+            'a[rel="next"]::attr(href), .pagination__next::attr(href), .pagination__link--next::attr(href), .pager__next::attr(href)'
+        ).get()
         if next_page:
             yield response.follow(next_page, callback=self.parse)
 
@@ -187,11 +224,16 @@ class WorldTravellersSpider(scrapy.Spider):
         # Hero subtext (often "12 Nights | Lautoka to Sydney")
         hero_subtext = self._norm_space(" ".join(response.css(".c-hero__subtext ::text").getall()))
 
-        # -------- PRICE: robust, currency-aware ----------
-        # 1) Legacy selector used on many pages
-        price_text_1 = self._norm_space(" ".join(response.css("span.deal-details__value ::text").getall()))
+        # -------- PRICE: JSON-LD → page blocks → text ----------
+        # 1) JSON-LD schema Offers
+        ld_price, ld_currency = self._extract_price_from_ldjson(response)
 
-        # 2) 'Priced From' label → accept immediate text node OR first block sibling
+        # 2) Common price containers
+        price_text_1 = self._norm_space(" ".join(response.css(
+            "span.deal-details__value, .price, .price-from, .deal-price, .pricing, .c-price, .price__value, .product-price, [class*='price']"
+        ).xpath(".//text()").getall()))
+
+        # 3) 'Priced From' label → accept immediate text node OR first block sibling
         price_text_2 = self._norm_space(" ".join(
             response.xpath(
                 # dl/dt -> dd
@@ -205,31 +247,32 @@ class WorldTravellersSpider(scrapy.Spider):
             ).getall()
         ))
 
-        # 3) Text inside the 'Pricing' section (scan deeper to be safe)
+        # 4) Pricing section (scan a bit deeper)
         pricing_section = self._norm_space(" ".join(
             response.xpath(
                 "//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=60]//text()"
             ).getall()
         ))
 
-        # 4) Body fallback ONLY if a currency marker exists
+        # 5) Body fallback ONLY if a currency marker exists
         body_text = self._norm_space(" ".join(response.xpath("//body//text()").getall()))
         body_price_text = body_text if self._has_currency_marker(body_text) else ""
 
         # Calculate price using the first valid source
         price = (
-            self._parse_price_text(price_text_1)
+            ld_price
+            or self._parse_price_text(price_text_1)
             or self._parse_price_text(price_text_2)
             or self._parse_price_text(pricing_section)
             or self._parse_price_text(body_price_text)
         )
 
         # Basis detection (prefer near-price text, then body)
-        basis_blob = " ".join([price_text_1, price_text_2, pricing_section])
-        price_basis = "per_person" if re.search(r"\bper\s*person\b|twin\s*share", basis_blob + " " + body_text, re.I) else "total"
+        basis_blob = " ".join([price_text_1, price_text_2, pricing_section, body_text])
+        price_basis = "per_person" if re.search(r"\bper\s*person\b|twin\s*share|\bpp\b", basis_blob, re.I) else "total"
 
         # Currency detection
-        currency = self._detect_currency(price_text_1, price_text_2, pricing_section, body_text)
+        currency = ld_currency or self._detect_currency(price_text_1, price_text_2, pricing_section, body_text)
 
         # -------- Duration / Destinations / Inclusions / Sale Ends ----------
         nights, duration_days = self._extract_days_nights(body_text, hero_subtext)
