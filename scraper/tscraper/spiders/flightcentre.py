@@ -43,7 +43,7 @@ class FlightCentreSpider(scrapy.Spider):
     # Hard caps to keep runs predictable and polite
     MAX_LISTINGS = 60      # how many listing pages to visit
     MAX_PRODUCTS = 2000    # safety cap for detail pages
-    MAX_LOAD_MORE = 3      # clicks on "Load more" per listing
+    MAX_LOAD_MORE = 5      # clicks on "Load more" per listing
 
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
