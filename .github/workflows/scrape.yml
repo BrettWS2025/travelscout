@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "25 12 * * *"   # 12:25 UTC (~01:25 NZT during DST)
   workflow_dispatch:
+    inputs:
+      spiders:
+        description: "Space-separated spiders to run (leave blank for defaults)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -15,7 +20,7 @@ jobs:
       - name: Checkout MAIN branch
         uses: actions/checkout@v4
         with:
-          ref: main          # explicit; avoids detached HEAD on schedule
+          ref: main
           fetch-depth: 0
 
       - name: Set up Python
@@ -33,28 +38,54 @@ jobs:
 
       - name: Crawl sources
         working-directory: scraper
+        env:
+          INPUT_SPIDERS: ${{ github.event.inputs.spiders }}
         run: |
+          set -e
           mkdir -p out
-          scrapy crawl worldtravellers -O out/worldtravellers.raw.jsonl || true
-          scrapy crawl flightcentre    -O out/flightcentre.raw.jsonl    || true
-          scrapy crawl houseoftravel   -O out/houseoftravel.raw.jsonl   || true
-          scrapy crawl helloworld      -O out/helloworld.raw.jsonl      || true
+
+          # Default set for scheduled runs (includes helloworld_cruise)
+          DEFAULT="worldtravellers flightcentre houseoftravel helloworld helloworld_cruise"
+          SPIDERS="${INPUT_SPIDERS:-$DEFAULT}"
+
+          echo "Running spiders: $SPIDERS"
+          for s in $SPIDERS; do
+            echo "::group::Crawling $s"
+            scrapy crawl "$s" -O "out/${s}.raw.jsonl" || true
+            echo "::endgroup::"
+          done
 
       - name: "Normalize & dedupe"   # quoted because of '&'
         working-directory: scraper
         run: |
-          python scripts/normalize.py out/worldtravellers.raw.jsonl out/worldtravellers.norm.jsonl || true
-          python scripts/normalize.py out/flightcentre.raw.jsonl    out/flightcentre.norm.jsonl    || true
-          python scripts/normalize.py out/houseoftravel.raw.jsonl   out/houseoftravel.norm.jsonl   || true
-          python scripts/normalize.py out/helloworld.raw.jsonl      out/helloworld.norm.jsonl      || true
+          set -e
 
-          python scripts/dedupe.py out/worldtravellers.norm.jsonl out/worldtravellers.dedupe.jsonl || true
-          python scripts/dedupe.py out/flightcentre.norm.jsonl    out/flightcentre.dedupe.jsonl    || true
-          python scripts/dedupe.py out/houseoftravel.norm.jsonl   out/houseoftravel.dedupe.jsonl   || true
-          python scripts/dedupe.py out/helloworld.norm.jsonl      out/helloworld.dedupe.jsonl      || true
+          # Normalize every raw file we produced
+          shopt -s nullglob
+          for raw in out/*.raw.jsonl; do
+            name=$(basename "$raw" .raw.jsonl)
+            echo "::group::Normalize $name"
+            python scripts/normalize.py "$raw" "out/${name}.norm.jsonl" || true
+            echo "::endgroup::"
+          done
 
-          cat out/*.dedupe.jsonl > out/packages.all.jsonl
-          python scripts/fx_apply.py out/packages.all.jsonl out/packages.final.jsonl
+          # Dedupe every normalized file we produced
+          for norm in out/*.norm.jsonl; do
+            name=$(basename "$norm" .norm.jsonl)
+            echo "::group::Dedupe $name"
+            python scripts/dedupe.py "$norm" "out/${name}.dedupe.jsonl" || true
+            echo "::endgroup::"
+          done
+
+          # Merge all deduped outputs (whatever ran)
+          cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
+
+          # Apply FX/derived fields if there is any content
+          if [ -s out/packages.all.jsonl ]; then
+            python scripts/fx_apply.py out/packages.all.jsonl out/packages.final.jsonl
+          else
+            echo "{}" > out/packages.final.jsonl
+          fi
 
       - name: Commit dataset into public/data
         run: |
