@@ -3,12 +3,13 @@ import json
 import hashlib
 import scrapy
 from urllib.parse import urlparse
+from scrapy.spiders import SitemapSpider
 
 from tscraper.items import PackageItem
 
 BASE = "https://helloworld.co.nz"
 
-# Allow only real deal pages, e.g. /deal/17506/samoa-with-air-new-zealand
+# Only real deal pages like /deal/17506/samoa-with-air-new-zealand
 ALLOW = [
     r"^/deal/\d+/?$",
     r"^/deal/\d+/[a-z0-9-]+/?$",
@@ -16,19 +17,30 @@ ALLOW = [
 DENY = [
     r"^/$",
     r"^/holidays/?$",
-    r"^/holidays/.*/top-deals/?$",
     r"/search",
     r"/contact",
     r"/about",
 ]
 
-STOPWORDS = {"and", "with", "the", "of", "sale", "spring", "exclusive", "new", "year", "experience"}
+STOPWORDS = {"and", "with", "the", "of", "sale", "exclusive", "new", "year", "experience", "package"}
 
-class HelloWorldSpider(scrapy.Spider):
+class HelloWorldSpider(SitemapSpider):
     name = "helloworld"
     allowed_domains = ["helloworld.co.nz"]
-    start_urls = [f"{BASE}/", f"{BASE}/holidays"]
+    # Use sitemap for full coverage; keep normal crawl as fallback
+    sitemap_urls = [f"{BASE}/sitemap.xml"]
+    # Follow only /deal/ URLs from the sitemap
+    sitemap_rules = [(r"/deal/\d+/", "parse_detail")]
     custom_settings = {"DOWNLOAD_DELAY": 0.7}
+
+    # Also crawl a couple of entry pages just in case the sitemap misses anything
+    def start_requests(self):
+        # sitemap-based enumeration
+        for r in super().start_requests():
+            yield r
+        # fallback discovery
+        for url in (f"{BASE}/", f"{BASE}/holidays"):
+            yield scrapy.Request(url, callback=self.parse_listing)
 
     # ----------------------------
     # Helpers
@@ -76,6 +88,7 @@ class HelloWorldSpider(scrapy.Spider):
 
     def _extract_days_nights(self, body: str, hero: str):
         t = f"{hero} {body}"
+        # tolerate "3 days / 2 nights" or "3 days, 2 nights"
         m_days = re.search(r"(\d{1,3})\s*days?", t, re.I)
         m_nights = re.search(r"(\d{1,3})\s*nights?", t, re.I)
         days = int(m_days.group(1)) if m_days else None
@@ -87,10 +100,9 @@ class HelloWorldSpider(scrapy.Spider):
 
     def _extract_destinations(self, response, hero: str):
         """
-        Try hero text; else last slug words (cleaned). Keeps it simple & scalable.
+        Prefer hero subtext after '|' (often shows destination); else use slug words.
         """
         t = self._norm(hero)
-        # If hero has pattern "X nights | City" or "City, Country", grab trailing piece after '|'
         dests = []
         if "|" in t:
             after = t.split("|", 1)[1].strip()
@@ -107,10 +119,9 @@ class HelloWorldSpider(scrapy.Spider):
             if len(segs) >= 2 and segs[0] == "deal":
                 slug = segs[-1] if not segs[-1].isdigit() else (segs[-2] if len(segs) > 2 else "")
                 slug = slug.replace("-", " ").strip().title()
-                # simple cleanup: remove common non-destination words
                 words = [w for w in slug.split() if w.lower() not in STOPWORDS]
                 if words:
-                    dests.append(" ".join(words[:4]))  # keep first few tokens
+                    dests.append(" ".join(words[:6]))
 
         # dedupe keep order
         seen, uniq = set(), []
@@ -134,10 +145,8 @@ class HelloWorldSpider(scrapy.Spider):
         m = re.search(r"(sale\s*ends\s*[A-Za-z0-9 ,]+|book\s*by\s*[A-Za-z0-9 ,]+|on\s*sale\s*until\s*[A-Za-z0-9 ,]+)", body, re.I)
         return self._norm(m.group(1)) if m else None
 
-    def _extract_price_from_ldjson(self, response):
-        """
-        schema.org Offers (Offer/AggregateOffer) if present.
-        """
+    def _price_from_ldjson(self, response):
+        # schema.org Offers (Offer/AggregateOffer)
         for node in response.xpath("//script[@type='application/ld+json']/text()").getall():
             try:
                 data = json.loads(node.strip())
@@ -145,7 +154,6 @@ class HelloWorldSpider(scrapy.Spider):
                 continue
             objs = data if isinstance(data, list) else [data]
             for obj in objs:
-                # check both Offer and AggregateOffer
                 offers = obj.get("offers") or obj.get("aggregateOffer")
                 if not offers:
                     continue
@@ -173,32 +181,30 @@ class HelloWorldSpider(scrapy.Spider):
             return False
         return any(re.search(a, path) for a in ALLOW)
 
-    # ----------------------------
-    # Crawl
-    # ----------------------------
-    def parse(self, response):
-        # follow only /deal/<id>/... links
+    # --------- normal crawl fallback ----------
+    def parse_listing(self, response):
         for href in response.xpath("//a/@href").getall():
             if self._allowed_link(href):
                 yield response.follow(href, callback=self.parse_detail)
-        # paginate
         for nxt in response.css("a[rel='next']::attr(href), .pagination__next::attr(href)").getall():
-            yield response.follow(nxt, callback=self.parse)
+            yield response.follow(nxt, callback=self.parse_listing)
 
     # ----------------------------
     # Detail
     # ----------------------------
     def parse_detail(self, response):
-        title = self._norm(response.css("h1::text, .c-hero__title::text, title::text").get())
+        # Robust title (h1 > text nodes; OG meta as fallback; then <title>)
+        title = self._norm(" ".join(response.css("h1 *::text, h1::text").getall())) \
+             or self._norm(response.css("meta[property='og:title']::attr(content)").get()) \
+             or self._norm(response.css("title::text").get())
+
         hero = self._norm(" ".join(response.css(".c-hero__subtext ::text, .hero__subtext ::text").getall()))
         body = self._norm(" ".join(response.xpath("//body//text()").getall()))
 
-        # Prices:
-        # 1) obvious price blocks/classes
+        # Price candidates:
         price_text_1 = self._norm(" ".join(response.css(
             ".price, .price-from, .deal-price, .pricing, .c-price, .price__value, .product-price, [class*='price']"
         ).xpath(".//text()").getall()))
-        # 2) 'Priced From' / 'From' labels
         price_text_2 = self._norm(" ".join(response.xpath(
             "//dl[.//dt[contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]]/dd[1]//text()"
             " | "
@@ -206,13 +212,10 @@ class HelloWorldSpider(scrapy.Spider):
             " | "
             "//*[self::h2 or self::h3 or self::h4][contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
         ).getall()))
-        # 3) JSON-LD
-        ld_price, ld_currency = self._extract_price_from_ldjson(response)
-        # 4) Pricing section
         price_text_3 = self._norm(" ".join(response.xpath(
             "//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=60]//text()"
         ).getall()))
-        # 5) Body fallback only if body actually has a currency marker
+        ld_price, ld_currency = self._price_from_ldjson(response)
         body_price_text = body if self._has_currency(body) else ""
 
         price = (
@@ -226,7 +229,6 @@ class HelloWorldSpider(scrapy.Spider):
             return
 
         currency = ld_currency or self._detect_currency(price_text_1, price_text_2, price_text_3, body)
-
         basis_blob = " ".join([price_text_1, price_text_2, price_text_3, body])
         price_basis = "per_person" if re.search(r"\bper\s*person\b|twin\s*share|\bpp\b", basis_blob, re.I) else "total"
 
