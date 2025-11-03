@@ -3,30 +3,36 @@ import json
 import hashlib
 import scrapy
 from urllib.parse import urlparse
+from scrapy.spiders import SitemapSpider
 
 from tscraper.items import PackageItem
 
 BASE = "https://helloworld.gocruising.co.nz"
 
-# Cruise detail URLs look like:
+# Example detail URLs:
 # /cruise/fly-stay-cruise-australias-kimberley-PON52500/
+# /cruise/emblematic-antarctica-PON53481/
+# /cruise/fly-cruise-the-riches-of-mekong-AMA53287/
 # /cruise/south-pacific-escape-CEL53238/
-# General pattern: /cruise/<slug>-<CODE><digits>/
-ALLOW = [
-    r"^/cruise/[a-z0-9-]+-[A-Z]{3,4}\d{4,6}/?$",
-]
-DENY = [
-    r"^/$",
-    r"/search",
-]
+# /cruise/a-journey-through-...-EXP53328/
+# /cruise/fly-cruise-the-jade-seas-OCE53548/
+ALLOW = [r"^/cruise/[a-z0-9-]+-[A-Z]{3,4}\d{4,6}/?$"]
+DENY  = [r"^/$", r"/search"]
 
-class HelloworldCruiseSpider(scrapy.Spider):
+class HelloworldCruiseSpider(SitemapSpider):
     name = "helloworld_cruise"
     allowed_domains = ["helloworld.gocruising.co.nz"]
-    start_urls = [f"{BASE}/"]
+    sitemap_urls = [f"{BASE}/sitemap.xml"]
+    sitemap_rules = [(r"/cruise/[a-z0-9-]+-[A-Z]{3,4}\d{4,6}/", "parse_detail")]
     custom_settings = {"DOWNLOAD_DELAY": 1.0}
 
-    # --------------- helpers ---------------
+    def start_requests(self):
+        for r in super().start_requests():
+            yield r
+        # fallback crawl from home page if sitemap unavailable
+        yield scrapy.Request(f"{BASE}/", callback=self.parse_listing)
+
+    # ---------- helpers ----------
     def _pid(self, url, title, price):
         return hashlib.md5(f"{url}|{title}|{price}".encode()).hexdigest()
 
@@ -90,7 +96,7 @@ class HelloworldCruiseSpider(scrapy.Spider):
             segs = [s for s in (u.path or "").split("/") if s]
             if segs and segs[0] == "cruise":
                 slug = segs[-1]
-                slug = re.sub(r"-[A-Z]{3,4}\d{4,6}$", "", slug)  # remove product code suffix
+                slug = re.sub(r"-[A-Z]{3,4}\d{4,6}$", "", slug)  # drop product code suffix
                 slug = re.sub(r"[-_]+", " ", slug).strip().title()
                 if slug:
                     dests.append(slug)
@@ -150,26 +156,26 @@ class HelloworldCruiseSpider(scrapy.Spider):
             return False
         return any(re.search(a, path, re.I) for a in ALLOW)
 
-    # --------------- crawl ---------------
-    def parse(self, response):
-        hrefs = response.xpath("//a/@href").getall()
-        for href in hrefs:
+    # ---------- fallback list crawl ----------
+    def parse_listing(self, response):
+        for href in response.xpath("//a/@href").getall():
             if self._allowed_link(href):
                 yield response.follow(href, callback=self.parse_detail)
         for nxt in response.css("a[rel='next']::attr(href), .pagination__link::attr(href), .pagination__next::attr(href)").getall():
-            yield response.follow(nxt, callback=self.parse)
+            yield response.follow(nxt, callback=self.parse_listing)
 
-    # --------------- detail ---------------
+    # ---------- detail ----------
     def parse_detail(self, response):
-        title = self._norm(response.css("h1::text, title::text").get())
+        title = self._norm(" ".join(response.css("h1 *::text, h1::text").getall())) \
+             or self._norm(response.css("meta[property='og:title']::attr(content)").get()) \
+             or self._norm(response.css("title::text").get())
+
         hero = self._norm(" ".join(response.css(".c-hero__subtext ::text, .hero__subtext ::text").getall()))
         body = self._norm(" ".join(response.xpath("//body//text()").getall()))
 
-        # Price: common price classes
         price_text_1 = self._norm(" ".join(response.css(
             ".price, .price-from, .deal-price, .pricing, .c-price, .price__value, .product-price, [class*='price']"
         ).xpath(".//text()").getall()))
-        # 'Priced From' / 'From' labels
         price_text_2 = self._norm(" ".join(response.xpath(
             "//dl[.//dt[contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]]/dd[1]//text()"
             " | "
@@ -177,13 +183,10 @@ class HelloworldCruiseSpider(scrapy.Spider):
             " | "
             "//*[self::h2 or self::h3 or self::h4][contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
         ).getall()))
-        # Pricing section
         price_text_3 = self._norm(" ".join(response.xpath(
             "//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=60]//text()"
         ).getall()))
-        # JSON-LD
         ld_price, ld_currency = self._price_from_ldjson(response)
-        # Body fallback only if it contains currency
         body_price_text = body if self._has_currency(body) else ""
 
         price = (
