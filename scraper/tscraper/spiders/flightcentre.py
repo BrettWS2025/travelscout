@@ -9,7 +9,6 @@ from tscraper.items import PackageItem
 
 BASE = "https://www.flightcentre.co.nz"
 
-# Allowed detail URLs
 ALLOW = [
     r"^/product/\d{6,}/?$",
     r"^/holidays/(?!types/|destinations/|inspiration/)[a-z0-9-]+/[a-z0-9-]+(?:-NZ\d{3,})?/?$",
@@ -26,13 +25,17 @@ DENY = [
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
+
 class FlightcentreSpider(scrapy.Spider):
     name = "flightcentre"
     allowed_domains = ["flightcentre.co.nz"]
     start_urls = [f"{BASE}/holidays", f"{BASE}/deals", f"{BASE}/product/21747107"]
-    custom_settings = {"DOWNLOAD_DELAY": 1.0}
+    custom_settings = {
+        "DOWNLOAD_DELAY": 0.8,
+        # obey robots from project settings; you can override per-run with: -s ROBOTSTXT_OBEY=false (if permitted)
+    }
 
-    # -------------- helpers --------------
+    # ---------- helpers ----------
     def _pid(self, url, title, price):
         return hashlib.md5(f"{url}|{title}|{price}".encode()).hexdigest()
 
@@ -52,7 +55,7 @@ class FlightcentreSpider(scrapy.Spider):
         m = re.search(
             r"(?:NZD|AUD|USD)?\s*(?:NZ\$|AU\$|US\$|\$)\s*([0-9]{2,7}(?:\.[0-9]{1,2})?)"
             r"|(?:NZD|AUD|USD)\s*([0-9]{2,7}(?:\.[0-9]{1,2})?)",
-            t, re.I
+            t, re.I,
         )
         if not m:
             return None
@@ -80,7 +83,7 @@ class FlightcentreSpider(scrapy.Spider):
         duration_days = days or (nights + 1 if nights else None)
         return nights, duration_days
 
-    def _price_from_ldjson(self, response) -> Tuple[Optional[float], Optional[str], Optional[str]]:
+    def _price_from_ldjson(self, response):
         for node in response.xpath("//script[@type='application/ld+json']/text()").getall():
             try:
                 data = json.loads(node.strip())
@@ -89,8 +92,7 @@ class FlightcentreSpider(scrapy.Spider):
             objs = data if isinstance(data, list) else [data]
             for obj in objs:
                 offers = obj.get("offers") or obj.get("aggregateOffer")
-                if not offers:
-                    continue
+                if not offers: continue
                 offers = offers if isinstance(offers, list) else [offers]
                 for off in offers:
                     price = off.get("price") or off.get("lowPrice") or off.get("highPrice")
@@ -115,19 +117,38 @@ class FlightcentreSpider(scrapy.Spider):
             return False
         return any(re.search(a, path) for a in ALLOW)
 
-    # -------------- crawl --------------
+    # ---------- crawl ----------
     def start_requests(self):
+        # Listing pages often lazy-render. We scroll & click “Load more” a few times.
+        listing_methods = [
+            ("wait_for_load_state", "networkidle"),
+            ("evaluate", "document.querySelector('#onetrust-accept-btn-handler, button[aria-label*=Accept i], button:has-text(\\'Accept\\')')?.click?.()"),
+            ("wait_for_timeout", 800),
+            ("evaluate", """
+                (async () => {
+                  const sleep = ms => new Promise(r => setTimeout(r, ms));
+                  let tries = 0;
+                  while (tries < 8) {
+                    window.scrollTo(0, document.body.scrollHeight);
+                    await sleep(900);
+                    const btn = Array.from(document.querySelectorAll('button, a'))
+                      .find(el => /load more|show more/i.test(el.textContent || ''));
+                    if (btn && !btn.disabled) { btn.click(); await sleep(1200); }
+                    else { break; }
+                    tries++;
+                  }
+                })();
+            """),
+            ("wait_for_timeout", 600),
+        ]
+
         for url in self.start_urls:
             meta = {}
             if any(x in url for x in ("/holidays", "/deals")):
                 meta = {
                     "playwright": True,
                     "playwright_context_kwargs": {"locale": "en-NZ", "user_agent": UA},
-                    "playwright_page_methods": [
-                        ("wait_for_load_state", "networkidle"),
-                        ("evaluate", "document.querySelector('#onetrust-accept-btn-handler, button[aria-label*=Accept i], button:has-text(\\'Accept\\')')?.click?.()"),
-                        ("wait_for_timeout", 1000),
-                    ],
+                    "playwright_page_methods": listing_methods,
                 }
             yield scrapy.Request(url, callback=self.parse, meta=meta, dont_filter=True)
 
@@ -144,11 +165,12 @@ class FlightcentreSpider(scrapy.Spider):
                         "playwright_page_methods": [
                             ("wait_for_load_state", "networkidle"),
                             ("evaluate", "document.querySelector('#onetrust-accept-btn-handler, button[aria-label*=Accept i], button:has-text(\\'Accept\\')')?.click?.()"),
-                            ("wait_for_timeout", 800),
+                            ("wait_for_timeout", 700),
                         ],
                     },
                 )
 
+        # follow classic pagination too
         for nxt in response.css("a[rel='next']::attr(href), a.pagination__link::attr(href)").getall():
             yield scrapy.Request(
                 response.urljoin(nxt),
@@ -156,36 +178,34 @@ class FlightcentreSpider(scrapy.Spider):
                 meta={
                     "playwright": True,
                     "playwright_context_kwargs": {"locale": "en-NZ", "user_agent": UA},
-                    "playwright_page_methods": [("wait_for_load_state", "networkidle"), ("wait_for_timeout", 800)],
+                    "playwright_page_methods": [("wait_for_load_state", "networkidle"), ("wait_for_timeout", 600)],
                 },
             )
 
-    # -------------- detail --------------
+    # ---------- detail ----------
     def parse_detail(self, response):
-        # Title/hero/body
-        title = self._norm(" ".join(response.css("h1 *::text, h1::text").getall())) \
-             or self._norm(response.css("meta[property='og:title']::attr(content)").get()) \
-             or self._norm(response.css("title::text").get())
+        # Title (strip generic suffixes)
+        raw_title = self._norm(" ".join(response.css("h1 *::text, h1::text").getall())) \
+                 or self._norm(response.css("meta[property='og:title']::attr(content)").get()) \
+                 or self._norm(response.css("title::text").get())
+        title = re.sub(r"\bEssential holiday info.*$", "", raw_title, flags=re.I).strip()
+
         hero = self._norm(" ".join(response.css(".c-hero__subtext ::text, .hero__subtext ::text").getall()))
         body = self._norm(" ".join(response.xpath("//body//text()").getall()))
 
-        # Price candidates
+        # broader price signals
         price_block = self._norm(" ".join(response.css(
-            "[class*='price'], .price, [data-test*='price']"
+            "[class*='price'], .price, [data-test*='price'], [data-testid*='price'], [data-qa*='price']"
         ).xpath(".//text()").getall()))
-        # 'Priced From' / 'From' nearby text
         price_from = self._norm(" ".join(response.xpath(
             "//dl[.//dt[contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]]/dd[1]//text()"
-            " | //*[(self::h2 or self::h3 or self::h4) and contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]/following::text()[1]"
-            " | //*[(self::h2 or self::h3 or self::h4) and contains(translate(., 'PRICED FROMFROM', 'priced fromfrom'), 'from')]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
+            " | //*[(self::h2 or self::h3 or self::h4) and contains(translate(., 'FROM', 'from'), 'from')]/following::text()[1]"
+            " | //*[(self::h2 or self::h3 or self::h4) and contains(translate(., 'FROM', 'from') )]/following::*[self::span or self::strong or self::p or self::div][1]//text()"
         ).getall()))
-        # Pricing section
         price_pricing = self._norm(" ".join(response.xpath(
             "//*[self::h2 or self::h3][contains(translate(., 'PRICING', 'pricing'), 'pricing')]/following::*[position()<=60]//text()"
         ).getall()))
-        # JSON-LD
         ld_price, ld_currency, price_valid_until = self._price_from_ldjson(response)
-        # Body fallback (only if currency marker exists)
         body_price_text = body if self._has_currency(body) else ""
 
         price = (
@@ -209,13 +229,13 @@ class FlightcentreSpider(scrapy.Spider):
             source="flightcentre",
             url=response.url,
             title=title,
-            destinations=[],   # FC pages vary; map if you find a consistent field later
+            destinations=[],
             duration_days=duration_days,
             nights=nights,
             price=price,
             currency=currency or "NZD",
             price_basis=price_basis,
-            includes={},       # can be expanded with specific selectors later
+            includes={},
             hotel={"name": None, "stars": None, "room_type": None},
             sale_ends_at=price_valid_until,
         )
