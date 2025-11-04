@@ -2,7 +2,7 @@ name: Crawl Travel Packages Nightly
 
 on:
   schedule:
-    - cron: "25 12 * * *"   # 12:25 UTC (~01:25 NZT during DST)
+    - cron: "25 12 * * *"
   workflow_dispatch:
     inputs:
       spiders:
@@ -44,7 +44,7 @@ jobs:
           set -e
           mkdir -p out
 
-          # Run sitemap-based spiders first; then listing/JS spiders
+          # Sitemap-first, then JS/listings (FC sitemap first)
           DEFAULT="helloworld helloworld_cruise houseoftravel_sitemap houseoftravel worldtravellers_sitemap worldtravellers flightcentre_sitemap flightcentre"
           SPIDERS="${INPUT_SPIDERS:-$DEFAULT}"
 
@@ -59,10 +59,8 @@ jobs:
         working-directory: scraper
         run: |
           set -e
-
           shopt -s nullglob
 
-          # Normalize each raw file
           for raw in out/*.raw.jsonl; do
             name=$(basename "$raw" .raw.jsonl)
             echo "::group::Normalize $name"
@@ -70,7 +68,6 @@ jobs:
             echo "::endgroup::"
           done
 
-          # Dedupe each normalized file
           for norm in out/*.norm.jsonl; do
             name=$(basename "$norm" .norm.jsonl)
             echo "::group::Dedupe $name"
@@ -78,15 +75,27 @@ jobs:
             echo "::endgroup::"
           done
 
-          # Merge all deduped outputs
+          # Merge whatever we produced
           cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
 
-      - name: Backfill prices for Flight Centre (optional but recommended)
+      # NEW: make sure every row has a 'price' and 'currency' so fx_apply won't crash
+      - name: Ensure 'price' field exists
         working-directory: scraper
         run: |
           set -e
           if [ -s out/packages.all.jsonl ]; then
-            python scripts/backfill_prices_flightcentre.py out/packages.all.jsonl out/packages.all.pricefix.jsonl || cp out/packages.all.jsonl out/packages.all.pricefix.jsonl
+            python scripts/ensure_price_field.py out/packages.all.jsonl out/packages.all.coerced.jsonl
+          else
+            echo "{}" > out/packages.all.coerced.jsonl
+          fi
+
+      # Optional: fill remaining FC prices by fetching FC detail pages with price==0
+      - name: Backfill prices for Flight Centre
+        working-directory: scraper
+        run: |
+          set -e
+          if [ -s out/packages.all.coerced.jsonl ]; then
+            python scripts/backfill_prices_flightcentre.py out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl || cp out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl
           else
             echo "{}" > out/packages.all.pricefix.jsonl
           fi
