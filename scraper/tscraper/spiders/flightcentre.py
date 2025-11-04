@@ -11,24 +11,31 @@ from tscraper.items import PackageItem
 BASE = "https://www.flightcentre.co.nz"
 
 LISTING_START_URLS = [
+    f"{BASE}/holidays",      # main hub where "Show more holidays" lives
     f"{BASE}/deals",
-    f"{BASE}/holidays",
     f"{BASE}/cruises",
     f"{BASE}/tours",
-    # popular regions (JS listings)
-    f"{BASE}/holidays/fj",
-    f"{BASE}/holidays/ck",
-    f"{BASE}/holidays/au",
-    f"{BASE}/holidays/us",
-    f"{BASE}/holidays/jp",
-    f"{BASE}/holidays/nz",
+
+    # broaden seeds (cheap, many cards per page)
+    f"{BASE}/holidays/fj",   # Fiji
+    f"{BASE}/holidays/ck",   # Cook Islands
+    f"{BASE}/holidays/au",   # Australia
+    f"{BASE}/holidays/us",   # USA
+    f"{BASE}/holidays/ca",   # Canada
+    f"{BASE}/holidays/gb",   # UK
+    f"{BASE}/holidays/eu",   # Europe
+    f"{BASE}/holidays/jp",   # Japan
+    f"{BASE}/holidays/fr",   # France
+    f"{BASE}/holidays/sg",   # Singapore
+    f"{BASE}/holidays/ae",   # UAE
+    f"{BASE}/holidays/nz",   # New Zealand
 ]
 
-# Patterns for detail pages
-PRODUCT_RE   = re.compile(r"^https?://(?:www\.)?flightcentre\.co\.nz/product/\d+/?$")
-HOLIDAY_RE   = re.compile(r"^https?://(?:www\.)?flightcentre\.co\.nz/holidays/.+-NZ\d+/?$", re.I)
+# Detail page patterns
+PRODUCT_RE = re.compile(r"^https?://(?:www\.)?flightcentre\.co\.nz/product/\d+/?$")
+HOLIDAY_RE = re.compile(r"^https?://(?:www\.)?flightcentre\.co\.nz/holidays/.+-NZ\d+/?$", re.I)
 
-# --- Block heavy assets when rendering JS listings ---
+# ---- Playwright helpers ----
 async def block_resources(route):
     req = route.request
     if req.resource_type in {"image", "media", "font", "stylesheet"}:
@@ -36,21 +43,73 @@ async def block_resources(route):
     else:
         await route.continue_()
 
+# Click "Show more" / "Load more" until it stops increasing card count
+def _js_click_show_more(max_clicks: int, selector_hint: str = "holidays"):
+    return PageMethod("evaluate", f"""
+        async () => {{
+          const MAX = {int(max_clicks)};
+          let clicks = 0;
+
+          function countCards() {{
+            const set = new Set();
+            // anchors with real detail slugs
+            document.querySelectorAll("a[href*='/holidays/']").forEach(a => {{
+              const href = a.getAttribute('href') || '';
+              if (/\\-NZ\\d+\\/?$/.test(href)) set.add(new URL(href, location.href).pathname);
+            }});
+            return set.size;
+          }}
+
+          function findBtn() {{
+            // match common patterns; includes "Show more holidays"
+            const nodes = Array.from(document.querySelectorAll('button, a'));
+            return nodes.find(el => /show\\s*more|load\\s*more|view\\s*more/i.test(el.textContent || ''));
+          }}
+
+          let prev = countCards();
+          while (clicks < MAX) {{
+            const btn = findBtn();
+            if (!btn) break;
+            btn.click();
+            clicks++;
+            // give time for fetch + render
+            await new Promise(r => setTimeout(r, 900));
+            window.scrollBy(0, document.body.scrollHeight);
+            await new Promise(r => setTimeout(r, 700));
+            const now = countCards();
+            if (now <= prev) break;  // no new items appeared
+            prev = now;
+          }}
+        }}
+    """)
+
+# Gentle infinite scroll (some pages lazy-load on intersection)
+def _js_infinite_scroll(cycles: int = 6, pause_ms: int = 400):
+    return PageMethod("evaluate", f"""
+        async () => {{
+          const CYCLES = {int(cycles)}, PAUSE = {int(pause_ms)};
+          for (let i = 0; i < CYCLES; i++) {{
+            window.scrollBy(0, document.body.scrollHeight);
+            await new Promise(r => setTimeout(r, PAUSE));
+          }}
+        }}
+    """)
+
 class FlightCentreSpider(scrapy.Spider):
     name = "flightcentre"
     allowed_domains = ["flightcentre.co.nz", "www.flightcentre.co.nz"]
 
-    # Hard caps to keep runs predictable and polite
-    MAX_LISTINGS = 60      # how many listing pages to visit
-    MAX_PRODUCTS = 2000    # safety cap for detail pages
-    MAX_LOAD_MORE = 5      # clicks on "Load more" per listing
+    # Bound the crawl; rely on sitemap spider for breadth
+    MAX_LISTINGS = 120       # more listings than before to sweep regions
+    MAX_PRODUCTS = 4000      # safety cap for details
+    MAX_LOAD_MORE = 30       # try "Show more" quite a few times on hub pages
 
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
         "USER_AGENT": "TravelScoutBot/1.0 (+contact: data@travelscout.example)",
         "CONCURRENT_REQUESTS": 8,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
-        "DOWNLOAD_DELAY": 1.5,
+        "DOWNLOAD_DELAY": 1.2,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 1.0,
@@ -62,7 +121,7 @@ class FlightCentreSpider(scrapy.Spider):
         "PLAYWRIGHT_MAX_PAGES_PER_CONTEXT": 2,
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 15000,
         "LOGSTATS_INTERVAL": 30,
-        "CLOSESPIDER_TIMEOUT": 1800,  # hard stop at ~30 min
+        "CLOSESPIDER_TIMEOUT": 1800,  # ~30 minutes hard stop
     }
 
     def __init__(self, *args, **kwargs):
@@ -70,6 +129,7 @@ class FlightCentreSpider(scrapy.Spider):
         self.seen_listings = set()
         self.listing_count = 0
         self.product_count = 0
+        self.seen_detail_urls = set()
 
     # ---------- Entry ----------
     def start_requests(self):
@@ -84,8 +144,9 @@ class FlightCentreSpider(scrapy.Spider):
                     "playwright_page_methods": [
                         PageMethod("route", "**/*", block_resources),
                         PageMethod("wait_for_load_state", "domcontentloaded"),
-                        # Try to load more cards a few times (if button exists)
-                        *self._load_more_js(self.MAX_LOAD_MORE),
+                        _js_infinite_scroll(6, 400),
+                        _js_click_show_more(self.MAX_LOAD_MORE, "holidays"),
+                        _js_infinite_scroll(4, 400),
                     ],
                 },
             )
@@ -101,14 +162,14 @@ class FlightCentreSpider(scrapy.Spider):
         self.seen_listings.add(url_no_qs)
         self.listing_count += 1
 
-        # Collect detail links from listings (both /product/ and /holidays/...-NZ#####)
-        for href in set(response.css("a[href]::attr(href)").getall()):
-            url = response.urljoin(href).split("?")[0]
-            if PRODUCT_RE.match(url) or HOLIDAY_RE.match(url):
-                # Let Scrapy's dupefilter handle repeats (no dont_filter=True)
-                yield Request(url, callback=self.parse_detail)
+        # Pull detail links from href and common data-* attributes
+        for url in self._extract_detail_urls(response):
+            if url in self.seen_detail_urls:
+                continue
+            self.seen_detail_urls.add(url)
+            yield Request(url, callback=self.parse_detail)
 
-        # Follow more listings (bounded + filtered)
+        # Follow more listing pages (bounded)
         more = set()
         more.update(response.css("a[href^='/holidays/']::attr(href)").getall())
         more.update(response.css("a[href^='/deals']::attr(href)").getall())
@@ -133,10 +194,34 @@ class FlightCentreSpider(scrapy.Spider):
                     "playwright_page_methods": [
                         PageMethod("route", "**/*", block_resources),
                         PageMethod("wait_for_load_state", "domcontentloaded"),
-                        *self._load_more_js(min(2, self.MAX_LOAD_MORE)),
+                        _js_infinite_scroll(4, 350),
+                        _js_click_show_more(min(12, self.MAX_LOAD_MORE), "holidays"),
                     ],
                 },
             )
+
+    def _extract_detail_urls(self, response):
+        """
+        Extract /holidays/...-NZ##### and /product/###### URLs from:
+        - anchor hrefs
+        - data-href / data-url / data-link attributes (common on card wrappers)
+        """
+        candidates = set()
+
+        # 1) Plain anchors
+        for href in response.css("a[href]::attr(href)").getall():
+            u = response.urljoin(href).split("?")[0]
+            if PRODUCT_RE.match(u) or HOLIDAY_RE.match(u):
+                candidates.add(u)
+
+        # 2) data-* attributes that often hold the real link
+        for attr in ("data-href", "data-url", "data-link"):
+            for href in response.css(f"[{attr}]::attr({attr})").getall():
+                u = response.urljoin(href).split("?")[0]
+                if PRODUCT_RE.match(u) or HOLIDAY_RE.match(u):
+                    candidates.add(u)
+
+        return candidates
 
     # ---------- Details ----------
     def parse_detail(self, response):
@@ -154,7 +239,7 @@ class FlightCentreSpider(scrapy.Spider):
             or "Flight Centre Deal"
         )
 
-        # Deal number for package_id (from /holidays/...-NZ##### or "Deal number: ######")
+        # Deal number for package_id (from slug -NZ##### or text)
         deal_from_path = self._rx_first(r"-NZ(\d+)$", url)
         deal_in_text = self._rx_first(r"Deal number:\s*([0-9]{5,})", body_text)
         deal_number = deal_from_path or deal_in_text
@@ -210,30 +295,6 @@ class FlightCentreSpider(scrapy.Spider):
         yield item.model_dump()
 
     # ---------- Helpers ----------
-    def _load_more_js(self, max_clicks: int):
-        # try to click buttons/links that say 'load more' up to N times
-        js = f"""
-        () => {{
-          let clicks = 0;
-          const MAX = {int(max_clicks)};
-          function findBtn() {{
-            const nodes = Array.from(document.querySelectorAll('button, a'));
-            return nodes.find(el => /load more|show more|view more/i.test(el.textContent || ''));
-          }}
-          return new Promise(async (resolve) => {{
-            while (clicks < MAX) {{
-              const btn = findBtn();
-              if (!btn) break;
-              btn.click();
-              clicks++;
-              await new Promise(r => setTimeout(r, 700));
-            }}
-            resolve();
-          }});
-        }}
-        """
-        return [PageMethod("evaluate", js), PageMethod("wait_for_timeout", 400)]
-
     def _norm(self, s: str) -> str:
         return re.sub(r"[\u00A0\u202F\s]+", " ", (s or "")).strip()
 
@@ -264,7 +325,7 @@ class FlightCentreSpider(scrapy.Spider):
             try:
                 data = json.loads(raw)
             except Exception:
-                # Sometimes multiple JSON blocks concatenated; try to split rudimentarily
+                # handle concatenated blocks
                 for chunk in re.split(r"}\s*{", raw):
                     try:
                         data = json.loads("{" + chunk + "}" if not chunk.strip().startswith("{") else chunk)
@@ -302,7 +363,6 @@ class FlightCentreSpider(scrapy.Spider):
                 for v in x: walk(v)
         walk(node)
         if found:
-            # choose the lowest advertised price
             return sorted(found, key=lambda t: t[0])[0]
         return None, None
 
@@ -321,19 +381,17 @@ class FlightCentreSpider(scrapy.Spider):
             return None, None
         t = text.replace(",", " ")
         t = re.sub(r"(?<=\$)\s+", "", t)
-        # Common: "From $3 489 pp", "Price from NZ$3 489", "From $2,999* twin share"
+        # "From $3 489 pp", "Price from NZ$3 489", "From $2,999* twin share"
         m = re.search(r"(?:^|\b)(?:from|price\s*from)\s*(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)\s*([0-9][0-9\s,\.]{2,})", t, re.I)
         if m:
             try:
                 num = float(re.sub(r"[^\d.]", "", m.group(1)))
-                # infer currency token near the match
                 win = t[max(m.start()-12,0):m.end()]
                 cm = re.search(r"(NZD|AUD|USD|NZ\$|AU\$|US\$|\$)", win, re.I)
                 ccy = {"NZD":"NZD","AUD":"AUD","USD":"USD","NZ$":"NZD","AU$":"AUD","US$":"USD","$":"NZD"}[(cm.group(1).upper() if cm else "$")]
                 return num, ccy
             except Exception:
                 pass
-        # Fallback: any "$1234" near "per person/pp"
         m2 = re.search(r"(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)\s*([0-9][0-9\s,\.]{2,})\s*(?:per\s+person|pp|twin\s+share)", t, re.I)
         if m2:
             try:
