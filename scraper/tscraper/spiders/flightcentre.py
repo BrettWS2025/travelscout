@@ -1,9 +1,9 @@
+# scraper/tscraper/spiders/flightcentre.py
 import re
 import json
 import hashlib
 import scrapy
 from urllib.parse import urljoin
-
 from scrapy.http import Request
 from scrapy_playwright.page import PageMethod
 from tscraper.items import PackageItem
@@ -11,24 +11,19 @@ from tscraper.items import PackageItem
 BASE = "https://www.flightcentre.co.nz"
 
 LISTING_START_URLS = [
-    f"{BASE}/holidays",      # main hub where "Show more holidays" lives
+    # Main hubs where "Show more holidays" appears
+    f"{BASE}/holidays",
     f"{BASE}/deals",
     f"{BASE}/cruises",
     f"{BASE}/tours",
 
-    # broaden seeds (cheap, many cards per page)
-    f"{BASE}/holidays/fj",   # Fiji
-    f"{BASE}/holidays/ck",   # Cook Islands
-    f"{BASE}/holidays/au",   # Australia
-    f"{BASE}/holidays/us",   # USA
-    f"{BASE}/holidays/ca",   # Canada
-    f"{BASE}/holidays/gb",   # UK
-    f"{BASE}/holidays/eu",   # Europe
-    f"{BASE}/holidays/jp",   # Japan
-    f"{BASE}/holidays/fr",   # France
-    f"{BASE}/holidays/sg",   # Singapore
-    f"{BASE}/holidays/ae",   # UAE
-    f"{BASE}/holidays/nz",   # New Zealand
+    # Region/country hubs (broad, cheap to request; high card density)
+    f"{BASE}/holidays/fj",  f"{BASE}/holidays/ck",  f"{BASE}/holidays/au",
+    f"{BASE}/holidays/us",  f"{BASE}/holidays/ca",  f"{BASE}/holidays/gb",
+    f"{BASE}/holidays/eu",  f"{BASE}/holidays/jp",  f"{BASE}/holidays/fr",
+    f"{BASE}/holidays/sg",  f"{BASE}/holidays/ae",  f"{BASE}/holidays/nz",
+    f"{BASE}/holidays/th",  f"{BASE}/holidays/id",  f"{BASE}/holidays/vn",
+    f"{BASE}/holidays/mx",
 ]
 
 # Detail page patterns
@@ -43,8 +38,13 @@ async def block_resources(route):
     else:
         await route.continue_()
 
-# Click "Show more" / "Load more" until it stops increasing card count
-def _js_click_show_more(max_clicks: int, selector_hint: str = "holidays"):
+def _js_click_show_more_until_stable(max_clicks: int):
+    """
+    Click 'Show more' / 'Load more' repeatedly until either:
+    - MAX clicks reached, OR
+    - card count stops increasing, OR
+    - the button disappears.
+    """
     return PageMethod("evaluate", f"""
         async () => {{
           const MAX = {int(max_clicks)};
@@ -52,18 +52,22 @@ def _js_click_show_more(max_clicks: int, selector_hint: str = "holidays"):
 
           function countCards() {{
             const set = new Set();
-            // anchors with real detail slugs
-            document.querySelectorAll("a[href*='/holidays/']").forEach(a => {{
-              const href = a.getAttribute('href') || '';
-              if (/\\-NZ\\d+\\/?$/.test(href)) set.add(new URL(href, location.href).pathname);
-            }});
+            document.querySelectorAll("a[href*='/holidays/'], [data-href*='/holidays/'], [data-url*='/holidays/'], [data-link*='/holidays/']")
+              .forEach(el => {{
+                const href = el.getAttribute('href') || el.getAttribute('data-href') || el.getAttribute('data-url') || el.getAttribute('data-link') || '';
+                if (/\\-NZ\\d+\\/?$/.test(href)) {{
+                  try {{ set.add(new URL(href, location.href).pathname); }} catch(_){}
+                }}
+              }});
             return set.size;
           }}
 
           function findBtn() {{
-            // match common patterns; includes "Show more holidays"
             const nodes = Array.from(document.querySelectorAll('button, a'));
-            return nodes.find(el => /show\\s*more|load\\s*more|view\\s*more/i.test(el.textContent || ''));
+            return nodes.find(el => /\\b(show|load|view)\\s*more\\b/i.test(el.textContent || '') ||
+                                    /show\\s*more\\s*holidays/i.test(el.textContent || '') ||
+                                    /more\\s*results/i.test(el.textContent || '') ||
+                                    /aria-label/i.test([...el.attributes].map(a=>a.name).join('')) && /more/i.test(el.getAttribute('aria-label')||''));
           }}
 
           let prev = countCards();
@@ -72,25 +76,22 @@ def _js_click_show_more(max_clicks: int, selector_hint: str = "holidays"):
             if (!btn) break;
             btn.click();
             clicks++;
-            // give time for fetch + render
             await new Promise(r => setTimeout(r, 900));
             window.scrollBy(0, document.body.scrollHeight);
             await new Promise(r => setTimeout(r, 700));
             const now = countCards();
-            if (now <= prev) break;  // no new items appeared
+            if (now <= prev) break;  // no growth -> stop
             prev = now;
           }}
         }}
     """)
 
-# Gentle infinite scroll (some pages lazy-load on intersection)
-def _js_infinite_scroll(cycles: int = 6, pause_ms: int = 400):
+def _js_infinite_scroll(cycles: int = 8, pause_ms: int = 400):
     return PageMethod("evaluate", f"""
         async () => {{
-          const CYCLES = {int(cycles)}, PAUSE = {int(pause_ms)};
-          for (let i = 0; i < CYCLES; i++) {{
+          for (let i = 0; i < {int(cycles)}; i++) {{
             window.scrollBy(0, document.body.scrollHeight);
-            await new Promise(r => setTimeout(r, PAUSE));
+            await new Promise(r => setTimeout(r, {int(pause_ms)}));
           }}
         }}
     """)
@@ -100,16 +101,16 @@ class FlightCentreSpider(scrapy.Spider):
     allowed_domains = ["flightcentre.co.nz", "www.flightcentre.co.nz"]
 
     # Bound the crawl; rely on sitemap spider for breadth
-    MAX_LISTINGS = 120       # more listings than before to sweep regions
-    MAX_PRODUCTS = 4000      # safety cap for details
-    MAX_LOAD_MORE = 30       # try "Show more" quite a few times on hub pages
+    MAX_LISTINGS = 150       # sweep more region pages
+    MAX_PRODUCTS = 5000      # safety cap
+    MAX_LOAD_MORE = 50       # more 'Show more' cycles on hubs
 
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
         "USER_AGENT": "TravelScoutBot/1.0 (+contact: data@travelscout.example)",
         "CONCURRENT_REQUESTS": 8,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
-        "DOWNLOAD_DELAY": 1.2,
+        "DOWNLOAD_DELAY": 1.1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 1.0,
@@ -144,9 +145,9 @@ class FlightCentreSpider(scrapy.Spider):
                     "playwright_page_methods": [
                         PageMethod("route", "**/*", block_resources),
                         PageMethod("wait_for_load_state", "domcontentloaded"),
-                        _js_infinite_scroll(6, 400),
-                        _js_click_show_more(self.MAX_LOAD_MORE, "holidays"),
-                        _js_infinite_scroll(4, 400),
+                        _js_infinite_scroll(8, 400),                      # trigger lazy sections
+                        _js_click_show_more_until_stable(self.MAX_LOAD_MORE),
+                        _js_infinite_scroll(4, 350),
                     ],
                 },
             )
@@ -156,20 +157,20 @@ class FlightCentreSpider(scrapy.Spider):
         if self.listing_count >= self.MAX_LISTINGS:
             return
 
-        url_no_qs = response.url.split("?")[0]
-        if url_no_qs in self.seen_listings:
+        root = response.url.split("?")[0]
+        if root in self.seen_listings:
             return
-        self.seen_listings.add(url_no_qs)
+        self.seen_listings.add(root)
         self.listing_count += 1
 
-        # Pull detail links from href and common data-* attributes
+        # Collect detail links from anchors and common data-* wrappers
         for url in self._extract_detail_urls(response):
             if url in self.seen_detail_urls:
                 continue
             self.seen_detail_urls.add(url)
             yield Request(url, callback=self.parse_detail)
 
-        # Follow more listing pages (bounded)
+        # Follow more listings (bounded)
         more = set()
         more.update(response.css("a[href^='/holidays/']::attr(href)").getall())
         more.update(response.css("a[href^='/deals']::attr(href)").getall())
@@ -194,8 +195,8 @@ class FlightCentreSpider(scrapy.Spider):
                     "playwright_page_methods": [
                         PageMethod("route", "**/*", block_resources),
                         PageMethod("wait_for_load_state", "domcontentloaded"),
-                        _js_infinite_scroll(4, 350),
-                        _js_click_show_more(min(12, self.MAX_LOAD_MORE), "holidays"),
+                        _js_infinite_scroll(6, 350),
+                        _js_click_show_more_until_stable(min(25, self.MAX_LOAD_MORE)),
                     ],
                 },
             )
@@ -203,8 +204,9 @@ class FlightCentreSpider(scrapy.Spider):
     def _extract_detail_urls(self, response):
         """
         Extract /holidays/...-NZ##### and /product/###### URLs from:
-        - anchor hrefs
-        - data-href / data-url / data-link attributes (common on card wrappers)
+          - <a href=...>
+          - data-href / data-url / data-link
+          - onclick handlers like "location.href='...'"
         """
         candidates = set()
 
@@ -214,10 +216,18 @@ class FlightCentreSpider(scrapy.Spider):
             if PRODUCT_RE.match(u) or HOLIDAY_RE.match(u):
                 candidates.add(u)
 
-        # 2) data-* attributes that often hold the real link
+        # 2) data-* attributes
         for attr in ("data-href", "data-url", "data-link"):
             for href in response.css(f"[{attr}]::attr({attr})").getall():
                 u = response.urljoin(href).split("?")[0]
+                if PRODUCT_RE.match(u) or HOLIDAY_RE.match(u):
+                    candidates.add(u)
+
+        # 3) onclick handlers
+        for onclick in response.css("[onclick]::attr(onclick)").getall():
+            m = re.search(r"location\\.href\\s*=\\s*['\\\"]([^'\\\"]+)['\\\"]", onclick)
+            if m:
+                u = response.urljoin(m.group(1)).split("?")[0]
                 if PRODUCT_RE.match(u) or HOLIDAY_RE.match(u):
                     candidates.add(u)
 
@@ -239,16 +249,25 @@ class FlightCentreSpider(scrapy.Spider):
             or "Flight Centre Deal"
         )
 
-        # Deal number for package_id (from slug -NZ##### or text)
+        # Deal number for package_id (from slug -NZ##### or page text)
         deal_from_path = self._rx_first(r"-NZ(\d+)$", url)
         deal_in_text = self._rx_first(r"Deal number:\s*([0-9]{5,})", body_text)
         deal_number = deal_from_path or deal_in_text
         package_id = f"flightcentre-{deal_number}" if deal_number else self._make_id(url, title)
 
-        # ---- PRICE extraction (JSON-LD → meta → text) ----
+        # If this is a /holidays/... page and we saw a deal number, probe /product/{id} too
+        if (deal_number and "flightcentre.co.nz/holidays/" in url):
+            product_url = f"{BASE}/product/{deal_number}"
+            if product_url not in self.seen_detail_urls:
+                self.seen_detail_urls.add(product_url)
+                yield response.follow(product_url, callback=self.parse_detail)
+
+        # ---- PRICE extraction: JSON-LD → meta → any JSON → text ----
         price, currency = self._price_from_jsonld(response)
         if not price:
             price, currency = self._price_from_meta(response)
+        if not price:
+            price, currency = self._price_from_any_json(response)
         if not price:
             price, currency = self._price_from_text(body_text)
         currency = currency or "NZD"
@@ -376,6 +395,63 @@ class FlightCentreSpider(scrapy.Spider):
                 return None, None
         return None, None
 
+    def _price_from_any_json(self, response):
+        """
+        Some FC detail pages hydrate with embedded JSON (Next.js/data blobs).
+        Scan <script type="application/json"> and untyped <script> blocks for common keys.
+        """
+        KEYS = ("price", "fromPrice", "leadPrice", "amount", "valueInCents")
+        for sel in ["script[type='application/json']::text", "script:not([src])::text"]:
+            for raw in response.css(sel).getall():
+                try:
+                    data = json.loads(raw.strip())
+                except Exception:
+                    continue
+                price = self._dig_for_price(data, KEYS)
+                if price is not None:
+                    try:
+                        v = float(re.sub(r"[^\d.]", "", str(price)))
+                        ccy = self._dig_for_currency(data) or None
+                        return v, ccy
+                    except Exception:
+                        pass
+        return None, None
+
+    def _dig_for_price(self, node, keys):
+        found = []
+        def walk(x):
+            if isinstance(x, dict):
+                for k, v in x.items():
+                    if any(k.lower() == kk.lower() for kk in keys):
+                        found.append(v)
+                    walk(v)
+            elif isinstance(x, list):
+                for v in x: walk(v)
+        walk(node)
+        return found[0] if found else None
+
+    def _dig_for_currency(self, node):
+        for key in ("currency", "priceCurrency"):
+            v = self._find_key(node, key)
+            if v:
+                return str(v).upper()
+        return None
+
+    def _find_key(self, node, needle):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k.lower() == needle.lower():
+                    return v
+                out = self._find_key(v, needle)
+                if out is not None:
+                    return out
+        elif isinstance(node, list):
+            for v in node:
+                out = self._find_key(v, needle)
+                if out is not None:
+                    return out
+        return None
+
     def _price_from_text(self, text: str):
         if not text:
             return None, None
@@ -392,6 +468,7 @@ class FlightCentreSpider(scrapy.Spider):
                 return num, ccy
             except Exception:
                 pass
+        # Fallback: any "$1234" near "per person/pp"
         m2 = re.search(r"(?:NZD|AUD|USD|NZ\$|AU\$|US\$|\$)\s*([0-9][0-9\s,\.]{2,})\s*(?:per\s+person|pp|twin\s+share)", t, re.I)
         if m2:
             try:
