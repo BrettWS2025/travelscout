@@ -44,8 +44,8 @@ jobs:
           set -e
           mkdir -p out
 
-          # Default set for scheduled runs (includes helloworld_cruise)
-          DEFAULT="worldtravellers worldtravellers_sitemap houseoftravel houseoftravel_sitemap helloworld helloworld_cruise flightcentre_sitemap flightcentre"
+          # Run sitemap-based spiders first; then listing/JS spiders
+          DEFAULT="helloworld helloworld_cruise houseoftravel_sitemap houseoftravel worldtravellers_sitemap worldtravellers flightcentre_sitemap flightcentre"
           SPIDERS="${INPUT_SPIDERS:-$DEFAULT}"
 
           echo "Running spiders: $SPIDERS"
@@ -55,13 +55,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: "Normalize & dedupe"   # quoted because of '&'
+      - name: Normalize & dedupe
         working-directory: scraper
         run: |
           set -e
 
-          # Normalize every raw file we produced
           shopt -s nullglob
+
+          # Normalize each raw file
           for raw in out/*.raw.jsonl; do
             name=$(basename "$raw" .raw.jsonl)
             echo "::group::Normalize $name"
@@ -69,7 +70,7 @@ jobs:
             echo "::endgroup::"
           done
 
-          # Dedupe every normalized file we produced
+          # Dedupe each normalized file
           for norm in out/*.norm.jsonl; do
             name=$(basename "$norm" .norm.jsonl)
             echo "::group::Dedupe $name"
@@ -77,12 +78,25 @@ jobs:
             echo "::endgroup::"
           done
 
-          # Merge all deduped outputs (whatever ran)
+          # Merge all deduped outputs
           cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
 
-          # Apply FX/derived fields if there is any content
+      - name: Backfill prices for Flight Centre (optional but recommended)
+        working-directory: scraper
+        run: |
+          set -e
           if [ -s out/packages.all.jsonl ]; then
-            python scripts/fx_apply.py out/packages.all.jsonl out/packages.final.jsonl
+            python scripts/backfill_prices_flightcentre.py out/packages.all.jsonl out/packages.all.pricefix.jsonl || cp out/packages.all.jsonl out/packages.all.pricefix.jsonl
+          else
+            echo "{}" > out/packages.all.pricefix.jsonl
+          fi
+
+      - name: FX & derived fields
+        working-directory: scraper
+        run: |
+          set -e
+          if [ -s out/packages.all.pricefix.jsonl ]; then
+            python scripts/fx_apply.py out/packages.all.pricefix.jsonl out/packages.final.jsonl
           else
             echo "{}" > out/packages.final.jsonl
           fi
@@ -97,6 +111,4 @@ jobs:
 
           git add public/data/packages.final.jsonl
           git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
-
-          # Explicit push to main
           git push origin HEAD:main
