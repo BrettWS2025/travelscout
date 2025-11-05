@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
+import type React from "react";
 import {
-  Plane,
   PanelsTopLeft,
   Compass,
   Percent,
@@ -38,7 +39,10 @@ const MENU: MenuSection[] = [
       { label: "Cruising", href: "/(product)/compare#lounges" },
       { label: "Tours", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
-      { label: "Travel Agencies, OTAs and Direct Bookings", href: "/compare/travel-agencies-otas-and-direct" },
+      {
+        label: "Travel Agencies, OTAs and Direct Bookings",
+        href: "/compare/travel-agencies-otas-and-direct",
+      },
     ],
   },
   {
@@ -86,7 +90,7 @@ const MENU: MenuSection[] = [
   },
 ];
 
-/** 
+/**
  * TEMPORARY HIDES:
  * Add keys here to hide sections from the navbar
  * without deleting their configuration.
@@ -203,19 +207,26 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
+        background: "rgba(22,34,58,0.55)", // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
+        backdropFilter: "saturate(160%) blur(12px)", // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate",                           // its own stacking context
+        isolation: "isolate", // its own stacking context
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo 1.5× bigger */}
+        {/* Logo: replaced Plane + text with actual image, sized similarly */}
         <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
-          <Plane className="w-9 h-9" />
-          <span className="font-semibold tracking-wide text-xl">TravelScout</span>
+          <Image
+            src="/Logo_BGRemove.png"
+            alt="TravelScout"
+            width={706}
+            height={313}
+            priority
+            className="h-9 w-auto"
+          />
+          <span className="sr-only">TravelScout</span>
         </Link>
 
         {/* Desktop nav */}
@@ -280,7 +291,11 @@ export function Navbar() {
                         if (!hasChildren) {
                           return (
                             <li key={key}>
-                              <Link className="block" href={it.href ?? "#"} style={{ color: "var(--text)" }}>
+                              <Link
+                                className="block"
+                                href={it.href ?? "#"}
+                                style={{ color: "var(--text)" }}
+                              >
                                 {it.label}
                               </Link>
                             </li>
@@ -288,7 +303,11 @@ export function Navbar() {
                         }
 
                         return (
-                          <li key={key} className="border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
+                          <li
+                            key={key}
+                            className="border-l pl-3"
+                            style={{ borderColor: "rgba(255,255,255,0.12)" }}
+                          >
                             <button
                               className="w-full flex items-center justify-between py-2"
                               onClick={() =>
@@ -298,13 +317,19 @@ export function Navbar() {
                               style={{ color: "var(--text)" }}
                             >
                               <span>{it.label}</span>
-                              <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+                              <ChevronDown
+                                className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
+                              />
                             </button>
                             {open && (
                               <ul className="pl-3 space-y-2">
                                 {it.items!.map((child) => (
                                   <li key={child.label}>
-                                    <Link className="block" href={child.href ?? "#"} style={{ color: "var(--text)" }}>
+                                    <Link
+                                      className="block"
+                                      href={child.href ?? "#"}
+                                      style={{ color: "var(--text)" }}
+                                    >
                                       {child.label}
                                     </Link>
                                   </li>
