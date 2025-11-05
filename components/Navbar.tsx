@@ -51,16 +51,13 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
-      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
-      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
         items: [
           { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
-          // add more destinations later
         ],
       },
     ],
@@ -150,7 +147,6 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
-    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -212,11 +208,11 @@ export function Navbar() {
         backdropFilter: "saturate(160%) blur(12px)", // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate", // its own stacking context
+        isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo: replaced Plane + text with actual image, sized similarly */}
+        {/* Big logo (≈5–6×) */}
         <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
           <Image
             src="/Logo_BGRemove.png"
@@ -224,7 +220,8 @@ export function Navbar() {
             width={706}
             height={313}
             priority
-            className="h-9 w-auto"
+            className="h-24 md:h-48 lg:h-[216px] w-auto"
+            sizes="(max-width: 768px) 96px, (max-width: 1024px) 192px, 216px"
           />
           <span className="sr-only">TravelScout</span>
         </Link>
