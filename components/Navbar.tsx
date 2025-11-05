@@ -208,8 +208,8 @@ export function Navbar() {
           <Image
             src="/Logo_BGRemove.png"
             alt="TravelScout"
-            width={140}            // adjust if your asset is wider/narrower
-            height={32}
+            width={420}            // adjust if your asset is wider/narrower
+            height={96}
             priority
             className="h-8 w-auto md:h-9"
           />
