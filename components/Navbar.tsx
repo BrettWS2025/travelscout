@@ -211,7 +211,7 @@ export function Navbar() {
             width={420}            // adjust if your asset is wider/narrower
             height={96}
             priority
-            className="h-12 w-auto md:h-16"
+            className="h-12 w-auto md:h-20"
           />
         </Link>
 
