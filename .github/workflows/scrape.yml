@@ -20,7 +20,7 @@ jobs:
       - name: Checkout dev branch
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: Dev
           fetch-depth: 0
 
       - name: Set up Python
@@ -120,4 +120,4 @@ jobs:
 
           git add public/data/packages.final.jsonl
           git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
-          git push origin HEAD:dev
+          git push origin HEAD:Dev
