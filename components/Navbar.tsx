@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 import {
+  Plane,
   PanelsTopLeft,
   Compass,
   Percent,
@@ -14,13 +14,13 @@ import {
 type MenuItem = {
   label: string;
   href?: string;
-  items?: MenuItem[];
+  items?: MenuItem[]; // nested submenu
 };
 
 type MenuSection = {
   key: string;
   label: string;
-  href: string;
+  href: string; // main page for the section
   icon: React.ComponentType<{ className?: string }>;
   items: MenuItem[];
 };
@@ -47,12 +47,17 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
+      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
+      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
-        items: [{ label: "Kaitaia", href: "/guides/destinations/kaitaia" }],
+        items: [
+          { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
+          // add more destinations later
+        ],
       },
     ],
   },
@@ -81,7 +86,14 @@ const MENU: MenuSection[] = [
   },
 ];
 
+/** 
+ * TEMPORARY HIDES:
+ * Add keys here to hide sections from the navbar
+ * without deleting their configuration.
+ */
 const HIDE_KEYS = new Set<string>(["guides", "tips"]);
+
+// Derived visible menu (desktop + mobile)
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
@@ -134,6 +146,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -190,29 +203,19 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)",
+        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)",
+        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate",
+        isolation: "isolate",                           // its own stacking context
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo (served from /public/Logo.png) */}
-        <Link
-          href="/"
-          className="flex items-center gap-2"
-          aria-label="TravelScout home"
-        >
-          <Image
-            src="/Logo_BGRemove.png"
-            alt="TravelScout"
-            width={530}            // adjust if your asset is wider/narrower
-            height={128}
-            priority
-            className="h-16 w-auto md:h-30"
-          />
+        {/* Logo 1.5× bigger */}
+        <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
+          <Plane className="w-9 h-9" />
+          <span className="font-semibold tracking-wide text-xl">TravelScout</span>
         </Link>
 
         {/* Desktop nav */}
