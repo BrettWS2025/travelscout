@@ -51,13 +51,16 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
+      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
+      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
         items: [
           { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
+          // add more destinations later
         ],
       },
     ],
@@ -147,6 +150,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -203,16 +207,16 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)", // translucent over your --bg (#16223A)
+        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)", // glass effect
+        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate",
+        isolation: "isolate",                           // its own stacking context
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Big logo (≈5–6×) */}
+        {/* Slightly smaller logo; navbar spacing unchanged */}
         <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
           <Image
             src="/Logo_BGRemove.png"
@@ -220,8 +224,8 @@ export function Navbar() {
             width={706}
             height={313}
             priority
-            className="h-24 md:h-48 lg:h-[216px] w-auto"
-            sizes="(max-width: 768px) 96px, (max-width: 1024px) 192px, 216px"
+            className="h-12 md:h-20 lg:h-24 w-auto"
+            sizes="(max-width: 768px) 48px, (max-width: 1024px) 80px, 96px"
           />
           <span className="sr-only">TravelScout</span>
         </Link>
@@ -288,11 +292,7 @@ export function Navbar() {
                         if (!hasChildren) {
                           return (
                             <li key={key}>
-                              <Link
-                                className="block"
-                                href={it.href ?? "#"}
-                                style={{ color: "var(--text)" }}
-                              >
+                              <Link className="block" href={it.href ?? "#"} style={{ color: "var(--text)" }}>
                                 {it.label}
                               </Link>
                             </li>
@@ -300,11 +300,7 @@ export function Navbar() {
                         }
 
                         return (
-                          <li
-                            key={key}
-                            className="border-l pl-3"
-                            style={{ borderColor: "rgba(255,255,255,0.12)" }}
-                          >
+                          <li key={key} className="border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
                             <button
                               className="w-full flex items-center justify-between py-2"
                               onClick={() =>
@@ -314,19 +310,13 @@ export function Navbar() {
                               style={{ color: "var(--text)" }}
                             >
                               <span>{it.label}</span>
-                              <ChevronDown
-                                className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
-                              />
+                              <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
                             </button>
                             {open && (
                               <ul className="pl-3 space-y-2">
                                 {it.items!.map((child) => (
                                   <li key={child.label}>
-                                    <Link
-                                      className="block"
-                                      href={child.href ?? "#"}
-                                      style={{ color: "var(--text)" }}
-                                    >
+                                    <Link className="block" href={child.href ?? "#"} style={{ color: "var(--text)" }}>
                                       {child.label}
                                     </Link>
                                   </li>
