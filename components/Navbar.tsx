@@ -206,7 +206,7 @@ export function Navbar() {
           aria-label="TravelScout home"
         >
           <Image
-            src="/Logo.png"
+            src="/Logo_BGRemove.png"
             alt="TravelScout"
             width={140}            // adjust if your asset is wider/narrower
             height={32}
