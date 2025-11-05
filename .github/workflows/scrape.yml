@@ -2,8 +2,13 @@ name: Crawl Travel Packages Nightly
 
 on:
   schedule:
-    - cron: "25 12 * * *"   # 12:25 UTC (~01:25 NZT during DST)
+    - cron: "25 12 * * *"
   workflow_dispatch:
+    inputs:
+      spiders:
+        description: "Space-separated spiders to run (leave blank for defaults)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -12,7 +17,11 @@ jobs:
   crawl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout MAIN branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,43 +32,92 @@ jobs:
         run: |
           pip install -r scraper/requirements.txt
 
+      - name: Install Playwright browser
+        run: |
+          python -m playwright install --with-deps chromium
+
       - name: Crawl sources
         working-directory: scraper
+        env:
+          INPUT_SPIDERS: ${{ github.event.inputs.spiders }}
         run: |
+          set -e
           mkdir -p out
-          scrapy crawl worldtravellers -O out/worldtravellers.raw.jsonl || true
-          scrapy crawl flightcentre    -O out/flightcentre.raw.jsonl    || true
-          scrapy crawl houseoftravel   -O out/houseoftravel.raw.jsonl   || true
-          scrapy crawl helloworld      -O out/helloworld.raw.jsonl      || true
+
+          # Sitemap-first, then JS/listings (FC sitemap first)
+          DEFAULT="helloworld helloworld_cruise houseoftravel_sitemap houseoftravel worldtravellers_sitemap worldtravellers flightcentre_sitemap flightcentre"
+          SPIDERS="${INPUT_SPIDERS:-$DEFAULT}"
+
+          echo "Running spiders: $SPIDERS"
+          for s in $SPIDERS; do
+            echo "::group::Crawling $s"
+            scrapy crawl "$s" -O "out/${s}.raw.jsonl" || true
+            echo "::endgroup::"
+          done
 
       - name: Normalize & dedupe
         working-directory: scraper
         run: |
-          python scripts/normalize.py out/worldtravellers.raw.jsonl out/worldtravellers.norm.jsonl || true
-          python scripts/normalize.py out/flightcentre.raw.jsonl    out/flightcentre.norm.jsonl    || true
-          python scripts/normalize.py out/houseoftravel.raw.jsonl   out/houseoftravel.norm.jsonl   || true
-          python scripts/normalize.py out/helloworld.raw.jsonl      out/helloworld.norm.jsonl      || true
+          set -e
+          shopt -s nullglob
 
-          python scripts/dedupe.py out/worldtravellers.norm.jsonl out/worldtravellers.dedupe.jsonl || true
-          python scripts/dedupe.py out/flightcentre.norm.jsonl    out/flightcentre.dedupe.jsonl    || true
-          python scripts/dedupe.py out/houseoftravel.norm.jsonl   out/houseoftravel.dedupe.jsonl   || true
-          python scripts/dedupe.py out/helloworld.norm.jsonl      out/helloworld.dedupe.jsonl      || true
+          for raw in out/*.raw.jsonl; do
+            name=$(basename "$raw" .raw.jsonl)
+            echo "::group::Normalize $name"
+            python scripts/normalize.py "$raw" "out/${name}.norm.jsonl" || true
+            echo "::endgroup::"
+          done
 
-          cat out/*.dedupe.jsonl > out/packages.all.jsonl
-          python scripts/fx_apply.py out/packages.all.jsonl out/packages.final.jsonl
+          for norm in out/*.norm.jsonl; do
+            name=$(basename "$norm" .norm.jsonl)
+            echo "::group::Dedupe $name"
+            python scripts/dedupe.py "$norm" "out/${name}.dedupe.jsonl" || true
+            echo "::endgroup::"
+          done
+
+          # Merge whatever we produced
+          cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
+
+      # NEW: make sure every row has a 'price' and 'currency' so fx_apply won't crash
+      - name: Ensure 'price' field exists
+        working-directory: scraper
+        run: |
+          set -e
+          if [ -s out/packages.all.jsonl ]; then
+            python scripts/ensure_price_field.py out/packages.all.jsonl out/packages.all.coerced.jsonl
+          else
+            echo "{}" > out/packages.all.coerced.jsonl
+          fi
+
+      # Optional: fill remaining FC prices by fetching FC detail pages with price==0
+      - name: Backfill prices for Flight Centre
+        working-directory: scraper
+        run: |
+          set -e
+          if [ -s out/packages.all.coerced.jsonl ]; then
+            python scripts/backfill_prices_flightcentre.py out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl || cp out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl
+          else
+            echo "{}" > out/packages.all.pricefix.jsonl
+          fi
+
+      - name: FX & derived fields
+        working-directory: scraper
+        run: |
+          set -e
+          if [ -s out/packages.all.pricefix.jsonl ]; then
+            python scripts/fx_apply.py out/packages.all.pricefix.jsonl out/packages.final.jsonl
+          else
+            echo "{}" > out/packages.final.jsonl
+          fi
 
       - name: Commit dataset into public/data
         run: |
           mkdir -p public/data
           cp scraper/out/packages.final.jsonl public/data/packages.final.jsonl
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add public/data/packages.final.jsonl
           git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
-          git push
-
-
-
-- name: Install Playwright browser
-  run: |
-    python -m playwright install --with-deps chromium
+          git push origin HEAD:main
