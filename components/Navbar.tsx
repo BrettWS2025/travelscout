@@ -51,16 +51,13 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
-      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
-      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
         items: [
           { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
-          // add more destinations later
         ],
       },
     ],
@@ -150,7 +147,6 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
-    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -216,16 +212,23 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Slightly smaller logo; navbar spacing unchanged */}
-        <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
+        {/* Bigger logo without increasing bar height:
+            - Keep the layout box small (h-10)
+            - Scale the image visually (2–3x) with transform; transforms don't affect layout height
+        */}
+        <Link
+          href="/"
+          className="relative flex items-center gap-2 overflow-visible"
+          style={{ color: "var(--text)" }}
+        >
           <Image
             src="/TravelScout Logo 1 (5).png"
             alt="TravelScout"
             width={706}
             height={313}
             priority
-            className="h-12 md:h-20 lg:h-24 w-auto"
-            sizes="(max-width: 768px) 48px, (max-width: 1024px) 80px, 96px"
+            className="h-10 w-auto transform origin-left scale-[2.25] md:scale-[2.6]"
+            sizes="(max-width: 768px) 40px, (max-width: 1024px) 40px, 40px"
           />
           <span className="sr-only">TravelScout</span>
         </Link>
