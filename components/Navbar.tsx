@@ -216,28 +216,24 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Crisp larger logo without increasing bar height:
-            - Wrapper keeps layout height at h-10 (40px)
-            - Image is absolutely positioned and rendered at a larger pixel height
-            - Wrapper width matches visible image width to avoid overlapping nav items
+        {/* 2× bigger, vertically centered, bar height unchanged:
+            - Wrapper keeps layout height fixed at h-10 (≈40px)
+            - Image is absolutely positioned and drawn larger (crisp), centered with top-1/2 translate-y-1/2
+            - Wrapper width reserves horizontal space so nav doesn’t overlap
             Aspect ratio ≈ 706 / 313 ≈ 2.255
-            -> For 96px height: width ≈ 217px; for 120px height (md+): ≈ 271px
+            For 2×: previous ~96/120px -> now 192px (mobile) / 240px (md+)
+            Widths ≈ 433px (mobile) / 541px (md+)
         */}
-        <Link
-          href="/"
-          className="relative flex items-center"
-          style={{ color: "var(--text)" }}
-        >
-          {/* Layout box: fixed height, width matches the bigger visual logo */}
-          <span className="relative block h-10 w-[218px] md:w-[272px] overflow-visible">
+        <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
+          <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
             <Image
               src="/TravelScout Logo 1 (5).png"
               alt="TravelScout"
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-[96px] md:h-[120px] w-auto select-none pointer-events-none"
-              sizes="(max-width: 768px) 218px, 272px"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              sizes="(max-width: 768px) 433px, 541px"
             />
           </span>
           <span className="sr-only">TravelScout</span>
