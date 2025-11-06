@@ -219,12 +219,12 @@ export function Navbar() {
         <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
           <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
             <Image
-              src="/TravelScout Logo 1 (5).png"
+              src="/TravelScout-Main.png"
               alt="TravelScout"
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+16px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) 433px, 541px"
             />
           </span>
