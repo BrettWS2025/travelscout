@@ -51,17 +51,12 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
-      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
-      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
-        items: [
-          { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
-          // add more destinations later
-        ],
+        items: [{ label: "Kaitaia", href: "/guides/destinations/kaitaia" }],
       },
     ],
   },
@@ -216,13 +211,10 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* 2× bigger, vertically centered, bar height unchanged:
-            - Wrapper keeps layout height fixed at h-10 (≈40px)
-            - Image is absolutely positioned and drawn larger (crisp), centered with top-1/2 translate-y-1/2
-            - Wrapper width reserves horizontal space so nav doesn’t overlap
-            Aspect ratio ≈ 706 / 313 ≈ 2.255
-            For 2×: previous ~96/120px -> now 192px (mobile) / 240px (md+)
-            Widths ≈ 433px (mobile) / 541px (md+)
+        {/* 2× bigger, perfectly centered, bar height unchanged.
+            Keep wrapper small (h-10) so layout height stays the same.
+            Center the absolutely-positioned image relative to the row by offsetting 16px (py-4).
+            Aspect ratio ≈ 706 / 313 ≈ 2.255 → widths below match height for no overlap.
         */}
         <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
           <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
@@ -232,7 +224,7 @@ export function Navbar() {
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+16px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) 433px, 541px"
             />
           </span>
