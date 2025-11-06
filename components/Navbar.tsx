@@ -219,7 +219,7 @@ export function Navbar() {
         {/* Slightly smaller logo; navbar spacing unchanged */}
         <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
           <Image
-            src="/Logo_BGRemove.png"
+            src="/TravelScout Logo 1.png"
             alt="TravelScout"
             width={706}
             height={313}
