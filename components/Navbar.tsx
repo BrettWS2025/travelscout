@@ -213,7 +213,7 @@ export function Navbar() {
       <div className="container flex items-center justify-between py-4">
         {/* 2× bigger, perfectly centered, bar height unchanged.
             Keep wrapper small (h-10) so layout height stays the same.
-            Center the absolutely-positioned image relative to the row by offsetting 24px (py-4).
+            Center the absolutely-positioned image relative to the row by offsetting 28px (py-4).
             Aspect ratio ≈ 706 / 313 ≈ 2.255 → widths below match height for no overlap.
         */}
         <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
@@ -224,7 +224,7 @@ export function Navbar() {
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+24px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+28px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) 433px, 541px"
             />
           </span>
