@@ -206,25 +206,42 @@ export function Navbar() {
         backdropFilter: "saturate(160%) blur(12px)",    // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate",                           // its own stacking context
+        isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between gap-2 py-4">
-        {/* Big logo that doesn't push the burger off-screen:
-            - On mobile: clamp width to viewport minus ~72px (padding + burger)
-            - On desktop: allow full wide width
-            - Image is absolutely centered within the small layout box (h-10)
+        {/* 
+          Vertically centered, large logo that does not push the burger off-screen.
+          - On mobile, clamp width to viewport: w-[min(420px,calc(100vw-72px))]
+          - On desktop, allow a wider placeholder.
+          - Image is absolutely centered; we nudge it down using --logo-shift per breakpoint.
         */}
-        <Link href="/" className="relative flex items-center min-w-0 shrink-0" style={{ color: "var(--text)" }}>
-          <span className="relative block h-10 w-[420px] max-w-[calc(100vw-72px)] md:w-[541px] md:max-w-none overflow-visible">
+        <Link
+          href="/"
+          className="relative flex items-center min-w-0 shrink-0"
+          style={{ color: "var(--text)" }}
+        >
+          <span
+            className="
+              relative block h-10
+              w-[min(420px,calc(100vw-72px))] md:w-[541px]
+              overflow-visible
+              [--logo-shift:10px] sm:[--logo-shift:12px] md:[--logo-shift:14px] lg:[--logo-shift:16px]
+            "
+          >
             <Image
-              src="/TravelScout-Main.png"
+              src="/TravelScout-Main.png"   // <-- your big logo
               alt="TravelScout"
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-[148px] sm:h-[168px] md:h-[240px] w-auto select-none pointer-events-none"
-              sizes="(max-width: 480px) 348px, (max-width: 768px) 420px, 541px"
+              className="
+                absolute left-0 top-1/2
+                translate-y-[calc(-50%+var(--logo-shift))]
+                h-[148px] sm:h-[168px] md:h-[220px] lg:h-[240px]
+                w-auto select-none pointer-events-none
+              "
+              sizes="(max-width: 480px) calc(100vw - 72px), (max-width: 768px) calc(100vw - 72px), 541px"
             />
           </span>
           <span className="sr-only">TravelScout</span>
@@ -237,7 +254,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Mobile burger (fixed hit-area, aligned) */}
+        {/* Mobile burger: fixed hit-area, stays visible */}
         <button
           className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
