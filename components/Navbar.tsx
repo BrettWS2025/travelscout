@@ -51,13 +51,16 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
+      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
+      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
         items: [
           { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
+          // add more destinations later
         ],
       },
     ],
@@ -147,6 +150,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -212,24 +216,30 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Bigger logo without increasing bar height:
-            - Keep the layout box small (h-10)
-            - Scale the image visually (2–3x) with transform; transforms don't affect layout height
+        {/* Crisp larger logo without increasing bar height:
+            - Wrapper keeps layout height at h-10 (40px)
+            - Image is absolutely positioned and rendered at a larger pixel height
+            - Wrapper width matches visible image width to avoid overlapping nav items
+            Aspect ratio ≈ 706 / 313 ≈ 2.255
+            -> For 96px height: width ≈ 217px; for 120px height (md+): ≈ 271px
         */}
         <Link
           href="/"
-          className="relative flex items-center gap-2 overflow-visible"
+          className="relative flex items-center"
           style={{ color: "var(--text)" }}
         >
-          <Image
-            src="/TravelScout Logo 1 (5).png"
-            alt="TravelScout"
-            width={706}
-            height={313}
-            priority
-            className="h-10 w-auto transform origin-left scale-[2.25] md:scale-[2.6]"
-            sizes="(max-width: 768px) 40px, (max-width: 1024px) 40px, 40px"
-          />
+          {/* Layout box: fixed height, width matches the bigger visual logo */}
+          <span className="relative block h-10 w-[218px] md:w-[272px] overflow-visible">
+            <Image
+              src="/TravelScout Logo 1 (5).png"
+              alt="TravelScout"
+              width={706}
+              height={313}
+              priority
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[96px] md:h-[120px] w-auto select-none pointer-events-none"
+              sizes="(max-width: 768px) 218px, 272px"
+            />
+          </span>
           <span className="sr-only">TravelScout</span>
         </Link>
 
