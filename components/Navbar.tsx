@@ -219,7 +219,7 @@ export function Navbar() {
         <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
           <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
             <Image
-              src="/TravelScout - Main.png.png"
+              src="/TravelScout-Main.png"
               alt="TravelScout"
               width={706}
               height={313}
