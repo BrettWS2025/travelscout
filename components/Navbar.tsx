@@ -228,7 +228,7 @@ export function Navbar() {
               relative block h-10
               w-[min(420px,calc(100vw-72px))] md:w-[541px]
               overflow-visible
-              [--logo-shift:10px] sm:[--logo-shift:12px] md:[--logo-shift:30px] lg:[--logo-shift:32px]
+              [--logo-shift:10px] sm:[--logo-shift:12px] md:[--logo-shift:14px] lg:[--logo-shift:16px]
             "
           >
             <Image
