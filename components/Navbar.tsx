@@ -145,7 +145,6 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
-    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -200,7 +199,7 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-[1000]"
+      className="sticky top-0 z-[1000] overflow-x-hidden"
       style={{
         background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
@@ -210,22 +209,22 @@ export function Navbar() {
         isolation: "isolate",                           // its own stacking context
       }}
     >
-      <div className="container flex items-center justify-between py-4">
-        {/* 2× bigger, perfectly centered, bar height unchanged.
-            Keep wrapper small (h-10) so layout height stays the same.
-            Center the absolutely-positioned image relative to the row by offsetting 32px (py-4).
-            Aspect ratio ≈ 706 / 313 ≈ 2.255 → widths below match height for no overlap.
+      <div className="container flex items-center justify-between gap-2 py-4">
+        {/* Big logo that doesn't push the burger off-screen:
+            - On mobile: clamp width to viewport minus ~72px (padding + burger)
+            - On desktop: allow full wide width
+            - Image is absolutely centered within the small layout box (h-10)
         */}
-        <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
-          <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
+        <Link href="/" className="relative flex items-center min-w-0 shrink-0" style={{ color: "var(--text)" }}>
+          <span className="relative block h-10 w-[420px] max-w-[calc(100vw-72px)] md:w-[541px] md:max-w-none overflow-visible">
             <Image
               src="/TravelScout-Main.png"
               alt="TravelScout"
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
-              sizes="(max-width: 768px) 433px, 541px"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[148px] sm:h-[168px] md:h-[240px] w-auto select-none pointer-events-none"
+              sizes="(max-width: 480px) 348px, (max-width: 768px) 420px, 541px"
             />
           </span>
           <span className="sr-only">TravelScout</span>
@@ -238,9 +237,9 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Mobile burger */}
+        {/* Mobile burger (fixed hit-area, aligned) */}
         <button
-          className="md:hidden"
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
