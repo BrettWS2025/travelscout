@@ -116,7 +116,12 @@ function SubmenuItem({ item }: { item: MenuItem }) {
 
       {item.items && open && (
         <div
-          className="absolute left-full top-0 -ml-px w-64 card p-3 z-50"
+          className="
+            absolute left-full top-0 -ml-px w-64 p-3 z-[1000]
+            rounded-md border border-white/10 shadow-xl
+            bg-[rgba(22,34,58,0.98)] backdrop-blur
+            overflow-visible max-h-none
+          "
           role="menu"
           aria-label={item.label}
           style={{ color: "var(--text)" }}
@@ -145,6 +150,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
+    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -164,7 +170,12 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
       {open && (
         <div
-          className="absolute left-0 top-full -mt-px w-72 card p-3 z-50"
+          className="
+            absolute left-0 top-full -mt-px w-72 p-3 z-[1000]
+            rounded-md border border-white/10 shadow-xl
+            bg-[rgba(22,34,58,0.98)] backdrop-blur
+            overflow-visible max-h-none
+          "
           role="menu"
           aria-label={section.label}
           style={{ color: "var(--text)" }}
@@ -199,7 +210,7 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-[1000] overflow-x-hidden"
+      className="sticky top-0 z-[100] overflow-x-hidden"  /* keep x hidden; allow y overflow so flyouts overlay page */
       style={{
         background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
@@ -209,18 +220,9 @@ export function Navbar() {
         isolation: "isolate",
       }}
     >
-      <div className="container flex items-center justify-between gap-2 py-4">
-        {/* 
-          Vertically centered, large logo that does not push the burger off-screen.
-          - On mobile, clamp width to viewport: w-[min(420px,calc(100vw-72px))]
-          - On desktop, allow a wider placeholder.
-          - Image is absolutely centered; we nudge it down using --logo-shift per breakpoint.
-        */}
-        <Link
-          href="/"
-          className="relative flex items-center min-w-0 shrink-0"
-          style={{ color: "var(--text)" }}
-        >
+      <div className="container flex items-center justify-between gap-2 py-4 overflow-visible">
+        {/* Large, centered logo that does not push the burger off-screen */}
+        <Link href="/" className="relative flex items-center min-w-0 shrink-0" style={{ color: "var(--text)" }}>
           <span
             className="
               relative block h-10
@@ -230,7 +232,7 @@ export function Navbar() {
             "
           >
             <Image
-              src="/TravelScout-Main.png"   // <-- your big logo
+              src="/TravelScout-Main.png"
               alt="TravelScout"
               width={706}
               height={313}
@@ -248,13 +250,13 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6 overflow-visible">
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
         </nav>
 
-        {/* Mobile burger: fixed hit-area, stays visible */}
+        {/* Mobile burger: fixed hit-area, aligned right */}
         <button
           className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
@@ -269,7 +271,14 @@ export function Navbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
-          <div className="card p-2" style={{ color: "var(--text)" }}>
+          <div
+            className="
+              p-2
+              rounded-md border border-white/10 shadow-lg
+              bg-[rgba(22,34,58,0.9)] backdrop-blur
+            "
+            style={{ color: "var(--text)" }}
+          >
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
               const isOpen = !!expanded[section.key];
