@@ -224,7 +224,7 @@ export function Navbar() {
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+16px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+20px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) 433px, 541px"
             />
           </span>
