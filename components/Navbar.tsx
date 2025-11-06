@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
+import type React from "react";
 import {
-  Plane,
   PanelsTopLeft,
   Compass,
   Percent,
@@ -38,7 +39,10 @@ const MENU: MenuSection[] = [
       { label: "Cruising", href: "/(product)/compare#lounges" },
       { label: "Tours", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
-      { label: "Travel Agencies, OTAs and Direct Bookings", href: "/compare/travel-agencies-otas-and-direct" },
+      {
+        label: "Travel Agencies, OTAs and Direct Bookings",
+        href: "/compare/travel-agencies-otas-and-direct",
+      },
     ],
   },
   {
@@ -47,17 +51,12 @@ const MENU: MenuSection[] = [
     href: "/guides",
     icon: Compass,
     items: [
-      // regular links
       { label: "Airport Guides", href: "/(marketing)/guides#airports" },
       { label: "Loyalty & Airpoints", href: "/(marketing)/guides#loyalty" },
-      // nested submenu: Guides > Destinations > Kaitaia
       {
         label: "Destinations",
         href: "/guides/destinations",
-        items: [
-          { label: "Kaitaia", href: "/guides/destinations/kaitaia" },
-          // add more destinations later
-        ],
+        items: [{ label: "Kaitaia", href: "/guides/destinations/kaitaia" }],
       },
     ],
   },
@@ -86,7 +85,7 @@ const MENU: MenuSection[] = [
   },
 ];
 
-/** 
+/**
  * TEMPORARY HIDES:
  * Add keys here to hide sections from the navbar
  * without deleting their configuration.
@@ -212,10 +211,24 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo 1.5× bigger */}
-        <Link href="/" className="flex items-center gap-2" style={{ color: "var(--text)" }}>
-          <Plane className="w-9 h-9" />
-          <span className="font-semibold tracking-wide text-xl">TravelScout</span>
+        {/* 2× bigger, perfectly centered, bar height unchanged.
+            Keep wrapper small (h-10) so layout height stays the same.
+            Center the absolutely-positioned image relative to the row by offsetting 32px (py-4).
+            Aspect ratio ≈ 706 / 313 ≈ 2.255 → widths below match height for no overlap.
+        */}
+        <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
+          <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
+            <Image
+              src="/TravelScout - Main.png.png"
+              alt="TravelScout"
+              width={706}
+              height={313}
+              priority
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              sizes="(max-width: 768px) 433px, 541px"
+            />
+          </span>
+          <span className="sr-only">TravelScout</span>
         </Link>
 
         {/* Desktop nav */}
