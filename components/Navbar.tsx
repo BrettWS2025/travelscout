@@ -1,8 +1,9 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import type React from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   PanelsTopLeft,
   Compass,
@@ -85,15 +86,87 @@ const MENU: MenuSection[] = [
   },
 ];
 
-/**
- * TEMPORARY HIDES:
- * Add keys here to hide sections from the navbar
- * without deleting their configuration.
- */
+/** TEMPORARY HIDES */
 const HIDE_KEYS = new Set<string>(["guides", "tips"]);
-
-// Derived visible menu (desktop + mobile)
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
+
+/* --------------------------------- */
+/*            MENU PORTAL            */
+/* --------------------------------- */
+
+function useIsomorphicLayoutEffect(cb: React.EffectCallback, deps: React.DependencyList) {
+  // SSR-safe layout effect
+  const isBrowser = typeof window !== "undefined";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return (isBrowser ? useLayoutEffect : useEffect)(cb, deps);
+}
+
+type MenuPortalProps = {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement>;
+  onClose: () => void;
+  render: () => React.ReactNode;
+  widthPx?: number; // desired width (tailwind w-72 ≈ 288px)
+};
+
+function MenuPortal({ open, anchorRef, onClose, render, widthPx = 288 }: MenuPortalProps) {
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [portalEl, setPortalEl] = useState<Element | null>(null);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") setPortalEl(document.body);
+  }, []);
+
+  // Position panel under anchor (viewport coords)
+  useIsomorphicLayoutEffect(() => {
+    if (!open || !anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+
+    // Clamp so the panel does not overflow the right edge
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - widthPx - 8));
+    const top = rect.bottom; // directly under the trigger
+    setPos({ top, left });
+  }, [open, anchorRef, widthPx]);
+
+  // Close when mouse leaves the panel area (typical hover dropdown behavior)
+  useEffect(() => {
+    if (!open) return;
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [open, onClose]);
+
+  if (!open || !portalEl) return null;
+
+  const panel = (
+    <div
+      ref={panelRef}
+      className="fixed z-[9999]"
+      style={{ top: pos.top, left: pos.left, width: widthPx }}
+      onMouseLeave={onClose}
+      onMouseEnter={() => {/* keep open */}}
+    >
+      <div
+        className="
+          p-3 rounded-md border border-white/10 shadow-xl
+          bg-[rgba(22,34,58,0.98)] backdrop-blur
+        "
+        style={{ color: "var(--text)" }}
+      >
+        {render()}
+      </div>
+    </div>
+  );
+
+  return createPortal(panel, portalEl);
+}
+
+/* --------------------------------- */
+/*            SUBMENUS               */
+/* --------------------------------- */
 
 function SubmenuItem({ item }: { item: MenuItem }) {
   const [open, setOpen] = useState(false);
@@ -114,13 +187,13 @@ function SubmenuItem({ item }: { item: MenuItem }) {
         {item.items && <ChevronRight className="w-4 h-4 opacity-70" />}
       </div>
 
+      {/* Nested submenu (still within the portal panel, so no navbar scrolling) */}
       {item.items && open && (
         <div
           className="
             absolute left-full top-0 -ml-px w-64 p-3 z-[1000]
             rounded-md border border-white/10 shadow-xl
             bg-[rgba(22,34,58,0.98)] backdrop-blur
-            overflow-visible max-h-none
           "
           role="menu"
           aria-label={item.label}
@@ -148,38 +221,36 @@ function SubmenuItem({ item }: { item: MenuItem }) {
 function NavDropdown({ section }: { section: MenuSection }) {
   const [open, setOpen] = useState(false);
   const Icon = section.icon;
+  const anchorRef = useRef<HTMLSpanElement>(null);
 
   return (
-    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <Link
-        href={section.href}
-        className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        style={{ color: "var(--text)" }}
-      >
-        <Icon className="w-4 h-4" />
-        {section.label}
-        <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
-      </Link>
-
-      {open && (
-        <div
-          className="
-            absolute left-0 top-full -mt-px w-72 p-3 z-[1000]
-            rounded-md border border-white/10 shadow-xl
-            bg-[rgba(22,34,58,0.98)] backdrop-blur
-            overflow-visible max-h-none
-          "
-          role="menu"
-          aria-label={section.label}
+      {/* Anchor span to measure position reliably (Link refs can be tricky) */}
+      <span ref={anchorRef}>
+        <Link
+          href={section.href}
+          className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+          aria-haspopup="menu"
+          aria-expanded={open}
           style={{ color: "var(--text)" }}
         >
+          <Icon className="w-4 h-4" />
+          {section.label}
+          <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+        </Link>
+      </span>
+
+      {/* Render the dropdown in a portal so it never scrolls the navbar */}
+      <MenuPortal
+        open={open}
+        anchorRef={anchorRef}
+        onClose={() => setOpen(false)}
+        widthPx={288} // Tailwind w-72
+        render={() => (
           <ul className="space-y-1">
             {section.items.map((it) =>
               it.items ? (
@@ -197,11 +268,15 @@ function NavDropdown({ section }: { section: MenuSection }) {
               )
             )}
           </ul>
-        </div>
-      )}
+        )}
+      />
     </div>
   );
 }
+
+/* --------------------------------- */
+/*               NAV                 */
+/* --------------------------------- */
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -210,25 +285,25 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-[100] overflow-x-hidden"  /* keep x hidden; allow y overflow so flyouts overlay page */
+      className="sticky top-0 z-[100] overflow-x-hidden"
       style={{
-        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
+        background: "rgba(22,34,58,0.55)",            // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
+        backdropFilter: "saturate(160%) blur(12px)",   // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
         isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between gap-2 py-4 overflow-visible">
-        {/* Large, centered logo that does not push the burger off-screen */}
+        {/* Large logo, fully centered, clamped on mobile so it never pushes burger off-screen */}
         <Link href="/" className="relative flex items-center min-w-0 shrink-0" style={{ color: "var(--text)" }}>
           <span
             className="
               relative block h-10
               w-[min(420px,calc(100vw-72px))] md:w-[541px]
               overflow-visible
-              [--logo-shift:10px] sm:[--logo-shift:12px] md:[--logo-shift:32px] lg:[--logo-shift:34px]
+              [--logo-shift:10px] sm:[--logo-shift:12px] md:[--logo-shift:14px] lg:[--logo-shift:16px]
             "
           >
             <Image
@@ -249,14 +324,14 @@ export function Navbar() {
           <span className="sr-only">TravelScout</span>
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop nav (hover to open; portals handle the dropdown panels) */}
         <nav className="hidden md:flex items-center gap-6 overflow-visible">
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
         </nav>
 
-        {/* Mobile burger: fixed hit-area, aligned right */}
+        {/* Mobile burger */}
         <button
           className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
@@ -268,7 +343,7 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (unchanged) */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
           <div
