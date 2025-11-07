@@ -48,23 +48,29 @@ jobs:
           python scraper/scripts/analyze_deals.py
 
       - name: Commit and push generated report (if any changes)
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+  run: |
+    set -e
 
-          # Stage all changes from the run
-          git add -A
+    git config user.name  "github-actions[bot]"
+    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Exit early if nothing changed
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
+    # Make sure we have the latest remote history
+    git fetch origin main
 
-          # Rebase on latest remote main to avoid non-fast-forward errors
-          git fetch origin main
-          git rebase origin/main || git rebase --abort
+    # Stage everything created by the script
+    git add -A
 
-          # Commit and push
-          git commit -m "chore(reports): OpenAI Top 10 deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          git push --with-lease origin HEAD:main
+    # If nothing is staged, exit quietly
+    if git diff --cached --quiet; then
+      echo "No changes to commit."
+      exit 0
+    fi
+
+    # Commit first (so the index is clean before rebase)
+    git commit -m "chore(reports): OpenAI Top 10 deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+    # Rebase our new commit(s) onto the latest remote main
+    git pull --rebase --autostash origin main
+
+    # Push safely
+    git push --with-lease origin HEAD:main
