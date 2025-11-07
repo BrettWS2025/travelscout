@@ -30,15 +30,14 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Right box with image (only the CTA is clickable) */}
+      {/* Right box with image */}
       <div
         className="
           relative w-full overflow-hidden rounded-2xl border
           aspect-[16/10] md:aspect-[5/4]
         "
         style={{
-          background:
-            "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
+          background: "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
           borderColor: "rgba(255,255,255,0.10)",
         }}
       >
@@ -51,19 +50,20 @@ export function Hero() {
           sizes="(max-width: 768px) 100vw, 50vw"
         />
 
-        {/* Clickable part only: CTA pill */}
+        {/* Centered CTA pill (only this part is clickable) */}
         <Link
           href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010#Inclusions"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open the Plantation Island deal (opens in a new tab)"
           className="
-            absolute bottom-3 right-3 z-10
-            inline-flex items-center gap-1
-            rounded-full px-4 py-2 text-sm font-semibold
-            transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+            absolute left-1/2 -translate-x-1/2 bottom-4 z-10
+            inline-flex items-center justify-center gap-2
+            rounded-xl px-6 py-3 text-sm md:text-base font-semibold
+            shadow-md transition-transform hover:scale-[1.02]
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
           "
-          style={{ background: "var(--brand)", color: "#000" }}
+          style={{ background: "#16223A", color: "#FFFFFF" }}
         >
           Take me there →
         </Link>
