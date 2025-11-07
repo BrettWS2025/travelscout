@@ -30,34 +30,44 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Right box with clickable image */}
-      <Link
-        href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010#Inclusions"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block"
+      {/* Right box with image (only the CTA is clickable) */}
+      <div
+        className="
+          relative w-full overflow-hidden rounded-2xl border
+          aspect-[16/10] md:aspect-[5/4]
+        "
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
+          borderColor: "rgba(255,255,255,0.10)",
+        }}
       >
-        <div
+        <Image
+          src="/7th_Nov_Deal_of_the_Day.png"
+          alt="Deal of the Day — Plantation Island Resort"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+
+        {/* Clickable part only: CTA pill */}
+        <Link
+          href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010#Inclusions"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open the Plantation Island deal (opens in a new tab)"
           className="
-            relative w-full overflow-hidden rounded-2xl border
-            /* Give the box a real size at all breakpoints */
-            aspect-[16/10] md:aspect-[5/4]
+            absolute bottom-3 right-3 z-10
+            inline-flex items-center gap-1
+            rounded-full px-4 py-2 text-sm font-semibold
+            transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
           "
-          style={{
-            background: "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
-            borderColor: "rgba(255,255,255,0.10)",
-          }}
+          style={{ background: "var(--brand)", color: "#000" }}
         >
-          <Image
-            src="/7th_Nov_Deal_of_the_Day.png"
-            alt="Deal of the Day — Plantation Island Resort"
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="(max-width: 768px) 100vw, 50vw"
-          />
-        </div>
-      </Link>
+          Take me there →
+        </Link>
+      </div>
     </section>
   );
 }
