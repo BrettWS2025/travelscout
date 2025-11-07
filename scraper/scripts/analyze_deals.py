@@ -71,7 +71,7 @@ USER_PROMPT_CORE = (
     "Attached is a file filled with Travel deals sourced from the internet. I want you to go through the details "
     "and find the best deals. To find the best deals I want you to check to see what is included in the deal, and then "
     "go to the link provided and compare that with what it costs to create that same booking yourself through the likes "
-    "of booking.com or expedia or with the suppliers directly. Then i want you to collate the top 10 deals that provide "
+    "of booking.com or expedia or with the suppliers directly, you will need to surce this from those sites. Then i want you to collate the top 10 deals that provide "
     "the best deals and give a breakdown of the do it yourself version compared to the travel agency version and provide "
     "sources for where you got the information. Be sure to bear in mind that the costs are provided as a per person twin "
     "share whereas when comparing with the likes of a hotel, the cost is not per person, so that is a key consideration "
