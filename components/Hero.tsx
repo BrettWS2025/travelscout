@@ -30,19 +30,20 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Right box with image */}
+      {/* Right box with clickable image */}
       <Link
         href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010#Inclusions"
         target="_blank"
         rel="noopener noreferrer"
-        className="block group"
+        className="block"
       >
         <div
           className="
-            relative h-64 md:h-full rounded-2xl border overflow-hidden
+            relative w-full overflow-hidden rounded-2xl border
+            /* Give the box a real size at all breakpoints */
+            aspect-[16/10] md:aspect-[5/4]
           "
           style={{
-            // Keeps your subtle background in case the image is still loading
             background: "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
             borderColor: "rgba(255,255,255,0.10)",
           }}
@@ -52,7 +53,7 @@ export function Hero() {
             alt="Deal of the Day — Plantation Island Resort"
             fill
             priority
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+            className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
