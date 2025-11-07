@@ -132,7 +132,7 @@ def stamp() -> str:
 def find_latest_packages(data_dir: Path) -> Path:
     candidates = sorted(data_dir.glob("packages.final.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not candidates:
-        raise FileNotFoundError(f"No packages.final*.jsonl found in {data_dir}")
+        raise FileNotFoundError(f"No packages.final.jsonl found in {data_dir}")
     return candidates[0]
 
 def read_jsonl(path: Path) -> List[Dict[str, Any]]:
