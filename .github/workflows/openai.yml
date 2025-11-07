@@ -85,4 +85,4 @@ jobs:
           git pull --rebase --autostash origin main
 
           # Push safely
-          git push --with-lease origin HEAD:main
+          git push origin HEAD:main
