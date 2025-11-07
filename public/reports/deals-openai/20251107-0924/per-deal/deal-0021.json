@@ -1,0 +1,57 @@
+{
+  "deal_id": "British Royale",
+  "title": "British Royale",
+  "url": "https://www.flightcentre.co.nz/product/22145574",
+  "source": "flightcentre",
+  "nights": 9,
+  "pp_price": 13795.0,
+  "package_total_for_two": 27590.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "10-day Limited edition Escorted tour with Luxury Gold from London to Edinburgh",
+    "9-nights luxury accommodation",
+    "15 Meals",
+    "Personalised Concierge Services"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Rubens at the Palace and other luxury accommodations",
+      "nights": 9,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (15)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Concierge Services",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Specific meal and service costs not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers a comprehensive luxury experience with unique inclusions, but lacks specific DIY pricing for a complete comparison.",
+  "additional_notes": "The deal is appealing for those seeking a guided luxury experience.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22145574"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"British Royale\",\n  \"title\": \"British Royale\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22145574\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9,\n  \"pp_price\": 13795.0,\n  \"package_total_for_two\": 27590.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"10-day Limited edition Escorted tour with Luxury Gold from London to Edinburgh\",\n    \"9-nights luxury accommodation\",\n    \"15 Meals\",\n    \"Personalised Concierge Services\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Rubens at the Palace and other luxury accommodations\",\n      \"nights\": 9,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (15)\", \"price\": null, \"source\": null},\n        {\"label\": \"Concierge Services\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Specific meal and service costs not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive luxury experience with unique inclusions, but lacks specific DIY pricing for a complete comparison.\",\n  \"additional_notes\": \"The deal is appealing for those seeking a guided luxury experience.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22145574\"\n  ]\n}"
+}

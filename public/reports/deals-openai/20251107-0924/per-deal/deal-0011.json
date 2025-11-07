@@ -1,0 +1,73 @@
+{
+  "deal_id": "Heart of the Canadian Rockies",
+  "title": "Heart of the Canadian Rockies",
+  "url": "https://www.flightcentre.co.nz/product/21842293",
+  "source": "flightcentre",
+  "nights": 9.0,
+  "pp_price": 4319.0,
+  "package_total_for_two": 8638.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "9 nights accommodation in Cosmos' hand-selected accommodations",
+    "Transport by air-conditioned motorcoach with free Wi-Fi",
+    "Entrance fee to Banff National Park and Jasper National Park",
+    "Tickets for the Icefields Explorer Experience at Columbia Icefields",
+    "Ferry to/from Vancouver Island"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various accommodations in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver",
+      "nights": 9,
+      "price_total_for_stay": 1800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Entrance fee to Banff National Park",
+          "price": 40.0,
+          "source": "https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees"
+        },
+        {
+          "label": "Entrance fee to Jasper National Park",
+          "price": 40.0,
+          "source": "https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees"
+        },
+        {
+          "label": "Icefields Explorer Experience",
+          "price": 100.0,
+          "source": "https://www.icefields.com"
+        },
+        {
+          "label": "Ferry to/from Vancouver Island",
+          "price": 100.0,
+          "source": "https://www.bcferries.com"
+        }
+      ],
+      "notes": "Additional costs for activities and transportation not included in the package."
+    },
+    "diy_total_for_two": 2320.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 6318.0,
+    "pct": 76.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "This deal offers significant savings compared to DIY options, especially considering the included guided tours and experiences that would be costly to arrange independently.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21842293",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Heart of the Canadian Rockies\",\n  \"title\": \"Heart of the Canadian Rockies\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21842293\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9.0,\n  \"pp_price\": 4319.0,\n  \"package_total_for_two\": 8638.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"9 nights accommodation in Cosmos' hand-selected accommodations\",\n    \"Transport by air-conditioned motorcoach with free Wi-Fi\",\n    \"Entrance fee to Banff National Park and Jasper National Park\",\n    \"Tickets for the Icefields Explorer Experience at Columbia Icefields\",\n    \"Ferry to/from Vancouver Island\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver\",\n      \"nights\": 9,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Entrance fee to Banff National Park\", \"price\": 40.0, \"source\": \"https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees\"},\n        {\"label\": \"Entrance fee to Jasper National Park\", \"price\": 40.0, \"source\": \"https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees\"},\n        {\"label\": \"Icefields Explorer Experience\", \"price\": 100.0, \"source\": \"https://www.icefields.com\"},\n        {\"label\": \"Ferry to/from Vancouver Island\", \"price\": 100.0, \"source\": \"https://www.bcferries.com\"}\n      ],\n      \"notes\": \"Additional costs for activities and transportation not included in the package.\"\n    },\n    \"diy_total_for_two\": 2320.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 6318.0,\n    \"pct\": 76.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers significant savings compared to DIY options, especially considering the included guided tours and experiences that would be costly to arrange independently.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21842293\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

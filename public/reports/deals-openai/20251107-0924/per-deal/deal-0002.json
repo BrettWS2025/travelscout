@@ -1,0 +1,63 @@
+{
+  "deal_id": "Turkey Unplugged",
+  "title": "Turkey Unplugged",
+  "url": "https://www.flightcentre.co.nz/product/22078921",
+  "source": "flightcentre",
+  "nights": 9.0,
+  "pp_price": 2199.0,
+  "package_total_for_two": 4398.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Accommodation: 9 nights 4 star and special class hotels",
+    "Meals: Breakfast daily and 6 dinners",
+    "Guided sightseeing - Istanbul, Gallipoli, Troy, Ruins of Ephesus and Pergamum, Pamukkale, Hierapolis and Cappadocia",
+    "Airport arrival transfer on day 1 of tour and departure transfer at set times",
+    "Escorted by an English-speaking guide"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "4 star and special class hotels",
+      "nights": 9,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (Breakfast daily and 6 dinners)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided sightseeing tours",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Airport transfers",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Specific costs for meals, sightseeing, and transfers are not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive tour package with accommodations and meals included, but lacks specific DIY pricing for flights and hotels, making it difficult to assess true savings.",
+  "additional_notes": "The deal does not include flights, which could significantly affect overall cost.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22078921"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Turkey Unplugged\",\n  \"title\": \"Turkey Unplugged\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22078921\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9.0,\n  \"pp_price\": 2199.0,\n  \"package_total_for_two\": 4398.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation: 9 nights 4 star and special class hotels\",\n    \"Meals: Breakfast daily and 6 dinners\",\n    \"Guided sightseeing - Istanbul, Gallipoli, Troy, Ruins of Ephesus and Pergamum, Pamukkale, Hierapolis and Cappadocia\",\n    \"Airport arrival transfer on day 1 of tour and departure transfer at set times\",\n    \"Escorted by an English-speaking guide\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"4 star and special class hotels\",\n      \"nights\": 9,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (Breakfast daily and 6 dinners)\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing tours\", \"price\": null, \"source\": null},\n        {\"label\": \"Airport transfers\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Specific costs for meals, sightseeing, and transfers are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive tour package with accommodations and meals included, but lacks specific DIY pricing for flights and hotels, making it difficult to assess true savings.\",\n  \"additional_notes\": \"The deal does not include flights, which could significantly affect overall cost.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22078921\"\n  ]\n}"
+}

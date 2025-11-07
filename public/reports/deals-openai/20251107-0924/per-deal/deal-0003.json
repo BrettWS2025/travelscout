@@ -1,0 +1,56 @@
+{
+  "deal_id": "Central & Western Europe: Essential Cities",
+  "title": "Central & Western Europe: Essential Cities",
+  "url": "https://www.flightcentre.co.nz/product/21893812",
+  "source": "flightcentre",
+  "nights": 18.0,
+  "pp_price": 6009.0,
+  "package_total_for_two": 12018.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "17-nights accommodation in multi-share rooms",
+    "Meals included: 28",
+    "Activities included: 10"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various accommodations in 6 countries",
+      "nights": 17,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (28)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Activities (10)",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals and activities are variable and depend on personal choices."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive package with accommodation, meals, and activities included, but lacks flight information and specific DIY pricing for a full comparison.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21893812"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Central & Western Europe: Essential Cities\",\n  \"title\": \"Central & Western Europe: Essential Cities\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21893812\",\n  \"source\": \"flightcentre\",\n  \"nights\": 18.0,\n  \"pp_price\": 6009.0,\n  \"package_total_for_two\": 12018.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"17-nights accommodation in multi-share rooms\",\n    \"Meals included: 28\",\n    \"Activities included: 10\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations in 6 countries\",\n      \"nights\": 17,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (28)\", \"price\": null, \"source\": null},\n        {\"label\": \"Activities (10)\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and activities are variable and depend on personal choices.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive package with accommodation, meals, and activities included, but lacks flight information and specific DIY pricing for a full comparison.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21893812\"\n  ]\n}"
+}

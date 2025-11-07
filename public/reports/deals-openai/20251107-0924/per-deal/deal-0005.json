@@ -1,0 +1,57 @@
+{
+  "deal_id": "Eastern Europe: Beyond The Big Sights",
+  "title": "Eastern Europe: Beyond The Big Sights",
+  "url": "https://www.flightcentre.co.nz/product/21893674",
+  "source": "flightcentre",
+  "nights": 15,
+  "pp_price": 4079.0,
+  "package_total_for_two": 8158.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "14-nights accommodation in multi-share rooms",
+    "Meals included: 22",
+    "Activities included: 9",
+    "Convenient transport travel by train and coach"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various accommodations in 6 countries",
+      "nights": 14,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (22 total)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Activities (9 total)",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Costs for meals and activities are not specified."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive tour with multiple inclusions, but lacks specific DIY pricing for flights and accommodations, making it difficult to assess savings accurately.",
+  "additional_notes": "The deal is appealing for those looking for a guided experience across multiple countries.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21893674"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Eastern Europe: Beyond The Big Sights\",\n  \"title\": \"Eastern Europe: Beyond The Big Sights\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21893674\",\n  \"source\": \"flightcentre\",\n  \"nights\": 15,\n  \"pp_price\": 4079.0,\n  \"package_total_for_two\": 8158.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"14-nights accommodation in multi-share rooms\",\n    \"Meals included: 22\",\n    \"Activities included: 9\",\n    \"Convenient transport travel by train and coach\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations in 6 countries\",\n      \"nights\": 14,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (22 total)\", \"price\": null, \"source\": null},\n        {\"label\": \"Activities (9 total)\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals and activities are not specified.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive tour with multiple inclusions, but lacks specific DIY pricing for flights and accommodations, making it difficult to assess savings accurately.\",\n  \"additional_notes\": \"The deal is appealing for those looking for a guided experience across multiple countries.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21893674\"\n  ]\n}"
+}

@@ -1,0 +1,65 @@
+{
+  "deal_id": "Spain Morocco and Portugal",
+  "title": "Spain Morocco and Portugal",
+  "url": "https://www.flightcentre.co.nz/product/21932369",
+  "source": "flightcentre",
+  "nights": 15,
+  "pp_price": 6535.0,
+  "package_total_for_two": 13070.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "15-nights accommodation in cherry-picked hotels, all tried and trusted",
+    "Breakfast daily and up to half of your evening meals",
+    "Transport by luxury air-conditioned coach with Wi-Fi in most countries or alternative transportation",
+    "Return ferry crossings between Spain and Morocco",
+    "Services of an expert Travel Director and professional Driver",
+    "All porterage and restaurant gratuities",
+    "All hotel tips, charges and local taxes"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various cherry-picked hotels",
+      "nights": 15,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (15 breakfasts + 7 dinners)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Transport (coach + ferry)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Travel Director and Driver services",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals, transport, and services are not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers extensive inclusions for a long tour, but lacks specific DIY pricing for hotels and meals, making it difficult to assess true savings.",
+  "additional_notes": "Flights are not included, which may add significant cost depending on the route.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21932369"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Spain Morocco and Portugal\",\n  \"title\": \"Spain Morocco and Portugal\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932369\",\n  \"source\": \"flightcentre\",\n  \"nights\": 15,\n  \"pp_price\": 6535.0,\n  \"package_total_for_two\": 13070.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"15-nights accommodation in cherry-picked hotels, all tried and trusted\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"Transport by luxury air-conditioned coach with Wi-Fi in most countries or alternative transportation\",\n    \"Return ferry crossings between Spain and Morocco\",\n    \"Services of an expert Travel Director and professional Driver\",\n    \"All porterage and restaurant gratuities\",\n    \"All hotel tips, charges and local taxes\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various cherry-picked hotels\",\n      \"nights\": 15,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (15 breakfasts + 7 dinners)\", \"price\": null, \"source\": null},\n        {\"label\": \"Transport (coach + ferry)\", \"price\": null, \"source\": null},\n        {\"label\": \"Travel Director and Driver services\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals, transport, and services are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers extensive inclusions for a long tour, but lacks specific DIY pricing for hotels and meals, making it difficult to assess true savings.\",\n  \"additional_notes\": \"Flights are not included, which may add significant cost depending on the route.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932369\"\n  ]\n}"
+}

@@ -1,0 +1,60 @@
+{
+  "deal_id": "Splendours of Italy",
+  "title": "Splendours of Italy",
+  "url": "https://www.flightcentre.co.nz/product/21932645",
+  "source": "flightcentre",
+  "nights": 13,
+  "pp_price": 3649.0,
+  "package_total_for_two": 7298.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "12-nights accommodation in cherry-picked hotels, all tried and trusted",
+    "Many meals and daily breakfasts included",
+    "Transport by luxury air-conditioned coach with Wi-Fi in most countries",
+    "Services of an expert Travel Director and professional Driver",
+    "Audio headsets are provided throughout your holiday to enhance your included sightseeing experiences"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Italy",
+      "nights": 12,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (approx. 2 meals per day)",
+          "price": 600,
+          "source": "https://www.numbeo.com/cost-of-living/in/Rome"
+        },
+        {
+          "label": "Transport (coach tours)",
+          "price": 800,
+          "source": "https://www.rome2rio.com"
+        }
+      ],
+      "notes": "Costs for meals and transport are estimated based on average prices."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive tour experience with included meals and transportation, but lacks flight inclusion and specific hotel pricing makes DIY comparison difficult.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21932645",
+    "https://www.numbeo.com/cost-of-living/in/Rome",
+    "https://www.rome2rio.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Splendours of Italy\",\n  \"title\": \"Splendours of Italy\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932645\",\n  \"source\": \"flightcentre\",\n  \"nights\": 13,\n  \"pp_price\": 3649.0,\n  \"package_total_for_two\": 7298.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"12-nights accommodation in cherry-picked hotels, all tried and trusted\",\n    \"Many meals and daily breakfasts included\",\n    \"Transport by luxury air-conditioned coach with Wi-Fi in most countries\",\n    \"Services of an expert Travel Director and professional Driver\",\n    \"Audio headsets are provided throughout your holiday to enhance your included sightseeing experiences\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Italy\",\n      \"nights\": 12,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (approx. 2 meals per day)\", \"price\": 600, \"source\": \"https://www.numbeo.com/cost-of-living/in/Rome\"},\n        {\"label\": \"Transport (coach tours)\", \"price\": 800, \"source\": \"https://www.rome2rio.com\"}\n      ],\n      \"notes\": \"Costs for meals and transport are estimated based on average prices.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive tour experience with included meals and transportation, but lacks flight inclusion and specific hotel pricing makes DIY comparison difficult.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932645\",\n    \"https://www.numbeo.com/cost-of-living/in/Rome\",\n    \"https://www.rome2rio.com\"\n  ]\n}"
+}

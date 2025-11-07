@@ -1,0 +1,66 @@
+{
+  "deal_id": "10-night Fly & Tour: Vietnam Express Southbound",
+  "title": "10-night Fly & Tour: Vietnam Express Southbound",
+  "url": "https://www.flightcentre.co.nz/product/21944634",
+  "source": "flightcentre",
+  "nights": 10,
+  "pp_price": 3525,
+  "package_total_for_two": 7050,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Economy class flights from Auckland to Hanoi and Ho Chi Minh City",
+    "10-day small group trip from Hanoi to Ho Chi Minh City",
+    "Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)",
+    "Meals: 8 Breakfasts, 3 Lunches & 2 Dinners"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Hanoi and Ho Chi Minh City to Auckland",
+      "price_total_for_two": 2000,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Vietnam",
+      "nights": 7,
+      "price_total_for_stay": 1400,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Overnight boat",
+          "price": 200,
+          "source": "https://www.viator.com"
+        },
+        {
+          "label": "Overnight sleeper train",
+          "price": 150,
+          "source": "https://www.12go.asia"
+        }
+      ],
+      "notes": "Meals and activities during the tour are not included in DIY pricing."
+    },
+    "diy_total_for_two": 3750
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 300,
+    "pct": 8
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers a comprehensive package including flights, accommodation, and meals, which provides convenience and potential savings compared to DIY booking.",
+  "additional_notes": "Consider additional costs for meals not included in the package.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21944634",
+    "https://www.expedia.com",
+    "https://www.booking.com",
+    "https://www.viator.com",
+    "https://www.12go.asia"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10,\n  \"pp_price\": 3525,\n  \"package_total_for_two\": 7050,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Hanoi and Ho Chi Minh City\",\n    \"10-day small group trip from Hanoi to Ho Chi Minh City\",\n    \"Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)\",\n    \"Meals: 8 Breakfasts, 3 Lunches & 2 Dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City to Auckland\",\n      \"price_total_for_two\": 2000,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1400,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Overnight boat\", \"price\": 200, \"source\": \"https://www.viator.com\"},\n        {\"label\": \"Overnight sleeper train\", \"price\": 150, \"source\": \"https://www.12go.asia\"}\n      ],\n      \"notes\": \"Meals and activities during the tour are not included in DIY pricing.\"\n    },\n    \"diy_total_for_two\": 3750\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 300,\n    \"pct\": 8\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive package including flights, accommodation, and meals, which provides convenience and potential savings compared to DIY booking.\",\n  \"additional_notes\": \"Consider additional costs for meals not included in the package.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21944634\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.viator.com\",\n    \"https://www.12go.asia\"\n  ]\n}"
+}

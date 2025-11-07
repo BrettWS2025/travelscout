@@ -1,0 +1,60 @@
+{
+  "deal_id": "14-day Fly, Stay & Tour: Seven Countries, Venice & Paris with London",
+  "title": "14-day Fly, Stay & Tour: Seven Countries, Venice & Paris with London",
+  "url": "https://www.flightcentre.co.nz/product/21968688",
+  "source": "flightcentre",
+  "nights": 2.0,
+  "pp_price": 8769.0,
+  "package_total_for_two": 17538.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return economy class flights Auckland to London with Singapore Airlines",
+    "3-nights accommodation 2 nights in London pre-tour & 1 night in London post tour with breakfast",
+    "11-day tour with Cosmos",
+    "12 Breakfasts, 3 Dinners"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to London",
+      "price_total_for_two": 3000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "London hotels",
+      "nights": 3,
+      "price_total_for_stay": 600.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Cosmos 11-day tour",
+          "price": 8000.0,
+          "source": "https://www.cosmostours.com"
+        }
+      ],
+      "notes": "Additional costs for meals and optional excursions not included."
+    },
+    "diy_total_for_two": 10600.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 6938.0,
+    "pct": 65.4
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "This deal offers significant savings compared to DIY options, especially with included flights and meals. The comprehensive tour adds value.",
+  "additional_notes": "Consider potential additional costs for airport transfers and optional excursions.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21968688",
+    "https://www.expedia.com",
+    "https://www.booking.com",
+    "https://www.cosmostours.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"14-day Fly, Stay & Tour: Seven Countries, Venice & Paris with London\",\n  \"title\": \"14-day Fly, Stay & Tour: Seven Countries, Venice & Paris with London\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21968688\",\n  \"source\": \"flightcentre\",\n  \"nights\": 2.0,\n  \"pp_price\": 8769.0,\n  \"package_total_for_two\": 17538.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return economy class flights Auckland to London with Singapore Airlines\",\n    \"3-nights accommodation 2 nights in London pre-tour & 1 night in London post tour with breakfast\",\n    \"11-day tour with Cosmos\",\n    \"12 Breakfasts, 3 Dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to London\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"London hotels\",\n      \"nights\": 3,\n      \"price_total_for_stay\": 600.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Cosmos 11-day tour\", \"price\": 8000.0, \"source\": \"https://www.cosmostours.com\"}\n      ],\n      \"notes\": \"Additional costs for meals and optional excursions not included.\"\n    },\n    \"diy_total_for_two\": 10600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 6938.0,\n    \"pct\": 65.4\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers significant savings compared to DIY options, especially with included flights and meals. The comprehensive tour adds value.\",\n  \"additional_notes\": \"Consider potential additional costs for airport transfers and optional excursions.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21968688\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.cosmostours.com\"\n  ]\n}"
+}

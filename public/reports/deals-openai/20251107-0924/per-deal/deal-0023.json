@@ -1,0 +1,52 @@
+{
+  "deal_id": "Legendary Greece - Small Group Discovery Tour",
+  "title": "Legendary Greece - Small Group Discovery Tour",
+  "url": "https://www.flightcentre.co.nz/product/21748934",
+  "source": "flightcentre",
+  "nights": 8.0,
+  "pp_price": 5849.0,
+  "package_total_for_two": 11698.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "8 nights in first class hotel accommodation",
+    "Transport by private, first-class, air-conditioned motorcoach with free Wi-Fi",
+    "Selected guided sightseeing",
+    "Meals: 8 Breakfasts & 2 Lunches"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "First class hotel accommodation",
+      "nights": 8,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Guided sightseeing and meals",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for guided tours and meals are not easily obtainable."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers a comprehensive tour experience with meals and guided sightseeing included, which can be difficult to replicate independently at a similar quality and price. However, specific DIY costs for flights and hotels could not be determined.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21748934"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"title\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21748934\",\n  \"source\": \"flightcentre\",\n  \"nights\": 8.0,\n  \"pp_price\": 5849.0,\n  \"package_total_for_two\": 11698.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"8 nights in first class hotel accommodation\",\n    \"Transport by private, first-class, air-conditioned motorcoach with free Wi-Fi\",\n    \"Selected guided sightseeing\",\n    \"Meals: 8 Breakfasts & 2 Lunches\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"First class hotel accommodation\",\n      \"nights\": 8,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Guided sightseeing and meals\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for guided tours and meals are not easily obtainable.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour experience with meals and guided sightseeing included, which can be difficult to replicate independently at a similar quality and price. However, specific DIY costs for flights and hotels could not be determined.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21748934\"\n  ]\n}"
+}
