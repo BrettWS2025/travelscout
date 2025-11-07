@@ -1,0 +1,9 @@
+{
+  "_error": "openai_failed: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}",
+  "package_total_for_two": 9658.0,
+  "pp_price": 4829.0,
+  "nights": null,
+  "url": "https://www.flightcentre.co.nz/product/21893743",
+  "title": "London to Lisbon: Western Wonders",
+  "source": "flightcentre"
+}
