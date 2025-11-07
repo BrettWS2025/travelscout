@@ -36,7 +36,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # If your requirements.txt is at the repo root, use:
+          # pip install -r requirements.txt
+          # If it lives under scraper/, keep the line below:
           pip install -r scraper/requirements.txt
+
+      # Optional: quick visibility into your dataset on the runner
+      # - name: Debug list data dir
+      #   run: |
+      #     ls -la public/data || true
+      #     wc -l public/data/packages.final*.jsonl || true
 
       - name: Run analysis script
         env:
@@ -44,33 +53,36 @@ jobs:
           OPENAI_MODEL: gpt-4o-mini
           # Optional while testing to save cost/time, e.g. only first 25 deals:
           MAX_DEALS: 25
+          # Optionally enforce repo root or specific file:
+          # REPO_ROOT: ${{ github.workspace }}
+          # PACKAGES_FILE: public/data/packages.final.jsonl
         run: |
           python scraper/scripts/analyze_deals.py
 
       - name: Commit and push generated report (if any changes)
-  run: |
-    set -e
+        run: |
+          set -e
 
-    git config user.name  "github-actions[bot]"
-    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-    # Make sure we have the latest remote history
-    git fetch origin main
+          # Make sure we have the latest remote history
+          git fetch origin main
 
-    # Stage everything created by the script
-    git add -A
+          # Stage everything created by the script
+          git add -A
 
-    # If nothing is staged, exit quietly
-    if git diff --cached --quiet; then
-      echo "No changes to commit."
-      exit 0
-    fi
+          # If nothing is staged, exit quietly
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
 
-    # Commit first (so the index is clean before rebase)
-    git commit -m "chore(reports): OpenAI Top 10 deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          # Commit first (so the index is clean before rebase)
+          git commit -m "chore(reports): OpenAI Top 10 deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-    # Rebase our new commit(s) onto the latest remote main
-    git pull --rebase --autostash origin main
+          # Rebase our new commit(s) onto the latest remote main
+          git pull --rebase --autostash origin main
 
-    # Push safely
-    git push --with-lease origin HEAD:main
+          # Push safely
+          git push --with-lease origin HEAD:main
