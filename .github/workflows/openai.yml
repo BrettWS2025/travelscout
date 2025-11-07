@@ -45,7 +45,7 @@ jobs:
           # Optional while testing to save cost/time, e.g. only first 25 deals:
           # MAX_DEALS: 25
         run: |
-          python scripts/analyze_deals.py
+          python scraper/scripts/analyze_deals.py
 
       - name: Commit and push generated report (if any changes)
         run: |
