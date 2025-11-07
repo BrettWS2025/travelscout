@@ -43,7 +43,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-4o-mini
           # Optional while testing to save cost/time, e.g. only first 25 deals:
-          # MAX_DEALS: 25
+          MAX_DEALS: 25
         run: |
           python scraper/scripts/analyze_deals.py
 
