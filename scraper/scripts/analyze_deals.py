@@ -41,7 +41,20 @@ except Exception:
     openai = None
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+def _compute_repo_root() -> Path:
+    here = Path(__file__).resolve()
+    # Prefer a parent that contains "public" (your site assets)
+    for p in here.parents:
+        if (p / "public").is_dir():
+            return p
+    # Fallback to a parent that has .git
+    for p in here.parents:
+        if (p / ".git").exists():
+            return p
+    # Last resort: go up two levels (scraper/scripts -> repo root)
+    return here.parents[2] if len(here.parents) >= 3 else here.parents[1]
+
+REPO_ROOT = Path(os.environ.get("REPO_ROOT", _compute_repo_root()))
 DATA_DIR = REPO_ROOT / "public" / "data"
 OUT_BASE = REPO_ROOT / "public" / "reports" / "deals-openai"
 
