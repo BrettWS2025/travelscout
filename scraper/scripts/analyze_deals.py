@@ -130,7 +130,7 @@ def stamp() -> str:
     return datetime.utcnow().strftime("%Y%m%d-%H%M")
 
 def find_latest_packages(data_dir: Path) -> Path:
-    candidates = sorted(data_dir.glob("packages.final*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)
+    candidates = sorted(data_dir.glob("packages.final.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not candidates:
         raise FileNotFoundError(f"No packages.final*.jsonl found in {data_dir}")
     return candidates[0]
