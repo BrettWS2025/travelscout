@@ -47,17 +47,15 @@ jobs:
       #     ls -la public/data || true
       #     wc -l public/data/packages.final*.jsonl || true
 
-      - name: Run analysis script
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: gpt-4o-mini
-          # Optional while testing to save cost/time, e.g. only first 25 deals:
-          MAX_DEALS: 25
-          # Optionally enforce repo root or specific file:
-          # REPO_ROOT: ${{ github.workspace }}
-          # PACKAGES_FILE: public/data/packages.final.jsonl
-        run: |
-          python scraper/scripts/analyze_deals.py
+- name: Run analysis script
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    OPENAI_MODEL: gpt-4o-mini
+    TOP_N: 20              # only write the Top 20 per-deal JSONs
+    SHORTLIST_SIZE: 400    # optional: analyze only the best 400 by heuristic
+    MAX_DEALS: 50         # leave 0 to consider all (after nights filter)
+  run: |
+    python scraper/scripts/analyze_deals.py
 
       - name: Commit and push generated report (if any changes)
         run: |
