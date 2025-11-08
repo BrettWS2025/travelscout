@@ -161,7 +161,7 @@ def find_latest_packages(data_dir: Path, override: Optional[str] = None) -> Path
         raise FileNotFoundError(f"PACKAGES_FILE override not found: {override}")
 
     candidates = sorted(
-        data_dir.glob("packages.final*.jsonl"),
+        data_dir.glob("packages.final*.jsonl"),  # wildcard to match variations
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -255,6 +255,7 @@ This payload is ONE deal. Evaluate it in isolation and return the strict JSON sc
 ### Deal JSON
 ```json
 {json.dumps(deal_block, ensure_ascii=False)}
+```
 
 ### Deal Page Text (excerpts)
 ```
@@ -263,243 +264,244 @@ This payload is ONE deal. Evaluate it in isolation and return the strict JSON sc
 
 {SCHEMA_INSTRUCTIONS}
 """.strip()
-return [
-{"role": "system", "content": system},
-{"role": "user", "content": user},
-]
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
 
 def openai_client():
-api_key = os.environ.get("OPENAI_API_KEY")
-if not api_key:
-print("ERROR: OPENAI_API_KEY is not set.", file=sys.stderr)
-sys.exit(1)
-if OpenAI is not None:
-return OpenAI(api_key=api_key), "new"
-if openai is None:
-print("ERROR: openai SDK not installed.", file=sys.stderr)
-sys.exit(1)
-openai.api_key = api_key
-return openai, "legacy"
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("ERROR: OPENAI_API_KEY is not set.", file=sys.stderr)
+        sys.exit(1)
+    if OpenAI is not None:
+        return OpenAI(api_key=api_key), "new"
+    if openai is None:
+        print("ERROR: openai SDK not installed.", file=sys.stderr)
+        sys.exit(1)
+    openai.api_key = api_key
+    return openai, "legacy"
 
 def _strip_code_fences(s: str) -> str:
-s = s.strip()
-if s.startswith(""): lines = s.splitlines() if lines and lines[0].startswith(""):
-lines = lines[1:]
-if lines and lines[-1].startswith("```"):
-lines = lines[:-1]
-return "\n".join(lines).strip()
-return s
+    s = s.strip()
+    if s.startswith("```"):
+        lines = s.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        return "\n".join(lines).strip()
+    return s
 
 def safe_json_parse(content: str) -> Dict[str, Any]:
-s = _strip_code_fences(content)
-if "{" in s and "}" in s:
-start = s.find("{")
-end = s.rfind("}")
-candidate = s[start:end+1]
-try:
-return json.loads(candidate)
-except Exception:
-pass
-try:
-return json.loads(s)
-except Exception:
-return {"_error": "bad_json", "_raw": content}
+    s = _strip_code_fences(content)
+    if "{" in s and "}" in s:
+        start = s.find("{")
+        end = s.rfind("}")
+        candidate = s[start:end+1]
+        try:
+            return json.loads(candidate)
+        except Exception:
+            pass
+    try:
+        return json.loads(s)
+    except Exception:
+        return {"_error": "bad_json", "_raw": content}
 
 def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
-client, flavor = openai_client()
-attempts = 0
-last_err: Optional[str] = None
-while attempts < 3:
-attempts += 1
-try:
-if flavor == "new":
-resp = client.chat.completions.create(
-model=MODEL,
-messages=messages,
-temperature=0.2,
-response_format={"type": "json_object"},
-max_tokens=3500,
-)
-content = (resp.choices[0].message.content or "").strip()
-else:
-resp = openai.ChatCompletion.create(
-model=MODEL,
-messages=messages,
-temperature=0.2,
-max_tokens=3500,
-)
-content = (resp["choices"][0]["message"]["content"] or "").strip()
-parsed = safe_json_parse(content)
-if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
-parsed["_raw_snippet"] = content[:5000]
-return parsed
-except Exception as e:
-last_err = str(e)
-time.sleep(0.8 * attempts)
-return {"_error": f"openai_failed: {last_err or 'unknown'}"}
+    client, flavor = openai_client()
+    attempts = 0
+    last_err: Optional[str] = None
+    while attempts < 3:
+        attempts += 1
+        try:
+            if flavor == "new":
+                resp = client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages,
+                    temperature=0.2,
+                    response_format={"type": "json_object"},
+                    max_tokens=3500,
+                )
+                content = (resp.choices[0].message.content or "").strip()
+            else:
+                resp = openai.ChatCompletion.create(
+                    model=MODEL,
+                    messages=messages,
+                    temperature=0.2,
+                    max_tokens=3500,
+                )
+                content = (resp["choices"][0]["message"]["content"] or "").strip()
+            parsed = safe_json_parse(content)
+            if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
+                parsed["_raw_snippet"] = content[:5000]
+            return parsed
+        except Exception as e:
+            last_err = str(e)
+            time.sleep(0.8 * attempts)
+    return {"_error": f"openai_failed: {last_err or 'unknown'}"}
 
 def ensure_dir(p: Path):
-p.mkdir(parents=True, exist_ok=True)
+    p.mkdir(parents=True, exist_ok=True)
 
----- simple shortlist heuristic (optional) ----
+# ---- simple shortlist heuristic (optional) ----
 def heuristic_value_score(nd: Dict[str, Any]) -> float:
-"""
-Lower is 'better' (cheaper per room-night).
-Gently favor titles that look like they include flights.
-"""
-nights = nd.get("nights") or 0
-cost2 = nd.get("package_total_for_two")
-if not nights or not cost2:
-return float("inf")
-score = float(cost2) / float(nights)
-title = (nd.get("title") or "").lower()
-if "flight" in title or "airfare" in title or "flights" in title:
-score *= 0.95 # small boost
-return score
+    """
+    Lower is 'better' (cheaper per room-night).
+    Gently favor titles that look like they include flights.
+    """
+    nights = nd.get("nights") or 0
+    cost2 = nd.get("package_total_for_two")
+    if not nights or not cost2:
+        return float("inf")
+    score = float(cost2) / float(nights)
+    title = (nd.get("title") or "").lower()
+    if "flight" in title or "airfare" in title or "flights" in title:
+        score *= 0.95  # small boost
+    return score
 
 def main():
-latest = find_latest_packages(DATA_DIR, override=os.environ.get("PACKAGES_FILE"))
-deals = read_jsonl(latest)
-if not deals:
-print(f"No rows in {latest}", file=sys.stderr)
-sys.exit(0)
+    latest = find_latest_packages(DATA_DIR, override=os.environ.get("PACKAGES_FILE"))
+    deals = read_jsonl(latest)
+    if not deals:
+        print(f"No rows in {latest}", file=sys.stderr)
+        sys.exit(0)
 
-python
-Copy code
-# Normalize + drop >21 nights
-normalized: List[Dict[str, Any]] = []
-for d in deals:
-    nd = normalize_deal(d)
-    if nd["nights"] is not None and nd["nights"] > 21:
-        continue
-    normalized.append(nd)
+    # Normalize + drop >21 nights
+    normalized: List[Dict[str, Any]] = []
+    for d in deals:
+        nd = normalize_deal(d)
+        if nd["nights"] is not None and nd["nights"] > 21:
+            continue
+        normalized.append(nd)
 
-# Optional MAX_DEALS for testing
-if MAX_DEALS > 0:
-    normalized = normalized[:MAX_DEALS]
+    # Optional MAX_DEALS for testing
+    if MAX_DEALS > 0:
+        normalized = normalized[:MAX_DEALS]
 
-# Optional shortlist to cap OpenAI calls
-analyzed_input = normalized
-if SHORTLIST_SIZE > 0 and len(normalized) > SHORTLIST_SIZE:
-    analyzed_input = sorted(normalized, key=heuristic_value_score)[:SHORTLIST_SIZE]
+    # Optional shortlist to cap OpenAI calls
+    analyzed_input = normalized
+    if SHORTLIST_SIZE > 0 and len(normalized) > SHORTLIST_SIZE:
+        analyzed_input = sorted(normalized, key=heuristic_value_score)[:SHORTLIST_SIZE]
 
-run_id = stamp()
-out_dir = OUT_BASE / run_id
-ensure_dir(out_dir)
+    run_id = stamp()
+    out_dir = OUT_BASE / run_id
+    ensure_dir(out_dir)
 
-meta = {
-    "input_file": str(latest.relative_to(REPO_ROOT)) if str(latest).startswith(str(REPO_ROOT)) else str(latest),
-    "rows_in_file": len(deals),
-    "rows_after_filter": len(normalized),
-    "rows_analyzed": len(analyzed_input),
-    "model": MODEL,
-    "run_id": run_id,
-    "generated_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
-    "top_n": TOP_N,
-    "shortlist_size": SHORTLIST_SIZE,
-}
-(out_dir / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    meta = {
+        "input_file": str(latest.relative_to(REPO_ROOT)) if str(latest).startswith(str(REPO_ROOT)) else str(latest),
+        "rows_in_file": len(deals),
+        "rows_after_filter": len(normalized),
+        "rows_analyzed": len(analyzed_input),
+        "model": MODEL,
+        "run_id": run_id,
+        "generated_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "top_n": TOP_N,
+        "shortlist_size": SHORTLIST_SIZE,
+    }
+    (out_dir / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-# Deep analysis (OpenAI) – do NOT write per-deal here
-per_results: List[Dict[str, Any]] = []
-for idx, nd in enumerate(analyzed_input, 1):
-    url = nd["url"] or ""
-    page_text = fetch_page_text(url)
-    messages = build_messages_for_deal(nd, page_text)
-    result = call_openai(messages)
+    # Deep analysis (OpenAI) – do NOT write per-deal here
+    per_results: List[Dict[str, Any]] = []
+    for idx, nd in enumerate(analyzed_input, 1):
+        url = nd["url"] or ""
+        page_text = fetch_page_text(url)
+        messages = build_messages_for_deal(nd, page_text)
+        result = call_openai(messages)
 
-    if isinstance(result, dict):
-        result.setdefault("package_total_for_two", nd["package_total_for_two"])
-        result.setdefault("pp_price", nd["pp_price"])
-        result.setdefault("nights", nd["nights"])
-        result.setdefault("url", nd["url"])
-        result.setdefault("title", nd["title"])
-        result.setdefault("source", nd["source"])
-        result.setdefault("deal_id", nd["id"])
+        if isinstance(result, dict):
+            result.setdefault("package_total_for_two", nd["package_total_for_two"])
+            result.setdefault("pp_price", nd["pp_price"])
+            result.setdefault("nights", nd["nights"])
+            result.setdefault("url", nd["url"])
+            result.setdefault("title", nd["title"])
+            result.setdefault("source", nd["source"])
+            result.setdefault("deal_id", nd["id"])
 
-    per_results.append(result)
-    time.sleep(0.35)  # pacing
+        per_results.append(result)
+        time.sleep(0.35)  # pacing
 
-# Combine into JSONL (all analyzed)
-combined_path = out_dir / "combined.jsonl"
-with combined_path.open("w", encoding="utf-8") as f:
-    for r in per_results:
-        f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    # Combine into JSONL (all analyzed)
+    combined_path = out_dir / "combined.jsonl"
+    with combined_path.open("w", encoding="utf-8") as f:
+        for r in per_results:
+            f.write(json.dumps(r, ensure_ascii=False) + "\\n")
 
-# Rank and select Top-N
-def rating_of(r: Dict[str, Any]) -> float:
-    try:
-        return float(r.get("rating_out_of_10") or 0.0)
-    except Exception:
-        return 0.0
-
-def savings_abs(r: Dict[str, Any]) -> float:
-    try:
-        v = r.get("estimated_savings_vs_diy", {}).get("abs")
-        return float(v or 0.0)
-    except Exception:
-        return 0.0
-
-ranked = sorted(per_results, key=lambda x: (rating_of(x), savings_abs(x)), reverse=True)
-topN = ranked[:TOP_N]
-
-# Write only Top-N per-deal JSON
-per_deal_dir = out_dir / "per-deal"
-ensure_dir(per_deal_dir)
-for i, r in enumerate(topN, 1):
-    # safe filename by rank + id fragment
-    rid = str(r.get("deal_id") or r.get("title") or i)
-    rid = "".join(ch for ch in rid if ch.isalnum() or ch in ("-", "_"))[:60] or f"rank{i:02d}"
-    (per_deal_dir / f"rank-{i:02d}-{rid}.json").write_text(json.dumps(r, indent=2), encoding="utf-8")
-
-# Top-N JSON + Markdown
-(out_dir / f"top{TOP_N}.json").write_text(json.dumps(topN, indent=2), encoding="utf-8")
-
-lines = [f"# Top {TOP_N} deals (model: {MODEL})", "", f"_Run: {run_id}_", ""]
-for i, r in enumerate(topN, 1):
-    title = r.get("title") or "Untitled"
-    url = r.get("url") or ""
-    nights = r.get("nights")
-    pkg2 = r.get("package_total_for_two")
-    inc_flights = r.get("includes_flights")
-    diy_total = (r.get("diy_breakdown") or {}).get("diy_total_for_two")
-    sav = r.get("estimated_savings_vs_diy") or {}
-    sav_abs = sav.get("abs")
-    sav_pct = sav.get("pct")
-    rating = rating_of(r)
-    reason = (r.get("reasoning") or "").strip()
-    cites = r.get("citations") or []
-
-    def fmt(x):
-        return "—" if x in (None, "", []) else f"{x}"
-    def fnum(x):
+    # Rank and select Top-N
+    def rating_of(r: Dict[str, Any]) -> float:
         try:
-            return f"NZD {float(x):,.0f}"
+            return float(r.get("rating_out_of_10") or 0.0)
         except Exception:
-            return "—"
+            return 0.0
 
-    lines += [
-        f"## {i}. {title}",
-        f"- Link: {url}",
-        f"- Nights: {fmt(nights)}  |  Includes flights: **{bool(inc_flights)}**",
-        f"- Package (2 pax): {fnum(pkg2)}  |  DIY total (2 pax): {fnum(diy_total)}",
-        f"- Estimated savings: {fnum(sav_abs)} ({fmt(f'{sav_pct:.1f}%') if isinstance(sav_pct,(int,float)) else '—'})",
-        f"- Rating: **{rating:.1f}/10**",
-        f"- Reasoning: {reason or '—'}",
-        f"- Sources: {', '.join(cites) if cites else '—'}",
-        ""
-    ]
-(out_dir / f"top{TOP_N}.md").write_text("\n".join(lines), encoding="utf-8")
+    def savings_abs(r: Dict[str, Any]) -> float:
+        try:
+            v = r.get("estimated_savings_vs_diy", {}).get("abs")
+            return float(v or 0.0)
+        except Exception:
+            return 0.0
 
-# Latest pointer
-(OUT_BASE / "LATEST.txt").write_text(run_id + "\n", encoding="utf-8")
+    ranked = sorted(per_results, key=lambda x: (rating_of(x), savings_abs(x)), reverse=True)
+    topN = ranked[:TOP_N]
 
-print("✅ Analysis complete")
-print("Artifacts:")
-print("  ", (out_dir / f'top{TOP_N}.md').relative_to(REPO_ROOT))
-print("  ", (out_dir / f'top{TOP_N}.json').relative_to(REPO_ROOT))
-print("  ", combined_path.relative_to(REPO_ROOT))
-print("  ", (out_dir / 'per-deal').relative_to(REPO_ROOT))
-print("  ", (OUT_BASE / 'LATEST.txt').relative_to(REPO_ROOT))
-if name == "main":
-main()
+    # Write only Top-N per-deal JSON
+    per_deal_dir = out_dir / "per-deal"
+    ensure_dir(per_deal_dir)
+    for i, r in enumerate(topN, 1):
+        rid = str(r.get("deal_id") or r.get("title") or i)
+        rid = "".join(ch for ch in rid if ch.isalnum() or ch in ("-", "_"))[:60] or f"rank{i:02d}"
+        (per_deal_dir / f"rank-{i:02d}-{rid}.json").write_text(json.dumps(r, indent=2), encoding="utf-8")
+
+    # Top-N JSON + Markdown
+    (out_dir / f"top{TOP_N}.json").write_text(json.dumps(topN, indent=2), encoding="utf-8")
+
+    lines = [f"# Top {TOP_N} deals (model: {MODEL})", "", f"_Run: {run_id}_", ""]
+    for i, r in enumerate(topN, 1):
+        title = r.get("title") or "Untitled"
+        url = r.get("url") or ""
+        nights = r.get("nights")
+        pkg2 = r.get("package_total_for_two")
+        inc_flights = r.get("includes_flights")
+        diy_total = (r.get("diy_breakdown") or {}).get("diy_total_for_two")
+        sav = r.get("estimated_savings_vs_diy") or {}
+        sav_abs = sav.get("abs")
+        sav_pct = sav.get("pct")
+        rating = rating_of(r)
+        reason = (r.get("reasoning") or "").strip()
+        cites = r.get("citations") or []
+
+        def fmt(x):
+            return "—" if x in (None, "", []) else f"{x}"
+        def fnum(x):
+            try:
+                return f"NZD {float(x):,.0f}"
+            except Exception:
+                return "—"
+
+        lines += [
+            f"## {i}. {title}",
+            f"- Link: {url}",
+            f"- Nights: {fmt(nights)}  |  Includes flights: **{bool(inc_flights)}**",
+            f"- Package (2 pax): {fnum(pkg2)}  |  DIY total (2 pax): {fnum(diy_total)}",
+            f"- Estimated savings: {fnum(sav_abs)} ({fmt(f'{sav_pct:.1f}%') if isinstance(sav_pct,(int,float)) else '—'})",
+            f"- Rating: **{rating:.1f}/10**",
+            f"- Reasoning: {reason or '—'}",
+            f"- Sources: {', '.join(cites) if cites else '—'}",
+            ""
+        ]
+    (out_dir / f"top{TOP_N}.md").write_text("\\n".join(lines), encoding="utf-8")
+
+    # Latest pointer
+    (OUT_BASE / "LATEST.txt").write_text(run_id + "\\n", encoding="utf-8")
+
+    print("✅ Analysis complete")
+    print("Artifacts:")
+    print("  ", (out_dir / f'top{TOP_N}.md').relative_to(REPO_ROOT))
+    print("  ", (out_dir / f'top{TOP_N}.json').relative_to(REPO_ROOT))
+    print("  ", combined_path.relative_to(REPO_ROOT))
+    print("  ", (out_dir / 'per-deal').relative_to(REPO_ROOT))
+    print("  ", (OUT_BASE / 'LATEST.txt').relative_to(REPO_ROOT))
+
+
+if __name__ == "__main__":
+    main()
