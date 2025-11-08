@@ -503,24 +503,3 @@ print("  ", (out_dir / 'per-deal').relative_to(REPO_ROOT))
 print("  ", (OUT_BASE / 'LATEST.txt').relative_to(REPO_ROOT))
 if name == "main":
 main()
-
-yaml
-Copy code
-
----
-
-## How to use it
-
-- **Replace** `scraper/scripts/analyze_deals.py` with the file above.
-- Keep your workflow the same, but you can add these env vars to control behavior:
-
-```yaml
-- name: Run analysis script
-  env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    OPENAI_MODEL: gpt-4o-mini
-    TOP_N: 20              # only write the Top 20 per-deal JSONs
-    SHORTLIST_SIZE: 400    # optional: analyze only the best 400 by heuristic
-    # MAX_DEALS: 0         # leave 0 to consider all (after nights filter)
-  run: |
-    python scraper/scripts/analyze_deals.py
