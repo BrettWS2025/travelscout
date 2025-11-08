@@ -1,0 +1,64 @@
+{
+  "deal_id": "Golden Eagle Luxury Trains: Balkan Explorer",
+  "title": "Golden Eagle Luxury Trains: Balkan Explorer",
+  "url": "https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer",
+  "source": "helloworld",
+  "nights": 11.0,
+  "pp_price": 40240.0,
+  "package_total_for_two": 80480.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Luxury Rail Journey as outlined",
+    "Pre/Post Accommodation",
+    "Breakfast, Lunch and Dinners as outlined",
+    "Alcoholic and non-alcoholic beverages from Standard Bar List",
+    "Guided off-train Excursions",
+    "Arrival and departure transfers"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Venice to Istanbul",
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Hotel Monaco & Grand Canal Venice, Royal Palm Hotel, Dubrovnik, Four Season Hotel Istanbul",
+      "nights": 11,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals and beverages",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided excursions",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Transfers",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Costs for meals, excursions, and transfers are not easily obtainable."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal includes comprehensive luxury services, including meals, excursions, and transfers, which are difficult to replicate at a lower cost through DIY options. However, exact DIY pricing could not be determined.",
+  "additional_notes": "The package offers a unique luxury experience that may not be available through standard booking sites.",
+  "citations": [
+    "https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Golden Eagle Luxury Trains: Balkan Explorer\",\n  \"title\": \"Golden Eagle Luxury Trains: Balkan Explorer\",\n  \"url\": \"https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 40240.0,\n  \"package_total_for_two\": 80480.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Luxury Rail Journey as outlined\",\n    \"Pre/Post Accommodation\",\n    \"Breakfast, Lunch and Dinners as outlined\",\n    \"Alcoholic and non-alcoholic beverages from Standard Bar List\",\n    \"Guided off-train Excursions\",\n    \"Arrival and departure transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Venice to Istanbul\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotel Monaco & Grand Canal Venice, Royal Palm Hotel, Dubrovnik, Four Season Hotel Istanbul\",\n      \"nights\": 11,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals and beverages\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided excursions\", \"price\": null, \"source\": null},\n        {\"label\": \"Transfers\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals, excursions, and transfers are not easily obtainable.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes comprehensive luxury services, including meals, excursions, and transfers, which are difficult to replicate at a lower cost through DIY options. However, exact DIY pricing could not be determined.\",\n  \"additional_notes\": \"The package offers a unique luxury experience that may not be available through standard booking sites.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer\"\n  ]\n}"
+}

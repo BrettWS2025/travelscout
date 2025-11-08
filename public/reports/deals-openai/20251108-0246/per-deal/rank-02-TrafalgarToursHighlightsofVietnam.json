@@ -1,0 +1,67 @@
+{
+  "deal_id": "Trafalgar Tours Highlights of Vietnam",
+  "title": "Trafalgar Tours Highlights of Vietnam",
+  "url": "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+  "source": "helloworld",
+  "nights": 11.0,
+  "pp_price": 6595.0,
+  "package_total_for_two": 13190.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Flights from Hanoi to Danang and Hue to Ho Chi Minh City",
+    "An expert Travel Director and professional Driver",
+    "Cherry-picked hotels, all tried and trusted",
+    "All porterage and restaurant gratuities",
+    "Breakfast daily and up to half of your evening meals",
+    "Must-see sightseeing"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "International flights to Vietnam and domestic flights within Vietnam",
+      "price_total_for_two": 1200.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Vietnam",
+      "nights": 11,
+      "price_total_for_stay": 800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals not included",
+          "price": 400.0,
+          "source": "https://www.expedia.com"
+        },
+        {
+          "label": "Sightseeing tours",
+          "price": 500.0,
+          "source": "https://www.viator.com"
+        }
+      ],
+      "notes": "Additional costs for meals and optional tours not included in the package."
+    },
+    "diy_total_for_two": 2900.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 10290.0,
+    "pct": 78.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal includes comprehensive inclusions such as flights, meals, and guided tours, which would be significantly more expensive if booked separately. The estimated savings are substantial, making it a highly attractive option.",
+  "additional_notes": "Consideration of optional experiences and local activities adds value to the package.",
+  "citations": [
+    "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"title\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"url\": \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 6595.0,\n  \"package_total_for_two\": 13190.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Flights from Hanoi to Danang and Hue to Ho Chi Minh City\",\n    \"An expert Travel Director and professional Driver\",\n    \"Cherry-picked hotels, all tried and trusted\",\n    \"All porterage and restaurant gratuities\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"Must-see sightseeing\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"International flights to Vietnam and domestic flights within Vietnam\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 11,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals not included\", \"price\": 400.0, \"source\": \"https://www.expedia.com\"},\n        {\"label\": \"Sightseeing tours\", \"price\": 500.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Additional costs for meals and optional tours not included in the package.\"\n    },\n    \"diy_total_for_two\": 2900.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10290.0,\n    \"pct\": 78.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes comprehensive inclusions such as flights, meals, and guided tours, which would be significantly more expensive if booked separately. The estimated savings are substantial, making it a highly attractive option.\",\n  \"additional_notes\": \"Consideration of optional experiences and local activities adds value to the package.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

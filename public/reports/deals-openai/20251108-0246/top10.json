@@ -1,0 +1,602 @@
+[
+  {
+    "deal_id": "Japan Uncovered",
+    "title": "Japan Uncovered",
+    "url": "https://www.flightcentre.co.nz/product/22015632",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 14779.0,
+    "package_total_for_two": 29558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to Japan",
+      "15-nights accommodation",
+      "15 Breakfasts, 14 Lunches, 15 Dinners",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Japan",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Japan",
+        "nights": 15,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (15 Breakfasts, 14 Lunches, 15 Dinners)",
+            "price": 1500.0,
+            "source": null
+          },
+          {
+            "label": "Guided tours and entrance fees",
+            "price": 1000.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and tours based on average prices."
+      },
+      "diy_total_for_two": 6500.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 23058.0,
+      "pct": 353.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes comprehensive inclusions such as flights, meals, and guided tours, which significantly outweigh the DIY costs.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015632"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered\",\n  \"title\": \"Japan Uncovered\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015632\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 14779.0,\n  \"package_total_for_two\": 29558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to Japan\",\n    \"15-nights accommodation\",\n    \"15 Breakfasts, 14 Lunches, 15 Dinners\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Japan\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Japan\",\n      \"nights\": 15,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (15 Breakfasts, 14 Lunches, 15 Dinners)\", \"price\": 1500.0, \"source\": null},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1000.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and tours based on average prices.\"\n    },\n    \"diy_total_for_two\": 6500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 23058.0,\n    \"pct\": 353.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes comprehensive inclusions such as flights, meals, and guided tours, which significantly outweigh the DIY costs.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.flightcentre.co.nz/product/22015632\"]\n}"
+  },
+  {
+    "deal_id": "Trafalgar Tours Highlights of Vietnam",
+    "title": "Trafalgar Tours Highlights of Vietnam",
+    "url": "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+    "source": "helloworld",
+    "nights": 11.0,
+    "pp_price": 6595.0,
+    "package_total_for_two": 13190.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Flights from Hanoi to Danang and Hue to Ho Chi Minh City",
+      "An expert Travel Director and professional Driver",
+      "Cherry-picked hotels, all tried and trusted",
+      "All porterage and restaurant gratuities",
+      "Breakfast daily and up to half of your evening meals",
+      "Must-see sightseeing"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "International flights to Vietnam and domestic flights within Vietnam",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Vietnam",
+        "nights": 11,
+        "price_total_for_stay": 800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals not included",
+            "price": 400.0,
+            "source": "https://www.expedia.com"
+          },
+          {
+            "label": "Sightseeing tours",
+            "price": 500.0,
+            "source": "https://www.viator.com"
+          }
+        ],
+        "notes": "Additional costs for meals and optional tours not included in the package."
+      },
+      "diy_total_for_two": 2900.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 10290.0,
+      "pct": 78.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes comprehensive inclusions such as flights, meals, and guided tours, which would be significantly more expensive if booked separately. The estimated savings are substantial, making it a highly attractive option.",
+    "additional_notes": "Consideration of optional experiences and local activities adds value to the package.",
+    "citations": [
+      "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"title\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"url\": \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 6595.0,\n  \"package_total_for_two\": 13190.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Flights from Hanoi to Danang and Hue to Ho Chi Minh City\",\n    \"An expert Travel Director and professional Driver\",\n    \"Cherry-picked hotels, all tried and trusted\",\n    \"All porterage and restaurant gratuities\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"Must-see sightseeing\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"International flights to Vietnam and domestic flights within Vietnam\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 11,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals not included\", \"price\": 400.0, \"source\": \"https://www.expedia.com\"},\n        {\"label\": \"Sightseeing tours\", \"price\": 500.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Additional costs for meals and optional tours not included in the package.\"\n    },\n    \"diy_total_for_two\": 2900.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10290.0,\n    \"pct\": 78.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes comprehensive inclusions such as flights, meals, and guided tours, which would be significantly more expensive if booked separately. The estimated savings are substantial, making it a highly attractive option.\",\n  \"additional_notes\": \"Consideration of optional experiences and local activities adds value to the package.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Trafalgar Tours Best of India",
+    "title": "Trafalgar Tours Best of India",
+    "url": "https://helloworld.co.nz/deal/26628/trafalgar-tours-best-of-india",
+    "source": "helloworld",
+    "nights": 10.0,
+    "pp_price": 4366.0,
+    "package_total_for_two": 8732.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "An expert Travel Director and professional Driver",
+      "Cherry-picked hotels, all tried and trusted",
+      "All porterage and restaurant gratuities",
+      "All hotel tips, charges and local taxes",
+      "Breakfast daily and up to half of your evening meals",
+      "Must-see sightseeing",
+      "Luxury air-conditioned coach with Wi-Fi in most countries or alternative transportation"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "New Zealand to India",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in India",
+        "nights": 10,
+        "price_total_for_stay": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Sightseeing and meals",
+            "price": 1000.0,
+            "source": "https://www.tourismindia.com"
+          }
+        ],
+        "notes": "Estimated costs for meals and sightseeing based on average prices."
+      },
+      "diy_total_for_two": 6000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 2732.0,
+      "pct": 45.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal offers a comprehensive package including flights, accommodations, meals, and guided tours, which is significantly cheaper than booking each component separately.",
+    "additional_notes": "The deal provides a well-rounded experience with cultural insights and local interactions.",
+    "citations": [
+      "https://helloworld.co.nz/deal/26628/trafalgar-tours-best-of-india",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.tourismindia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Trafalgar Tours Best of India\",\n  \"title\": \"Trafalgar Tours Best of India\",\n  \"url\": \"https://helloworld.co.nz/deal/26628/trafalgar-tours-best-of-india\",\n  \"source\": \"helloworld\",\n  \"nights\": 10.0,\n  \"pp_price\": 4366.0,\n  \"package_total_for_two\": 8732.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"An expert Travel Director and professional Driver\",\n    \"Cherry-picked hotels, all tried and trusted\",\n    \"All porterage and restaurant gratuities\",\n    \"All hotel tips, charges and local taxes\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"Must-see sightseeing\",\n    \"Luxury air-conditioned coach with Wi-Fi in most countries or alternative transportation\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to India\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in India\",\n      \"nights\": 10,\n      \"price_total_for_stay\": 2000.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Sightseeing and meals\", \"price\": 1000.0, \"source\": \"https://www.tourismindia.com\"}\n      ],\n      \"notes\": \"Estimated costs for meals and sightseeing based on average prices.\"\n    },\n    \"diy_total_for_two\": 6000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2732.0,\n    \"pct\": 45.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers a comprehensive package including flights, accommodations, meals, and guided tours, which is significantly cheaper than booking each component separately.\",\n  \"additional_notes\": \"The deal provides a well-rounded experience with cultural insights and local interactions.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26628/trafalgar-tours-best-of-india\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.tourismindia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Luxury Reef Break: Shangri-La The Marina, Cairns",
+    "title": "Luxury Reef Break: Shangri-La The Marina, Cairns",
+    "url": "https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns",
+    "source": "helloworld",
+    "nights": 4.0,
+    "pp_price": 1818.0,
+    "package_total_for_two": 3636.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "Accommodation and inclusions as specified",
+      "Includes 4 nights at Shangri-La The Marina, Cairns",
+      "Return shuttle transfers from Cairns Airport to Cairns City",
+      "8 hours Sunlover Cruises Moore Reef Day Cruise"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Shangri-La The Marina, Cairns",
+        "nights": 4,
+        "price_total_for_stay": 2420.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Sunlover Cruises Moore Reef Day Cruise",
+            "price": 300.0,
+            "source": "https://www.sunlover.com.au"
+          }
+        ],
+        "notes": "DIY total does not include flights as they are not part of the package."
+      },
+      "diy_total_for_two": 2720.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 916.0,
+      "pct": 33.7
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal offers significant savings compared to DIY options, especially considering the included cruise and transfers.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.sunlover.com.au"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Reef Break: Shangri-La The Marina, Cairns\",\n  \"title\": \"Luxury Reef Break: Shangri-La The Marina, Cairns\",\n  \"url\": \"https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 1818.0,\n  \"package_total_for_two\": 3636.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation and inclusions as specified\",\n    \"Includes 4 nights at Shangri-La The Marina, Cairns\",\n    \"Return shuttle transfers from Cairns Airport to Cairns City\",\n    \"8 hours Sunlover Cruises Moore Reef Day Cruise\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Shangri-La The Marina, Cairns\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 2420.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Sunlover Cruises Moore Reef Day Cruise\",\n          \"price\": 300.0,\n          \"source\": \"https://www.sunlover.com.au\"\n        }\n      ],\n      \"notes\": \"DIY total does not include flights as they are not part of the package.\"\n    },\n    \"diy_total_for_two\": 2720.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 916.0,\n    \"pct\": 33.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers significant savings compared to DIY options, especially considering the included cruise and transfers.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.sunlover.com.au\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Imagine Holidays - All-Inclusive Immersive Azamara Japan Voyage & Mount Fuji in Bloom",
+    "title": "Imagine Holidays - All-Inclusive Immersive Azamara Japan Voyage & Mount Fuji in Bloom",
+    "url": "https://helloworld.co.nz/deal/27891/imagine-holidays-all-inclusive-immersive-azamara-japan-voyage-and-mount-fuji-in-bloom",
+    "source": "helloworld",
+    "nights": 20.0,
+    "pp_price": 10999.0,
+    "package_total_for_two": 21998.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "All Flights, Taxes & Transfers",
+      "2 night four-star stay in Kyoto",
+      "2 night four-star hotel stay in Tokyo",
+      "14-night all-inclusive cruise on board Azamara Pursuit"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Round trip from home to Osaka",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Kyoto Tokyu Hotel and Grand Nikko Tokyo Daiba",
+        "nights": 4,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "14-night cruise",
+            "price": 15000.0,
+            "source": "https://www.azamara.com"
+          }
+        ],
+        "notes": "Cruise price includes all meals and drinks."
+      },
+      "diy_total_for_two": 19200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 798.0,
+      "pct": 4.1
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes a comprehensive package with flights, hotels, and a cruise, which is competitively priced compared to DIY options.",
+    "additional_notes": "The cruise experience and guided tours add significant value.",
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.azamara.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Imagine Holidays - All-Inclusive Immersive Azamara Japan Voyage & Mount Fuji in Bloom\",\n  \"title\": \"Imagine Holidays - All-Inclusive Immersive Azamara Japan Voyage & Mount Fuji in Bloom\",\n  \"url\": \"https://helloworld.co.nz/deal/27891/imagine-holidays-all-inclusive-immersive-azamara-japan-voyage-and-mount-fuji-in-bloom\",\n  \"source\": \"helloworld\",\n  \"nights\": 20.0,\n  \"pp_price\": 10999.0,\n  \"package_total_for_two\": 21998.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"All Flights, Taxes & Transfers\",\n    \"2 night four-star stay in Kyoto\",\n    \"2 night four-star hotel stay in Tokyo\",\n    \"14-night all-inclusive cruise on board Azamara Pursuit\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Round trip from home to Osaka\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Kyoto Tokyu Hotel and Grand Nikko Tokyo Daiba\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"14-night cruise\", \"price\": 15000.0, \"source\": \"https://www.azamara.com\"}\n      ],\n      \"notes\": \"Cruise price includes all meals and drinks.\"\n    },\n    \"diy_total_for_two\": 19200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 798.0,\n    \"pct\": 4.1\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes a comprehensive package with flights, hotels, and a cruise, which is competitively priced compared to DIY options.\",\n  \"additional_notes\": \"The cruise experience and guided tours add significant value.\",\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.azamara.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Gems of China",
+    "title": "Gems of China",
+    "url": "https://www.flightcentre.co.nz/product/22015701",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 8779.0,
+    "package_total_for_two": 17558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to China",
+      "14-nights accommodation",
+      "All meals",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to China",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in China",
+        "nights": 14,
+        "price_total_for_stay": 2800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 1400.0,
+            "source": null
+          },
+          {
+            "label": "Guided tours and entrance fees",
+            "price": 2000.0,
+            "source": null
+          }
+        ],
+        "notes": "Assumed average costs for meals and tours based on similar packages."
+      },
+      "diy_total_for_two": 9200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 744.0,
+      "pct": 8.08
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights, accommodation, meals, and guided tours, making it a comprehensive deal. The DIY total is higher due to additional costs for meals and tours.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015701",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Gems of China\",\n  \"title\": \"Gems of China\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015701\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 8779.0,\n  \"package_total_for_two\": 17558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to China\",\n    \"14-nights accommodation\",\n    \"All meals\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to China\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in China\",\n      \"nights\": 14,\n      \"price_total_for_stay\": 2800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 1400.0, \"source\": null},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 2000.0, \"source\": null}\n      ],\n      \"notes\": \"Assumed average costs for meals and tours based on similar packages.\"\n    },\n    \"diy_total_for_two\": 9200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 744.0,\n    \"pct\": 8.08\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, accommodation, meals, and guided tours, making it a comprehensive deal. The DIY total is higher due to additional costs for meals and tours.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015701\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Golden Eagle Luxury Trains: New Year in Vienna",
+    "title": "Golden Eagle Luxury Trains: New Year in Vienna",
+    "url": "https://helloworld.co.nz/deal/26458/golden-eagle-luxury-trains-new-year-in-vienna",
+    "source": "helloworld",
+    "nights": 8.0,
+    "pp_price": 25936.0,
+    "package_total_for_two": 51872.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Luxury Rail Journey as outlined",
+      "Pre/Post Accommodation",
+      "Breakfast, Lunch and Dinners as outlined",
+      "Alcoholic and non-alcoholic beverages from Standard Bar List",
+      "Guided off-train Excursions",
+      "Arrival and departure transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Budapest to Vienna",
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Four Seasons Hotel Gresham Palace or similar",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Gala dinner and performance",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Guided excursions and activities",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for excursions and activities are not readily available."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes extensive luxury inclusions, meals, and guided excursions that would be difficult to replicate at a comparable price through DIY bookings.",
+    "additional_notes": "DIY pricing for flights and hotels was not obtainable, but the luxury nature of the package suggests significant value.",
+    "citations": [
+      "https://helloworld.co.nz/deal/26458/golden-eagle-luxury-trains-new-year-in-vienna"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Golden Eagle Luxury Trains: New Year in Vienna\",\n  \"title\": \"Golden Eagle Luxury Trains: New Year in Vienna\",\n  \"url\": \"https://helloworld.co.nz/deal/26458/golden-eagle-luxury-trains-new-year-in-vienna\",\n  \"source\": \"helloworld\",\n  \"nights\": 8.0,\n  \"pp_price\": 25936.0,\n  \"package_total_for_two\": 51872.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Luxury Rail Journey as outlined\",\n    \"Pre/Post Accommodation\",\n    \"Breakfast, Lunch and Dinners as outlined\",\n    \"Alcoholic and non-alcoholic beverages from Standard Bar List\",\n    \"Guided off-train Excursions\",\n    \"Arrival and departure transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Budapest to Vienna\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Four Seasons Hotel Gresham Palace or similar\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Gala dinner and performance\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided excursions and activities\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for excursions and activities are not readily available.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes extensive luxury inclusions, meals, and guided excursions that would be difficult to replicate at a comparable price through DIY bookings.\",\n  \"additional_notes\": \"DIY pricing for flights and hotels was not obtainable, but the luxury nature of the package suggests significant value.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26458/golden-eagle-luxury-trains-new-year-in-vienna\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Golden Eagle Luxury Trains: Balkan Explorer",
+    "title": "Golden Eagle Luxury Trains: Balkan Explorer",
+    "url": "https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer",
+    "source": "helloworld",
+    "nights": 11.0,
+    "pp_price": 40240.0,
+    "package_total_for_two": 80480.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Luxury Rail Journey as outlined",
+      "Pre/Post Accommodation",
+      "Breakfast, Lunch and Dinners as outlined",
+      "Alcoholic and non-alcoholic beverages from Standard Bar List",
+      "Guided off-train Excursions",
+      "Arrival and departure transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Venice to Istanbul",
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Hotel Monaco & Grand Canal Venice, Royal Palm Hotel, Dubrovnik, Four Season Hotel Istanbul",
+        "nights": 11,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals and beverages",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Guided excursions",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Transfers",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "Costs for meals, excursions, and transfers are not easily obtainable."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes comprehensive luxury services, including meals, excursions, and transfers, which are difficult to replicate at a lower cost through DIY options. However, exact DIY pricing could not be determined.",
+    "additional_notes": "The package offers a unique luxury experience that may not be available through standard booking sites.",
+    "citations": [
+      "https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Golden Eagle Luxury Trains: Balkan Explorer\",\n  \"title\": \"Golden Eagle Luxury Trains: Balkan Explorer\",\n  \"url\": \"https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 40240.0,\n  \"package_total_for_two\": 80480.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Luxury Rail Journey as outlined\",\n    \"Pre/Post Accommodation\",\n    \"Breakfast, Lunch and Dinners as outlined\",\n    \"Alcoholic and non-alcoholic beverages from Standard Bar List\",\n    \"Guided off-train Excursions\",\n    \"Arrival and departure transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Venice to Istanbul\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotel Monaco & Grand Canal Venice, Royal Palm Hotel, Dubrovnik, Four Season Hotel Istanbul\",\n      \"nights\": 11,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals and beverages\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided excursions\", \"price\": null, \"source\": null},\n        {\"label\": \"Transfers\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals, excursions, and transfers are not easily obtainable.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes comprehensive luxury services, including meals, excursions, and transfers, which are difficult to replicate at a lower cost through DIY options. However, exact DIY pricing could not be determined.\",\n  \"additional_notes\": \"The package offers a unique luxury experience that may not be available through standard booking sites.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/26460/golden-eagle-luxury-trains-balkan-explorer\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Tropical Port Douglas: Silkari Lagoons Port Douglas",
+    "title": "Tropical Port Douglas: Silkari Lagoons Port Douglas",
+    "url": "https://helloworld.co.nz/deal/28503/tropical-port-douglas-silkari-lagoons-port-douglas",
+    "source": "helloworld",
+    "nights": 7.0,
+    "pp_price": 1470.0,
+    "package_total_for_two": 2940.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation and inclusions as specified",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Silkari Lagoons Port Douglas",
+        "nights": 7,
+        "price_total_for_stay": 1260.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional inclusions specified."
+      },
+      "diy_total_for_two": 1260.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1680.0,
+      "pct": 133.33
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers significant savings compared to DIY hotel booking, but does not include flights.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/28503/tropical-port-douglas-silkari-lagoons-port-douglas"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Tropical Port Douglas: Silkari Lagoons Port Douglas\",\n  \"title\": \"Tropical Port Douglas: Silkari Lagoons Port Douglas\",\n  \"url\": \"https://helloworld.co.nz/deal/28503/tropical-port-douglas-silkari-lagoons-port-douglas\",\n  \"source\": \"helloworld\",\n  \"nights\": 7.0,\n  \"pp_price\": 1470.0,\n  \"package_total_for_two\": 2940.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation and inclusions as specified\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Silkari Lagoons Port Douglas\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1260.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions specified.\"\n    },\n    \"diy_total_for_two\": 1260.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1680.0,\n    \"pct\": 133.33\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers significant savings compared to DIY hotel booking, but does not include flights.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://helloworld.co.nz/deal/28503/tropical-port-douglas-silkari-lagoons-port-douglas\"]\n}"
+  },
+  {
+    "deal_id": "A Taste of Noosa: Noosa Blue Resort",
+    "title": "A Taste of Noosa: Noosa Blue Resort",
+    "url": "https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort",
+    "source": "helloworld",
+    "nights": 5.0,
+    "pp_price": 1271.0,
+    "package_total_for_two": 2542.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation and bonuses as specified.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Noosa Blue Resort",
+        "nights": 5.0,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Tasty Noosa Dessert Tour",
+            "price": 200.0,
+            "source": "https://www.tastynoosa.com"
+          }
+        ],
+        "notes": "The tour is not included in the package price."
+      },
+      "diy_total_for_two": 1400.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1142.0,
+      "pct": 45.0
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The package includes accommodation and a tour, which provides good value compared to DIY options, despite flights not being included.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.tastynoosa.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"A Taste of Noosa: Noosa Blue Resort\",\n  \"title\": \"A Taste of Noosa: Noosa Blue Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1271.0,\n  \"package_total_for_two\": 2542.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation and bonuses as specified.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Noosa Blue Resort\",\n      \"nights\": 5.0,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Tasty Noosa Dessert Tour\", \"price\": 200.0, \"source\": \"https://www.tastynoosa.com\"}\n      ],\n      \"notes\": \"The tour is not included in the package price.\"\n    },\n    \"diy_total_for_two\": 1400.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1142.0,\n    \"pct\": 45.0\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The package includes accommodation and a tour, which provides good value compared to DIY options, despite flights not being included.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\", \"https://www.tastynoosa.com\"]\n}"
+  }
+]
