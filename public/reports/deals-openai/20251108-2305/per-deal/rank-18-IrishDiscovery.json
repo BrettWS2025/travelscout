@@ -1,0 +1,56 @@
+{
+  "deal_id": "Irish Discovery",
+  "title": "Irish Discovery",
+  "url": "https://www.flightcentre.co.nz/product/21747107",
+  "source": "flightcentre",
+  "nights": 8.0,
+  "pp_price": 2999.0,
+  "package_total_for_two": 5998.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "8 Breakfasts & 3 Dinners",
+    "Transport by air-conditioned motorcoach with free Wi-Fi",
+    "Selected guided sightseeing"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various accommodations",
+      "nights": 8,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals",
+          "price": 300,
+          "source": "assumed average cost for meals"
+        },
+        {
+          "label": "Transport",
+          "price": 200,
+          "source": "assumed average cost for transport"
+        }
+      ],
+      "notes": "DIY costs for meals and transport are estimated."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal includes meals and guided sightseeing, which adds value. However, without specific DIY costs for hotels and flights, it's difficult to estimate savings accurately.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21747107"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Irish Discovery\",\n  \"title\": \"Irish Discovery\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21747107\",\n  \"source\": \"flightcentre\",\n  \"nights\": 8.0,\n  \"pp_price\": 2999.0,\n  \"package_total_for_two\": 5998.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"8 Breakfasts & 3 Dinners\",\n    \"Transport by air-conditioned motorcoach with free Wi-Fi\",\n    \"Selected guided sightseeing\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations\",\n      \"nights\": 8,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 300, \"source\": \"assumed average cost for meals\"},\n        {\"label\": \"Transport\", \"price\": 200, \"source\": \"assumed average cost for transport\"}\n      ],\n      \"notes\": \"DIY costs for meals and transport are estimated.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal includes meals and guided sightseeing, which adds value. However, without specific DIY costs for hotels and flights, it's difficult to estimate savings accurately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21747107\"\n  ]\n}"
+}

@@ -1,0 +1,61 @@
+{
+  "deal_id": "From St Paul's to St Peter's - London to Rome",
+  "title": "From St Paul's to St Peter's - London to Rome",
+  "url": "https://www.flightcentre.co.nz/product/21747176",
+  "source": "flightcentre",
+  "nights": 11.0,
+  "pp_price": 4599.0,
+  "package_total_for_two": 9198.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Meals: 11 Breakfasts & 2 Dinners.",
+    "Transport by air-conditioned motorcoach with free Wi-Fi",
+    "Selected guided sightseeing"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in London and Rome",
+      "nights": 11.0,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (11 Breakfasts & 2 Dinners)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Transport by motorcoach",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided sightseeing",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Specific costs for meals, transport, and guided tours not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal includes meals and guided tours, which can add significant value, but lacks specific DIY pricing for flights and accommodations.",
+  "additional_notes": "Further research needed for accurate DIY pricing.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21747176"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"From St Paul's to St Peter's - London to Rome\",\n  \"title\": \"From St Paul's to St Peter's - London to Rome\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21747176\",\n  \"source\": \"flightcentre\",\n  \"nights\": 11.0,\n  \"pp_price\": 4599.0,\n  \"package_total_for_two\": 9198.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Meals: 11 Breakfasts & 2 Dinners.\",\n    \"Transport by air-conditioned motorcoach with free Wi-Fi\",\n    \"Selected guided sightseeing\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in London and Rome\",\n      \"nights\": 11.0,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (11 Breakfasts & 2 Dinners)\", \"price\": null, \"source\": null},\n        {\"label\": \"Transport by motorcoach\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Specific costs for meals, transport, and guided tours not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal includes meals and guided tours, which can add significant value, but lacks specific DIY pricing for flights and accommodations.\",\n  \"additional_notes\": \"Further research needed for accurate DIY pricing.\",\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21747176\"]\n}"
+}

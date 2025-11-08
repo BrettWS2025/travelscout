@@ -1,0 +1,75 @@
+{
+  "deal_id": "Colombo, Caves & Kandy",
+  "title": "Colombo, Caves & Kandy",
+  "url": "https://www.flightcentre.co.nz/product/21991030",
+  "source": "flightcentre",
+  "nights": 7.0,
+  "pp_price": 1705.0,
+  "package_total_for_two": 3410.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Accommodation: 7 nights in 4-5 star hotels and heritage properties",
+    "Meals: Breakfast daily and 1 lunch",
+    "Travel by private air-conditioned tourism vehicles",
+    "Guided sightseeing - Dambulla, Polonnaruwa, Sigiriya, Nuwara Eliya, Udawalawe and Colombo",
+    "Jeep safari/game drive in Udawalawe National Park",
+    "Scenic train trip from Kandy to Nuwara Eliya, canoe ride and tuk tuk trips",
+    "Escorted by an English-speaking guide"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "4-5 star hotels and heritage properties",
+      "nights": 7.0,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (Breakfast daily and 1 lunch)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided sightseeing",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Jeep safari/game drive",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Scenic train trip",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Canoe ride and tuk tuk trips",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Costs for meals and activities are not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal includes a comprehensive itinerary with accommodation and meals, but lacks specific DIY pricing for flights and hotels, making it difficult to assess savings accurately.",
+  "additional_notes": "Further research is needed to obtain DIY prices for hotels and activities.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21991030"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Colombo, Caves & Kandy\",\n  \"title\": \"Colombo, Caves & Kandy\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21991030\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 1705.0,\n  \"package_total_for_two\": 3410.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation: 7 nights in 4-5 star hotels and heritage properties\",\n    \"Meals: Breakfast daily and 1 lunch\",\n    \"Travel by private air-conditioned tourism vehicles\",\n    \"Guided sightseeing - Dambulla, Polonnaruwa, Sigiriya, Nuwara Eliya, Udawalawe and Colombo\",\n    \"Jeep safari/game drive in Udawalawe National Park\",\n    \"Scenic train trip from Kandy to Nuwara Eliya, canoe ride and tuk tuk trips\",\n    \"Escorted by an English-speaking guide\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"4-5 star hotels and heritage properties\",\n      \"nights\": 7.0,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (Breakfast daily and 1 lunch)\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing\", \"price\": null, \"source\": null},\n        {\"label\": \"Jeep safari/game drive\", \"price\": null, \"source\": null},\n        {\"label\": \"Scenic train trip\", \"price\": null, \"source\": null},\n        {\"label\": \"Canoe ride and tuk tuk trips\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals and activities are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal includes a comprehensive itinerary with accommodation and meals, but lacks specific DIY pricing for flights and hotels, making it difficult to assess savings accurately.\",\n  \"additional_notes\": \"Further research is needed to obtain DIY prices for hotels and activities.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21991030\"\n  ]\n}"
+}

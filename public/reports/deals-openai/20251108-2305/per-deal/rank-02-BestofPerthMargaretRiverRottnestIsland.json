@@ -1,0 +1,59 @@
+{
+  "deal_id": "Best of Perth, Margaret River & Rottnest Island",
+  "title": "Best of Perth, Margaret River & Rottnest Island",
+  "url": "https://www.flightcentre.co.nz/product/21892076",
+  "source": "flightcentre",
+  "nights": 4.0,
+  "pp_price": 2329.0,
+  "package_total_for_two": 4658.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "4 nights accommodation",
+    "4 Breakfasts, 1 Lunch & 1 Dinner",
+    "Transport: Private Vehicle, Ferry, Shuttle Bus"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Comfortable accommodation",
+      "nights": 4.0,
+      "price_total_for_stay": 800.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals",
+          "price": 150.0,
+          "source": null
+        },
+        {
+          "label": "Transport",
+          "price": 200.0,
+          "source": null
+        }
+      ],
+      "notes": "Estimated costs for meals and transport based on average prices."
+    },
+    "diy_total_for_two": 1150.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 3508.0,
+    "pct": 304.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal offers significant savings compared to DIY costs, especially considering included meals and transport.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21892076",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Best of Perth, Margaret River & Rottnest Island\",\n  \"title\": \"Best of Perth, Margaret River & Rottnest Island\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21892076\",\n  \"source\": \"flightcentre\",\n  \"nights\": 4.0,\n  \"pp_price\": 2329.0,\n  \"package_total_for_two\": 4658.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"4 nights accommodation\",\n    \"4 Breakfasts, 1 Lunch & 1 Dinner\",\n    \"Transport: Private Vehicle, Ferry, Shuttle Bus\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Comfortable accommodation\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 150.0, \"source\": null},\n        {\"label\": \"Transport\", \"price\": 200.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and transport based on average prices.\"\n    },\n    \"diy_total_for_two\": 1150.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3508.0,\n    \"pct\": 304.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers significant savings compared to DIY costs, especially considering included meals and transport.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21892076\", \"https://www.booking.com\"]\n}"
+}

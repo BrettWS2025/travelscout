@@ -1,0 +1,55 @@
+{
+  "deal_id": "Japan Uncovered",
+  "title": "Japan Uncovered",
+  "url": "https://www.flightcentre.co.nz/product/22015632",
+  "source": "flightcentre",
+  "nights": 14.0,
+  "pp_price": 14779.0,
+  "package_total_for_two": 29558.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return airfares from Auckland to Japan",
+    "18-day fully inclusive tour with Wendy Wu Tours from Osaka to Tokyo",
+    "15-nights accommodation",
+    "15 Breakfasts, 14 Lunches, 15 Dinners",
+    "Touring with Guides and entrance fees",
+    "Cultural experiences",
+    "Fully escorted by expert guides"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Japan",
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Japan",
+      "nights": 15,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals and tours",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Exact costs for meals and tours not available for DIY comparison."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal includes comprehensive inclusions such as flights, extensive meals, and guided tours, making it a strong package. However, DIY costs for flights and accommodations were not sourced, limiting the ability to calculate exact savings.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22015632"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered\",\n  \"title\": \"Japan Uncovered\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015632\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 14779.0,\n  \"package_total_for_two\": 29558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to Japan\",\n    \"18-day fully inclusive tour with Wendy Wu Tours from Osaka to Tokyo\",\n    \"15-nights accommodation\",\n    \"15 Breakfasts, 14 Lunches, 15 Dinners\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Japan\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Japan\",\n      \"nights\": 15,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals and tours\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Exact costs for meals and tours not available for DIY comparison.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal includes comprehensive inclusions such as flights, extensive meals, and guided tours, making it a strong package. However, DIY costs for flights and accommodations were not sourced, limiting the ability to calculate exact savings.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015632\"\n  ]\n}"
+}

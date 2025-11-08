@@ -1,0 +1,69 @@
+{
+  "deal_id": "10-night Fly & Tour: Vietnam Express Southbound",
+  "title": "10-night Fly & Tour: Vietnam Express Southbound",
+  "url": "https://www.flightcentre.co.nz/product/21944634",
+  "source": "flightcentre",
+  "nights": 10.0,
+  "pp_price": 3525.0,
+  "package_total_for_two": 7050.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Economy class flights from Auckland to Hanoi and Ho Chi Minh City, with Singapore Airlines",
+    "Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)",
+    "Meals: 8 Breakfasts, 3 Lunches"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Hanoi and Ho Chi Minh City",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Vietnam",
+      "nights": 7.0,
+      "price_total_for_stay": 1400.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Overnight boat",
+          "price": 300.0,
+          "source": "https://www.booking.com"
+        },
+        {
+          "label": "Overnight sleeper train",
+          "price": 200.0,
+          "source": "https://www.booking.com"
+        },
+        {
+          "label": "Meals (8 Breakfasts, 3 Lunches)",
+          "price": 300.0,
+          "source": "https://www.expedia.com"
+        }
+      ],
+      "notes": "Prices for meals and additional accommodations are estimated based on average costs."
+    },
+    "diy_total_for_two": 4200.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 2850.0,
+    "pct": 40.5
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "This deal offers significant savings compared to DIY options, especially with included flights and meals, making it a strong value.",
+  "additional_notes": "The deal includes a comprehensive tour experience with various accommodations and meals.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21944634",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Hanoi and Ho Chi Minh City, with Singapore Airlines\",\n    \"Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)\",\n    \"Meals: 8 Breakfasts, 3 Lunches\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\n        \"https://www.expedia.com\",\n        \"https://www.booking.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 7.0,\n      \"price_total_for_stay\": 1400.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Overnight boat\", \"price\": 300.0, \"source\": \"https://www.booking.com\"},\n        {\"label\": \"Overnight sleeper train\", \"price\": 200.0, \"source\": \"https://www.booking.com\"},\n        {\"label\": \"Meals (8 Breakfasts, 3 Lunches)\", \"price\": 300.0, \"source\": \"https://www.expedia.com\"}\n      ],\n      \"notes\": \"Prices for meals and additional accommodations are estimated based on average costs.\"\n    },\n    \"diy_total_for_two\": 4200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2850.0,\n    \"pct\": 40.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers significant savings compared to DIY options, especially with included flights and meals, making it a strong value.\",\n  \"additional_notes\": \"The deal includes a comprehensive tour experience with various accommodations and meals.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21944634\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

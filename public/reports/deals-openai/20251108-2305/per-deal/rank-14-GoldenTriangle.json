@@ -1,0 +1,51 @@
+{
+  "deal_id": "Golden Triangle",
+  "title": "Golden Triangle",
+  "url": "https://www.flightcentre.co.nz/product/21934094",
+  "source": "flightcentre",
+  "nights": 6.0,
+  "pp_price": 1189.0,
+  "package_total_for_two": 2378.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "7-nights accommodation",
+    "Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw",
+    "Services of a CEO (Chief Experience Officer) throughout, local guides"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Delhi, Jaipur, and Agra",
+      "nights": 6,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Transport and local guides",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Transport and local guide costs are variable and depend on specific arrangements."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive package with accommodation and local transport, but lacks flight inclusion and specific DIY cost comparisons.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21934094"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Golden Triangle\",\n  \"title\": \"Golden Triangle\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21934094\",\n  \"source\": \"flightcentre\",\n  \"nights\": 6.0,\n  \"pp_price\": 1189.0,\n  \"package_total_for_two\": 2378.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"7-nights accommodation\",\n    \"Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\",\n    \"Services of a CEO (Chief Experience Officer) throughout, local guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Delhi, Jaipur, and Agra\",\n      \"nights\": 6,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Transport and local guides\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Transport and local guide costs are variable and depend on specific arrangements.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive package with accommodation and local transport, but lacks flight inclusion and specific DIY cost comparisons.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21934094\"]\n}"
+}

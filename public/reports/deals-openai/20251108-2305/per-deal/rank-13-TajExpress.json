@@ -1,0 +1,56 @@
+{
+  "deal_id": "Taj Express",
+  "title": "Taj Express",
+  "url": "https://www.flightcentre.co.nz/product/21990961",
+  "source": "flightcentre",
+  "nights": 7.0,
+  "pp_price": 1109.0,
+  "package_total_for_two": 2218.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Accommodation: 7 nights in 3 & 4 star heritage hotels.",
+    "Meals: Breakfast daily and 1 Dinner.",
+    "Guided sightseeing - Delhi, Jaipur, Agra and Karauli or Dholpur."
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "3 & 4 star heritage hotels",
+      "nights": 7,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (Breakfast daily and 1 Dinner)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided sightseeing",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals and sightseeing not available."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal offers a comprehensive package with accommodation, meals, and guided tours, but lacks specific DIY pricing for a complete comparison.",
+  "additional_notes": "Further research needed for exact hotel and flight costs.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21990961"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Taj Express\",\n  \"title\": \"Taj Express\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21990961\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 1109.0,\n  \"package_total_for_two\": 2218.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation: 7 nights in 3 & 4 star heritage hotels.\",\n    \"Meals: Breakfast daily and 1 Dinner.\",\n    \"Guided sightseeing - Delhi, Jaipur, Agra and Karauli or Dholpur.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"3 & 4 star heritage hotels\",\n      \"nights\": 7,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (Breakfast daily and 1 Dinner)\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and sightseeing not available.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal offers a comprehensive package with accommodation, meals, and guided tours, but lacks specific DIY pricing for a complete comparison.\",\n  \"additional_notes\": \"Further research needed for exact hotel and flight costs.\",\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21990961\"]\n}"
+}

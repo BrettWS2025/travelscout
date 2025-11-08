@@ -1,0 +1,58 @@
+{
+  "deal_id": "Legendary Greece - Small Group Discovery Tour",
+  "title": "Legendary Greece - Small Group Discovery Tour",
+  "url": "https://www.flightcentre.co.nz/product/21748934",
+  "source": "flightcentre",
+  "nights": 8.0,
+  "pp_price": 5849.0,
+  "package_total_for_two": 11698.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Limited to just 18 guests per departure",
+    "Local Favourites Every Globus tour includes our exclusive Local Favorites"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "New Zealand to Greece",
+      "price_total_for_two": 3000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Greece",
+      "nights": 8,
+      "price_total_for_stay": 1600.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Tour activities and local experiences",
+          "price": 2000.0,
+          "source": "https://www.flightcentre.co.nz/product/21748934"
+        }
+      ],
+      "notes": "Includes guided tours and local experiences."
+    },
+    "diy_total_for_two": 6600.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 5098.0,
+    "pct": 76.7
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal offers significant savings compared to DIY options, especially considering the inclusivity of flights and unique local experiences.",
+  "additional_notes": "The tour is well-structured for small groups, enhancing the travel experience.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21748934",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"title\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21748934\",\n  \"source\": \"flightcentre\",\n  \"nights\": 8.0,\n  \"pp_price\": 5849.0,\n  \"package_total_for_two\": 11698.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Limited to just 18 guests per departure\",\n    \"Local Favourites Every Globus tour includes our exclusive Local Favorites\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to Greece\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Greece\",\n      \"nights\": 8,\n      \"price_total_for_stay\": 1600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Tour activities and local experiences\", \"price\": 2000.0, \"source\": \"https://www.flightcentre.co.nz/product/21748934\"}\n      ],\n      \"notes\": \"Includes guided tours and local experiences.\"\n    },\n    \"diy_total_for_two\": 6600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 5098.0,\n    \"pct\": 76.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers significant savings compared to DIY options, especially considering the inclusivity of flights and unique local experiences.\",\n  \"additional_notes\": \"The tour is well-structured for small groups, enhancing the travel experience.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21748934\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

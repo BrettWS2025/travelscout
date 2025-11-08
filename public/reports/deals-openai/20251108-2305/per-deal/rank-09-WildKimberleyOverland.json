@@ -1,0 +1,52 @@
+{
+  "deal_id": "Wild Kimberley Overland",
+  "title": "Wild Kimberley Overland",
+  "url": "https://www.flightcentre.co.nz/product/21892214",
+  "source": "flightcentre",
+  "nights": 10.0,
+  "pp_price": 4089.0,
+  "package_total_for_two": 8178.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "SAVE $725* per person",
+    "10 nights accommodation",
+    "Meals: 10 Breakfasts, 10 Lunches & 8 Dinners",
+    "add international flights & comprehensive Travel Insurance"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Camping and Eco safari camp",
+      "nights": 10.0,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (10 Breakfasts, 10 Lunches & 8 Dinners)",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals and camping accommodations are not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal includes comprehensive meals and accommodations, making it a strong offering despite the lack of detailed DIY pricing.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21892214"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Wild Kimberley Overland\",\n  \"title\": \"Wild Kimberley Overland\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21892214\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10.0,\n  \"pp_price\": 4089.0,\n  \"package_total_for_two\": 8178.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"SAVE $725* per person\",\n    \"10 nights accommodation\",\n    \"Meals: 10 Breakfasts, 10 Lunches & 8 Dinners\",\n    \"add international flights & comprehensive Travel Insurance\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Camping and Eco safari camp\",\n      \"nights\": 10.0,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (10 Breakfasts, 10 Lunches & 8 Dinners)\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and camping accommodations are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal includes comprehensive meals and accommodations, making it a strong offering despite the lack of detailed DIY pricing.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21892214\"\n  ]\n}"
+}

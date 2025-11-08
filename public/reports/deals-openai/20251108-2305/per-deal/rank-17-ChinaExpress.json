@@ -1,0 +1,82 @@
+{
+  "deal_id": "China Express",
+  "title": "China Express",
+  "url": "https://www.flightcentre.co.nz/product/22078852",
+  "source": "flightcentre",
+  "nights": 7.0,
+  "pp_price": 2429.0,
+  "package_total_for_two": 4858.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Accommodation: 7 nights in 4 star hotels",
+    "Meals: 7 Breakfasts, 2 Lunches & 3 Dinners",
+    "Travel by private air-conditioned tourism vehicles",
+    "Guided sightseeing - Beijing, Huanghuacheng Great Wall, Luoyang & Xi'an",
+    "Highspeed train ticket to Luoyang (2nd class)",
+    "Xi\u2019an - bike ride on medieval City Wall",
+    "Chinese acrobatic performance",
+    "Beijing Capital Airport arrival transfer on day 1",
+    "Escorted by an English-speaking guide"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "4 star hotels in Beijing and Xi'an",
+      "nights": 7,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (7 Breakfasts, 2 Lunches & 3 Dinners)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided sightseeing",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Highspeed train ticket to Luoyang",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Bike ride on medieval City Wall",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Chinese acrobatic performance",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Airport transfer",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals, sightseeing, and activities not reliably obtainable."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal includes a comprehensive package with accommodation, meals, and guided tours, which may offer good value compared to DIY options, but exact DIY costs are not available.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22078852"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"China Express\",\n  \"title\": \"China Express\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22078852\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 2429.0,\n  \"package_total_for_two\": 4858.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation: 7 nights in 4 star hotels\",\n    \"Meals: 7 Breakfasts, 2 Lunches & 3 Dinners\",\n    \"Travel by private air-conditioned tourism vehicles\",\n    \"Guided sightseeing - Beijing, Huanghuacheng Great Wall, Luoyang & Xi'an\",\n    \"Highspeed train ticket to Luoyang (2nd class)\",\n    \"Xi\u2019an - bike ride on medieval City Wall\",\n    \"Chinese acrobatic performance\",\n    \"Beijing Capital Airport arrival transfer on day 1\",\n    \"Escorted by an English-speaking guide\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"4 star hotels in Beijing and Xi'an\",\n      \"nights\": 7,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (7 Breakfasts, 2 Lunches & 3 Dinners)\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing\", \"price\": null, \"source\": null},\n        {\"label\": \"Highspeed train ticket to Luoyang\", \"price\": null, \"source\": null},\n        {\"label\": \"Bike ride on medieval City Wall\", \"price\": null, \"source\": null},\n        {\"label\": \"Chinese acrobatic performance\", \"price\": null, \"source\": null},\n        {\"label\": \"Airport transfer\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals, sightseeing, and activities not reliably obtainable.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal includes a comprehensive package with accommodation, meals, and guided tours, which may offer good value compared to DIY options, but exact DIY costs are not available.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22078852\"\n  ]\n}"
+}
