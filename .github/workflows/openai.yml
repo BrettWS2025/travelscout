@@ -68,7 +68,7 @@ jobs:
           READ_TIMEOUT: 10       # seconds per request
           CACHE_PAGES: 1         # use disk cache for page HTML
           PAUSE_BETWEEN_CALLS: 0.15
-          MAX_DEALS: 0           # 0 = analyze all (after nights filter)
+          MAX_DEALS: 50           # 0 = analyze all (after nights filter)
           # REPO_ROOT: ${{ github.workspace }}                 # optional override
           # PACKAGES_FILE: public/data/packages.final.jsonl     # optional override
         run: |
