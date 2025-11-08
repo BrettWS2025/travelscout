@@ -53,7 +53,7 @@ jobs:
           OPENAI_MODEL: gpt-4o-mini
           TOP_N: 10              # only write the Top 20 per-deal JSONs
           SHORTLIST_SIZE: 400    # optional: analyze only the best 400 by heuristic
-          MAX_DEALS: 100          # set 0 to consider all (after nights filter)
+          MAX_DEALS: 50          # set 0 to consider all (after nights filter)
           # REPO_ROOT: ${{ github.workspace }}   # optional override
           # PACKAGES_FILE: public/data/packages.final.jsonl  # optional override
         run: |
