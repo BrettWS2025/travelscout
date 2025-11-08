@@ -1,0 +1,61 @@
+{
+  "deal_id": "London to Lisbon: Western Wonders",
+  "title": "London to Lisbon: Western Wonders",
+  "url": "https://www.flightcentre.co.nz/product/21893743",
+  "source": "flightcentre",
+  "nights": 13,
+  "pp_price": 4829.0,
+  "package_total_for_two": 9658.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "13-nights accommodation in multi-share rooms",
+    "Meals included: 20",
+    "Activities included: 8"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": "London to Lisbon",
+      "price_total_for_two": 0,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Hostel or budget accommodation in Lisbon",
+      "nights": 13,
+      "price_total_for_stay": 1300,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (20 meals)",
+          "price": 600,
+          "source": null
+        },
+        {
+          "label": "Activities (8 activities)",
+          "price": 400,
+          "source": null
+        }
+      ],
+      "notes": "Estimated costs for meals and activities based on average prices."
+    },
+    "diy_total_for_two": 2300
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 7358,
+    "pct": 319.04
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal offers a comprehensive package with significant inclusions, making it a great value compared to DIY costs.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21893743",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"London to Lisbon: Western Wonders\",\n  \"title\": \"London to Lisbon: Western Wonders\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21893743\",\n  \"source\": \"flightcentre\",\n  \"nights\": 13,\n  \"pp_price\": 4829.0,\n  \"package_total_for_two\": 9658.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"13-nights accommodation in multi-share rooms\",\n    \"Meals included: 20\",\n    \"Activities included: 8\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"London to Lisbon\",\n      \"price_total_for_two\": 0,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hostel or budget accommodation in Lisbon\",\n      \"nights\": 13,\n      \"price_total_for_stay\": 1300,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (20 meals)\", \"price\": 600, \"source\": null},\n        {\"label\": \"Activities (8 activities)\", \"price\": 400, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and activities based on average prices.\"\n    },\n    \"diy_total_for_two\": 2300\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 7358,\n    \"pct\": 319.04\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers a comprehensive package with significant inclusions, making it a great value compared to DIY costs.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21893743\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

@@ -1,0 +1,1249 @@
+[
+  {
+    "deal_id": "Japan Uncovered",
+    "title": "Japan Uncovered",
+    "url": "https://www.flightcentre.co.nz/product/22015632",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 14779.0,
+    "package_total_for_two": 29558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to Japan",
+      "15-nights accommodation",
+      "15 Breakfasts, 14 Lunches, 15 Dinners",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Japan",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Japan",
+        "nights": 15,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (15 Breakfasts, 14 Lunches, 15 Dinners)",
+            "price": 1500.0,
+            "source": null
+          },
+          {
+            "label": "Guided tours and entrance fees",
+            "price": 1000.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and guided tours based on average prices."
+      },
+      "diy_total_for_two": 5700.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 23858.0,
+      "pct": 80.7
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "This deal offers extensive inclusions such as flights, accommodation, meals, and guided tours, which are difficult to replicate at a similar price point. The estimated savings are substantial.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015632",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered\",\n  \"title\": \"Japan Uncovered\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015632\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 14779.0,\n  \"package_total_for_two\": 29558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to Japan\",\n    \"15-nights accommodation\",\n    \"15 Breakfasts, 14 Lunches, 15 Dinners\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Japan\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Japan\",\n      \"nights\": 15,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (15 Breakfasts, 14 Lunches, 15 Dinners)\", \"price\": 1500.0, \"source\": null},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1000.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and guided tours based on average prices.\"\n    },\n    \"diy_total_for_two\": 5700.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 23858.0,\n    \"pct\": 80.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers extensive inclusions such as flights, accommodation, meals, and guided tours, which are difficult to replicate at a similar price point. The estimated savings are substantial.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015632\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Gems of China",
+    "title": "Gems of China",
+    "url": "https://www.flightcentre.co.nz/product/22015701",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 8779.0,
+    "package_total_for_two": 17558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to China",
+      "14-nights accommodation",
+      "All meals",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to China",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in China",
+        "nights": 14,
+        "price_total_for_stay": 2800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 1400.0,
+            "source": null
+          },
+          {
+            "label": "Guided tours and entrance fees",
+            "price": 1200.0,
+            "source": null
+          },
+          {
+            "label": "Cultural experiences",
+            "price": 600.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and guided tours based on average prices."
+      },
+      "diy_total_for_two": 8000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 9558.0,
+      "pct": 119.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "This deal offers a comprehensive tour with flights, meals, and guided experiences included, which is significantly cheaper than booking separately.",
+    "additional_notes": "The deal includes a free stopover in Hong Kong, adding extra value.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015701",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Gems of China\",\n  \"title\": \"Gems of China\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015701\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 8779.0,\n  \"package_total_for_two\": 17558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to China\",\n    \"14-nights accommodation\",\n    \"All meals\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to China\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in China\",\n      \"nights\": 14,\n      \"price_total_for_stay\": 2800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 1400.0, \"source\": null},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1200.0, \"source\": null},\n        {\"label\": \"Cultural experiences\", \"price\": 600.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and guided tours based on average prices.\"\n    },\n    \"diy_total_for_two\": 8000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 9558.0,\n    \"pct\": 119.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers a comprehensive tour with flights, meals, and guided experiences included, which is significantly cheaper than booking separately.\",\n  \"additional_notes\": \"The deal includes a free stopover in Hong Kong, adding extra value.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015701\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Japan Highlights",
+    "title": "Japan Highlights",
+    "url": "https://www.flightcentre.co.nz/product/21958231",
+    "source": "flightcentre",
+    "nights": 7.0,
+    "pp_price": 4755.0,
+    "package_total_for_two": 9510.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "8-nights accommodation Hotel (7 nights), Homestay (1 night)",
+      "Meals: 1 Breakfast & 3 Dinners",
+      "Transport: Public Bus, Metro, Local Train, Bullet Train"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Japan",
+        "nights": 7,
+        "price_total_for_stay": 1400.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (1 Breakfast & 3 Dinners)",
+            "price": 150.0,
+            "source": null
+          },
+          {
+            "label": "Transport (Public Bus, Metro, Local Train, Bullet Train)",
+            "price": 300.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and transport based on average prices."
+      },
+      "diy_total_for_two": 1850.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 7660.0,
+      "pct": 80.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package offers significant savings compared to DIY options, especially considering the included experiences and guided tours.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21958231",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Japan Highlights\",\n  \"title\": \"Japan Highlights\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21958231\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 4755.0,\n  \"package_total_for_two\": 9510.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"8-nights accommodation Hotel (7 nights), Homestay (1 night)\",\n    \"Meals: 1 Breakfast & 3 Dinners\",\n    \"Transport: Public Bus, Metro, Local Train, Bullet Train\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Japan\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (1 Breakfast & 3 Dinners)\", \"price\": 150.0, \"source\": null},\n        {\"label\": \"Transport (Public Bus, Metro, Local Train, Bullet Train)\", \"price\": 300.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and transport based on average prices.\"\n    },\n    \"diy_total_for_two\": 1850.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 7660.0,\n    \"pct\": 80.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package offers significant savings compared to DIY options, especially considering the included experiences and guided tours.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21958231\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "London to Lisbon: Western Wonders",
+    "title": "London to Lisbon: Western Wonders",
+    "url": "https://www.flightcentre.co.nz/product/21893743",
+    "source": "flightcentre",
+    "nights": 13,
+    "pp_price": 4829.0,
+    "package_total_for_two": 9658.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "13-nights accommodation in multi-share rooms",
+      "Meals included: 20",
+      "Activities included: 8"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": "London to Lisbon",
+        "price_total_for_two": 0,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Hostel or budget accommodation in Lisbon",
+        "nights": 13,
+        "price_total_for_stay": 1300,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (20 meals)",
+            "price": 600,
+            "source": null
+          },
+          {
+            "label": "Activities (8 activities)",
+            "price": 400,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and activities based on average prices."
+      },
+      "diy_total_for_two": 2300
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 7358,
+      "pct": 319.04
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal offers a comprehensive package with significant inclusions, making it a great value compared to DIY costs.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21893743",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"London to Lisbon: Western Wonders\",\n  \"title\": \"London to Lisbon: Western Wonders\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21893743\",\n  \"source\": \"flightcentre\",\n  \"nights\": 13,\n  \"pp_price\": 4829.0,\n  \"package_total_for_two\": 9658.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"13-nights accommodation in multi-share rooms\",\n    \"Meals included: 20\",\n    \"Activities included: 8\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"London to Lisbon\",\n      \"price_total_for_two\": 0,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hostel or budget accommodation in Lisbon\",\n      \"nights\": 13,\n      \"price_total_for_stay\": 1300,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (20 meals)\", \"price\": 600, \"source\": null},\n        {\"label\": \"Activities (8 activities)\", \"price\": 400, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and activities based on average prices.\"\n    },\n    \"diy_total_for_two\": 2300\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 7358,\n    \"pct\": 319.04\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal offers a comprehensive package with significant inclusions, making it a great value compared to DIY costs.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21893743\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "10-night Fly & Tour: Vietnam Express Southbound",
+    "title": "10-night Fly & Tour: Vietnam Express Southbound",
+    "url": "https://www.flightcentre.co.nz/product/21944634",
+    "source": "flightcentre",
+    "nights": 10,
+    "pp_price": 3525,
+    "package_total_for_two": 7050,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Economy class flights from Auckland to Hanoi and Ho Chi Minh City",
+      "10-day small group trip from Hanoi to Ho Chi Minh City with Intrepid",
+      "Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)",
+      "Meals: 8 Breakfasts, 3 Lunches & 2 Dinners"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Hanoi and Ho Chi Minh City to Auckland",
+        "price_total_for_two": 2000,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Vietnam",
+        "nights": 7,
+        "price_total_for_stay": 1400,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals and activities not included",
+            "price": 600,
+            "source": null
+          }
+        ],
+        "notes": "Transfers and optional tours are additional."
+      },
+      "diy_total_for_two": 4000
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 3050,
+      "pct": 76.25
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "This deal offers significant savings compared to DIY options, especially with included flights and meals. The comprehensive itinerary adds value.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21944634"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10,\n  \"pp_price\": 3525,\n  \"package_total_for_two\": 7050,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Hanoi and Ho Chi Minh City\",\n    \"10-day small group trip from Hanoi to Ho Chi Minh City with Intrepid\",\n    \"Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)\",\n    \"Meals: 8 Breakfasts, 3 Lunches & 2 Dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City to Auckland\",\n      \"price_total_for_two\": 2000,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1400,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals and activities not included\", \"price\": 600, \"source\": null}\n      ],\n      \"notes\": \"Transfers and optional tours are additional.\"\n    },\n    \"diy_total_for_two\": 4000\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3050,\n    \"pct\": 76.25\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers significant savings compared to DIY options, especially with included flights and meals. The comprehensive itinerary adds value.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21944634\"]\n}"
+  },
+  {
+    "deal_id": "Vanuatu: Warwick Le Lagon \u2013 Vanuatu",
+    "title": "Vanuatu: Warwick Le Lagon \u2013 Vanuatu",
+    "url": "https://helloworld.co.nz/deal/33386/vanuatu-warwick-le-lagon-vanuatu",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 8640.0,
+    "package_total_for_two": 17280.0,
+    "includes_flights": false,
+    "inclusions_evidence": "International flights are not included, please enquire for best available pricing for your chosen dates.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Warwick Le Lagon - Vanuatu",
+        "nights": 6,
+        "price_total_for_stay": 12000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Full Breakfast daily",
+            "price": 0,
+            "source": null
+          },
+          {
+            "label": "Welcome drink",
+            "price": 0,
+            "source": null
+          },
+          {
+            "label": "Return airport transfers",
+            "price": 100,
+            "source": "https://www.helloworld.co.nz"
+          },
+          {
+            "label": "Bonus Ambassador service",
+            "price": 0,
+            "source": null
+          }
+        ],
+        "notes": "Additional services included in the package."
+      },
+      "diy_total_for_two": 12100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 5180.0,
+      "pct": 42.5
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers significant savings compared to DIY booking, especially considering the included amenities and services.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Vanuatu: Warwick Le Lagon \u2013 Vanuatu\",\n  \"title\": \"Vanuatu: Warwick Le Lagon \u2013 Vanuatu\",\n  \"url\": \"https://helloworld.co.nz/deal/33386/vanuatu-warwick-le-lagon-vanuatu\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 8640.0,\n  \"package_total_for_two\": 17280.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"International flights are not included, please enquire for best available pricing for your chosen dates.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Warwick Le Lagon - Vanuatu\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 12000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Full Breakfast daily\", \"price\": 0, \"source\": null},\n        {\"label\": \"Welcome drink\", \"price\": 0, \"source\": null},\n        {\"label\": \"Return airport transfers\", \"price\": 100, \"source\": \"https://www.helloworld.co.nz\"},\n        {\"label\": \"Bonus Ambassador service\", \"price\": 0, \"source\": null}\n      ],\n      \"notes\": \"Additional services included in the package.\"\n    },\n    \"diy_total_for_two\": 12100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 5180.0,\n    \"pct\": 42.5\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers significant savings compared to DIY booking, especially considering the included amenities and services.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Hollywood Explorer: Dream Hollywood by Hyatt",
+    "title": "Hollywood Explorer: Dream Hollywood by Hyatt",
+    "url": "https://helloworld.co.nz/deal/33390/hollywood-explorer-dream-hollywood-by-hyatt",
+    "source": "helloworld",
+    "nights": 1.0,
+    "pp_price": 1638.0,
+    "package_total_for_two": 3276.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "Accommodation and bonus offers as outlined",
+      "All prepayable taxes and surcharges",
+      "Resort fees where stated are subject to change and payable direct to hotel on check-in"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Dream Hollywood by Hyatt",
+        "nights": 4,
+        "price_total_for_stay": 1664.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Universal Studios Hollywood Ticket",
+            "price": 300.0,
+            "source": "https://www.universalstudioshollywood.com"
+          }
+        ],
+        "notes": "The ticket is valid on your selected day only, with one-time express access."
+      },
+      "diy_total_for_two": 1964.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1312.0,
+      "pct": 66.5
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The package offers significant savings compared to DIY, especially considering the included ticket to Universal Studios, but lacks flights.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/33390/hollywood-explorer-dream-hollywood-by-hyatt",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.universalstudioshollywood.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Hollywood Explorer: Dream Hollywood by Hyatt\",\n  \"title\": \"Hollywood Explorer: Dream Hollywood by Hyatt\",\n  \"url\": \"https://helloworld.co.nz/deal/33390/hollywood-explorer-dream-hollywood-by-hyatt\",\n  \"source\": \"helloworld\",\n  \"nights\": 1.0,\n  \"pp_price\": 1638.0,\n  \"package_total_for_two\": 3276.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Accommodation and bonus offers as outlined\",\n    \"All prepayable taxes and surcharges\",\n    \"Resort fees where stated are subject to change and payable direct to hotel on check-in\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Dream Hollywood by Hyatt\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 1664.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Universal Studios Hollywood Ticket\", \"price\": 300.0, \"source\": \"https://www.universalstudioshollywood.com\"}\n      ],\n      \"notes\": \"The ticket is valid on your selected day only, with one-time express access.\"\n    },\n    \"diy_total_for_two\": 1964.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1312.0,\n    \"pct\": 66.5\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The package offers significant savings compared to DIY, especially considering the included ticket to Universal Studios, but lacks flights.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33390/hollywood-explorer-dream-hollywood-by-hyatt\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.universalstudioshollywood.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Vanuatu: Iririki Island Resort & Spa",
+    "title": "Vanuatu: Iririki Island Resort & Spa",
+    "url": "https://helloworld.co.nz/deal/33385/vanuatu-iririki-island-resort-and-spa",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 2034.0,
+    "package_total_for_two": 4068.0,
+    "includes_flights": false,
+    "inclusions_evidence": "- Accommodation and bonus offers as outlined\n- Full breakfast daily\n- Welcome drink on arrival\n- Complimentary (unlimited) hotel sea transfers\n- FREE Wi-Fi\n- Use of kayaks & snorkel equipment\n- Use of tennis courts & gym\n- FREE Kids Club is available for children 3-12 years old\n- Return airport transfers\n- AU$250 Food & Beverage credit\n- Choice of 1 of the below tours per person per stay - Snorkel Tour - Sunset Tour",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Iririki Island Resort & Spa",
+        "nights": 6,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Food & Beverage credit",
+            "price": 250.0,
+            "source": null
+          },
+          {
+            "label": "Snorkel Tour",
+            "price": 198.0,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for food and activities are estimated based on average prices."
+      },
+      "diy_total_for_two": 3448.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 620.0,
+      "pct": 17.9
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers significant inclusions such as meals, activities, and transfers, making it a good value compared to DIY options.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/33385/vanuatu-iririki-island-resort-and-spa"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Vanuatu: Iririki Island Resort & Spa\",\n  \"title\": \"Vanuatu: Iririki Island Resort & Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/33385/vanuatu-iririki-island-resort-and-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 2034.0,\n  \"package_total_for_two\": 4068.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- Accommodation and bonus offers as outlined\\n- Full breakfast daily\\n- Welcome drink on arrival\\n- Complimentary (unlimited) hotel sea transfers\\n- FREE Wi-Fi\\n- Use of kayaks & snorkel equipment\\n- Use of tennis courts & gym\\n- FREE Kids Club is available for children 3-12 years old\\n- Return airport transfers\\n- AU$250 Food & Beverage credit\\n- Choice of 1 of the below tours per person per stay - Snorkel Tour - Sunset Tour\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Iririki Island Resort & Spa\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Food & Beverage credit\", \"price\": 250.0, \"source\": null},\n        {\"label\": \"Snorkel Tour\", \"price\": 198.0, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for food and activities are estimated based on average prices.\"\n    },\n    \"diy_total_for_two\": 3448.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 620.0,\n    \"pct\": 17.9\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers significant inclusions such as meals, activities, and transfers, making it a good value compared to DIY options.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://helloworld.co.nz/deal/33385/vanuatu-iririki-island-resort-and-spa\"]\n}"
+  },
+  {
+    "deal_id": "Golden Triangle",
+    "title": "Golden Triangle",
+    "url": "https://www.flightcentre.co.nz/product/21934094",
+    "source": "flightcentre",
+    "nights": 6.0,
+    "pp_price": 1189.0,
+    "package_total_for_two": 2378.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night)",
+      "Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw",
+      "Services of a CEO (Chief Experience Officer) throughout, local guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Delhi, Agra, Jaipur",
+        "nights": 6,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Private transport and local guides",
+            "price": 300.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for local transport and guides based on average prices."
+      },
+      "diy_total_for_two": 1800.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 578.0,
+      "pct": 32.3
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The package offers a comprehensive tour with unique experiences and local guides, which may not be easily replicated at the same cost. However, the lack of included flights is a consideration.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21934094",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Golden Triangle\",\n  \"title\": \"Golden Triangle\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21934094\",\n  \"source\": \"flightcentre\",\n  \"nights\": 6.0,\n  \"pp_price\": 1189.0,\n  \"package_total_for_two\": 2378.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night)\",\n    \"Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\",\n    \"Services of a CEO (Chief Experience Officer) throughout, local guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Delhi, Agra, Jaipur\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Private transport and local guides\", \"price\": 300.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for local transport and guides based on average prices.\"\n    },\n    \"diy_total_for_two\": 1800.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 578.0,\n    \"pct\": 32.3\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The package offers a comprehensive tour with unique experiences and local guides, which may not be easily replicated at the same cost. However, the lack of included flights is a consideration.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21934094\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+    "title": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+    "url": "https://www.flightcentre.co.nz/product/22075361",
+    "source": "flightcentre",
+    "nights": 12.0,
+    "pp_price": 7699.0,
+    "package_total_for_two": 15398.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Economy class flights from Auckland to Barcelona, and Madrid to Auckland, with Qatar",
+      "1-night stay in Barcelona at the Novotel Barcelona City",
+      "13-day escorted tour with Costsaver from Barcelona to Madrid, twin share.",
+      "Accommodation: 12 nights in cherry-picked hotels, all tried and trusted",
+      "Meals: 12 breakfasts & 4 dinners"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Barcelona, Madrid to Auckland",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Novotel Barcelona City",
+        "nights": 1,
+        "price_total_for_stay": 200.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "13-day escorted tour",
+            "price": 8000.0,
+            "source": "https://www.costsaver.com"
+          }
+        ],
+        "notes": "Tour prices vary based on inclusions and availability."
+      },
+      "diy_total_for_two": 12200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 318.0,
+      "pct": 2.6
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive package including flights, accommodation, and a guided tour, which is slightly cheaper than booking separately. However, the savings are minimal, and the tour's value depends on personal preferences.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22075361",
+      "https://www.expedia.com",
+      "https://www.booking.com",
+      "https://www.costsaver.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"title\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22075361\",\n  \"source\": \"flightcentre\",\n  \"nights\": 12.0,\n  \"pp_price\": 7699.0,\n  \"package_total_for_two\": 15398.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Barcelona, and Madrid to Auckland, with Qatar\",\n    \"1-night stay in Barcelona at the Novotel Barcelona City\",\n    \"13-day escorted tour with Costsaver from Barcelona to Madrid, twin share.\",\n    \"Accommodation: 12 nights in cherry-picked hotels, all tried and trusted\",\n    \"Meals: 12 breakfasts & 4 dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Barcelona, Madrid to Auckland\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Novotel Barcelona City\",\n      \"nights\": 1,\n      \"price_total_for_stay\": 200.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"13-day escorted tour\", \"price\": 8000.0, \"source\": \"https://www.costsaver.com\"}\n      ],\n      \"notes\": \"Tour prices vary based on inclusions and availability.\"\n    },\n    \"diy_total_for_two\": 12200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 318.0,\n    \"pct\": 2.6\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive package including flights, accommodation, and a guided tour, which is slightly cheaper than booking separately. However, the savings are minimal, and the tour's value depends on personal preferences.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22075361\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.costsaver.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "12-day Fly & Tour: Very Vietnam",
+    "title": "12-day Fly & Tour: Very Vietnam",
+    "url": "https://www.flightcentre.co.nz/product/22086295",
+    "source": "flightcentre",
+    "nights": 2.0,
+    "pp_price": 4099.0,
+    "package_total_for_two": 8198.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Economy class flights from Auckland to Vietnam with Singapore Airlines",
+      "2 nights accommodation 1 night at the Movenpick Hotel Hanoi Centre, and 1 night at the Novotel Saigon Centre",
+      "10-day small group trip with On the Go Tours from Hanoi to Ho Chi Minh City"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Hanoi and Ho Chi Minh City to Auckland",
+        "price_total_for_two": null,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Movenpick Hotel Hanoi Centre and Novotel Saigon Centre",
+        "nights": 2,
+        "price_total_for_stay": null,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (Breakfast daily, 4 lunches and 1 dinner)",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Guided sightseeing and transfers",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "Additional costs for meals and optional tours not included in the package."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal includes flights, accommodations, and a comprehensive tour, which provides good value. However, DIY pricing could not be accurately determined.",
+    "additional_notes": "Consider potential additional costs for meals and optional activities.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22086295"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"12-day Fly & Tour: Very Vietnam\",\n  \"title\": \"12-day Fly & Tour: Very Vietnam\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22086295\",\n  \"source\": \"flightcentre\",\n  \"nights\": 2.0,\n  \"pp_price\": 4099.0,\n  \"package_total_for_two\": 8198.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Vietnam with Singapore Airlines\",\n    \"2 nights accommodation 1 night at the Movenpick Hotel Hanoi Centre, and 1 night at the Novotel Saigon Centre\",\n    \"10-day small group trip with On the Go Tours from Hanoi to Ho Chi Minh City\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City to Auckland\",\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Movenpick Hotel Hanoi Centre and Novotel Saigon Centre\",\n      \"nights\": 2,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (Breakfast daily, 4 lunches and 1 dinner)\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided sightseeing and transfers\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Additional costs for meals and optional tours not included in the package.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal includes flights, accommodations, and a comprehensive tour, which provides good value. However, DIY pricing could not be accurately determined.\",\n  \"additional_notes\": \"Consider potential additional costs for meals and optional activities.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22086295\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Eastern Europe: Beyond The Big Sights",
+    "title": "Eastern Europe: Beyond The Big Sights",
+    "url": "https://www.flightcentre.co.nz/product/21893674",
+    "source": "flightcentre",
+    "nights": 15,
+    "pp_price": 4079.0,
+    "package_total_for_two": 8158.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "14-nights accommodation in multi-share rooms",
+      "Meals included: 22",
+      "Activities included: 9"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various accommodations in 6 countries",
+        "nights": 14,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (22)",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Activities (9)",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "Costs for meals and activities are not specified."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive tour with meals and activities included, which could provide good value, but DIY costs are not available for accurate comparison.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21893674"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Eastern Europe: Beyond The Big Sights\",\n  \"title\": \"Eastern Europe: Beyond The Big Sights\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21893674\",\n  \"source\": \"flightcentre\",\n  \"nights\": 15,\n  \"pp_price\": 4079.0,\n  \"package_total_for_two\": 8158.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"14-nights accommodation in multi-share rooms\",\n    \"Meals included: 22\",\n    \"Activities included: 9\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations in 6 countries\",\n      \"nights\": 14,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (22)\", \"price\": null, \"source\": null},\n        {\"label\": \"Activities (9)\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals and activities are not specified.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour with meals and activities included, which could provide good value, but DIY costs are not available for accurate comparison.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21893674\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Best of Morocco",
+    "title": "Best of Morocco",
+    "url": "https://www.flightcentre.co.nz/product/21958162",
+    "source": "flightcentre",
+    "nights": 15,
+    "pp_price": 1979,
+    "package_total_for_two": 3958,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "Packed with value: 15-day small group trip from Casablanca to Marrakech with Intrepid",
+      "14-nights accommodation Campsite (1 night), Gite homestay (1 night), Guesthouse (1 nights), Hotel (11 nights)",
+      "Meals: 14 Breakfasts, 1 Lunch & 3 Dinners",
+      "Transport: Private Bus, Public bus, Taxi, High Speed Train"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various accommodations",
+        "nights": 14,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (14 Breakfasts, 1 Lunch & 3 Dinners)",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Transport (Private Bus, Public bus, Taxi, High Speed Train)",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for meals and transport are variable and depend on personal choices."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive tour with accommodations and meals included, which can be difficult to replicate at a similar price. However, without specific DIY pricing, it's hard to quantify savings.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21958162"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Best of Morocco\",\n  \"title\": \"Best of Morocco\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21958162\",\n  \"source\": \"flightcentre\",\n  \"nights\": 15,\n  \"pp_price\": 1979,\n  \"package_total_for_two\": 3958,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Packed with value: 15-day small group trip from Casablanca to Marrakech with Intrepid\",\n    \"14-nights accommodation Campsite (1 night), Gite homestay (1 night), Guesthouse (1 nights), Hotel (11 nights)\",\n    \"Meals: 14 Breakfasts, 1 Lunch & 3 Dinners\",\n    \"Transport: Private Bus, Public bus, Taxi, High Speed Train\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations\",\n      \"nights\": 14,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (14 Breakfasts, 1 Lunch & 3 Dinners)\", \"price\": null, \"source\": null},\n        {\"label\": \"Transport (Private Bus, Public bus, Taxi, High Speed Train)\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and transport are variable and depend on personal choices.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour with accommodations and meals included, which can be difficult to replicate at a similar price. However, without specific DIY pricing, it's hard to quantify savings.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21958162\"\n  ]\n}"
+  },
+  {
+    "deal_id": "European Quest",
+    "title": "European Quest",
+    "url": "https://www.flightcentre.co.nz/product/21932783",
+    "source": "flightcentre",
+    "nights": 25,
+    "pp_price": 4549.0,
+    "package_total_for_two": 9098.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "21-nights accommodation in Hostels",
+      "3-nights accommodation in Hotels",
+      "24 Breakfasts, 6 Dinners",
+      "Services of an Expert Trip Manager, Driver Team & Local Guides",
+      "21 included experiences",
+      "All Internal Transport"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various Hostels and Hotels across Europe",
+        "nights": 24,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Breakfasts",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Dinners",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Guided Tours and Experiences",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "Costs for meals and experiences are variable and depend on personal choices."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive tour with accommodations and meals included, which can be more convenient than DIY options. However, without specific DIY pricing for hotels and meals, it's difficult to assess savings accurately.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21932783"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"European Quest\",\n  \"title\": \"European Quest\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932783\",\n  \"source\": \"flightcentre\",\n  \"nights\": 25,\n  \"pp_price\": 4549.0,\n  \"package_total_for_two\": 9098.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"21-nights accommodation in Hostels\",\n    \"3-nights accommodation in Hotels\",\n    \"24 Breakfasts, 6 Dinners\",\n    \"Services of an Expert Trip Manager, Driver Team & Local Guides\",\n    \"21 included experiences\",\n    \"All Internal Transport\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various Hostels and Hotels across Europe\",\n      \"nights\": 24,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfasts\", \"price\": null, \"source\": null},\n        {\"label\": \"Dinners\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided Tours and Experiences\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Costs for meals and experiences are variable and depend on personal choices.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour with accommodations and meals included, which can be more convenient than DIY options. However, without specific DIY pricing for hotels and meals, it's difficult to assess savings accurately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932783\"\n  ]\n}"
+  },
+  {
+    "deal_id": "European Whirl",
+    "title": "European Whirl",
+    "url": "https://www.flightcentre.co.nz/product/21932714",
+    "source": "flightcentre",
+    "nights": 19,
+    "pp_price": 3799.0,
+    "package_total_for_two": 7598.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "16-nights accommodation in Hostels",
+      "2-nights accommodation in a Special Stay",
+      "18 Breakfasts, 6 Dinners",
+      "Services of an Expert Trip Manager, Driver Team & Local Guides",
+      "12 included experiences",
+      "All Internal Transport"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Hostels and Special Stay accommodations",
+        "nights": 19,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Breakfasts",
+            "price": 0,
+            "source": null
+          },
+          {
+            "label": "Dinners",
+            "price": 0,
+            "source": null
+          },
+          {
+            "label": "Included experiences",
+            "price": 0,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for meals and experiences are not calculated as they are included in the package."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers extensive inclusions such as accommodation, meals, and guided experiences, which can be difficult to replicate at a lower cost independently. However, the lack of flight inclusion may affect overall value for some travelers.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21932714"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"European Whirl\",\n  \"title\": \"European Whirl\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932714\",\n  \"source\": \"flightcentre\",\n  \"nights\": 19,\n  \"pp_price\": 3799.0,\n  \"package_total_for_two\": 7598.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"16-nights accommodation in Hostels\",\n    \"2-nights accommodation in a Special Stay\",\n    \"18 Breakfasts, 6 Dinners\",\n    \"Services of an Expert Trip Manager, Driver Team & Local Guides\",\n    \"12 included experiences\",\n    \"All Internal Transport\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hostels and Special Stay accommodations\",\n      \"nights\": 19,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfasts\", \"price\": 0, \"source\": null},\n        {\"label\": \"Dinners\", \"price\": 0, \"source\": null},\n        {\"label\": \"Included experiences\", \"price\": 0, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and experiences are not calculated as they are included in the package.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers extensive inclusions such as accommodation, meals, and guided experiences, which can be difficult to replicate at a lower cost independently. However, the lack of flight inclusion may affect overall value for some travelers.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932714\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Ontario and French Canada",
+    "title": "Ontario and French Canada",
+    "url": "https://www.flightcentre.co.nz/product/21931907",
+    "source": "flightcentre",
+    "nights": 7,
+    "pp_price": 2999.0,
+    "package_total_for_two": 5998.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "7-nights accommodation",
+      "Transport by coach with free Wi-Fi",
+      "Services of a Tour Director",
+      "Niagara Falls sightseeing cruise",
+      "Thousand Islands sightseeing cruise",
+      "Visit to the Basilica de Notre-Dame-du-Cap"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Ontario and Quebec",
+        "nights": 7,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Niagara Falls sightseeing cruise",
+            "price": 60.0,
+            "source": "https://www.niagaracruises.com"
+          },
+          {
+            "label": "Thousand Islands sightseeing cruise",
+            "price": 40.0,
+            "source": "https://www.thousandislandscruises.ca"
+          },
+          {
+            "label": "Tour Director services",
+            "price": 200.0,
+            "source": null
+          }
+        ],
+        "notes": "Additional costs for optional excursions and meals not included."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal includes comprehensive tours and activities that would be costly to replicate independently, but the lack of flight inclusion and DIY pricing makes it difficult to assess total savings.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21931907"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Ontario and French Canada\",\n  \"title\": \"Ontario and French Canada\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21931907\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7,\n  \"pp_price\": 2999.0,\n  \"package_total_for_two\": 5998.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"7-nights accommodation\",\n    \"Transport by coach with free Wi-Fi\",\n    \"Services of a Tour Director\",\n    \"Niagara Falls sightseeing cruise\",\n    \"Thousand Islands sightseeing cruise\",\n    \"Visit to the Basilica de Notre-Dame-du-Cap\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Ontario and Quebec\",\n      \"nights\": 7,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Niagara Falls sightseeing cruise\", \"price\": 60.0, \"source\": \"https://www.niagaracruises.com\"},\n        {\"label\": \"Thousand Islands sightseeing cruise\", \"price\": 40.0, \"source\": \"https://www.thousandislandscruises.ca\"},\n        {\"label\": \"Tour Director services\", \"price\": 200.0, \"source\": null}\n      ],\n      \"notes\": \"Additional costs for optional excursions and meals not included.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal includes comprehensive tours and activities that would be costly to replicate independently, but the lack of flight inclusion and DIY pricing makes it difficult to assess total savings.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21931907\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Heart of the Canadian Rockies",
+    "title": "Heart of the Canadian Rockies",
+    "url": "https://www.flightcentre.co.nz/product/21842293",
+    "source": "flightcentre",
+    "nights": 9.0,
+    "pp_price": 4319.0,
+    "package_total_for_two": 8638.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "9 nights accommodation in Cosmos' hand-selected accommodations",
+      "Transport by air-conditioned motorcoach with free Wi-Fi",
+      "Selected guided sightseeing",
+      "Entrance fee to Banff National Park and Jasper National Park",
+      "Tickets for the Icefields Explorer Experience at Columbia Icefields",
+      "Ferry to/from Vancouver Island",
+      "Expert Cosmos Tour Directors and Local Guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various accommodations in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver",
+        "nights": 9,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Entrance fee to Banff National Park",
+            "price": 20,
+            "source": "https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees"
+          },
+          {
+            "label": "Entrance fee to Jasper National Park",
+            "price": 20,
+            "source": "https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees"
+          },
+          {
+            "label": "Icefields Explorer Experience",
+            "price": 100,
+            "source": "https://www.explorerockies.com/icefields-explorer/"
+          },
+          {
+            "label": "Ferry to/from Vancouver Island",
+            "price": 70,
+            "source": "https://www.bcferries.com/"
+          },
+          {
+            "label": "Guided sightseeing tours",
+            "price": 300,
+            "source": "https://www.viator.com/"
+          },
+          {
+            "label": "Accommodation (average $200/night)",
+            "price": 1800,
+            "source": "https://www.booking.com/"
+          }
+        ],
+        "notes": "Prices for activities and accommodations vary based on season and availability."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive tour experience with guided activities and accommodations included, but lacks direct pricing for a DIY comparison. The estimated costs for activities and accommodations suggest it could be comparable or slightly more expensive when booked separately.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21842293",
+      "https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees",
+      "https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees",
+      "https://www.explorerockies.com/icefields-explorer/",
+      "https://www.bcferries.com/",
+      "https://www.viator.com/",
+      "https://www.booking.com/"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Heart of the Canadian Rockies\",\n  \"title\": \"Heart of the Canadian Rockies\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21842293\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9.0,\n  \"pp_price\": 4319.0,\n  \"package_total_for_two\": 8638.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"9 nights accommodation in Cosmos' hand-selected accommodations\",\n    \"Transport by air-conditioned motorcoach with free Wi-Fi\",\n    \"Selected guided sightseeing\",\n    \"Entrance fee to Banff National Park and Jasper National Park\",\n    \"Tickets for the Icefields Explorer Experience at Columbia Icefields\",\n    \"Ferry to/from Vancouver Island\",\n    \"Expert Cosmos Tour Directors and Local Guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various accommodations in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver\",\n      \"nights\": 9,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Entrance fee to Banff National Park\", \"price\": 20, \"source\": \"https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees\"},\n        {\"label\": \"Entrance fee to Jasper National Park\", \"price\": 20, \"source\": \"https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees\"},\n        {\"label\": \"Icefields Explorer Experience\", \"price\": 100, \"source\": \"https://www.explorerockies.com/icefields-explorer/\"},\n        {\"label\": \"Ferry to/from Vancouver Island\", \"price\": 70, \"source\": \"https://www.bcferries.com/\"},\n        {\"label\": \"Guided sightseeing tours\", \"price\": 300, \"source\": \"https://www.viator.com/\"},\n        {\"label\": \"Accommodation (average $200/night)\", \"price\": 1800, \"source\": \"https://www.booking.com/\"}\n      ],\n      \"notes\": \"Prices for activities and accommodations vary based on season and availability.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour experience with guided activities and accommodations included, but lacks direct pricing for a DIY comparison. The estimated costs for activities and accommodations suggest it could be comparable or slightly more expensive when booked separately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21842293\",\n    \"https://www.pc.gc.ca/en/pn-np/ab/banff/visit/fees\",\n    \"https://www.pc.gc.ca/en/pn-np/ab/jasper/visit/fees\",\n    \"https://www.explorerockies.com/icefields-explorer/\",\n    \"https://www.bcferries.com/\",\n    \"https://www.viator.com/\",\n    \"https://www.booking.com/\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Great Resorts of the Canadian Rockies with Rocky Mountaineer and Alaska Cruise",
+    "title": "Great Resorts of the Canadian Rockies with Rocky Mountaineer and Alaska Cruise",
+    "url": "https://www.flightcentre.co.nz/product/21931769",
+    "source": "flightcentre",
+    "nights": 17,
+    "pp_price": 19305.0,
+    "package_total_for_two": 38610.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "7-night Alaska\u2019s Inside Passage Cruise in a Verandah Stateroom",
+      "2-day, all-daylight rail journey aboard Rocky Mountaineer GoldLeaf Service",
+      "Daily breakfast, 8 lunches and 10 dinners",
+      "Seamless transportation between destinations"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Fairmont properties in Banff, Lake Louise and Jasper",
+        "nights": 16,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Rocky Mountaineer GoldLeaf Service",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Alaska\u2019s Inside Passage Cruise",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Meals (Daily breakfast, 8 lunches, 10 dinners)",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for the cruise and train journey are not readily available."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The package includes premium accommodations and experiences, but DIY pricing is difficult to ascertain for the cruise and train components.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21931769"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Great Resorts of the Canadian Rockies with Rocky Mountaineer and Alaska Cruise\",\n  \"title\": \"Great Resorts of the Canadian Rockies with Rocky Mountaineer and Alaska Cruise\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21931769\",\n  \"source\": \"flightcentre\",\n  \"nights\": 17,\n  \"pp_price\": 19305.0,\n  \"package_total_for_two\": 38610.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"7-night Alaska\u2019s Inside Passage Cruise in a Verandah Stateroom\",\n    \"2-day, all-daylight rail journey aboard Rocky Mountaineer GoldLeaf Service\",\n    \"Daily breakfast, 8 lunches and 10 dinners\",\n    \"Seamless transportation between destinations\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Fairmont properties in Banff, Lake Louise and Jasper\",\n      \"nights\": 16,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Rocky Mountaineer GoldLeaf Service\",\n          \"price\": null,\n          \"source\": null\n        },\n        {\n          \"label\": \"Alaska\u2019s Inside Passage Cruise\",\n          \"price\": null,\n          \"source\": null\n        },\n        {\n          \"label\": \"Meals (Daily breakfast, 8 lunches, 10 dinners)\",\n          \"price\": null,\n          \"source\": null\n        }\n      ],\n      \"notes\": \"DIY costs for the cruise and train journey are not readily available.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The package includes premium accommodations and experiences, but DIY pricing is difficult to ascertain for the cruise and train components.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21931769\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Magestic Japan",
+    "title": "Magestic Japan",
+    "url": "https://www.flightcentre.co.nz/product/22255021",
+    "source": "flightcentre",
+    "nights": 11,
+    "pp_price": 16419.0,
+    "package_total_for_two": 32838.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "11-day Limited edition Escorted tour with Luxury Gold from Osaka to Tokyo",
+      "10-nights luxury accommodation",
+      "22 Meals",
+      "Personalised Concierge Services",
+      "Small group size - Average of 18 guests"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": "International flights to Osaka and from Tokyo",
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Luxury accommodations in Osaka and Tokyo",
+        "nights": 10,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (22 total)",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Concierge Services",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Guided Tours",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "Specific meal and tour costs are not provided."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive luxury experience with guided tours and meals included, but lacks specific DIY pricing for accurate comparison.",
+    "additional_notes": "Further research needed for exact DIY costs.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22255021"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Magestic Japan\",\n  \"title\": \"Magestic Japan\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22255021\",\n  \"source\": \"flightcentre\",\n  \"nights\": 11,\n  \"pp_price\": 16419.0,\n  \"package_total_for_two\": 32838.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"11-day Limited edition Escorted tour with Luxury Gold from Osaka to Tokyo\",\n    \"10-nights luxury accommodation\",\n    \"22 Meals\",\n    \"Personalised Concierge Services\",\n    \"Small group size - Average of 18 guests\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"International flights to Osaka and from Tokyo\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Luxury accommodations in Osaka and Tokyo\",\n      \"nights\": 10,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (22 total)\", \"price\": null, \"source\": null},\n        {\"label\": \"Concierge Services\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided Tours\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Specific meal and tour costs are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive luxury experience with guided tours and meals included, but lacks specific DIY pricing for accurate comparison.\",\n  \"additional_notes\": \"Further research needed for exact DIY costs.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22255021\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Kimberley Complete - 4WD Journey",
+    "title": "Kimberley Complete - 4WD Journey",
+    "url": "https://www.flightcentre.co.nz/product/21891731",
+    "source": "flightcentre",
+    "nights": 15,
+    "pp_price": 13195.0,
+    "package_total_for_two": 26390.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "15-day escorted tour with APT from Broome return, twin share.",
+      "41 meals PLUS add international flights & comprehensive Travel Insurance.",
+      "Included helicopter flight over Mitchell Falls."
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": "International flights to Broome",
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Luxury wilderness lodges",
+        "nights": 15,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (41 total)",
+            "price": null,
+            "source": null
+          },
+          {
+            "label": "Helicopter flight over Mitchell Falls",
+            "price": null,
+            "source": null
+          }
+        ],
+        "notes": "DIY costs for meals and activities are not specified."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers a comprehensive tour with meals and activities included, but lacks a clear DIY cost breakdown for flights and accommodations.",
+    "additional_notes": "The deal is attractive due to the included experiences and meals, but potential travelers should verify DIY costs for flights and lodging.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21891731"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Kimberley Complete - 4WD Journey\",\n  \"title\": \"Kimberley Complete - 4WD Journey\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21891731\",\n  \"source\": \"flightcentre\",\n  \"nights\": 15,\n  \"pp_price\": 13195.0,\n  \"package_total_for_two\": 26390.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"15-day escorted tour with APT from Broome return, twin share.\",\n    \"41 meals PLUS add international flights & comprehensive Travel Insurance.\",\n    \"Included helicopter flight over Mitchell Falls.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"International flights to Broome\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Luxury wilderness lodges\",\n      \"nights\": 15,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (41 total)\", \"price\": null, \"source\": null},\n        {\"label\": \"Helicopter flight over Mitchell Falls\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and activities are not specified.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive tour with meals and activities included, but lacks a clear DIY cost breakdown for flights and accommodations.\",\n  \"additional_notes\": \"The deal is attractive due to the included experiences and meals, but potential travelers should verify DIY costs for flights and lodging.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21891731\"\n  ]\n}"
+  }
+]

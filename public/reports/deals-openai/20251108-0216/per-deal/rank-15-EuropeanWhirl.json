@@ -1,0 +1,64 @@
+{
+  "deal_id": "European Whirl",
+  "title": "European Whirl",
+  "url": "https://www.flightcentre.co.nz/product/21932714",
+  "source": "flightcentre",
+  "nights": 19,
+  "pp_price": 3799.0,
+  "package_total_for_two": 7598.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "16-nights accommodation in Hostels",
+    "2-nights accommodation in a Special Stay",
+    "18 Breakfasts, 6 Dinners",
+    "Services of an Expert Trip Manager, Driver Team & Local Guides",
+    "12 included experiences",
+    "All Internal Transport"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Hostels and Special Stay accommodations",
+      "nights": 19,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Breakfasts",
+          "price": 0,
+          "source": null
+        },
+        {
+          "label": "Dinners",
+          "price": 0,
+          "source": null
+        },
+        {
+          "label": "Included experiences",
+          "price": 0,
+          "source": null
+        }
+      ],
+      "notes": "DIY costs for meals and experiences are not calculated as they are included in the package."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers extensive inclusions such as accommodation, meals, and guided experiences, which can be difficult to replicate at a lower cost independently. However, the lack of flight inclusion may affect overall value for some travelers.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21932714"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"European Whirl\",\n  \"title\": \"European Whirl\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932714\",\n  \"source\": \"flightcentre\",\n  \"nights\": 19,\n  \"pp_price\": 3799.0,\n  \"package_total_for_two\": 7598.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"16-nights accommodation in Hostels\",\n    \"2-nights accommodation in a Special Stay\",\n    \"18 Breakfasts, 6 Dinners\",\n    \"Services of an Expert Trip Manager, Driver Team & Local Guides\",\n    \"12 included experiences\",\n    \"All Internal Transport\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hostels and Special Stay accommodations\",\n      \"nights\": 19,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfasts\", \"price\": 0, \"source\": null},\n        {\"label\": \"Dinners\", \"price\": 0, \"source\": null},\n        {\"label\": \"Included experiences\", \"price\": 0, \"source\": null}\n      ],\n      \"notes\": \"DIY costs for meals and experiences are not calculated as they are included in the package.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers extensive inclusions such as accommodation, meals, and guided experiences, which can be difficult to replicate at a lower cost independently. However, the lack of flight inclusion may affect overall value for some travelers.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932714\"\n  ]\n}"
+}

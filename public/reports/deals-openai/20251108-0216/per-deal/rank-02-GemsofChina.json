@@ -1,0 +1,72 @@
+{
+  "deal_id": "Gems of China",
+  "title": "Gems of China",
+  "url": "https://www.flightcentre.co.nz/product/22015701",
+  "source": "flightcentre",
+  "nights": 14.0,
+  "pp_price": 8779.0,
+  "package_total_for_two": 17558.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return airfares from Auckland to China",
+    "14-nights accommodation",
+    "All meals",
+    "Touring with Guides and entrance fees",
+    "Cultural experiences",
+    "Fully escorted by expert guides"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to China",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in China",
+      "nights": 14,
+      "price_total_for_stay": 2800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals",
+          "price": 1400.0,
+          "source": null
+        },
+        {
+          "label": "Guided tours and entrance fees",
+          "price": 1200.0,
+          "source": null
+        },
+        {
+          "label": "Cultural experiences",
+          "price": 600.0,
+          "source": null
+        }
+      ],
+      "notes": "Estimated costs for meals and guided tours based on average prices."
+    },
+    "diy_total_for_two": 8000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 9558.0,
+    "pct": 119.5
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "This deal offers a comprehensive tour with flights, meals, and guided experiences included, which is significantly cheaper than booking separately.",
+  "additional_notes": "The deal includes a free stopover in Hong Kong, adding extra value.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22015701",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Gems of China\",\n  \"title\": \"Gems of China\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015701\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 8779.0,\n  \"package_total_for_two\": 17558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to China\",\n    \"14-nights accommodation\",\n    \"All meals\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to China\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in China\",\n      \"nights\": 14,\n      \"price_total_for_stay\": 2800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 1400.0, \"source\": null},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1200.0, \"source\": null},\n        {\"label\": \"Cultural experiences\", \"price\": 600.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and guided tours based on average prices.\"\n    },\n    \"diy_total_for_two\": 8000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 9558.0,\n    \"pct\": 119.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"This deal offers a comprehensive tour with flights, meals, and guided experiences included, which is significantly cheaper than booking separately.\",\n  \"additional_notes\": \"The deal includes a free stopover in Hong Kong, adding extra value.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015701\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

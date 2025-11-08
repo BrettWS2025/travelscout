@@ -1,0 +1,63 @@
+{
+  "deal_id": "Magestic Japan",
+  "title": "Magestic Japan",
+  "url": "https://www.flightcentre.co.nz/product/22255021",
+  "source": "flightcentre",
+  "nights": 11,
+  "pp_price": 16419.0,
+  "package_total_for_two": 32838.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "11-day Limited edition Escorted tour with Luxury Gold from Osaka to Tokyo",
+    "10-nights luxury accommodation",
+    "22 Meals",
+    "Personalised Concierge Services",
+    "Small group size - Average of 18 guests"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": "International flights to Osaka and from Tokyo",
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Luxury accommodations in Osaka and Tokyo",
+      "nights": 10,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (22 total)",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Concierge Services",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Guided Tours",
+          "price": null,
+          "source": null
+        }
+      ],
+      "notes": "Specific meal and tour costs are not provided."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers a comprehensive luxury experience with guided tours and meals included, but lacks specific DIY pricing for accurate comparison.",
+  "additional_notes": "Further research needed for exact DIY costs.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22255021"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Magestic Japan\",\n  \"title\": \"Magestic Japan\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22255021\",\n  \"source\": \"flightcentre\",\n  \"nights\": 11,\n  \"pp_price\": 16419.0,\n  \"package_total_for_two\": 32838.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"11-day Limited edition Escorted tour with Luxury Gold from Osaka to Tokyo\",\n    \"10-nights luxury accommodation\",\n    \"22 Meals\",\n    \"Personalised Concierge Services\",\n    \"Small group size - Average of 18 guests\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"International flights to Osaka and from Tokyo\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Luxury accommodations in Osaka and Tokyo\",\n      \"nights\": 10,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (22 total)\", \"price\": null, \"source\": null},\n        {\"label\": \"Concierge Services\", \"price\": null, \"source\": null},\n        {\"label\": \"Guided Tours\", \"price\": null, \"source\": null}\n      ],\n      \"notes\": \"Specific meal and tour costs are not provided.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive luxury experience with guided tours and meals included, but lacks specific DIY pricing for accurate comparison.\",\n  \"additional_notes\": \"Further research needed for exact DIY costs.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22255021\"\n  ]\n}"
+}

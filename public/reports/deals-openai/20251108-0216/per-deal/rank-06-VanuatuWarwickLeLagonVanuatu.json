@@ -1,0 +1,66 @@
+{
+  "deal_id": "Vanuatu: Warwick Le Lagon \u2013 Vanuatu",
+  "title": "Vanuatu: Warwick Le Lagon \u2013 Vanuatu",
+  "url": "https://helloworld.co.nz/deal/33386/vanuatu-warwick-le-lagon-vanuatu",
+  "source": "helloworld",
+  "nights": 6.0,
+  "pp_price": 8640.0,
+  "package_total_for_two": 17280.0,
+  "includes_flights": false,
+  "inclusions_evidence": "International flights are not included, please enquire for best available pricing for your chosen dates.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Warwick Le Lagon - Vanuatu",
+      "nights": 6,
+      "price_total_for_stay": 12000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Full Breakfast daily",
+          "price": 0,
+          "source": null
+        },
+        {
+          "label": "Welcome drink",
+          "price": 0,
+          "source": null
+        },
+        {
+          "label": "Return airport transfers",
+          "price": 100,
+          "source": "https://www.helloworld.co.nz"
+        },
+        {
+          "label": "Bonus Ambassador service",
+          "price": 0,
+          "source": null
+        }
+      ],
+      "notes": "Additional services included in the package."
+    },
+    "diy_total_for_two": 12100.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 5180.0,
+    "pct": 42.5
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers significant savings compared to DIY booking, especially considering the included amenities and services.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Vanuatu: Warwick Le Lagon \u2013 Vanuatu\",\n  \"title\": \"Vanuatu: Warwick Le Lagon \u2013 Vanuatu\",\n  \"url\": \"https://helloworld.co.nz/deal/33386/vanuatu-warwick-le-lagon-vanuatu\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 8640.0,\n  \"package_total_for_two\": 17280.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"International flights are not included, please enquire for best available pricing for your chosen dates.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Warwick Le Lagon - Vanuatu\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 12000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Full Breakfast daily\", \"price\": 0, \"source\": null},\n        {\"label\": \"Welcome drink\", \"price\": 0, \"source\": null},\n        {\"label\": \"Return airport transfers\", \"price\": 100, \"source\": \"https://www.helloworld.co.nz\"},\n        {\"label\": \"Bonus Ambassador service\", \"price\": 0, \"source\": null}\n      ],\n      \"notes\": \"Additional services included in the package.\"\n    },\n    \"diy_total_for_two\": 12100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 5180.0,\n    \"pct\": 42.5\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers significant savings compared to DIY booking, especially considering the included amenities and services.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+}

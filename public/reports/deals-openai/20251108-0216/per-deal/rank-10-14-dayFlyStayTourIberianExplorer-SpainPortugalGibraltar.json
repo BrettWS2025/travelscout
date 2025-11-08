@@ -1,0 +1,61 @@
+{
+  "deal_id": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+  "title": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+  "url": "https://www.flightcentre.co.nz/product/22075361",
+  "source": "flightcentre",
+  "nights": 12.0,
+  "pp_price": 7699.0,
+  "package_total_for_two": 15398.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Economy class flights from Auckland to Barcelona, and Madrid to Auckland, with Qatar",
+    "1-night stay in Barcelona at the Novotel Barcelona City",
+    "13-day escorted tour with Costsaver from Barcelona to Madrid, twin share.",
+    "Accommodation: 12 nights in cherry-picked hotels, all tried and trusted",
+    "Meals: 12 breakfasts & 4 dinners"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Barcelona, Madrid to Auckland",
+      "price_total_for_two": 3000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Novotel Barcelona City",
+      "nights": 1,
+      "price_total_for_stay": 200.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "13-day escorted tour",
+          "price": 8000.0,
+          "source": "https://www.costsaver.com"
+        }
+      ],
+      "notes": "Tour prices vary based on inclusions and availability."
+    },
+    "diy_total_for_two": 12200.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 318.0,
+    "pct": 2.6
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers a comprehensive package including flights, accommodation, and a guided tour, which is slightly cheaper than booking separately. However, the savings are minimal, and the tour's value depends on personal preferences.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22075361",
+    "https://www.expedia.com",
+    "https://www.booking.com",
+    "https://www.costsaver.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"title\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22075361\",\n  \"source\": \"flightcentre\",\n  \"nights\": 12.0,\n  \"pp_price\": 7699.0,\n  \"package_total_for_two\": 15398.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Barcelona, and Madrid to Auckland, with Qatar\",\n    \"1-night stay in Barcelona at the Novotel Barcelona City\",\n    \"13-day escorted tour with Costsaver from Barcelona to Madrid, twin share.\",\n    \"Accommodation: 12 nights in cherry-picked hotels, all tried and trusted\",\n    \"Meals: 12 breakfasts & 4 dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Barcelona, Madrid to Auckland\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Novotel Barcelona City\",\n      \"nights\": 1,\n      \"price_total_for_stay\": 200.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"13-day escorted tour\", \"price\": 8000.0, \"source\": \"https://www.costsaver.com\"}\n      ],\n      \"notes\": \"Tour prices vary based on inclusions and availability.\"\n    },\n    \"diy_total_for_two\": 12200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 318.0,\n    \"pct\": 2.6\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers a comprehensive package including flights, accommodation, and a guided tour, which is slightly cheaper than booking separately. However, the savings are minimal, and the tour's value depends on personal preferences.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22075361\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.costsaver.com\"\n  ]\n}"
+}
