@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
 # scraper/scripts/analyze_deals.py
 """
-Analyze travel deals with OpenAI and produce a Top-N report.
+Fast analyze: dedupe, prune, parallel fetch, snippet extraction, Top‑N outputs.
 
-- Picks the latest public/data/packages.final*.jsonl (or PACKAGES_FILE override)
-- Filters out rows with nights > 21
-- (Optional) Shortlist with a quick heuristic to reduce OpenAI calls
-- Deep analysis with OpenAI on the (shortlisted) deals
-- Ranks and writes:
-    * public/reports/deals-openai/<run-id>/combined.jsonl  (all analyzed)
-    * public/reports/deals-openai/<run-id>/topN.json, topN.md
-    * public/reports/deals-openai/<run-id>/per-deal/       (ONLY Top N per-deal JSON)
-
-ENV:
-  OPENAI_API_KEY (required)
-  OPENAI_MODEL=gpt-4o-mini            (optional)
-  TOP_N=20                            (optional; how many per-deal files to save)
-  SHORTLIST_SIZE=0                    (optional; 0 = off, else shortlist this many via heuristic)
-  MAX_DEALS=0                         (optional; 0 = all, for testing)
-  READ_TIMEOUT=20                     (optional, seconds)
-  USER_AGENT="TravelScoutBot/1.0 ..." (optional)
-  PACKAGES_FILE=<path/to/file.jsonl>  (optional, override input file)
+ENV (new + existing):
+  OPENAI_API_KEY               (required)
+  OPENAI_MODEL=gpt-4o-mini     (optional)
+  TOP_N=20                     (save per-deal JSONs only for Top‑N)
+  PRUNE_PERCENTILE=60          (keep cheapest X% by heuristic before OpenAI; 0=off)
+  SHORTLIST_SIZE=400           (cap count after pruning; 0=off)
+  MAX_DEALS=0                  (testing cap; 0=all after filters)
+  PARALLEL_FETCH=12            (concurrent page fetches)
+  READ_TIMEOUT=10              (seconds per fetch)
+  CACHE_PAGES=1                (1=use disk cache at scraper/.cache/pages, 0=off)
+  PAUSE_BETWEEN_CALLS=0.15     (seconds between OpenAI calls; 0 to disable)
+  PACKAGES_FILE=public/data/packages.final.jsonl  (optional, override input)
 """
 
 from __future__ import annotations
@@ -28,11 +22,17 @@ import json
 import os
 import sys
 import time
+import math
+import hashlib
+import concurrent.futures as cf
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
 # OpenAI SDK (>=1.0 preferred)
@@ -45,44 +45,42 @@ try:
 except Exception:
     openai = None
 
-# --- repo root detection (robust for scraper/scripts/ placement) ---
+# ---------- config & helpers ----------
 def _compute_repo_root() -> Path:
     here = Path(__file__).resolve()
-    # Prefer a parent that contains "public" (your site assets)
     for p in here.parents:
         if (p / "public").is_dir():
             return p
-    # Fallback to a parent that has .git
     for p in here.parents:
         if (p / ".git").exists():
             return p
-    # Last resort: go up two levels (scraper/scripts -> repo root)
     return here.parents[2] if len(here.parents) >= 3 else here.parents[1]
 
 REPO_ROOT = Path(os.environ.get("REPO_ROOT", _compute_repo_root()))
 DATA_DIR = REPO_ROOT / "public" / "data"
 OUT_BASE = REPO_ROOT / "public" / "reports" / "deals-openai"
+CACHE_DIR = REPO_ROOT / "scraper" / ".cache" / "pages"
 
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 TOP_N = int(os.environ.get("TOP_N", "20"))
-SHORTLIST_SIZE = int(os.environ.get("SHORTLIST_SIZE", "0"))  # 0=off
-MAX_DEALS = int(os.environ.get("MAX_DEALS", "0"))  # 0=all
-READ_TIMEOUT = int(os.environ.get("READ_TIMEOUT", "20"))
+PRUNE_PERCENTILE = int(os.environ.get("PRUNE_PERCENTILE", "60"))
+SHORTLIST_SIZE = int(os.environ.get("SHORTLIST_SIZE", "400"))
+MAX_DEALS = int(os.environ.get("MAX_DEALS", "0"))
+READ_TIMEOUT = int(os.environ.get("READ_TIMEOUT", "10"))
+PARALLEL_FETCH = int(os.environ.get("PARALLEL_FETCH", "12"))
+CACHE_PAGES = os.environ.get("CACHE_PAGES", "1") not in ("0", "false", "False", "")
+PAUSE_BETWEEN_CALLS = float(os.environ.get("PAUSE_BETWEEN_CALLS", "0.15"))
 USER_AGENT = os.environ.get(
-    "USER_AGENT",
-    "TravelScoutBot/1.0 (+https://travelscout.co.nz) PythonRequests"
+    "USER_AGENT", "TravelScoutBot/1.0 (+https://travelscout.co.nz) PythonRequests"
 )
 
-# ---- Your analysis prompt ----
 USER_PROMPT_CORE = (
     "Attached is a file filled with Travel deals sourced from the internet. I want you to go through the details "
     "and find the best deals. To find the best deals I want you to check to see what is included in the deal, and then "
     "go to the link provided and compare that with what it costs to create that same booking yourself through the likes "
     "of booking.com or expedia or with the suppliers directly, you will need to source this from those sites. Then i want you to collate the top 10 deals that provide "
     "the best deals and give a breakdown of the do it yourself version compared to the travel agency version and provide "
-    "sources for where you got the information. What defines a good deal is when the travel agency deal is better than the DIY deal so when you are determining which ones are the best deals, the best deals will be"
-    "the ones where it is demonstrably cheaper to book through a travel agency as opposed to booking it yourself. So ensure the Top 10 deals only include instances where it is cheaper to book with the travel agency."
-    "Be sure to bear in mind that the costs are provided as a per person twin "
+    "sources for where you got the information. Be sure to bear in mind that the costs are provided as a per person twin "
     "share whereas when comparing with the likes of a hotel, the cost is not per person, so that is a key consideration "
     "when comparing the deals. I also want you to rate the deals out of 10. Ignore any deals that show more than 21 nights "
     "as they are often an error. Review the options and ensure that if flights are included you need to be making sure that "
@@ -161,9 +159,8 @@ def find_latest_packages(data_dir: Path, override: Optional[str] = None) -> Path
         if cand.exists():
             return cand
         raise FileNotFoundError(f"PACKAGES_FILE override not found: {override}")
-
     candidates = sorted(
-        data_dir.glob("packages.final*.jsonl"),  # wildcard to match variations
+        data_dir.glob("packages.final*.jsonl"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -212,16 +209,92 @@ def normalize_deal(d: Dict[str, Any]) -> Dict[str, Any]:
         "raw": d,
     }
 
-def fetch_page_text(url: str, timeout: int = READ_TIMEOUT) -> str:
-    if not url or not url.startswith(("http://", "https://")):
-        return ""
-    headers = {
+# ---------- dedupe & shortlist ----------
+def canonical_url(u: Optional[str]) -> Optional[str]:
+    if not u:
+        return None
+    try:
+        p = urlparse(u)
+        # keep scheme+netloc+path; drop query/fragment for dedupe
+        return f"{p.scheme}://{p.netloc}{p.path}".rstrip("/")
+    except Exception:
+        return u
+
+def normalize_title_key(t: Optional[str]) -> Optional[str]:
+    if not t:
+        return None
+    s = "".join(ch.lower() for ch in t if ch.isalnum() or ch.isspace())
+    return " ".join(s.split()) or None
+
+def dedupe_deals(deals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    seen: set[Tuple[Optional[str], Optional[str]]] = set()
+    out: List[Dict[str, Any]] = []
+    for d in deals:
+        key = (canonical_url(d.get("url")), normalize_title_key(d.get("title")))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(d)
+    return out
+
+def heuristic_value_score(nd: Dict[str, Any]) -> float:
+    nights = nd.get("nights") or 0
+    total2 = nd.get("package_total_for_two")
+    if not nights or not total2:
+        return float("inf")
+    score = float(total2) / float(nights)
+    title = (nd.get("title") or "").lower()
+    if "flight" in title or "airfare" in title or "flights" in title:
+        score *= 0.95
+    return score
+
+def prune_by_percentile(rows: List[Dict[str, Any]], keep_pct: int) -> List[Dict[str, Any]]:
+    if keep_pct <= 0 or keep_pct >= 100 or not rows:
+        return rows
+    scored = [(heuristic_value_score(r), r) for r in rows]
+    scored.sort(key=lambda x: x[0])
+    k = max(1, math.ceil(len(scored) * keep_pct / 100))
+    return [r for _, r in scored[:k]]
+
+# ---------- requests session & cache ----------
+def make_session() -> requests.Session:
+    s = requests.Session()
+    retries = Retry(
+        total=2,
+        connect=2,
+        read=2,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "HEAD"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retries, pool_connections=PARALLEL_FETCH, pool_maxsize=PARALLEL_FETCH)
+    s.mount("http://", adapter)
+    s.mount("https://", adapter)
+    s.headers.update({
         "User-Agent": USER_AGENT,
         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.8",
-    }
+    })
+    return s
+
+def cache_path_for(url: str) -> Path:
+    h = hashlib.sha1(url.encode("utf-8")).hexdigest()
+    return CACHE_DIR / f"{h}.txt"
+
+def fetch_page_text(session: requests.Session, url: str) -> str:
+    if not url or not url.startswith(("http://", "https://")):
+        return ""
+    if CACHE_PAGES:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cp = cache_path_for(url)
+        if cp.exists():
+            try:
+                return cp.read_text(encoding="utf-8")
+            except Exception:
+                pass
     try:
-        r = requests.get(url, headers=headers, timeout=timeout)
+        r = session.get(url, timeout=READ_TIMEOUT)
         r.raise_for_status()
         soup = BeautifulSoup(r.text or "", "lxml")
         for tag in soup(["script", "style", "noscript"]):
@@ -230,47 +303,52 @@ def fetch_page_text(url: str, timeout: int = READ_TIMEOUT) -> str:
             for el in soup.select(f".{cls}"):
                 el.decompose()
         text = " ".join(soup.get_text(separator=" ").split())
-        return text[:12000]
+        if CACHE_PAGES:
+            try:
+                cache_path_for(url).write_text(text, encoding="utf-8")
+            except Exception:
+                pass
+        return text
     except Exception:
         return ""
 
-def build_messages_for_deal(deal_norm: Dict[str, Any], page_text: str) -> List[Dict[str, str]]:
-    system = (
-        "You are a meticulous travel analyst. Return only valid JSON per instructions. "
-        "Do not include explanations outside JSON."
-    )
-    deal_block = {
-        "id": deal_norm["id"],
-        "title": deal_norm["title"],
-        "url": deal_norm["url"],
-        "source": deal_norm["source"],
-        "nights": deal_norm["nights"],
-        "pp_price": deal_norm["pp_price"],
-        "package_total_for_two": deal_norm["package_total_for_two"],
-    }
-    page_hint = page_text or "(no page text fetched)"
-    user = f"""
-{USER_PROMPT_CORE}
+KEYWORDS = [
+    "include", "includes", "included", "inclusions",
+    "what's included", "whats included",
+    "flight", "flights", "airfare", "airfares",
+    "itinerary", "terms", "conditions", "exclusions",
+    "price includes", "package includes",
+]
 
-This payload is ONE deal. Evaluate it in isolation and return the strict JSON schema described below.
+def extract_relevant_snippets(text: str, max_chars: int = 2500, window: int = 240) -> str:
+    if not text:
+        return ""
+    t = text
+    idxs = []
+    low = t.lower()
+    for kw in KEYWORDS:
+        start = 0
+        kwl = kw.lower()
+        while True:
+            i = low.find(kwl, start)
+            if i == -1:
+                break
+            idxs.append(i)
+            start = i + len(kwl)
+    if not idxs:
+        return t[:max_chars]
+    idxs = sorted(set(idxs))
+    chunks = []
+    for i in idxs:
+        a = max(0, i - window)
+        b = min(len(t), i + window)
+        chunks.append(t[a:b])
+    joined = "\\n...\\n".join(chunks)
+    if len(joined) <= max_chars:
+        return joined
+    return joined[:max_chars]
 
-### Deal JSON
-```json
-{json.dumps(deal_block, ensure_ascii=False)}
-```
-
-### Deal Page Text (excerpts)
-```
-{page_hint}
-```
-
-{SCHEMA_INSTRUCTIONS}
-""".strip()
-    return [
-        {"role": "system", "content": system},
-        {"role": "user", "content": user},
-    ]
-
+# ---------- OpenAI ----------
 def openai_client():
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -310,6 +388,43 @@ def safe_json_parse(content: str) -> Dict[str, Any]:
     except Exception:
         return {"_error": "bad_json", "_raw": content}
 
+def build_messages_for_deal(deal_norm: Dict[str, Any], page_text_snippet: str) -> List[Dict[str, str]]:
+    system = (
+        "You are a meticulous travel analyst. Return only valid JSON per instructions. "
+        "Do not include explanations outside JSON."
+    )
+    deal_block = {
+        "id": deal_norm["id"],
+        "title": deal_norm["title"],
+        "url": deal_norm["url"],
+        "source": deal_norm["source"],
+        "nights": deal_norm["nights"],
+        "pp_price": deal_norm["pp_price"],
+        "package_total_for_two": deal_norm["package_total_for_two"],
+    }
+    page_hint = page_text_snippet or "(no page text fetched)"
+    user = f"""
+{USER_PROMPT_CORE}
+
+This payload is ONE deal. Evaluate it in isolation and return the strict JSON schema described below.
+
+### Deal JSON
+```json
+{json.dumps(deal_block, ensure_ascii=False)}
+```
+
+### Deal Page Text (relevant excerpts)
+```
+{page_hint}
+```
+
+{SCHEMA_INSTRUCTIONS}
+""".strip()
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
 def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     client, flavor = openai_client()
     attempts = 0
@@ -323,7 +438,7 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                     messages=messages,
                     temperature=0.2,
                     response_format={"type": "json_object"},
-                    max_tokens=3500,
+                    max_tokens=3000,
                 )
                 content = (resp.choices[0].message.content or "").strip()
             else:
@@ -331,12 +446,12 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                     model=MODEL,
                     messages=messages,
                     temperature=0.2,
-                    max_tokens=3500,
+                    max_tokens=3000,
                 )
                 content = (resp["choices"][0]["message"]["content"] or "").strip()
             parsed = safe_json_parse(content)
             if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
-                parsed["_raw_snippet"] = content[:5000]
+                parsed["_raw_snippet"] = content[:3000]
             return parsed
         except Exception as e:
             last_err = str(e)
@@ -346,71 +461,72 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
 def ensure_dir(p: Path):
     p.mkdir(parents=True, exist_ok=True)
 
-# ---- simple shortlist heuristic (optional) ----
-def heuristic_value_score(nd: Dict[str, Any]) -> float:
-    """
-    Lower is 'better' (cheaper per room-night).
-    Gently favor titles that look like they include flights.
-    """
-    nights = nd.get("nights") or 0
-    cost2 = nd.get("package_total_for_two")
-    if not nights or not cost2:
-        return float("inf")
-    score = float(cost2) / float(nights)
-    title = (nd.get("title") or "").lower()
-    if "flight" in title or "airfare" in title or "flights" in title:
-        score *= 0.95  # small boost
-    return score
-
+# ---------- main ----------
 def main():
     latest = find_latest_packages(DATA_DIR, override=os.environ.get("PACKAGES_FILE"))
-    deals = read_jsonl(latest)
-    if not deals:
+    raw = read_jsonl(latest)
+    if not raw:
         print(f"No rows in {latest}", file=sys.stderr)
         sys.exit(0)
 
-    # Normalize + drop >21 nights
+    # Normalize + basic filters
     normalized: List[Dict[str, Any]] = []
-    for d in deals:
+    for d in raw:
         nd = normalize_deal(d)
         if nd["nights"] is not None and nd["nights"] > 21:
             continue
         normalized.append(nd)
 
-    # Optional MAX_DEALS for testing
+    # Dedupe
+    deduped = dedupe_deals(normalized)
+
+    # Optional MAX_DEALS cap (for testing)
     if MAX_DEALS > 0:
-        normalized = normalized[:MAX_DEALS]
+        deduped = deduped[:MAX_DEALS]
 
-    # Optional shortlist to cap OpenAI calls
-    analyzed_input = normalized
-    if SHORTLIST_SIZE > 0 and len(normalized) > SHORTLIST_SIZE:
-        analyzed_input = sorted(normalized, key=heuristic_value_score)[:SHORTLIST_SIZE]
+    # Heuristic pruning (percentile) then shortlist cap
+    pruned = prune_by_percentile(deduped, PRUNE_PERCENTILE) if PRUNE_PERCENTILE else deduped
+    analyzed_input = pruned[:SHORTLIST_SIZE] if SHORTLIST_SIZE and len(pruned) > SHORTLIST_SIZE else pruned
 
-    run_id = stamp()
+    run_id = datetime.utcnow().strftime("%Y%m%d-%H%M")
     out_dir = OUT_BASE / run_id
     ensure_dir(out_dir)
 
     meta = {
         "input_file": str(latest.relative_to(REPO_ROOT)) if str(latest).startswith(str(REPO_ROOT)) else str(latest),
-        "rows_in_file": len(deals),
+        "rows_in_file": len(raw),
         "rows_after_filter": len(normalized),
+        "rows_after_dedupe": len(deduped),
+        "rows_after_prune": len(pruned),
         "rows_analyzed": len(analyzed_input),
         "model": MODEL,
         "run_id": run_id,
         "generated_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "top_n": TOP_N,
+        "prune_percentile": PRUNE_PERCENTILE,
         "shortlist_size": SHORTLIST_SIZE,
+        "parallel_fetch": PARALLEL_FETCH,
+        "read_timeout": READ_TIMEOUT,
+        "cache_pages": bool(CACHE_PAGES),
     }
     (out_dir / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    # Deep analysis (OpenAI) – do NOT write per-deal here
-    per_results: List[Dict[str, Any]] = []
-    for idx, nd in enumerate(analyzed_input, 1):
-        url = nd["url"] or ""
-        page_text = fetch_page_text(url)
-        messages = build_messages_for_deal(nd, page_text)
-        result = call_openai(messages)
+    # Parallel fetch pages, extract only relevant snippets
+    sess = make_session()
+    urls = [d.get("url") or "" for d in analyzed_input]
+    def fetch_and_snip(u: str) -> str:
+        return extract_relevant_snippets(fetch_page_text(sess, u))
 
+    page_snippets: List[str] = []
+    with cf.ThreadPoolExecutor(max_workers=PARALLEL_FETCH) as ex:
+        for txt in ex.map(fetch_and_snip, urls):
+            page_snippets.append(txt)
+
+    # Deep analysis (OpenAI)
+    per_results: List[Dict[str, Any]] = []
+    for nd, snippet in zip(analyzed_input, page_snippets):
+        messages = build_messages_for_deal(nd, snippet)
+        result = call_openai(messages)
         if isinstance(result, dict):
             result.setdefault("package_total_for_two", nd["package_total_for_two"])
             result.setdefault("pp_price", nd["pp_price"])
@@ -419,17 +535,17 @@ def main():
             result.setdefault("title", nd["title"])
             result.setdefault("source", nd["source"])
             result.setdefault("deal_id", nd["id"])
-
         per_results.append(result)
-        time.sleep(0.35)  # pacing
+        if PAUSE_BETWEEN_CALLS > 0:
+            time.sleep(PAUSE_BETWEEN_CALLS)
 
-    # Combine into JSONL (all analyzed)
+    # Combined JSONL for all analyzed
     combined_path = out_dir / "combined.jsonl"
     with combined_path.open("w", encoding="utf-8") as f:
         for r in per_results:
-            f.write(json.dumps(r, ensure_ascii=False) + "\\n")
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-    # Rank and select Top-N
+    # Rank & select Top‑N
     def rating_of(r: Dict[str, Any]) -> float:
         try:
             return float(r.get("rating_out_of_10") or 0.0)
@@ -439,6 +555,9 @@ def main():
     def savings_abs(r: Dict[str, Any]) -> float:
         try:
             v = r.get("estimated_savings_vs_diy", {}).get("abs")
+        except Exception:
+            v = None
+        try:
             return float(v or 0.0)
         except Exception:
             return 0.0
@@ -446,7 +565,7 @@ def main():
     ranked = sorted(per_results, key=lambda x: (rating_of(x), savings_abs(x)), reverse=True)
     topN = ranked[:TOP_N]
 
-    # Write only Top-N per-deal JSON
+    # Per‑deal only for Top‑N
     per_deal_dir = out_dir / "per-deal"
     ensure_dir(per_deal_dir)
     for i, r in enumerate(topN, 1):
@@ -454,7 +573,7 @@ def main():
         rid = "".join(ch for ch in rid if ch.isalnum() or ch in ("-", "_"))[:60] or f"rank{i:02d}"
         (per_deal_dir / f"rank-{i:02d}-{rid}.json").write_text(json.dumps(r, indent=2), encoding="utf-8")
 
-    # Top-N JSON + Markdown
+    # Top‑N JSON + Markdown
     (out_dir / f"top{TOP_N}.json").write_text(json.dumps(topN, indent=2), encoding="utf-8")
 
     lines = [f"# Top {TOP_N} deals (model: {MODEL})", "", f"_Run: {run_id}_", ""]
@@ -491,10 +610,10 @@ def main():
             f"- Sources: {', '.join(cites) if cites else '—'}",
             ""
         ]
-    (out_dir / f"top{TOP_N}.md").write_text("\\n".join(lines), encoding="utf-8")
+    (out_dir / f"top{TOP_N}.md").write_text("\n".join(lines), encoding="utf-8")
 
     # Latest pointer
-    (OUT_BASE / "LATEST.txt").write_text(run_id + "\\n", encoding="utf-8")
+    (OUT_BASE / "LATEST.txt").write_text(run_id + "\n", encoding="utf-8")
 
     print("✅ Analysis complete")
     print("Artifacts:")
