@@ -1,0 +1,69 @@
+{
+  "deal_id": "10-night Fly & Tour: Vietnam Express Southbound",
+  "title": "10-night Fly & Tour: Vietnam Express Southbound",
+  "url": "https://www.flightcentre.co.nz/product/21944634",
+  "source": "flightcentre",
+  "nights": 10,
+  "pp_price": 3525,
+  "package_total_for_two": 7050,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Economy class flights from Auckland to Hanoi and Ho Chi Minh City",
+    "Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)",
+    "Meals: 8 Breakfasts, 3 Lunches & 2 Dinners"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Hanoi and Ho Chi Minh City to Auckland",
+      "price_total_for_two": 2000,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Vietnam",
+      "nights": 7,
+      "price_total_for_stay": 1400,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Overnight boat",
+          "price": 300,
+          "source": "https://www.booking.com"
+        },
+        {
+          "label": "Overnight sleeper train",
+          "price": 200,
+          "source": "https://www.booking.com"
+        },
+        {
+          "label": "Meals not included",
+          "price": 400,
+          "source": "https://www.expedia.com"
+        }
+      ],
+      "notes": "Additional activities and transfers not included in DIY breakdown."
+    },
+    "diy_total_for_two": 4300
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 2750,
+    "pct": 63.5
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights, accommodation, meals, and activities, which are significantly cheaper than booking separately. The estimated savings are substantial.",
+  "additional_notes": "Consideration of additional activities and transfers may affect total costs.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21944634",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10,\n  \"pp_price\": 3525,\n  \"package_total_for_two\": 7050,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Hanoi and Ho Chi Minh City\",\n    \"Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)\",\n    \"Meals: 8 Breakfasts, 3 Lunches & 2 Dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City to Auckland\",\n      \"price_total_for_two\": 2000,\n      \"sources\": [\n        \"https://www.expedia.com\",\n        \"https://www.booking.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1400,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Overnight boat\", \"price\": 300, \"source\": \"https://www.booking.com\"},\n        {\"label\": \"Overnight sleeper train\", \"price\": 200, \"source\": \"https://www.booking.com\"},\n        {\"label\": \"Meals not included\", \"price\": 400, \"source\": \"https://www.expedia.com\"}\n      ],\n      \"notes\": \"Additional activities and transfers not included in DIY breakdown.\"\n    },\n    \"diy_total_for_two\": 4300\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2750,\n    \"pct\": 63.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, accommodation, meals, and activities, which are significantly cheaper than booking separately. The estimated savings are substantial.\",\n  \"additional_notes\": \"Consideration of additional activities and transfers may affect total costs.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21944634\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

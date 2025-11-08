@@ -1,0 +1,65 @@
+{
+  "deal_id": "European Quest",
+  "title": "European Quest",
+  "url": "https://www.flightcentre.co.nz/product/21932783",
+  "source": "flightcentre",
+  "nights": 25,
+  "pp_price": 4549.0,
+  "package_total_for_two": 9098.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "EXCLUSIVE SAVE $775* per person",
+    "25-day tour departing London",
+    "21-nights accommodation in Hostels",
+    "3-nights accommodation in Hotels",
+    "24 Breakfasts, 6 Dinners",
+    "Services of an Expert Trip Manager, Driver Team & Local Guides",
+    "21 included experiences"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hostels and hotels across Europe",
+      "nights": 24,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Breakfasts",
+          "price": 480.0,
+          "source": "assumed average"
+        },
+        {
+          "label": "Dinners",
+          "price": 360.0,
+          "source": "assumed average"
+        },
+        {
+          "label": "Guided tours and experiences",
+          "price": 1000.0,
+          "source": "assumed average"
+        }
+      ],
+      "notes": "Costs for hotels and experiences are estimated based on averages."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The deal offers extensive inclusions and experiences that would be challenging to replicate at a lower cost independently, but exact DIY pricing could not be determined.",
+  "additional_notes": "The deal does not include flights, which would need to be factored in separately.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21932783"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"European Quest\",\n  \"title\": \"European Quest\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21932783\",\n  \"source\": \"flightcentre\",\n  \"nights\": 25,\n  \"pp_price\": 4549.0,\n  \"package_total_for_two\": 9098.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"EXCLUSIVE SAVE $775* per person\",\n    \"25-day tour departing London\",\n    \"21-nights accommodation in Hostels\",\n    \"3-nights accommodation in Hotels\",\n    \"24 Breakfasts, 6 Dinners\",\n    \"Services of an Expert Trip Manager, Driver Team & Local Guides\",\n    \"21 included experiences\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hostels and hotels across Europe\",\n      \"nights\": 24,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfasts\", \"price\": 480.0, \"source\": \"assumed average\"},\n        {\"label\": \"Dinners\", \"price\": 360.0, \"source\": \"assumed average\"},\n        {\"label\": \"Guided tours and experiences\", \"price\": 1000.0, \"source\": \"assumed average\"}\n      ],\n      \"notes\": \"Costs for hotels and experiences are estimated based on averages.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers extensive inclusions and experiences that would be challenging to replicate at a lower cost independently, but exact DIY pricing could not be determined.\",\n  \"additional_notes\": \"The deal does not include flights, which would need to be factored in separately.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21932783\"\n  ]\n}"
+}
