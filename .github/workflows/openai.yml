@@ -47,15 +47,17 @@ jobs:
       #     ls -la public/data || true
       #     wc -l public/data/packages.final*.jsonl || true
 
-- name: Run analysis script
-  env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    OPENAI_MODEL: gpt-4o-mini
-    TOP_N: 20              # only write the Top 20 per-deal JSONs
-    SHORTLIST_SIZE: 400    # optional: analyze only the best 400 by heuristic
-    MAX_DEALS: 50         # leave 0 to consider all (after nights filter)
-  run: |
-    python scraper/scripts/analyze_deals.py
+      - name: Run analysis script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-4o-mini
+          TOP_N: 20              # only write the Top 20 per-deal JSONs
+          SHORTLIST_SIZE: 400    # optional: analyze only the best 400 by heuristic
+          MAX_DEALS: 50          # set 0 to consider all (after nights filter)
+          # REPO_ROOT: ${{ github.workspace }}   # optional override
+          # PACKAGES_FILE: public/data/packages.final.jsonl  # optional override
+        run: |
+          python scraper/scripts/analyze_deals.py
 
       - name: Commit and push generated report (if any changes)
         run: |
@@ -77,10 +79,10 @@ jobs:
           fi
 
           # Commit first (so the index is clean before rebase)
-          git commit -m "chore(reports): OpenAI Top 10 deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git commit -m "chore(reports): OpenAI Top deals $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
           # Rebase our new commit(s) onto the latest remote main
           git pull --rebase --autostash origin main
 
-          # Push safely
+          # Push (fast-forward expected after rebase)
           git push origin HEAD:main
