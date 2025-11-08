@@ -1,0 +1,50 @@
+{
+  "deal_id": "Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*",
+  "title": "Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*",
+  "url": "https://www.flightcentre.co.nz/product/21607984",
+  "source": "flightcentre",
+  "nights": 7.0,
+  "pp_price": 3525.0,
+  "package_total_for_two": 7050.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "7-night cruise with Norwegian Cruise Line onboard Norwegian Epic in a Balcony Stateroom, twin share.",
+    "NCL's Free at Sea Bonus inclusions",
+    "Specialty Dining package",
+    "Wi-Fi package",
+    "Premium Beverages",
+    "Entertainment",
+    "Shore excursion credits",
+    "BONUS USD$100* Onboard Credit per stateroom"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Not specified",
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "N/A (cruise)",
+      "nights": null,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [],
+      "notes": "Cruise package includes various amenities and services."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The deal includes a comprehensive cruise package with multiple amenities, making it a strong value compared to DIY options, which are difficult to quantify without specific flight costs.",
+  "additional_notes": "DIY pricing for flights and cruise components not available.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21607984"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*\",\n  \"title\": \"Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21607984\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"7-night cruise with Norwegian Cruise Line onboard Norwegian Epic in a Balcony Stateroom, twin share.\",\n    \"NCL's Free at Sea Bonus inclusions\",\n    \"Specialty Dining package\",\n    \"Wi-Fi package\",\n    \"Premium Beverages\",\n    \"Entertainment\",\n    \"Shore excursion credits\",\n    \"BONUS USD$100* Onboard Credit per stateroom\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Not specified\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"N/A (cruise)\",\n      \"nights\": null,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"Cruise package includes various amenities and services.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes a comprehensive cruise package with multiple amenities, making it a strong value compared to DIY options, which are difficult to quantify without specific flight costs.\",\n  \"additional_notes\": \"DIY pricing for flights and cruise components not available.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21607984\"\n  ]\n}"
+}

@@ -1,0 +1,65 @@
+{
+  "deal_id": "Air New Zealand Mystery Breaks\u2122",
+  "title": "Air New Zealand Mystery Breaks\u2122",
+  "url": "https://helloworld.co.nz/deal/15451/air-new-zealand-mystery-breaks",
+  "source": "helloworld",
+  "nights": 2.0,
+  "pp_price": 649.0,
+  "package_total_for_two": 1298.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return seat+bag flights with Air New Zealand",
+    "Accommodation at a 3-4-star Hotel",
+    "Breakfast included",
+    "Return airport transfers"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": null,
+      "price_total_for_two": 600.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "3-4 star hotel",
+      "nights": 2,
+      "price_total_for_stay": 400.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Breakfast",
+          "price": 0.0,
+          "source": null
+        },
+        {
+          "label": "Airport Transfers",
+          "price": 100.0,
+          "source": "https://www.rome2rio.com"
+        }
+      ],
+      "notes": "Breakfast is included in the hotel stay."
+    },
+    "diy_total_for_two": 1100.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 198.0,
+    "pct": 18.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights, hotel, breakfast, and transfers, making it a comprehensive deal that is cheaper than booking separately.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com",
+    "https://www.rome2rio.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Air New Zealand Mystery Breaks\u2122\",\n  \"title\": \"Air New Zealand Mystery Breaks\u2122\",\n  \"url\": \"https://helloworld.co.nz/deal/15451/air-new-zealand-mystery-breaks\",\n  \"source\": \"helloworld\",\n  \"nights\": 2.0,\n  \"pp_price\": 649.0,\n  \"package_total_for_two\": 1298.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return seat+bag flights with Air New Zealand\",\n    \"Accommodation at a 3-4-star Hotel\",\n    \"Breakfast included\",\n    \"Return airport transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": null,\n      \"price_total_for_two\": 600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"3-4 star hotel\",\n      \"nights\": 2,\n      \"price_total_for_stay\": 400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfast\", \"price\": 0.0, \"source\": null},\n        {\"label\": \"Airport Transfers\", \"price\": 100.0, \"source\": \"https://www.rome2rio.com\"}\n      ],\n      \"notes\": \"Breakfast is included in the hotel stay.\"\n    },\n    \"diy_total_for_two\": 1100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 198.0,\n    \"pct\": 18.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, hotel, breakfast, and transfers, making it a comprehensive deal that is cheaper than booking separately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.rome2rio.com\"\n  ]\n}"
+}

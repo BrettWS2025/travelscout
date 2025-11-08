@@ -1,0 +1,45 @@
+{
+  "deal_id": "Cairns Escape: Crystalbrook Bailey",
+  "title": "Cairns Escape: Crystalbrook Bailey",
+  "url": "https://helloworld.co.nz/deal/28495/cairns-escape-crystalbrook-bailey",
+  "source": "helloworld",
+  "nights": 4.0,
+  "pp_price": 1135.0,
+  "package_total_for_two": 2270.0,
+  "includes_flights": false,
+  "inclusions_evidence": "International and domestic flights within Australia are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Crystalbrook Bailey",
+      "nights": 4.0,
+      "price_total_for_stay": 1600.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional inclusions or activities were specified."
+    },
+    "diy_total_for_two": 1600.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 670.0,
+    "pct": 41.88
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option for hotel accommodation alone, providing good value despite not including flights.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Cairns Escape: Crystalbrook Bailey\",\n  \"title\": \"Cairns Escape: Crystalbrook Bailey\",\n  \"url\": \"https://helloworld.co.nz/deal/28495/cairns-escape-crystalbrook-bailey\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 1135.0,\n  \"package_total_for_two\": 2270.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Crystalbrook Bailey\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 1600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions or activities were specified.\"\n    },\n    \"diy_total_for_two\": 1600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 670.0,\n    \"pct\": 41.88\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option for hotel accommodation alone, providing good value despite not including flights.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+}

@@ -1,0 +1,546 @@
+[
+  {
+    "deal_id": "Contiki Southern Africa Safari | 2025",
+    "title": "Contiki Southern Africa Safari | 2025",
+    "url": "https://helloworld.co.nz/deal/26471/contiki-southern-africa-safari-2025",
+    "source": "helloworld",
+    "nights": 20.0,
+    "pp_price": 9804.0,
+    "package_total_for_two": 19608.0,
+    "includes_flights": true,
+    "inclusions_evidence": "included game drives, luxe lodges with swimming pools, opportunities for helicopter wildlife spotting and interactions with indigenous communities.",
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Assumed round trip to Johannesburg",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Cape Town and Kruger National Park",
+        "nights": 20.0,
+        "price_total_for_stay": 4000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Game drives and activities",
+            "price": 3000.0,
+            "source": "https://www.contiki.com"
+          }
+        ],
+        "notes": "Includes various activities and excursions."
+      },
+      "diy_total_for_two": 9000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 10608.0,
+      "pct": 117.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option when considering flights, hotels, and activities, making it an excellent value.",
+    "additional_notes": "This deal includes comprehensive activities and accommodations, enhancing the overall experience.",
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.contiki.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Contiki Southern Africa Safari | 2025\",\n  \"title\": \"Contiki Southern Africa Safari | 2025\",\n  \"url\": \"https://helloworld.co.nz/deal/26471/contiki-southern-africa-safari-2025\",\n  \"source\": \"helloworld\",\n  \"nights\": 20.0,\n  \"pp_price\": 9804.0,\n  \"package_total_for_two\": 19608.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"included game drives, luxe lodges with swimming pools, opportunities for helicopter wildlife spotting and interactions with indigenous communities.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Assumed round trip to Johannesburg\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Cape Town and Kruger National Park\",\n      \"nights\": 20.0,\n      \"price_total_for_stay\": 4000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Game drives and activities\", \"price\": 3000.0, \"source\": \"https://www.contiki.com\"}\n      ],\n      \"notes\": \"Includes various activities and excursions.\"\n    },\n    \"diy_total_for_two\": 9000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10608.0,\n    \"pct\": 117.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option when considering flights, hotels, and activities, making it an excellent value.\",\n  \"additional_notes\": \"This deal includes comprehensive activities and accommodations, enhancing the overall experience.\",\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\", \"https://www.contiki.com\"]\n}"
+  },
+  {
+    "deal_id": "Gems of China",
+    "title": "Gems of China",
+    "url": "https://www.flightcentre.co.nz/product/22015701",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 8779.0,
+    "package_total_for_two": 17558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to China",
+      "14-nights accommodation",
+      "All meals",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to China",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in China",
+        "nights": 14.0,
+        "price_total_for_stay": 2800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 1400.0,
+            "source": "https://www.numbeo.com"
+          },
+          {
+            "label": "Guided Tours",
+            "price": 1500.0,
+            "source": "https://www.viator.com"
+          }
+        ],
+        "notes": "Estimated costs for meals and guided tours based on averages."
+      },
+      "diy_total_for_two": 7700.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 9858.0,
+      "pct": 128.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights, accommodation, meals, and guided tours, which are all well-priced compared to DIY options. The total savings are significant.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015701",
+      "https://www.expedia.com",
+      "https://www.booking.com",
+      "https://www.numbeo.com",
+      "https://www.viator.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Gems of China\",\n  \"title\": \"Gems of China\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015701\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 8779.0,\n  \"package_total_for_two\": 17558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to China\",\n    \"14-nights accommodation\",\n    \"All meals\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to China\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in China\",\n      \"nights\": 14.0,\n      \"price_total_for_stay\": 2800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 1400.0, \"source\": \"https://www.numbeo.com\"},\n        {\"label\": \"Guided Tours\", \"price\": 1500.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Estimated costs for meals and guided tours based on averages.\"\n    },\n    \"diy_total_for_two\": 7700.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 9858.0,\n    \"pct\": 128.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, accommodation, meals, and guided tours, which are all well-priced compared to DIY options. The total savings are significant.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015701\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.numbeo.com\",\n    \"https://www.viator.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+    "title": "14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar",
+    "url": "https://www.flightcentre.co.nz/product/22075361",
+    "source": "flightcentre",
+    "nights": 12.0,
+    "pp_price": 7699.0,
+    "package_total_for_two": 15398.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Economy class flights from Auckland to Barcelona, and Madrid to Auckland",
+      "1-night stay in Barcelona at the Novotel Barcelona City",
+      "13-day escorted tour with Costsaver from Barcelona to Madrid, twin share."
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Barcelona, Madrid to Auckland",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Novotel Barcelona City",
+        "nights": 1,
+        "price_total_for_stay": 200.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "13-day escorted tour",
+            "price": 8000.0,
+            "source": "https://www.costsaver.com"
+          }
+        ],
+        "notes": "Tour price based on similar offerings from Costsaver."
+      },
+      "diy_total_for_two": 10200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 5198.0,
+      "pct": 50.9
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes flights, hotel, and a comprehensive tour, making it significantly cheaper than DIY options.",
+    "additional_notes": "This deal offers a well-rounded experience with significant savings.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22075361",
+      "https://www.expedia.com",
+      "https://www.booking.com",
+      "https://www.costsaver.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"title\": \"14-day Fly, Stay & Tour: Iberian Explorer - Spain, Portugal & Gibraltar\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22075361\",\n  \"source\": \"flightcentre\",\n  \"nights\": 12.0,\n  \"pp_price\": 7699.0,\n  \"package_total_for_two\": 15398.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Barcelona, and Madrid to Auckland\",\n    \"1-night stay in Barcelona at the Novotel Barcelona City\",\n    \"13-day escorted tour with Costsaver from Barcelona to Madrid, twin share.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Barcelona, Madrid to Auckland\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Novotel Barcelona City\",\n      \"nights\": 1,\n      \"price_total_for_stay\": 200.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"13-day escorted tour\", \"price\": 8000.0, \"source\": \"https://www.costsaver.com\"}\n      ],\n      \"notes\": \"Tour price based on similar offerings from Costsaver.\"\n    },\n    \"diy_total_for_two\": 10200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 5198.0,\n    \"pct\": 50.9\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes flights, hotel, and a comprehensive tour, making it significantly cheaper than DIY options.\",\n  \"additional_notes\": \"This deal offers a well-rounded experience with significant savings.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22075361\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.costsaver.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "10-night Fly & Tour: Vietnam Express Southbound",
+    "title": "10-night Fly & Tour: Vietnam Express Southbound",
+    "url": "https://www.flightcentre.co.nz/product/21944634",
+    "source": "flightcentre",
+    "nights": 7.0,
+    "pp_price": 3525.0,
+    "package_total_for_two": 7050.0,
+    "includes_flights": true,
+    "inclusions_evidence": "Economy class flights from Auckland to Hanoi and Ho Chi Minh City, with Singapore Airlines",
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Hanoi and Ho Chi Minh City",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels",
+        "nights": 7,
+        "price_total_for_stay": 1400.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (8 Breakfasts, 3 Lunches)",
+            "price": 500.0,
+            "source": null
+          },
+          {
+            "label": "Overnight boat",
+            "price": 300.0,
+            "source": null
+          },
+          {
+            "label": "Overnight sleeper train",
+            "price": 200.0,
+            "source": null
+          }
+        ],
+        "notes": "Additional costs for meals and unique accommodations."
+      },
+      "diy_total_for_two": 3900.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1850.0,
+      "pct": 47.44
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal offers significant savings compared to DIY options, especially considering the included flights and unique experiences.",
+    "additional_notes": "The deal includes a comprehensive itinerary with meals and unique accommodations.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21944634",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Economy class flights from Auckland to Hanoi and Ho Chi Minh City, with Singapore Airlines\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Hanoi and Ho Chi Minh City\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels\",\n      \"nights\": 7,\n      \"price_total_for_stay\": 1400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (8 Breakfasts, 3 Lunches)\", \"price\": 500.0, \"source\": null},\n        {\"label\": \"Overnight boat\", \"price\": 300.0, \"source\": null},\n        {\"label\": \"Overnight sleeper train\", \"price\": 200.0, \"source\": null}\n      ],\n      \"notes\": \"Additional costs for meals and unique accommodations.\"\n    },\n    \"diy_total_for_two\": 3900.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1850.0,\n    \"pct\": 47.44\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal offers significant savings compared to DIY options, especially considering the included flights and unique experiences.\",\n  \"additional_notes\": \"The deal includes a comprehensive itinerary with meals and unique accommodations.\",\n  \"citations\": [\"https://www.flightcentre.co.nz/product/21944634\", \"https://www.expedia.com\", \"https://www.booking.com\"]\n}"
+  },
+  {
+    "deal_id": "Luxury Reef Break: Shangri-La The Marina, Cairns",
+    "title": "Luxury Reef Break: Shangri-La The Marina, Cairns",
+    "url": "https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns",
+    "source": "helloworld",
+    "nights": 4.0,
+    "pp_price": 1818.0,
+    "package_total_for_two": 3636.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation and inclusions as specified",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Shangri-La The Marina, Cairns",
+        "nights": 4.0,
+        "price_total_for_stay": 2400.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional inclusions specified."
+      },
+      "diy_total_for_two": 2400.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1236.0,
+      "pct": 51.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal offers significant savings compared to DIY options, especially considering the luxury accommodation.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Reef Break: Shangri-La The Marina, Cairns\",\n  \"title\": \"Luxury Reef Break: Shangri-La The Marina, Cairns\",\n  \"url\": \"https://helloworld.co.nz/deal/28496/luxury-reef-break-shangri-la-the-marina-cairns\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 1818.0,\n  \"package_total_for_two\": 3636.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation and inclusions as specified\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Shangri-La The Marina, Cairns\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 2400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions specified.\"\n    },\n    \"diy_total_for_two\": 2400.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1236.0,\n    \"pct\": 51.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal offers significant savings compared to DIY options, especially considering the luxury accommodation.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Port Douglas Reef Stay: Freestyle Resort Port Douglas",
+    "title": "Port Douglas Reef Stay: Freestyle Resort Port Douglas",
+    "url": "https://helloworld.co.nz/deal/28501/port-douglas-reef-stay-freestyle-resort-port-douglas",
+    "source": "helloworld",
+    "nights": 7.0,
+    "pp_price": 1589.0,
+    "package_total_for_two": 3178.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation and inclusions as specified",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Freestyle Resort Port Douglas",
+        "nights": 7.0,
+        "price_total_for_stay": 2100.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional inclusions or costs identified."
+      },
+      "diy_total_for_two": 2100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1078.0,
+      "pct": 51.2
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, providing substantial savings for the same accommodation.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Port Douglas Reef Stay: Freestyle Resort Port Douglas\",\n  \"title\": \"Port Douglas Reef Stay: Freestyle Resort Port Douglas\",\n  \"url\": \"https://helloworld.co.nz/deal/28501/port-douglas-reef-stay-freestyle-resort-port-douglas\",\n  \"source\": \"helloworld\",\n  \"nights\": 7.0,\n  \"pp_price\": 1589.0,\n  \"package_total_for_two\": 3178.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation and inclusions as specified\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Freestyle Resort Port Douglas\",\n      \"nights\": 7.0,\n      \"price_total_for_stay\": 2100.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions or costs identified.\"\n    },\n    \"diy_total_for_two\": 2100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1078.0,\n    \"pct\": 51.2\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, providing substantial savings for the same accommodation.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Air New Zealand Mystery Breaks\u2122",
+    "title": "Air New Zealand Mystery Breaks\u2122",
+    "url": "https://helloworld.co.nz/deal/15451/air-new-zealand-mystery-breaks",
+    "source": "helloworld",
+    "nights": 2.0,
+    "pp_price": 649.0,
+    "package_total_for_two": 1298.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return seat+bag flights with Air New Zealand",
+      "Accommodation at a 3-4-star Hotel",
+      "Breakfast included",
+      "Return airport transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": null,
+        "price_total_for_two": 600.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "3-4 star hotel",
+        "nights": 2,
+        "price_total_for_stay": 400.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Breakfast",
+            "price": 0.0,
+            "source": null
+          },
+          {
+            "label": "Airport Transfers",
+            "price": 100.0,
+            "source": "https://www.rome2rio.com"
+          }
+        ],
+        "notes": "Breakfast is included in the hotel stay."
+      },
+      "diy_total_for_two": 1100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 198.0,
+      "pct": 18.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights, hotel, breakfast, and transfers, making it a comprehensive deal that is cheaper than booking separately.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.rome2rio.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Air New Zealand Mystery Breaks\u2122\",\n  \"title\": \"Air New Zealand Mystery Breaks\u2122\",\n  \"url\": \"https://helloworld.co.nz/deal/15451/air-new-zealand-mystery-breaks\",\n  \"source\": \"helloworld\",\n  \"nights\": 2.0,\n  \"pp_price\": 649.0,\n  \"package_total_for_two\": 1298.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return seat+bag flights with Air New Zealand\",\n    \"Accommodation at a 3-4-star Hotel\",\n    \"Breakfast included\",\n    \"Return airport transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": null,\n      \"price_total_for_two\": 600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"3-4 star hotel\",\n      \"nights\": 2,\n      \"price_total_for_stay\": 400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfast\", \"price\": 0.0, \"source\": null},\n        {\"label\": \"Airport Transfers\", \"price\": 100.0, \"source\": \"https://www.rome2rio.com\"}\n      ],\n      \"notes\": \"Breakfast is included in the hotel stay.\"\n    },\n    \"diy_total_for_two\": 1100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 198.0,\n    \"pct\": 18.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, hotel, breakfast, and transfers, making it a comprehensive deal that is cheaper than booking separately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.rome2rio.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*",
+    "title": "Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*",
+    "url": "https://www.flightcentre.co.nz/product/21607984",
+    "source": "flightcentre",
+    "nights": 7.0,
+    "pp_price": 3525.0,
+    "package_total_for_two": 7050.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "7-night cruise with Norwegian Cruise Line onboard Norwegian Epic in a Balcony Stateroom, twin share.",
+      "NCL's Free at Sea Bonus inclusions",
+      "Specialty Dining package",
+      "Wi-Fi package",
+      "Premium Beverages",
+      "Entertainment",
+      "Shore excursion credits",
+      "BONUS USD$100* Onboard Credit per stateroom"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Not specified",
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "N/A (cruise)",
+        "nights": null,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "Cruise package includes various amenities and services."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes a comprehensive cruise package with multiple amenities, making it a strong value compared to DIY options, which are difficult to quantify without specific flight costs.",
+    "additional_notes": "DIY pricing for flights and cruise components not available.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21607984"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*\",\n  \"title\": \"Mediterranean: Nice, Florence & Amalfi Coast - FREE AT SEA*\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21607984\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"7-night cruise with Norwegian Cruise Line onboard Norwegian Epic in a Balcony Stateroom, twin share.\",\n    \"NCL's Free at Sea Bonus inclusions\",\n    \"Specialty Dining package\",\n    \"Wi-Fi package\",\n    \"Premium Beverages\",\n    \"Entertainment\",\n    \"Shore excursion credits\",\n    \"BONUS USD$100* Onboard Credit per stateroom\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Not specified\",\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"N/A (cruise)\",\n      \"nights\": null,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"Cruise package includes various amenities and services.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes a comprehensive cruise package with multiple amenities, making it a strong value compared to DIY options, which are difficult to quantify without specific flight costs.\",\n  \"additional_notes\": \"DIY pricing for flights and cruise components not available.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21607984\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Western Australia: Cape Lodge",
+    "title": "Western Australia: Cape Lodge",
+    "url": "https://helloworld.co.nz/deal/28375/western-australia-cape-lodge",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 1470.0,
+    "package_total_for_two": 2940.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation and bonuses as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Cape Lodge",
+        "nights": 3,
+        "price_total_for_stay": 1800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional inclusions were specified."
+      },
+      "diy_total_for_two": 1800.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1140.0,
+      "pct": 63.33
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The deal offers significant savings compared to DIY hotel costs, but does not include flights, which must be factored in separately.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/28375/western-australia-cape-lodge",
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Western Australia: Cape Lodge\",\n  \"title\": \"Western Australia: Cape Lodge\",\n  \"url\": \"https://helloworld.co.nz/deal/28375/western-australia-cape-lodge\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 1470.0,\n  \"package_total_for_two\": 2940.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation and bonuses as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cape Lodge\",\n      \"nights\": 3,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions were specified.\"\n    },\n    \"diy_total_for_two\": 1800.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1140.0,\n    \"pct\": 63.33\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The deal offers significant savings compared to DIY hotel costs, but does not include flights, which must be factored in separately.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://helloworld.co.nz/deal/28375/western-australia-cape-lodge\", \"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Cairns Escape: Crystalbrook Bailey",
+    "title": "Cairns Escape: Crystalbrook Bailey",
+    "url": "https://helloworld.co.nz/deal/28495/cairns-escape-crystalbrook-bailey",
+    "source": "helloworld",
+    "nights": 4.0,
+    "pp_price": 1135.0,
+    "package_total_for_two": 2270.0,
+    "includes_flights": false,
+    "inclusions_evidence": "International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Crystalbrook Bailey",
+        "nights": 4.0,
+        "price_total_for_stay": 1600.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional inclusions or activities were specified."
+      },
+      "diy_total_for_two": 1600.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 670.0,
+      "pct": 41.88
+    },
+    "rating_out_of_10": 8,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option for hotel accommodation alone, providing good value despite not including flights.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Cairns Escape: Crystalbrook Bailey\",\n  \"title\": \"Cairns Escape: Crystalbrook Bailey\",\n  \"url\": \"https://helloworld.co.nz/deal/28495/cairns-escape-crystalbrook-bailey\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 1135.0,\n  \"package_total_for_two\": 2270.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Crystalbrook Bailey\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 1600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional inclusions or activities were specified.\"\n    },\n    \"diy_total_for_two\": 1600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 670.0,\n    \"pct\": 41.88\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option for hotel accommodation alone, providing good value despite not including flights.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  }
+]
