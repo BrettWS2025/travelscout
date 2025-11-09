@@ -60,7 +60,7 @@ jobs:
       - name: Run analysis script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: gpt-4o-mini
+          OPENAI_MODEL: gpt-5-nano
           TOP_N: 10              # write per-deal JSON only for Top 20
           PRUNE_PERCENTILE: 70   # keep cheapest 60% by heuristic before OpenAI
           SHORTLIST_SIZE: 400    # cap analysis set after pruning (0=off)
