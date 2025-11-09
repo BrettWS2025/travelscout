@@ -61,9 +61,9 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-4o-mini
-          TOP_N: 10              # write per-deal JSON only for Top 20
-          PRUNE_PERCENTILE: 60   # keep cheapest 60% by heuristic before OpenAI
-          SHORTLIST_SIZE: 400    # cap analysis set after pruning (0=off)
+          TOP_N: 20              # write per-deal JSON only for Top 20
+          PRUNE_PERCENTILE: 0   # keep cheapest 60% by heuristic before OpenAI
+          SHORTLIST_SIZE: 0    # cap analysis set after pruning (0=off)
           PARALLEL_FETCH: 12     # concurrent page fetches
           READ_TIMEOUT: 10       # seconds per request
           CACHE_PAGES: 1         # use disk cache for page HTML
