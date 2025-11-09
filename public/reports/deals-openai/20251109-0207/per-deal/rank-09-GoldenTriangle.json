@@ -1,0 +1,41 @@
+{
+  "deal_id": "Golden Triangle",
+  "title": "Golden Triangle",
+  "url": "https://www.flightcentre.co.nz/product/21934094",
+  "source": "flightcentre",
+  "nights": 6.0,
+  "pp_price": 1189.0,
+  "package_total_for_two": 2378.0,
+  "includes_flights": false,
+  "inclusions_evidence": "\"Airfares & transfers are additional\"; \"add international flights & comprehensive Travel Insurance\"; \"8-day tour departing Delhi 7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night) Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": null,
+      "nights": 6,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [],
+      "notes": ""
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The Flight Centre deal lists 6 nights with private transport and guides for a total of 2378 for two (1189 pp). It explicitly states flights are not included (airfares & transfers are additional). Without a reliable DIY price from booking sites (e.g., Booking.com, Expedia, or supplier direct) for the same 6-night Golden Triangle itinerary including comparable hotels, transport, and guides, I cannot determine if the agency price is cheaper than DIY. The value appears reasonable, but lacks a verified DIY comparison, so the rating reflects potential value with incomplete verification.",
+  "additional_notes": "",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21934094"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Golden Triangle\",\n  \"title\": \"Golden Triangle\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21934094\",\n  \"source\": \"flightcentre\",\n  \"nights\": 6.0,\n  \"pp_price\": 1189.0,\n  \"package_total_for_two\": 2378.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\\\"Airfares & transfers are additional\\\"; \\\"add international flights & comprehensive Travel Insurance\\\"; \\\"8-day tour departing Delhi 7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night) Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": null,\n      \"nights\": 6,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The Flight Centre deal lists 6 nights with private transport and guides for a total of 2378 for two (1189 pp). It explicitly states flights are not included (airfares & transfers are additional). Without a reliable DIY price from booking sites (e.g., Booking.com, Expedia, or supplier direct) for the same 6-night Golden Triangle itinerary including comparable hotels, transport, and guides, I cannot determine if the agency price is cheaper than DIY. The value appears reasonable, but lacks a verified DIY comparison, so the rating reflects potential value with incomplete verification.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21934094\"\n  ]\n}"
+}

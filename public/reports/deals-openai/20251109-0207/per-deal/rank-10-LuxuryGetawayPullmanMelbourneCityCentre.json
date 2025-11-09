@@ -1,0 +1,54 @@
+{
+  "deal_id": "Luxury Getaway: Pullman Melbourne City Centre",
+  "title": "Luxury Getaway: Pullman Melbourne City Centre",
+  "url": "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 621.0,
+  "package_total_for_two": 1242.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "INCLUSIONS: Accommodation, touring and bonus offers as specified",
+    "IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare."
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Pullman Melbourne City Centre",
+      "nights": 3,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Tour inclusions (DIY price unknown)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+        }
+      ],
+      "notes": "Deal includes touring; no DIY price data available to compute a direct DIY total."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The deal costs 1242 for three nights for two (hotel + touring included, no flights). However, there is no accessible DIY price data for a 3-night Pullman Melbourne City Centre stay plus any included touring to compare against. Flights are not included in the deal, so a DIY total would require adding airfare. Without verifiable DIY pricing from booking sites (booking.com, expedia, etc.), we cannot confirm savings. The deal is a decent hotel + touring package but cannot be rated as a top 10 DIY-savings deal without price comparisons.",
+  "additional_notes": "",
+  "citations": [
+    "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Luxury Getaway: Pullman Melbourne City Centre\",\n  \"title\": \"Luxury Getaway: Pullman Melbourne City Centre\",\n  \"url\": \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 621.0,\n  \"package_total_for_two\": 1242.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"INCLUSIONS: Accommodation, touring and bonus offers as specified\",\n    \"IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Pullman Melbourne City Centre\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Tour inclusions (DIY price unknown)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n        }\n      ],\n      \"notes\": \"Deal includes touring; no DIY price data available to compute a direct DIY total.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal costs 1242 for three nights for two (hotel + touring included, no flights). However, there is no accessible DIY price data for a 3-night Pullman Melbourne City Centre stay plus any included touring to compare against. Flights are not included in the deal, so a DIY total would require adding airfare. Without verifiable DIY pricing from booking sites (booking.com, expedia, etc.), we cannot confirm savings. The deal is a decent hotel + touring package but cannot be rated as a top 10 DIY-savings deal without price comparisons.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n  ]\n}"
+}

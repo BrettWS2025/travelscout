@@ -1,0 +1,41 @@
+{
+  "deal_id": "Country Escape: Royal Mail Hotel",
+  "title": "Country Escape: Royal Mail Hotel",
+  "url": "https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 552.0,
+  "package_total_for_two": 1104.0,
+  "includes_flights": false,
+  "inclusions_evidence": "- INCLUSIONS: Accommodation, touring and bonus offers as specified\n- International and domestic flights within Australia are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Royal Mail Hotel, Southern Grampians, Victoria",
+      "nights": 3.0,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [],
+      "notes": "DIY price data not retrieved from external booking sites."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8.0,
+  "reasoning": "DIY price data could not be reliably obtained from external sources within this task. The deal clearly states flights are not included; without current DIY pricing from Booking.com/Expedia or supplier sites for Royal Mail Hotel in the Southern Grampians for 3 nights, I cannot compute savings. Therefore, diy_total_for_two remains null and savings cannot be calculated. The deal still presents a potentially good value at 1104 for two for 3 nights with included touring bonuses, but a precise DIY comparison is unavailable here.",
+  "additional_notes": "",
+  "citations": [
+    "https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Country Escape: Royal Mail Hotel\",\n  \"title\": \"Country Escape: Royal Mail Hotel\",\n  \"url\": \"https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 552.0,\n  \"package_total_for_two\": 1104.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- INCLUSIONS: Accommodation, touring and bonus offers as specified\\n- International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Royal Mail Hotel, Southern Grampians, Victoria\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"DIY price data not retrieved from external booking sites.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8.0,\n  \"reasoning\": \"DIY price data could not be reliably obtained from external sources within this task. The deal clearly states flights are not included; without current DIY pricing from Booking.com/Expedia or supplier sites for Royal Mail Hotel in the Southern Grampians for 3 nights, I cannot compute savings. Therefore, diy_total_for_two remains null and savings cannot be calculated. The deal still presents a potentially good value at 1104 for two for 3 nights with included touring bonuses, but a precise DIY comparison is unavailable here.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel\"\n  ]\n}"
+}

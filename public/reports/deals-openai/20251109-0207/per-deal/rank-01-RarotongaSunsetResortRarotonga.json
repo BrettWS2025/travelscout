@@ -1,0 +1,47 @@
+{
+  "deal_id": "Rarotonga: Sunset Resort Rarotonga",
+  "title": "Rarotonga: Sunset Resort Rarotonga",
+  "url": "https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga",
+  "source": "helloworld",
+  "nights": 5.0,
+  "pp_price": 1030.0,
+  "package_total_for_two": 2060.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Includes 5 nights at Sunset Resort Rarotonga",
+    "Return airport transfers",
+    "Tropical breakfast",
+    "FREE Wifi",
+    "Per Person, from $1,030"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Sunset Resort Rarotonga",
+      "nights": 5,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [],
+      "notes": "No explicit flight component in the deal; price is per person for land-only package with inclusions."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 8.5,
+  "reasoning": "Strong value for 5 nights at a beachfront resort with included tropical breakfast, return airport transfers, and WiFi at a price of 1030 per person (2060 total for two). However, flights are not included and a reliable DIY price comparison could not be sourced here, so exact savings vs booking independently cannot be confirmed. The lack of flight inclusion and date-specific pricing introduce some uncertainty, but the base land-only offer is highly competitive for the destination and inclusions.",
+  "additional_notes": "",
+  "citations": [
+    "https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Rarotonga: Sunset Resort Rarotonga\",\n  \"title\": \"Rarotonga: Sunset Resort Rarotonga\",\n  \"url\": \"https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1030.0,\n  \"package_total_for_two\": 2060.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Includes 5 nights at Sunset Resort Rarotonga\",\n    \"Return airport transfers\",\n    \"Tropical breakfast\",\n    \"FREE Wifi\",\n    \"Per Person, from $1,030\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Sunset Resort Rarotonga\",\n      \"nights\": 5,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No explicit flight component in the deal; price is per person for land-only package with inclusions.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8.5,\n  \"reasoning\": \"Strong value for 5 nights at a beachfront resort with included tropical breakfast, return airport transfers, and WiFi at a price of 1030 per person (2060 total for two). However, flights are not included and a reliable DIY price comparison could not be sourced here, so exact savings vs booking independently cannot be confirmed. The lack of flight inclusion and date-specific pricing introduce some uncertainty, but the base land-only offer is highly competitive for the destination and inclusions.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga\"\n  ]\n}"
+}

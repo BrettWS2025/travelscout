@@ -1,0 +1,47 @@
+{
+  "deal_id": "Add on a Hunter Valley Experience : Hunter Valley Resort + Farm",
+  "title": "Add on a Hunter Valley Experience : Hunter Valley Resort + Farm",
+  "url": "https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 945.0,
+  "package_total_for_two": 1890.0,
+  "includes_flights": false,
+  "inclusions_evidence": "Your Sydney Holiday INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Hunter Valley Resort",
+      "nights": 3,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Hunter Valley Farm experience add-on",
+          "price": null,
+          "source": ""
+        }
+      ],
+      "notes": "DIY pricing not available from provided data."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7.5,
+  "reasoning": "DIY prices could not be reliably obtained from external sources; the deal is land-only (no flights) for 3 nights at Hunter Valley Resort with a farm experience add-on; pricing is 945 per person (1890 for two). Without verified DIY pricing, cannot confirm savings; rating reflects value of a land-only package and inclusions given.",
+  "additional_notes": "",
+  "citations": [
+    "https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Add on a Hunter Valley Experience : Hunter Valley Resort + Farm\",\n  \"title\": \"Add on a Hunter Valley Experience : Hunter Valley Resort + Farm\",\n  \"url\": \"https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 945.0,\n  \"package_total_for_two\": 1890.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Your Sydney Holiday INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hunter Valley Resort\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Hunter Valley Farm experience add-on\",\n          \"price\": null,\n          \"source\": \"\"\n        }\n      ],\n      \"notes\": \"DIY pricing not available from provided data.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7.5,\n  \"reasoning\": \"DIY prices could not be reliably obtained from external sources; the deal is land-only (no flights) for 3 nights at Hunter Valley Resort with a farm experience add-on; pricing is 945 per person (1890 for two). Without verified DIY pricing, cannot confirm savings; rating reflects value of a land-only package and inclusions given.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm\"\n  ]\n}"
+}

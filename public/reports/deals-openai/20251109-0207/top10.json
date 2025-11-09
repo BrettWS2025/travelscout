@@ -1,0 +1,445 @@
+[
+  {
+    "deal_id": "Rarotonga: Sunset Resort Rarotonga",
+    "title": "Rarotonga: Sunset Resort Rarotonga",
+    "url": "https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga",
+    "source": "helloworld",
+    "nights": 5.0,
+    "pp_price": 1030.0,
+    "package_total_for_two": 2060.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "Includes 5 nights at Sunset Resort Rarotonga",
+      "Return airport transfers",
+      "Tropical breakfast",
+      "FREE Wifi",
+      "Per Person, from $1,030"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Sunset Resort Rarotonga",
+        "nights": 5,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "No explicit flight component in the deal; price is per person for land-only package with inclusions."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8.5,
+    "reasoning": "Strong value for 5 nights at a beachfront resort with included tropical breakfast, return airport transfers, and WiFi at a price of 1030 per person (2060 total for two). However, flights are not included and a reliable DIY price comparison could not be sourced here, so exact savings vs booking independently cannot be confirmed. The lack of flight inclusion and date-specific pricing introduce some uncertainty, but the base land-only offer is highly competitive for the destination and inclusions.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Rarotonga: Sunset Resort Rarotonga\",\n  \"title\": \"Rarotonga: Sunset Resort Rarotonga\",\n  \"url\": \"https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1030.0,\n  \"package_total_for_two\": 2060.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Includes 5 nights at Sunset Resort Rarotonga\",\n    \"Return airport transfers\",\n    \"Tropical breakfast\",\n    \"FREE Wifi\",\n    \"Per Person, from $1,030\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Sunset Resort Rarotonga\",\n      \"nights\": 5,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No explicit flight component in the deal; price is per person for land-only package with inclusions.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8.5,\n  \"reasoning\": \"Strong value for 5 nights at a beachfront resort with included tropical breakfast, return airport transfers, and WiFi at a price of 1030 per person (2060 total for two). However, flights are not included and a reliable DIY price comparison could not be sourced here, so exact savings vs booking independently cannot be confirmed. The lack of flight inclusion and date-specific pricing introduce some uncertainty, but the base land-only offer is highly competitive for the destination and inclusions.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28812/rarotonga-sunset-resort-rarotonga\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Country Escape: Royal Mail Hotel",
+    "title": "Country Escape: Royal Mail Hotel",
+    "url": "https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 552.0,
+    "package_total_for_two": 1104.0,
+    "includes_flights": false,
+    "inclusions_evidence": "- INCLUSIONS: Accommodation, touring and bonus offers as specified\n- International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Royal Mail Hotel, Southern Grampians, Victoria",
+        "nights": 3.0,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "DIY price data not retrieved from external booking sites."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 8.0,
+    "reasoning": "DIY price data could not be reliably obtained from external sources within this task. The deal clearly states flights are not included; without current DIY pricing from Booking.com/Expedia or supplier sites for Royal Mail Hotel in the Southern Grampians for 3 nights, I cannot compute savings. Therefore, diy_total_for_two remains null and savings cannot be calculated. The deal still presents a potentially good value at 1104 for two for 3 nights with included touring bonuses, but a precise DIY comparison is unavailable here.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Country Escape: Royal Mail Hotel\",\n  \"title\": \"Country Escape: Royal Mail Hotel\",\n  \"url\": \"https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 552.0,\n  \"package_total_for_two\": 1104.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- INCLUSIONS: Accommodation, touring and bonus offers as specified\\n- International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Royal Mail Hotel, Southern Grampians, Victoria\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"DIY price data not retrieved from external booking sites.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 8.0,\n  \"reasoning\": \"DIY price data could not be reliably obtained from external sources within this task. The deal clearly states flights are not included; without current DIY pricing from Booking.com/Expedia or supplier sites for Royal Mail Hotel in the Southern Grampians for 3 nights, I cannot compute savings. Therefore, diy_total_for_two remains null and savings cannot be calculated. The deal still presents a potentially good value at 1104 for two for 3 nights with included touring bonuses, but a precise DIY comparison is unavailable here.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28537/country-escape-royal-mail-hotel\"\n  ]\n}"
+  },
+  {
+    "deal_id": "A Taste of Noosa: Noosa Blue Resort",
+    "title": "A Taste of Noosa: Noosa Blue Resort",
+    "url": "https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort",
+    "source": "helloworld",
+    "nights": 5.0,
+    "pp_price": 1271.0,
+    "package_total_for_two": 2542.0,
+    "includes_flights": false,
+    "inclusions_evidence": "- INCLUSIONS: Accommodation and bonuses as specified.\\n- IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\\n- Add your best available airfares to these land only deals",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Noosa Blue Resort",
+        "nights": 5,
+        "price_total_for_stay": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": ""
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7.5,
+    "reasoning": "DIY prices could not be reliably obtained from provided sources within this task, so savings cannot be computed. The deal is land-only (flights not included) for 5 nights at Noosa Blue Resort, priced at 2542 total for two (1271 pp). Without a DIY price to compare, we cannot determine if it is among the top 10; rating assigned based on apparent value of accommodation alone.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"A Taste of Noosa: Noosa Blue Resort\",\n  \"title\": \"A Taste of Noosa: Noosa Blue Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1271.0,\n  \"package_total_for_two\": 2542.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- INCLUSIONS: Accommodation and bonuses as specified.\\\\n- IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\\\\n- Add your best available airfares to these land only deals\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\"https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Noosa Blue Resort\",\n      \"nights\": 5,\n      \"price_total_for_stay\": null,\n      \"sources\": [\"https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7.5,\n  \"reasoning\": \"DIY prices could not be reliably obtained from provided sources within this task, so savings cannot be computed. The deal is land-only (flights not included) for 5 nights at Noosa Blue Resort, priced at 2542 total for two (1271 pp). Without a DIY price to compare, we cannot determine if it is among the top 10; rating assigned based on apparent value of accommodation alone.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\"https://helloworld.co.nz/deal/28485/a-taste-of-noosa-noosa-blue-resort\"]\n}"
+  },
+  {
+    "deal_id": "Add on a Hunter Valley Experience : Hunter Valley Resort + Farm",
+    "title": "Add on a Hunter Valley Experience : Hunter Valley Resort + Farm",
+    "url": "https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 945.0,
+    "package_total_for_two": 1890.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Your Sydney Holiday INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Hunter Valley Resort",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Hunter Valley Farm experience add-on",
+            "price": null,
+            "source": ""
+          }
+        ],
+        "notes": "DIY pricing not available from provided data."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7.5,
+    "reasoning": "DIY prices could not be reliably obtained from external sources; the deal is land-only (no flights) for 3 nights at Hunter Valley Resort with a farm experience add-on; pricing is 945 per person (1890 for two). Without verified DIY pricing, cannot confirm savings; rating reflects value of a land-only package and inclusions given.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Add on a Hunter Valley Experience : Hunter Valley Resort + Farm\",\n  \"title\": \"Add on a Hunter Valley Experience : Hunter Valley Resort + Farm\",\n  \"url\": \"https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 945.0,\n  \"package_total_for_two\": 1890.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Your Sydney Holiday INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hunter Valley Resort\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Hunter Valley Farm experience add-on\",\n          \"price\": null,\n          \"source\": \"\"\n        }\n      ],\n      \"notes\": \"DIY pricing not available from provided data.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7.5,\n  \"reasoning\": \"DIY prices could not be reliably obtained from external sources; the deal is land-only (no flights) for 3 nights at Hunter Valley Resort with a farm experience add-on; pricing is 945 per person (1890 for two). Without verified DIY pricing, cannot confirm savings; rating reflects value of a land-only package and inclusions given.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28522/add-on-a-hunter-valley-experience-hunter-valley-resort-farm\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Discover San Diego : Handlery Hotel San Diego",
+    "title": "Discover San Diego : Handlery Hotel San Diego",
+    "url": "https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 468.0,
+    "package_total_for_two": 936.0,
+    "includes_flights": false,
+    "inclusions_evidence": "- Includes 3 nights at Handlery Hotel San Diego (3 star) in a Traditional Section Room - Full American breakfast daily\n- Twin per person fr $468",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Handlery Hotel San Diego",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No DIY price data available from other sites."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "DIY pricing data could not be reliably obtained from alternative booking sources within this environment. Therefore, total savings vs DIY cannot be calculated, and DIY totals remain unknown. The deal provides 3 nights at Handlery Hotel San Diego with breakfast for two at 936 total, which may be competitive, but without verifiable DIY pricing a numeric savings or ranking cannot be confidently determined.",
+    "additional_notes": "Data limited to provided deal page; no independent DIY price verification performed.",
+    "citations": [
+      "https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Discover San Diego : Handlery Hotel San Diego\",\n  \"title\": \"Discover San Diego : Handlery Hotel San Diego\",\n  \"url\": \"https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 468.0,\n  \"package_total_for_two\": 936.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- Includes 3 nights at Handlery Hotel San Diego (3 star) in a Traditional Section Room - Full American breakfast daily\\n- Twin per person fr $468\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\"https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Handlery Hotel San Diego\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": [\"https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No DIY price data available from other sites.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"DIY pricing data could not be reliably obtained from alternative booking sources within this environment. Therefore, total savings vs DIY cannot be calculated, and DIY totals remain unknown. The deal provides 3 nights at Handlery Hotel San Diego with breakfast for two at 936 total, which may be competitive, but without verifiable DIY pricing a numeric savings or ranking cannot be confidently determined.\",\n  \"additional_notes\": \"Data limited to provided deal page; no independent DIY price verification performed.\",\n  \"citations\": [\"https://helloworld.co.nz/deal/28872/discover-san-diego-handlery-hotel-san-diego\"]\n}"
+  },
+  {
+    "deal_id": "Glamping in Karijini National Park: Karijini Eco Retreat",
+    "title": "Glamping in Karijini National Park: Karijini Eco Retreat",
+    "url": "https://helloworld.co.nz/deal/28562/glamping-in-karijini-national-park-karijini-eco-retreat",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 519.0,
+    "package_total_for_two": 1038.0,
+    "includes_flights": false,
+    "inclusions_evidence": "- INCLUSIONS: Accommodation, touring and bonus offers as specified\n- IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": null,
+        "nights": null,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": ""
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "DIY price data could not be reliably obtained from booking sites within this session. The deal clearly lists 3 nights for two at Karijini Eco Retreat with accommodation and touring included, but flights are explicitly not included. Without live pricing for the equivalent hotel stay plus tours (and any included extras) on Booking.com, Expedia, or supplier sites, I cannot determine if the agency price of 1038 for two is cheaper than a DIY package. Therefore, full savings cannot be calculated.",
+    "additional_notes": "DIY price data not accessible; analysis limited to the deal as listed.",
+    "citations": [
+      "https://helloworld.co.nz/deal/28562/glamping-in-karijini-national-park-karijini-eco-retreat"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Glamping in Karijini National Park: Karijini Eco Retreat\",\n  \"title\": \"Glamping in Karijini National Park: Karijini Eco Retreat\",\n  \"url\": \"https://helloworld.co.nz/deal/28562/glamping-in-karijini-national-park-karijini-eco-retreat\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 519.0,\n  \"package_total_for_two\": 1038.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"- INCLUSIONS: Accommodation, touring and bonus offers as specified\\n- IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": null,\n      \"nights\": null,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"DIY price data could not be reliably obtained from booking sites within this session. The deal clearly lists 3 nights for two at Karijini Eco Retreat with accommodation and touring included, but flights are explicitly not included. Without live pricing for the equivalent hotel stay plus tours (and any included extras) on Booking.com, Expedia, or supplier sites, I cannot determine if the agency price of 1038 for two is cheaper than a DIY package. Therefore, full savings cannot be calculated.\",\n  \"additional_notes\": \"DIY price data not accessible; analysis limited to the deal as listed.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28562/glamping-in-karijini-national-park-karijini-eco-retreat\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Melbourne City Stay: Holiday Inn Express Melbourne Little Collins",
+    "title": "Melbourne City Stay: Holiday Inn Express Melbourne Little Collins",
+    "url": "https://helloworld.co.nz/deal/28526/melbourne-city-stay-holiday-inn-express-melbourne-little-collins",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 549.0,
+    "package_total_for_two": 1098.0,
+    "includes_flights": false,
+    "inclusions_evidence": "INCLUSIONS: Accommodation, touring and bonus offers as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Holiday Inn Express Melbourne Little Collins",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "DIY pricing data not available; unable to verify cost comparison from third-party sites."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "Deal shows 3 nights for two at 1098 total, with flights excluded. Without reliable DIY price data, cannot confirm savings; rating reflects perceived value given city-center hotel and non-inclusive flight policy. If DIY total were significantly higher than 1098, this would be a top contender; but price cannot be verified.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28526/melbourne-city-stay-holiday-inn-express-melbourne-little-collins"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Melbourne City Stay: Holiday Inn Express Melbourne Little Collins\",\n  \"title\": \"Melbourne City Stay: Holiday Inn Express Melbourne Little Collins\",\n  \"url\": \"https://helloworld.co.nz/deal/28526/melbourne-city-stay-holiday-inn-express-melbourne-little-collins\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 549.0,\n  \"package_total_for_two\": 1098.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: Accommodation, touring and bonus offers as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Holiday Inn Express Melbourne Little Collins\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"DIY pricing data not available; unable to verify cost comparison from third-party sites.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Deal shows 3 nights for two at 1098 total, with flights excluded. Without reliable DIY price data, cannot confirm savings; rating reflects perceived value given city-center hotel and non-inclusive flight policy. If DIY total were significantly higher than 1098, this would be a top contender; but price cannot be verified.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\"https://helloworld.co.nz/deal/28526/melbourne-city-stay-holiday-inn-express-melbourne-little-collins\"]\n}"
+  },
+  {
+    "deal_id": "City and Food Trail: Batman's Hill on Collins",
+    "title": "City and Food Trail: Batman's Hill on Collins",
+    "url": "https://helloworld.co.nz/deal/28529/city-and-food-trail-batmans-hill-on-collins",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 565.0,
+    "package_total_for_two": 1130.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Inclusions: Accommodation, touring and bonus offers as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Batman\u2019s Hill on Collins",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "No DIY price data available from provided sources."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "Deal shows 3 nights for two at Batman's Hill on Collins with accommodation and touring included, and explicitly notes that flights are not included. While the package total is 1130 for two (565 per person), a DIY price could not be reliably sourced from Booking.com/Expedia or suppliers within this task. Without DIY price data, cannot confirm if this is cheaper than self-booking. The inclusions appear valuable (accommodation + touring) for a Melbourne stay, making it a potentially good deal even without flights, but verification of savings is pending.",
+    "additional_notes": "DIY price data unavailable; cannot determine savings. If DIY price data become available, recalculate top 10 with updated figures.",
+    "citations": [
+      "https://helloworld.co.nz/deal/28529/city-and-food-trail-batmans-hill-on-collins"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"City and Food Trail: Batman's Hill on Collins\",\n  \"title\": \"City and Food Trail: Batman's Hill on Collins\",\n  \"url\": \"https://helloworld.co.nz/deal/28529/city-and-food-trail-batmans-hill-on-collins\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 565.0,\n  \"package_total_for_two\": 1130.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Inclusions: Accommodation, touring and bonus offers as specified. IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Batman\u2019s Hill on Collins\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No DIY price data available from provided sources.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Deal shows 3 nights for two at Batman's Hill on Collins with accommodation and touring included, and explicitly notes that flights are not included. While the package total is 1130 for two (565 per person), a DIY price could not be reliably sourced from Booking.com/Expedia or suppliers within this task. Without DIY price data, cannot confirm if this is cheaper than self-booking. The inclusions appear valuable (accommodation + touring) for a Melbourne stay, making it a potentially good deal even without flights, but verification of savings is pending.\",\n  \"additional_notes\": \"DIY price data unavailable; cannot determine savings. If DIY price data become available, recalculate top 10 with updated figures.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28529/city-and-food-trail-batmans-hill-on-collins\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Golden Triangle",
+    "title": "Golden Triangle",
+    "url": "https://www.flightcentre.co.nz/product/21934094",
+    "source": "flightcentre",
+    "nights": 6.0,
+    "pp_price": 1189.0,
+    "package_total_for_two": 2378.0,
+    "includes_flights": false,
+    "inclusions_evidence": "\"Airfares & transfers are additional\"; \"add international flights & comprehensive Travel Insurance\"; \"8-day tour departing Delhi 7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night) Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\"",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": null,
+        "nights": 6,
+        "price_total_for_stay": null,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": ""
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "The Flight Centre deal lists 6 nights with private transport and guides for a total of 2378 for two (1189 pp). It explicitly states flights are not included (airfares & transfers are additional). Without a reliable DIY price from booking sites (e.g., Booking.com, Expedia, or supplier direct) for the same 6-night Golden Triangle itinerary including comparable hotels, transport, and guides, I cannot determine if the agency price is cheaper than DIY. The value appears reasonable, but lacks a verified DIY comparison, so the rating reflects potential value with incomplete verification.",
+    "additional_notes": "",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21934094"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Golden Triangle\",\n  \"title\": \"Golden Triangle\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21934094\",\n  \"source\": \"flightcentre\",\n  \"nights\": 6.0,\n  \"pp_price\": 1189.0,\n  \"package_total_for_two\": 2378.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\\\"Airfares & transfers are additional\\\"; \\\"add international flights & comprehensive Travel Insurance\\\"; \\\"8-day tour departing Delhi 7-nights accommodation Hotels (6 nights), comfortable tented camp (1 night) Transport by private vehicle, taxis, auto-rickshaw, cycle-rickshaw\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": null,\n      \"nights\": 6,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The Flight Centre deal lists 6 nights with private transport and guides for a total of 2378 for two (1189 pp). It explicitly states flights are not included (airfares & transfers are additional). Without a reliable DIY price from booking sites (e.g., Booking.com, Expedia, or supplier direct) for the same 6-night Golden Triangle itinerary including comparable hotels, transport, and guides, I cannot determine if the agency price is cheaper than DIY. The value appears reasonable, but lacks a verified DIY comparison, so the rating reflects potential value with incomplete verification.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21934094\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Luxury Getaway: Pullman Melbourne City Centre",
+    "title": "Luxury Getaway: Pullman Melbourne City Centre",
+    "url": "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre",
+    "source": "helloworld",
+    "nights": 3.0,
+    "pp_price": 621.0,
+    "package_total_for_two": 1242.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "INCLUSIONS: Accommodation, touring and bonus offers as specified",
+      "IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare."
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Pullman Melbourne City Centre",
+        "nights": 3,
+        "price_total_for_stay": null,
+        "sources": [
+          "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Tour inclusions (DIY price unknown)",
+            "price": null,
+            "source": "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+          }
+        ],
+        "notes": "Deal includes touring; no DIY price data available to compute a direct DIY total."
+      },
+      "diy_total_for_two": null
+    },
+    "estimated_savings_vs_diy": {
+      "abs": null,
+      "pct": null
+    },
+    "rating_out_of_10": 7,
+    "reasoning": "The deal costs 1242 for three nights for two (hotel + touring included, no flights). However, there is no accessible DIY price data for a 3-night Pullman Melbourne City Centre stay plus any included touring to compare against. Flights are not included in the deal, so a DIY total would require adding airfare. Without verifiable DIY pricing from booking sites (booking.com, expedia, etc.), we cannot confirm savings. The deal is a decent hotel + touring package but cannot be rated as a top 10 DIY-savings deal without price comparisons.",
+    "additional_notes": "",
+    "citations": [
+      "https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Getaway: Pullman Melbourne City Centre\",\n  \"title\": \"Luxury Getaway: Pullman Melbourne City Centre\",\n  \"url\": \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 621.0,\n  \"package_total_for_two\": 1242.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"INCLUSIONS: Accommodation, touring and bonus offers as specified\",\n    \"IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Pullman Melbourne City Centre\",\n      \"nights\": 3,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Tour inclusions (DIY price unknown)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n        }\n      ],\n      \"notes\": \"Deal includes touring; no DIY price data available to compute a direct DIY total.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The deal costs 1242 for three nights for two (hotel + touring included, no flights). However, there is no accessible DIY price data for a 3-night Pullman Melbourne City Centre stay plus any included touring to compare against. Flights are not included in the deal, so a DIY total would require adding airfare. Without verifiable DIY pricing from booking sites (booking.com, expedia, etc.), we cannot confirm savings. The deal is a decent hotel + touring package but cannot be rated as a top 10 DIY-savings deal without price comparisons.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28532/luxury-getaway-pullman-melbourne-city-centre\"\n  ]\n}"
+  }
+]
