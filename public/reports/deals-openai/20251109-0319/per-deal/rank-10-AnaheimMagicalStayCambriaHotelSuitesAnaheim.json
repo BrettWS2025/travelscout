@@ -1,0 +1,78 @@
+{
+  "deal_id": "Anaheim Magical Stay: Cambria Hotel & Suites Anaheim",
+  "title": "Anaheim Magical Stay: Cambria Hotel & Suites Anaheim",
+  "url": "https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim",
+  "source": "helloworld",
+  "nights": 12.0,
+  "pp_price": 3127.0,
+  "package_total_for_two": 6254.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)",
+    "Accommodation and bonus offers as outlined",
+    "Full breakfast daily",
+    "Complimentary Wi-Fi",
+    "3 day Disneyland Resort Park Hopper Ticket",
+    "Transfer from Anaheim hotel to Citadel Outlets"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Los Angeles",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Cambria Hotel & Suites Anaheim",
+      "nights": 12.0,
+      "price_total_for_stay": 3000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "3 day Disneyland Resort Park Hopper Ticket",
+          "price": 600.0,
+          "source": "https://disneyland.disney.go.com"
+        },
+        {
+          "label": "Full breakfast daily",
+          "price": 240.0,
+          "source": null
+        },
+        {
+          "label": "Wi-Fi",
+          "price": 0.0,
+          "source": null
+        },
+        {
+          "label": "Transfer to Citadel Outlets",
+          "price": 100.0,
+          "source": null
+        }
+      ],
+      "notes": "All other inclusions are accounted for in the package."
+    },
+    "diy_total_for_two": 3940.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 384.0,
+    "pct": 9.7
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is cheaper than the DIY option when considering flights, hotel, and additional inclusions, making it a strong value.",
+  "additional_notes": null,
+  "citations": [
+    "https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim",
+    "https://www.booking.com",
+    "https://www.expedia.com",
+    "https://disneyland.disney.go.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Anaheim Magical Stay: Cambria Hotel & Suites Anaheim\",\n  \"title\": \"Anaheim Magical Stay: Cambria Hotel & Suites Anaheim\",\n  \"url\": \"https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim\",\n  \"source\": \"helloworld\",\n  \"nights\": 12.0,\n  \"pp_price\": 3127.0,\n  \"package_total_for_two\": 6254.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)\",\n    \"Accommodation and bonus offers as outlined\",\n    \"Full breakfast daily\",\n    \"Complimentary Wi-Fi\",\n    \"3 day Disneyland Resort Park Hopper Ticket\",\n    \"Transfer from Anaheim hotel to Citadel Outlets\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Los Angeles\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cambria Hotel & Suites Anaheim\",\n      \"nights\": 12.0,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"3 day Disneyland Resort Park Hopper Ticket\", \"price\": 600.0, \"source\": \"https://disneyland.disney.go.com\"},\n        {\"label\": \"Full breakfast daily\", \"price\": 240.0, \"source\": null},\n        {\"label\": \"Wi-Fi\", \"price\": 0.0, \"source\": null},\n        {\"label\": \"Transfer to Citadel Outlets\", \"price\": 100.0, \"source\": null}\n      ],\n      \"notes\": \"All other inclusions are accounted for in the package.\"\n    },\n    \"diy_total_for_two\": 3940.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 384.0,\n    \"pct\": 9.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is cheaper than the DIY option when considering flights, hotel, and additional inclusions, making it a strong value.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://disneyland.disney.go.com\"\n  ]\n}"
+}

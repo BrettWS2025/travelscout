@@ -1,0 +1,58 @@
+{
+  "deal_id": "Add on Ubud: Wapa Di Ume Resort and Spa",
+  "title": "Add on Ubud: Wapa Di Ume Resort and Spa",
+  "url": "https://helloworld.co.nz/deal/33338/add-on-ubud-wapa-di-ume-resort-and-spa",
+  "source": "helloworld",
+  "nights": 6.0,
+  "pp_price": 663.0,
+  "package_total_for_two": 1326.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch",
+    "Accommodation and bonus offers as specified",
+    "Return private car airport transfers"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Bali",
+      "price_total_for_two": 1200.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Wapa Di Ume Resort and Spa",
+      "nights": 6.0,
+      "price_total_for_stay": 1800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Private car airport transfers",
+          "price": 100.0,
+          "source": "https://www.booking.com"
+        }
+      ],
+      "notes": "Assumed cost for transfers based on typical rates."
+    },
+    "diy_total_for_two": 3100.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 1774.0,
+    "pct": 57.1
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and transfers. The inclusion of flights and transfers makes this a comprehensive and cost-effective package.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Add on Ubud: Wapa Di Ume Resort and Spa\",\n  \"title\": \"Add on Ubud: Wapa Di Ume Resort and Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/33338/add-on-ubud-wapa-di-ume-resort-and-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 663.0,\n  \"package_total_for_two\": 1326.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch\",\n    \"Accommodation and bonus offers as specified\",\n    \"Return private car airport transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Bali\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Wapa Di Ume Resort and Spa\",\n      \"nights\": 6.0,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Private car airport transfers\", \"price\": 100.0, \"source\": \"https://www.booking.com\"}\n      ],\n      \"notes\": \"Assumed cost for transfers based on typical rates.\"\n    },\n    \"diy_total_for_two\": 3100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1774.0,\n    \"pct\": 57.1\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and transfers. The inclusion of flights and transfers makes this a comprehensive and cost-effective package.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

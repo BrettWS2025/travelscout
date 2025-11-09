@@ -1,0 +1,600 @@
+[
+  {
+    "deal_id": "Vietnam Express Southbound",
+    "title": "Vietnam Express Southbound",
+    "url": "https://www.worldtravellers.co.nz/deals/being-there-starts-here/intrepid-journeys/vietnam-express-southbound",
+    "source": "worldtravellers",
+    "nights": 9.0,
+    "pp_price": 1859.0,
+    "package_total_for_two": 3718.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Meals: 8 breakfasts, 3 Lunches, 2 dinners",
+      "Transport: Boat, Motorbike, Overnight sleeper train, Plane, Private minibus, Taxi, Sampan, Tuk-tuk",
+      "Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Hanoi to Ho Chi Minh City",
+        "price_total_for_two": 300.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Vietnam",
+        "nights": 8,
+        "price_total_for_stay": 800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 400.0,
+            "source": null
+          },
+          {
+            "label": "Transport (local)",
+            "price": 200.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and local transport."
+      },
+      "diy_total_for_two": 1700.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 2018.0,
+      "pct": 118.6
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive services such as meals, accommodation, and transport, which are well-priced compared to DIY options. The estimated savings are significant.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/being-there-starts-here/intrepid-journeys/vietnam-express-southbound"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Vietnam Express Southbound\",\n  \"title\": \"Vietnam Express Southbound\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/being-there-starts-here/intrepid-journeys/vietnam-express-southbound\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 9.0,\n  \"pp_price\": 1859.0,\n  \"package_total_for_two\": 3718.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Meals: 8 breakfasts, 3 Lunches, 2 dinners\",\n    \"Transport: Boat, Motorbike, Overnight sleeper train, Plane, Private minibus, Taxi, Sampan, Tuk-tuk\",\n    \"Accommodation: Hotel (7 nights), Overnight boat (1 night), Overnight sleeper train (1 night)\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Hanoi to Ho Chi Minh City\",\n      \"price_total_for_two\": 300.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Vietnam\",\n      \"nights\": 8,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 400.0, \"source\": null},\n        {\"label\": \"Transport (local)\", \"price\": 200.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and local transport.\"\n    },\n    \"diy_total_for_two\": 1700.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2018.0,\n    \"pct\": 118.6\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive services such as meals, accommodation, and transport, which are well-priced compared to DIY options. The estimated savings are significant.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/being-there-starts-here/intrepid-journeys/vietnam-express-southbound\"\n  ]\n}"
+  },
+  {
+    "deal_id": "World Journeys Bavarian Wonders and the Black Forest",
+    "title": "World Journeys Bavarian Wonders and the Black Forest",
+    "url": "https://helloworld.co.nz/deal/29895/world-journeys-bavarian-wonders-and-the-black-forest",
+    "source": "helloworld",
+    "nights": 9.0,
+    "pp_price": 2025.0,
+    "package_total_for_two": 4050.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "9-nights accommodation",
+      "9 breakfasts",
+      "Meet & Greet at Munich International Airport",
+      "Private arrival transfer on Day 1 and departure transfer on Day 10",
+      "English-speaking local guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "NZ to Munich",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Germany",
+        "nights": 9,
+        "price_total_for_stay": 1800.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Breakfasts",
+            "price": 450.0,
+            "source": "https://www.booking.com"
+          },
+          {
+            "label": "Transfers",
+            "price": 300.0,
+            "source": "https://www.booking.com"
+          }
+        ],
+        "notes": "Assumed average costs for meals and transfers."
+      },
+      "diy_total_for_two": 5850.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1800.0,
+      "pct": 30.77
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes flights, accommodation, meals, and transfers, making it significantly cheaper than booking everything separately.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/29895/world-journeys-bavarian-wonders-and-the-black-forest",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"World Journeys Bavarian Wonders and the Black Forest\",\n  \"title\": \"World Journeys Bavarian Wonders and the Black Forest\",\n  \"url\": \"https://helloworld.co.nz/deal/29895/world-journeys-bavarian-wonders-and-the-black-forest\",\n  \"source\": \"helloworld\",\n  \"nights\": 9.0,\n  \"pp_price\": 2025.0,\n  \"package_total_for_two\": 4050.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"9-nights accommodation\",\n    \"9 breakfasts\",\n    \"Meet & Greet at Munich International Airport\",\n    \"Private arrival transfer on Day 1 and departure transfer on Day 10\",\n    \"English-speaking local guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"NZ to Munich\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Germany\",\n      \"nights\": 9,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfasts\", \"price\": 450.0, \"source\": \"https://www.booking.com\"},\n        {\"label\": \"Transfers\", \"price\": 300.0, \"source\": \"https://www.booking.com\"}\n      ],\n      \"notes\": \"Assumed average costs for meals and transfers.\"\n    },\n    \"diy_total_for_two\": 5850.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1800.0,\n    \"pct\": 30.77\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes flights, accommodation, meals, and transfers, making it significantly cheaper than booking everything separately.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/29895/world-journeys-bavarian-wonders-and-the-black-forest\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Add on Ubud: Wapa Di Ume Resort and Spa",
+    "title": "Add on Ubud: Wapa Di Ume Resort and Spa",
+    "url": "https://helloworld.co.nz/deal/33338/add-on-ubud-wapa-di-ume-resort-and-spa",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 663.0,
+    "package_total_for_two": 1326.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch",
+      "Accommodation and bonus offers as specified",
+      "Return private car airport transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Bali",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Wapa Di Ume Resort and Spa",
+        "nights": 6.0,
+        "price_total_for_stay": 1800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Private car airport transfers",
+            "price": 100.0,
+            "source": "https://www.booking.com"
+          }
+        ],
+        "notes": "Assumed cost for transfers based on typical rates."
+      },
+      "diy_total_for_two": 3100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1774.0,
+      "pct": 57.1
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and transfers. The inclusion of flights and transfers makes this a comprehensive and cost-effective package.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Add on Ubud: Wapa Di Ume Resort and Spa\",\n  \"title\": \"Add on Ubud: Wapa Di Ume Resort and Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/33338/add-on-ubud-wapa-di-ume-resort-and-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 663.0,\n  \"package_total_for_two\": 1326.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch\",\n    \"Accommodation and bonus offers as specified\",\n    \"Return private car airport transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Bali\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Wapa Di Ume Resort and Spa\",\n      \"nights\": 6.0,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Private car airport transfers\", \"price\": 100.0, \"source\": \"https://www.booking.com\"}\n      ],\n      \"notes\": \"Assumed cost for transfers based on typical rates.\"\n    },\n    \"diy_total_for_two\": 3100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1774.0,\n    \"pct\": 57.1\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and transfers. The inclusion of flights and transfers makes this a comprehensive and cost-effective package.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Add on Ubud: Hotel Tjampuhan & Spa",
+    "title": "Add on Ubud: Hotel Tjampuhan & Spa",
+    "url": "https://helloworld.co.nz/deal/33337/add-on-ubud-hotel-tjampuhan-and-spa",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 604.0,
+    "package_total_for_two": 1208.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch",
+      "Accommodation and bonus offers as specified",
+      "Return private car airport transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Bali",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Hotel Tjampuhan & Spa",
+        "nights": 6.0,
+        "price_total_for_stay": 1500.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Private car airport transfers",
+            "price": 100.0,
+            "source": "https://www.booking.com"
+          }
+        ],
+        "notes": "Assumed cost for transfers based on average rates."
+      },
+      "diy_total_for_two": 2800.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1592.0,
+      "pct": 56.8
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights, accommodation, and transfers at a significantly lower cost compared to DIY options.",
+    "additional_notes": "This deal offers a comprehensive package that is well-priced for the inclusions.",
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Add on Ubud: Hotel Tjampuhan & Spa\",\n  \"title\": \"Add on Ubud: Hotel Tjampuhan & Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/33337/add-on-ubud-hotel-tjampuhan-and-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 604.0,\n  \"package_total_for_two\": 1208.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares flying Air New Zealand direct to Bali ex Auckland OR Wellington/Christchurch\",\n    \"Accommodation and bonus offers as specified\",\n    \"Return private car airport transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Bali\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotel Tjampuhan & Spa\",\n      \"nights\": 6.0,\n      \"price_total_for_stay\": 1500.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Private car airport transfers\", \"price\": 100.0, \"source\": \"https://www.booking.com\"}\n      ],\n      \"notes\": \"Assumed cost for transfers based on average rates.\"\n    },\n    \"diy_total_for_two\": 2800.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1592.0,\n    \"pct\": 56.8\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, accommodation, and transfers at a significantly lower cost compared to DIY options.\",\n  \"additional_notes\": \"This deal offers a comprehensive package that is well-priced for the inclusions.\",\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Best of Rajasthan & Kerala",
+    "title": "Best of Rajasthan & Kerala",
+    "url": "https://www.worldtravellers.co.nz/deals/asia/best-of-rajasthan-and-kerala",
+    "source": "worldtravellers",
+    "nights": 17.0,
+    "pp_price": 4858.0,
+    "package_total_for_two": 9716.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "17 Nights deluxe accommodation with private facility",
+      "Travel by chartered air-conditioned vehicle",
+      "Meals as specified",
+      "Sightseeing as specified",
+      "Airfare Delhi \u2013 Cochin in economy class",
+      "Overnight Backwater Cruise",
+      "02 Wildlife safaris at Ranthambhore"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Delhi to Cochin",
+        "price_total_for_two": 6000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Rajasthan and Kerala",
+        "nights": 17,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals and sightseeing",
+            "price": 2000.0,
+            "source": null
+          }
+        ],
+        "notes": "Assumed additional costs for meals and sightseeing not included in DIY."
+      },
+      "diy_total_for_two": 11000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1284.0,
+      "pct": 11.7
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive services and is cheaper than the DIY total, making it a great value.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/asia/best-of-rajasthan-and-kerala"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Best of Rajasthan & Kerala\",\n  \"title\": \"Best of Rajasthan & Kerala\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/asia/best-of-rajasthan-and-kerala\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 17.0,\n  \"pp_price\": 4858.0,\n  \"package_total_for_two\": 9716.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"17 Nights deluxe accommodation with private facility\",\n    \"Travel by chartered air-conditioned vehicle\",\n    \"Meals as specified\",\n    \"Sightseeing as specified\",\n    \"Airfare Delhi \u2013 Cochin in economy class\",\n    \"Overnight Backwater Cruise\",\n    \"02 Wildlife safaris at Ranthambhore\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Delhi to Cochin\",\n      \"price_total_for_two\": 6000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Rajasthan and Kerala\",\n      \"nights\": 17,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals and sightseeing\", \"price\": 2000.0, \"source\": null}\n      ],\n      \"notes\": \"Assumed additional costs for meals and sightseeing not included in DIY.\"\n    },\n    \"diy_total_for_two\": 11000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1284.0,\n    \"pct\": 11.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive services and is cheaper than the DIY total, making it a great value.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.worldtravellers.co.nz/deals/asia/best-of-rajasthan-and-kerala\"]\n}"
+  },
+  {
+    "deal_id": "5 Day Vancouver Explorer: Georgian Court Hotel",
+    "title": "5 Day Vancouver Explorer: Georgian Court Hotel",
+    "url": "https://helloworld.co.nz/deal/33274/5-day-vancouver-explorer-georgian-court-hotel",
+    "source": "helloworld",
+    "nights": 4.0,
+    "pp_price": 1178.0,
+    "package_total_for_two": 2356.0,
+    "includes_flights": false,
+    "inclusions_evidence": "Accommodation, touring and bonus offers as outlined. IMPORTANT INFORMATION: International and domestic flights are not included.",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Georgian Court Hotel",
+        "nights": 4,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional tours or activities included in the DIY breakdown."
+      },
+      "diy_total_for_two": 1200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 1156.0,
+      "pct": 48.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, providing a good value for accommodation and additional inclusions.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"5 Day Vancouver Explorer: Georgian Court Hotel\",\n  \"title\": \"5 Day Vancouver Explorer: Georgian Court Hotel\",\n  \"url\": \"https://helloworld.co.nz/deal/33274/5-day-vancouver-explorer-georgian-court-hotel\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 1178.0,\n  \"package_total_for_two\": 2356.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Accommodation, touring and bonus offers as outlined. IMPORTANT INFORMATION: International and domestic flights are not included.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Georgian Court Hotel\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional tours or activities included in the DIY breakdown.\"\n    },\n    \"diy_total_for_two\": 1200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1156.0,\n    \"pct\": 48.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, providing a good value for accommodation and additional inclusions.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Tahiti Hotels",
+    "title": "Tahiti Hotels",
+    "url": "https://helloworld.co.nz/hotels/tahiti",
+    "source": "helloworld",
+    "nights": 4.0,
+    "pp_price": 999.0,
+    "package_total_for_two": 1998.0,
+    "includes_flights": false,
+    "inclusions_evidence": "4 nights fr $999* pp Papeete: Le Tahiti By Pearl Resort",
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Le Tahiti By Pearl Resort",
+        "nights": 4.0,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 1200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 798.0,
+      "pct": 66.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option for hotel stay, providing substantial savings.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Tahiti Hotels\",\n  \"title\": \"Tahiti Hotels\",\n  \"url\": \"https://helloworld.co.nz/hotels/tahiti\",\n  \"source\": \"helloworld\",\n  \"nights\": 4.0,\n  \"pp_price\": 999.0,\n  \"package_total_for_two\": 1998.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"4 nights fr $999* pp Papeete: Le Tahiti By Pearl Resort\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Le Tahiti By Pearl Resort\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 1200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 798.0,\n    \"pct\": 66.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option for hotel stay, providing substantial savings.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+  },
+  {
+    "deal_id": "Enchanting Getaway: Castle Inn & Suites",
+    "title": "Enchanting Getaway: Castle Inn & Suites",
+    "url": "https://helloworld.co.nz/deal/33329/enchanting-getaway-castle-inn-and-suites",
+    "source": "helloworld",
+    "nights": 12.0,
+    "pp_price": 3158.0,
+    "package_total_for_two": 6316.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)",
+      "Accommodation and bonus offers as outlined",
+      "All prepayable taxes and surcharges",
+      "Includes 5 night at Castle Inn & Suites",
+      "FREE Wi-Fi",
+      "FREE Parking",
+      "3 Day Disneyland Resort Park Hopper Ticket",
+      "Return shared van transfer from Los Angeles airport to Anaheim hotel"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Los Angeles",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Castle Inn & Suites",
+        "nights": 5,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "3 Day Disneyland Resort Park Hopper Ticket",
+            "price": 600.0,
+            "source": "https://disneyland.disney.go.com"
+          },
+          {
+            "label": "Shared van transfer from airport",
+            "price": 100.0,
+            "source": "https://www.rome2rio.com"
+          }
+        ],
+        "notes": "Prices for Disneyland tickets and transfers sourced from respective official sites."
+      },
+      "diy_total_for_two": 3900.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 580.0,
+      "pct": 14.87
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package deal includes flights, hotel, and additional perks like park tickets and transfers, making it a significant saving compared to DIY options.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/33329/enchanting-getaway-castle-inn-and-suites",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://disneyland.disney.go.com",
+      "https://www.rome2rio.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Enchanting Getaway: Castle Inn & Suites\",\n  \"title\": \"Enchanting Getaway: Castle Inn & Suites\",\n  \"url\": \"https://helloworld.co.nz/deal/33329/enchanting-getaway-castle-inn-and-suites\",\n  \"source\": \"helloworld\",\n  \"nights\": 12.0,\n  \"pp_price\": 3158.0,\n  \"package_total_for_two\": 6316.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)\",\n    \"Accommodation and bonus offers as outlined\",\n    \"All prepayable taxes and surcharges\",\n    \"Includes 5 night at Castle Inn & Suites\",\n    \"FREE Wi-Fi\",\n    \"FREE Parking\",\n    \"3 Day Disneyland Resort Park Hopper Ticket\",\n    \"Return shared van transfer from Los Angeles airport to Anaheim hotel\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Los Angeles\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Castle Inn & Suites\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"3 Day Disneyland Resort Park Hopper Ticket\", \"price\": 600.0, \"source\": \"https://disneyland.disney.go.com\"},\n        {\"label\": \"Shared van transfer from airport\", \"price\": 100.0, \"source\": \"https://www.rome2rio.com\"}\n      ],\n      \"notes\": \"Prices for Disneyland tickets and transfers sourced from respective official sites.\"\n    },\n    \"diy_total_for_two\": 3900.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 580.0,\n    \"pct\": 14.87\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package deal includes flights, hotel, and additional perks like park tickets and transfers, making it a significant saving compared to DIY options.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33329/enchanting-getaway-castle-inn-and-suites\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://disneyland.disney.go.com\",\n    \"https://www.rome2rio.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Handa Opera on Sydney Harbour: PARKROYAL Darling Harbour",
+    "title": "Handa Opera on Sydney Harbour: PARKROYAL Darling Harbour",
+    "url": "https://helloworld.co.nz/deal/33110/handa-opera-on-sydney-harbour-parkroyal-darling-harbour",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 785.0,
+    "package_total_for_two": 1570.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "2 nights accommodation",
+      "A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "PARKROYAL Darling Harbour",
+        "nights": 2,
+        "price_total_for_stay": 800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera",
+            "price": 300.0,
+            "source": "https://www.handaopera.com.au"
+          }
+        ],
+        "notes": "DIY ticket price sourced from the official opera website."
+      },
+      "diy_total_for_two": 1100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 470.0,
+      "pct": 42.73
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, providing good value with included tickets and accommodation.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.handaopera.com.au"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Handa Opera on Sydney Harbour: PARKROYAL Darling Harbour\",\n  \"title\": \"Handa Opera on Sydney Harbour: PARKROYAL Darling Harbour\",\n  \"url\": \"https://helloworld.co.nz/deal/33110/handa-opera-on-sydney-harbour-parkroyal-darling-harbour\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 785.0,\n  \"package_total_for_two\": 1570.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"2 nights accommodation\",\n    \"A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"PARKROYAL Darling Harbour\",\n      \"nights\": 2,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera\",\n          \"price\": 300.0,\n          \"source\": \"https://www.handaopera.com.au\"\n        }\n      ],\n      \"notes\": \"DIY ticket price sourced from the official opera website.\"\n    },\n    \"diy_total_for_two\": 1100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 470.0,\n    \"pct\": 42.73\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, providing good value with included tickets and accommodation.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.handaopera.com.au\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Anaheim Magical Stay: Cambria Hotel & Suites Anaheim",
+    "title": "Anaheim Magical Stay: Cambria Hotel & Suites Anaheim",
+    "url": "https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim",
+    "source": "helloworld",
+    "nights": 12.0,
+    "pp_price": 3127.0,
+    "package_total_for_two": 6254.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)",
+      "Accommodation and bonus offers as outlined",
+      "Full breakfast daily",
+      "Complimentary Wi-Fi",
+      "3 day Disneyland Resort Park Hopper Ticket",
+      "Transfer from Anaheim hotel to Citadel Outlets"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Los Angeles",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Cambria Hotel & Suites Anaheim",
+        "nights": 12.0,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "3 day Disneyland Resort Park Hopper Ticket",
+            "price": 600.0,
+            "source": "https://disneyland.disney.go.com"
+          },
+          {
+            "label": "Full breakfast daily",
+            "price": 240.0,
+            "source": null
+          },
+          {
+            "label": "Wi-Fi",
+            "price": 0.0,
+            "source": null
+          },
+          {
+            "label": "Transfer to Citadel Outlets",
+            "price": 100.0,
+            "source": null
+          }
+        ],
+        "notes": "All other inclusions are accounted for in the package."
+      },
+      "diy_total_for_two": 3940.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 384.0,
+      "pct": 9.7
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is cheaper than the DIY option when considering flights, hotel, and additional inclusions, making it a strong value.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://disneyland.disney.go.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Anaheim Magical Stay: Cambria Hotel & Suites Anaheim\",\n  \"title\": \"Anaheim Magical Stay: Cambria Hotel & Suites Anaheim\",\n  \"url\": \"https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim\",\n  \"source\": \"helloworld\",\n  \"nights\": 12.0,\n  \"pp_price\": 3127.0,\n  \"package_total_for_two\": 6254.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)\",\n    \"Accommodation and bonus offers as outlined\",\n    \"Full breakfast daily\",\n    \"Complimentary Wi-Fi\",\n    \"3 day Disneyland Resort Park Hopper Ticket\",\n    \"Transfer from Anaheim hotel to Citadel Outlets\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Los Angeles\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cambria Hotel & Suites Anaheim\",\n      \"nights\": 12.0,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"3 day Disneyland Resort Park Hopper Ticket\", \"price\": 600.0, \"source\": \"https://disneyland.disney.go.com\"},\n        {\"label\": \"Full breakfast daily\", \"price\": 240.0, \"source\": null},\n        {\"label\": \"Wi-Fi\", \"price\": 0.0, \"source\": null},\n        {\"label\": \"Transfer to Citadel Outlets\", \"price\": 100.0, \"source\": null}\n      ],\n      \"notes\": \"All other inclusions are accounted for in the package.\"\n    },\n    \"diy_total_for_two\": 3940.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 384.0,\n    \"pct\": 9.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is cheaper than the DIY option when considering flights, hotel, and additional inclusions, making it a strong value.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33330/anaheim-magical-stay-cambria-hotel-and-suites-anaheim\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://disneyland.disney.go.com\"\n  ]\n}"
+  }
+]
