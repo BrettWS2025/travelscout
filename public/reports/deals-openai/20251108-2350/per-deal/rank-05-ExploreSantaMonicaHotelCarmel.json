@@ -1,0 +1,55 @@
+{
+  "deal_id": "Explore Santa Monica : Hotel Carmel",
+  "title": "Explore Santa Monica : Hotel Carmel",
+  "url": "https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 834.0,
+  "package_total_for_two": 1668.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Includes 3 nights at Hotel Carmel~ Per Person, from $834",
+    "A compulsory resort fee of USD$23 plus taxes per room per day is payable direct to hotel on check-in."
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Hotel Carmel",
+      "nights": 3,
+      "price_total_for_stay": 2500.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Resort Fee",
+          "price": 69.0,
+          "source": "https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel"
+        }
+      ],
+      "notes": "Resort fee is payable directly to the hotel."
+    },
+    "diy_total_for_two": 2639.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 971.0,
+    "pct": 36.8
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option when considering the total costs, including the resort fee.",
+  "additional_notes": null,
+  "citations": [
+    "https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Explore Santa Monica : Hotel Carmel\",\n  \"title\": \"Explore Santa Monica : Hotel Carmel\",\n  \"url\": \"https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 834.0,\n  \"package_total_for_two\": 1668.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Includes 3 nights at Hotel Carmel~ Per Person, from $834\",\n    \"A compulsory resort fee of USD$23 plus taxes per room per day is payable direct to hotel on check-in.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotel Carmel\",\n      \"nights\": 3,\n      \"price_total_for_stay\": 2500.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Resort Fee\",\n          \"price\": 69.0,\n          \"source\": \"https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel\"\n        }\n      ],\n      \"notes\": \"Resort fee is payable directly to the hotel.\"\n    },\n    \"diy_total_for_two\": 2639.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 971.0,\n    \"pct\": 36.8\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option when considering the total costs, including the resort fee.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28894/explore-santa-monica-hotel-carmel\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

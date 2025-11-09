@@ -1,0 +1,68 @@
+{
+  "deal_id": "Aitutaki: Etu Moana Boutique Beach Villas",
+  "title": "Aitutaki: Etu Moana Boutique Beach Villas",
+  "url": "https://helloworld.co.nz/deal/28849/aitutaki-etu-moana-boutique-beach-villas",
+  "source": "helloworld",
+  "nights": 5.0,
+  "pp_price": 1875.0,
+  "package_total_for_two": 3750.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Includes 5 night at Etu Moana Boutique Beach Villas",
+    "Return airport transfers for flights arriving or departing between the hours of 8am-6pm",
+    "Continental Breakfast daily",
+    "Bicycles, kayaks and SUPs",
+    "FREE Wi-Fi"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Etu Moana Boutique Beach Villas",
+      "nights": 5,
+      "price_total_for_stay": 5000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Airport transfers",
+          "price": 100.0,
+          "source": "https://www.aitutaki.com"
+        },
+        {
+          "label": "Breakfast",
+          "price": 150.0,
+          "source": "https://www.aitutaki.com"
+        },
+        {
+          "label": "Bicycles, kayaks and SUPs",
+          "price": 200.0,
+          "source": "https://www.aitutaki.com"
+        }
+      ],
+      "notes": "Assumed additional costs for transfers, breakfast, and activities."
+    },
+    "diy_total_for_two": 5450.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 1700.0,
+    "pct": 31.1
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option when considering hotel and additional costs.",
+  "additional_notes": null,
+  "citations": [
+    "https://helloworld.co.nz/deal/28849/aitutaki-etu-moana-boutique-beach-villas",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Aitutaki: Etu Moana Boutique Beach Villas\",\n  \"title\": \"Aitutaki: Etu Moana Boutique Beach Villas\",\n  \"url\": \"https://helloworld.co.nz/deal/28849/aitutaki-etu-moana-boutique-beach-villas\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1875.0,\n  \"package_total_for_two\": 3750.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Includes 5 night at Etu Moana Boutique Beach Villas\",\n    \"Return airport transfers for flights arriving or departing between the hours of 8am-6pm\",\n    \"Continental Breakfast daily\",\n    \"Bicycles, kayaks and SUPs\",\n    \"FREE Wi-Fi\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Etu Moana Boutique Beach Villas\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 5000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Airport transfers\", \"price\": 100.0, \"source\": \"https://www.aitutaki.com\"},\n        {\"label\": \"Breakfast\", \"price\": 150.0, \"source\": \"https://www.aitutaki.com\"},\n        {\"label\": \"Bicycles, kayaks and SUPs\", \"price\": 200.0, \"source\": \"https://www.aitutaki.com\"}\n      ],\n      \"notes\": \"Assumed additional costs for transfers, breakfast, and activities.\"\n    },\n    \"diy_total_for_two\": 5450.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1700.0,\n    \"pct\": 31.1\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option when considering hotel and additional costs.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28849/aitutaki-etu-moana-boutique-beach-villas\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

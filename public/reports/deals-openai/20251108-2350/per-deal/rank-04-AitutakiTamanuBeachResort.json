@@ -1,0 +1,52 @@
+{
+  "deal_id": "Aitutaki: Tamanu Beach Resort",
+  "title": "Aitutaki: Tamanu Beach Resort",
+  "url": "https://helloworld.co.nz/deal/28848/aitutaki-tamanu-beach-resort",
+  "source": "helloworld",
+  "nights": 5.0,
+  "pp_price": 1740.0,
+  "package_total_for_two": 3480.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "Includes 5 nights at Tamanu Beach Resort",
+    "Return airport transfers",
+    "American breakfast daily",
+    "Welcome drink and flower ei's on arrival & departure",
+    "FREE Wi-Fi 10GB Wi-Fi vouchers per guest"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Tamanu Beach Resort",
+      "nights": 5,
+      "price_total_for_stay": 4480.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 4480.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 1000.0,
+    "pct": 22.32
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The travel agency deal is cheaper than the DIY option by $1000, providing good value with included amenities.",
+  "additional_notes": null,
+  "citations": [
+    "https://helloworld.co.nz/deal/28848/aitutaki-tamanu-beach-resort",
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Aitutaki: Tamanu Beach Resort\",\n  \"title\": \"Aitutaki: Tamanu Beach Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/28848/aitutaki-tamanu-beach-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 5.0,\n  \"pp_price\": 1740.0,\n  \"package_total_for_two\": 3480.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"Includes 5 nights at Tamanu Beach Resort\",\n    \"Return airport transfers\",\n    \"American breakfast daily\",\n    \"Welcome drink and flower ei's on arrival & departure\",\n    \"FREE Wi-Fi 10GB Wi-Fi vouchers per guest\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Tamanu Beach Resort\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 4480.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 4480.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 1000.0,\n    \"pct\": 22.32\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is cheaper than the DIY option by $1000, providing good value with included amenities.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28848/aitutaki-tamanu-beach-resort\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

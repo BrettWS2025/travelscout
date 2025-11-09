@@ -1,0 +1,45 @@
+{
+  "deal_id": "Port Vila: Iririki Island Resort & Spa",
+  "title": "Port Vila: Iririki Island Resort & Spa",
+  "url": "https://helloworld.co.nz/deal/28915/port-vila-iririki-island-resort-and-spa",
+  "source": "helloworld",
+  "nights": 6.0,
+  "pp_price": 1410.0,
+  "package_total_for_two": 2820.0,
+  "includes_flights": false,
+  "inclusions_evidence": "Return airport transfers as required. Accommodation and bonus offers as outlined.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Iririki Island Resort & Spa",
+      "nights": 6.0,
+      "price_total_for_stay": 2064.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 2064.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 756.0,
+    "pct": 36.5
+  },
+  "rating_out_of_10": 8,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option for the hotel stay, but flights are not included, which is a consideration.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Port Vila: Iririki Island Resort & Spa\",\n  \"title\": \"Port Vila: Iririki Island Resort & Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/28915/port-vila-iririki-island-resort-and-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 1410.0,\n  \"package_total_for_two\": 2820.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Return airport transfers as required. Accommodation and bonus offers as outlined.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Iririki Island Resort & Spa\",\n      \"nights\": 6.0,\n      \"price_total_for_stay\": 2064.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 2064.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 756.0,\n    \"pct\": 36.5\n  },\n  \"rating_out_of_10\": 8,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option for the hotel stay, but flights are not included, which is a consideration.\",\n  \"additional_notes\": null,\n  \"citations\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n}"
+}
