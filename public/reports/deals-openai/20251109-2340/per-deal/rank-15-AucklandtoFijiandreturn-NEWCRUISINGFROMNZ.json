@@ -1,0 +1,10 @@
+{
+  "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+  "package_total_for_two": 2478.0,
+  "pp_price": 1239.0,
+  "nights": 9.0,
+  "url": "https://www.flightcentre.co.nz/product/22108328",
+  "title": "Auckland to Fiji and return - NEW CRUISING FROM NZ",
+  "source": "flightcentre",
+  "deal_id": "Auckland to Fiji and return - NEW CRUISING FROM NZ"
+}
