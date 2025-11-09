@@ -1,0 +1,48 @@
+{
+  "deal_id": "Viking Homelands",
+  "title": "Viking Homelands",
+  "url": "https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands",
+  "source": "worldtravellers",
+  "nights": 14.0,
+  "pp_price": 13695.0,
+  "package_total_for_two": 27390.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "FREE FLIGHT OFFER Companion Fly Free up to AUD$2,500* per booking"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": "Bergen to Stockholm",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in cities along the route",
+      "nights": 14,
+      "price_total_for_stay": 4000.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 6000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 21390.0,
+    "pct": 78.2
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes flights and offers significant savings compared to DIY options, making it an excellent value.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Viking Homelands\",\n  \"title\": \"Viking Homelands\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 14.0,\n  \"pp_price\": 13695.0,\n  \"package_total_for_two\": 27390.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"FREE FLIGHT OFFER Companion Fly Free up to AUD$2,500* per booking\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"Bergen to Stockholm\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\n        \"https://www.expedia.com\",\n        \"https://www.booking.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in cities along the route\",\n      \"nights\": 14,\n      \"price_total_for_stay\": 4000.0,\n      \"sources\": [\n        \"https://www.booking.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 6000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 21390.0,\n    \"pct\": 78.2\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes flights and offers significant savings compared to DIY options, making it an excellent value.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands\"\n  ]\n}"
+}

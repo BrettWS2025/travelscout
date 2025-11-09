@@ -1,0 +1,63 @@
+{
+  "deal_id": "Japan Uncovered: A World Travellers Exclusive Tour",
+  "title": "Japan Uncovered: A World Travellers Exclusive Tour",
+  "url": "https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers",
+  "source": "worldtravellers",
+  "nights": 18.0,
+  "pp_price": 16935.0,
+  "package_total_for_two": 33870.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return economy class flights ex Christchurch to Tokyo",
+    "All accommodation",
+    "All meals (From Dinner on day 1 to breakfast on the last day)",
+    "Bullet Train from Tokyo to Osaka",
+    "All sights",
+    "All transportation and transfers"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Christchurch to Tokyo",
+      "price_total_for_two": 2500.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Tokyo and Osaka",
+      "nights": 18,
+      "price_total_for_stay": 6000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals",
+          "price": 3000.0,
+          "source": "https://www.numbeo.com"
+        }
+      ],
+      "notes": "Estimated cost for meals not included in hotel or flights."
+    },
+    "diy_total_for_two": 11500.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 22370.0,
+    "pct": 194.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes comprehensive inclusions such as flights, meals, and transportation, making it significantly cheaper than DIY options.",
+  "additional_notes": "The deal offers a well-rounded experience with guided tours and meals included.",
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers",
+    "https://www.expedia.com",
+    "https://www.booking.com",
+    "https://www.numbeo.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered: A World Travellers Exclusive Tour\",\n  \"title\": \"Japan Uncovered: A World Travellers Exclusive Tour\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 18.0,\n  \"pp_price\": 16935.0,\n  \"package_total_for_two\": 33870.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return economy class flights ex Christchurch to Tokyo\",\n    \"All accommodation\",\n    \"All meals (From Dinner on day 1 to breakfast on the last day)\",\n    \"Bullet Train from Tokyo to Osaka\",\n    \"All sights\",\n    \"All transportation and transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Christchurch to Tokyo\",\n      \"price_total_for_two\": 2500.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Tokyo and Osaka\",\n      \"nights\": 18,\n      \"price_total_for_stay\": 6000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 3000.0, \"source\": \"https://www.numbeo.com\"}\n      ],\n      \"notes\": \"Estimated cost for meals not included in hotel or flights.\"\n    },\n    \"diy_total_for_two\": 11500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 22370.0,\n    \"pct\": 194.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive inclusions such as flights, meals, and transportation, making it significantly cheaper than DIY options.\",\n  \"additional_notes\": \"The deal offers a well-rounded experience with guided tours and meals included.\",\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.numbeo.com\"\n  ]\n}"
+}

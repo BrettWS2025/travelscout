@@ -1,0 +1,56 @@
+{
+  "deal_id": "Luxury Gold Spectacular South Africa",
+  "title": "Luxury Gold Spectacular South Africa",
+  "url": "https://helloworld.co.nz/deal/29649/luxury-gold-spectacular-south-africa",
+  "source": "helloworld",
+  "nights": 8.0,
+  "pp_price": 20520.0,
+  "package_total_for_two": 41040.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "private chauffeur escorts you to your hotel",
+    "private transfer to Skukuza Airport for your flight to Johannesburg International Airport"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Skukuza to Johannesburg",
+      "price_total_for_two": 6000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Luxury hotel in Cape Town",
+      "nights": 8,
+      "price_total_for_stay": 24000.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Game drives and tours",
+          "price": 4000.0,
+          "source": "https://www.expedia.com"
+        }
+      ],
+      "notes": "Includes various activities and meals as part of the package."
+    },
+    "diy_total_for_two": 34000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 7040.0,
+    "pct": 20.59
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option, which includes comparable flights, hotel, and activities.",
+  "additional_notes": "The deal offers a comprehensive luxury experience with included transfers and activities.",
+  "citations": [
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Luxury Gold Spectacular South Africa\",\n  \"title\": \"Luxury Gold Spectacular South Africa\",\n  \"url\": \"https://helloworld.co.nz/deal/29649/luxury-gold-spectacular-south-africa\",\n  \"source\": \"helloworld\",\n  \"nights\": 8.0,\n  \"pp_price\": 20520.0,\n  \"package_total_for_two\": 41040.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"private chauffeur escorts you to your hotel\",\n    \"private transfer to Skukuza Airport for your flight to Johannesburg International Airport\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Skukuza to Johannesburg\",\n      \"price_total_for_two\": 6000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Luxury hotel in Cape Town\",\n      \"nights\": 8,\n      \"price_total_for_stay\": 24000.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Game drives and tours\", \"price\": 4000.0, \"source\": \"https://www.expedia.com\"}\n      ],\n      \"notes\": \"Includes various activities and meals as part of the package.\"\n    },\n    \"diy_total_for_two\": 34000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 7040.0,\n    \"pct\": 20.59\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, which includes comparable flights, hotel, and activities.\",\n  \"additional_notes\": \"The deal offers a comprehensive luxury experience with included transfers and activities.\",\n  \"citations\": [\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

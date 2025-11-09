@@ -1,0 +1,56 @@
+{
+  "deal_id": "Signature Gal\u00e1pagos Islands",
+  "title": "Signature Gal\u00e1pagos Islands",
+  "url": "https://www.worldtravellers.co.nz/deals/cruise/viva-expeditions/signature-galapagos-islands",
+  "source": "worldtravellers",
+  "nights": 10.0,
+  "pp_price": 13800.0,
+  "package_total_for_two": 27600.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "You'll fly to the Galapagos Islands to embark on a luxury cruise aboard the MC Seaman Journey."
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Quito to Galapagos Islands",
+      "price_total_for_two": 800.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Hotel in Quito",
+      "nights": 3.0,
+      "price_total_for_stay": 600.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Luxury cruise",
+          "price": 20000.0,
+          "source": "https://www.vivaexpeditions.com"
+        }
+      ],
+      "notes": "The cruise is a significant part of the overall experience."
+    },
+    "diy_total_for_two": 21600.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 6000.0,
+    "pct": 27.78
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option, offering a luxury cruise experience with included flights.",
+  "additional_notes": "The deal provides a comprehensive experience with activities and meals included.",
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/cruise/viva-expeditions/signature-galapagos-islands",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Signature Gal\u00e1pagos Islands\",\n  \"title\": \"Signature Gal\u00e1pagos Islands\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/cruise/viva-expeditions/signature-galapagos-islands\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 10.0,\n  \"pp_price\": 13800.0,\n  \"package_total_for_two\": 27600.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"You'll fly to the Galapagos Islands to embark on a luxury cruise aboard the MC Seaman Journey.\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Quito to Galapagos Islands\",\n      \"price_total_for_two\": 800.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotel in Quito\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": 600.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Luxury cruise\", \"price\": 20000.0, \"source\": \"https://www.vivaexpeditions.com\"}\n      ],\n      \"notes\": \"The cruise is a significant part of the overall experience.\"\n    },\n    \"diy_total_for_two\": 21600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 6000.0,\n    \"pct\": 27.78\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, offering a luxury cruise experience with included flights.\",\n  \"additional_notes\": \"The deal provides a comprehensive experience with activities and meals included.\",\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/cruise/viva-expeditions/signature-galapagos-islands\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

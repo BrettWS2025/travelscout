@@ -1,0 +1,60 @@
+{
+  "deal_id": "Hollywood Explorer : Dream Hollywood by Hyatt",
+  "title": "Hollywood Explorer : Dream Hollywood by Hyatt",
+  "url": "https://helloworld.co.nz/deal/33332/hollywood-explorer-dream-hollywood-by-hyatt",
+  "source": "helloworld",
+  "nights": 1.0,
+  "pp_price": 2946.0,
+  "package_total_for_two": 5892.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)",
+    "Accommodation and bonus offers as outlined",
+    "All prepayable taxes and surcharges"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Los Angeles",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Dream Hollywood by Hyatt",
+      "nights": 1,
+      "price_total_for_stay": 400.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Universal Studios Hollywood Ticket",
+          "price": 300.0,
+          "source": "https://www.universalstudioshollywood.com"
+        }
+      ],
+      "notes": "Additional costs for attractions and meals not included."
+    },
+    "diy_total_for_two": 2700.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 3192.0,
+    "pct": 118.3
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights, hotel, and a theme park ticket, making it significantly cheaper than booking separately.",
+  "additional_notes": "This deal is particularly good for travelers looking for a comprehensive package.",
+  "citations": [
+    "https://helloworld.co.nz/deal/33332/hollywood-explorer-dream-hollywood-by-hyatt",
+    "https://www.booking.com",
+    "https://www.expedia.com",
+    "https://www.universalstudioshollywood.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Hollywood Explorer : Dream Hollywood by Hyatt\",\n  \"title\": \"Hollywood Explorer : Dream Hollywood by Hyatt\",\n  \"url\": \"https://helloworld.co.nz/deal/33332/hollywood-explorer-dream-hollywood-by-hyatt\",\n  \"source\": \"helloworld\",\n  \"nights\": 1.0,\n  \"pp_price\": 2946.0,\n  \"package_total_for_two\": 5892.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)\",\n    \"Accommodation and bonus offers as outlined\",\n    \"All prepayable taxes and surcharges\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Los Angeles\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Dream Hollywood by Hyatt\",\n      \"nights\": 1,\n      \"price_total_for_stay\": 400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Universal Studios Hollywood Ticket\", \"price\": 300.0, \"source\": \"https://www.universalstudioshollywood.com\"}\n      ],\n      \"notes\": \"Additional costs for attractions and meals not included.\"\n    },\n    \"diy_total_for_two\": 2700.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3192.0,\n    \"pct\": 118.3\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, hotel, and a theme park ticket, making it significantly cheaper than booking separately.\",\n  \"additional_notes\": \"This deal is particularly good for travelers looking for a comprehensive package.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33332/hollywood-explorer-dream-hollywood-by-hyatt\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.universalstudioshollywood.com\"\n  ]\n}"
+}

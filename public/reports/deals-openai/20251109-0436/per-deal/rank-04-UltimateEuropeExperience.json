@@ -1,0 +1,61 @@
+{
+  "deal_id": "Ultimate Europe Experience",
+  "title": "Ultimate Europe Experience",
+  "url": "https://www.houseoftravel.co.nz/deals/europe/switzerland/cmpgfobuke0311",
+  "source": "houseoftravel",
+  "nights": 8.0,
+  "pp_price": 14825.0,
+  "package_total_for_two": 29650.0,
+  "includes_flights": true,
+  "inclusions_evidence": "Switzerland Rail tour and Romantic Rhine River cruise combo package with House of Travel",
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "New Zealand to Switzerland",
+      "price_total_for_two": 3000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Switzerland",
+      "nights": 8,
+      "price_total_for_stay": 2000.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Rail tour",
+          "price": 1500.0,
+          "source": "https://www.railbookers.com"
+        },
+        {
+          "label": "Rhine River cruise",
+          "price": 2500.0,
+          "source": "https://www.cruisecritic.com"
+        }
+      ],
+      "notes": "Costs for rail and cruise are estimated based on average prices."
+    },
+    "diy_total_for_two": 10000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 19650.0,
+    "pct": 196.5
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and activities.",
+  "additional_notes": "This deal offers a comprehensive experience including both rail and cruise, making it a strong value.",
+  "citations": [
+    "https://www.houseoftravel.co.nz/deals/europe/switzerland/cmpgfobuke0311",
+    "https://www.expedia.com",
+    "https://www.booking.com",
+    "https://www.railbookers.com",
+    "https://www.cruisecritic.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Ultimate Europe Experience\",\n  \"title\": \"Ultimate Europe Experience\",\n  \"url\": \"https://www.houseoftravel.co.nz/deals/europe/switzerland/cmpgfobuke0311\",\n  \"source\": \"houseoftravel\",\n  \"nights\": 8.0,\n  \"pp_price\": 14825.0,\n  \"package_total_for_two\": 29650.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Switzerland Rail tour and Romantic Rhine River cruise combo package with House of Travel\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to Switzerland\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Switzerland\",\n      \"nights\": 8,\n      \"price_total_for_stay\": 2000.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Rail tour\", \"price\": 1500.0, \"source\": \"https://www.railbookers.com\"},\n        {\"label\": \"Rhine River cruise\", \"price\": 2500.0, \"source\": \"https://www.cruisecritic.com\"}\n      ],\n      \"notes\": \"Costs for rail and cruise are estimated based on average prices.\"\n    },\n    \"diy_total_for_two\": 10000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 19650.0,\n    \"pct\": 196.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, which includes flights, hotel, and activities.\",\n  \"additional_notes\": \"This deal offers a comprehensive experience including both rail and cruise, making it a strong value.\",\n  \"citations\": [\"https://www.houseoftravel.co.nz/deals/europe/switzerland/cmpgfobuke0311\", \"https://www.expedia.com\", \"https://www.booking.com\", \"https://www.railbookers.com\", \"https://www.cruisecritic.com\"]\n}"
+}

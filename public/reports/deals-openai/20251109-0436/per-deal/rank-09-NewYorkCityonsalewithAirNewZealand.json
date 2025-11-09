@@ -1,0 +1,51 @@
+{
+  "deal_id": "New York City on sale with Air New Zealand",
+  "title": "New York City on sale with Air New Zealand",
+  "url": "https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2",
+  "source": "worldtravellers",
+  "nights": 5.0,
+  "pp_price": 3625.0,
+  "package_total_for_two": 7250.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class Airfares flying Air New Zealand to New York from Auckland",
+    "5 nights accommodation"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to New York",
+      "price_total_for_two": 12000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Tempo by Hilton New York Times Square",
+      "nights": 5,
+      "price_total_for_stay": 7678.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 19678.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 12428.0,
+    "pct": 63.1
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights and accommodation at a significantly lower total cost compared to DIY options. The savings are substantial, making it a highly attractive deal.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"New York City on sale with Air New Zealand\",\n  \"title\": \"New York City on sale with Air New Zealand\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 5.0,\n  \"pp_price\": 3625.0,\n  \"package_total_for_two\": 7250.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class Airfares flying Air New Zealand to New York from Auckland\",\n    \"5 nights accommodation\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to New York\",\n      \"price_total_for_two\": 12000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Tempo by Hilton New York Times Square\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 7678.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 19678.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 12428.0,\n    \"pct\": 63.1\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and accommodation at a significantly lower total cost compared to DIY options. The savings are substantial, making it a highly attractive deal.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}
