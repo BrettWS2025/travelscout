@@ -441,7 +441,7 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                     messages=messages,
                     temperature=0.2,
                     response_format={"type": "json_object"},
-                    max_tokens=3000,
+                    max_completion_tokens=3000,
                 )
                 content = (resp.choices[0].message.content or "").strip()
             else:
@@ -449,7 +449,7 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                     model=MODEL,
                     messages=messages,
                     temperature=0.2,
-                    max_tokens=3000,
+                    max_completion_tokens=3000,
                 )
                 content = (resp["choices"][0]["message"]["content"] or "").strip()
             parsed = safe_json_parse(content)
