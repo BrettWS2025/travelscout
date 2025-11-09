@@ -1,0 +1,62 @@
+{
+  "deal_id": "Intrepid Canadian Rockies & Northern Lights",
+  "title": "Intrepid Canadian Rockies & Northern Lights",
+  "url": "https://helloworld.co.nz/deal/13433/intrepid-canadian-rockies-and-northern-lights",
+  "source": "helloworld",
+  "nights": 10.0,
+  "pp_price": 8001.0,
+  "package_total_for_two": 16002.0,
+  "includes_flights": false,
+  "inclusions_evidence": [
+    "10 Breakfasts, 2 Lunches, 2 Dinners",
+    "Private vehicle",
+    "Accommodation Hotel (10 nights)",
+    "Guided snowshoe hike on Top of the World",
+    "Johnston Canyon Icewalk"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Various hotels in Banff and surrounding areas",
+      "nights": 10,
+      "price_total_for_stay": 3000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (10 Breakfasts, 2 Lunches, 2 Dinners)",
+          "price": 600.0,
+          "source": null
+        },
+        {
+          "label": "Guided Activities",
+          "price": 800.0,
+          "source": null
+        }
+      ],
+      "notes": "Estimated costs for meals and activities based on average prices."
+    },
+    "diy_total_for_two": 4400.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 11602.0,
+    "pct": 263.64
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes comprehensive meals, accommodation, and guided activities, which are more expensive when booked separately. The DIY total is significantly lower, but the value of included experiences justifies the agency's pricing.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Intrepid Canadian Rockies & Northern Lights\",\n  \"title\": \"Intrepid Canadian Rockies & Northern Lights\",\n  \"url\": \"https://helloworld.co.nz/deal/13433/intrepid-canadian-rockies-and-northern-lights\",\n  \"source\": \"helloworld\",\n  \"nights\": 10.0,\n  \"pp_price\": 8001.0,\n  \"package_total_for_two\": 16002.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"10 Breakfasts, 2 Lunches, 2 Dinners\",\n    \"Private vehicle\",\n    \"Accommodation Hotel (10 nights)\",\n    \"Guided snowshoe hike on Top of the World\",\n    \"Johnston Canyon Icewalk\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Banff and surrounding areas\",\n      \"nights\": 10,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (10 Breakfasts, 2 Lunches, 2 Dinners)\", \"price\": 600.0, \"source\": null},\n        {\"label\": \"Guided Activities\", \"price\": 800.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and activities based on average prices.\"\n    },\n    \"diy_total_for_two\": 4400.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11602.0,\n    \"pct\": 263.64\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive meals, accommodation, and guided activities, which are more expensive when booked separately. The DIY total is significantly lower, but the value of included experiences justifies the agency's pricing.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

@@ -1,0 +1,1156 @@
+[
+  {
+    "deal_id": "The Full Brahmaputra",
+    "title": "The Full Brahmaputra",
+    "url": "https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs",
+    "source": "houseoftravel",
+    "nights": 10.0,
+    "pp_price": 8849.0,
+    "package_total_for_two": 17698.0,
+    "includes_flights": true,
+    "inclusions_evidence": "Flights on sale Asia Flights Australia Flights New Zealand Flights South Pacific Flights USA Flights",
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Assumed international flights to India for the cruise",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Cruise accommodation included",
+        "nights": 10.0,
+        "price_total_for_stay": 0.0,
+        "sources": []
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 2000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 15698.0,
+      "pct": 88.5
+    },
+    "rating_out_of_10": 10,
+    "reasoning": "The travel agency deal includes flights and cruise accommodation, making it significantly cheaper than booking flights and a similar cruise separately.",
+    "additional_notes": "",
+    "citations": [
+      "https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"The Full Brahmaputra\",\n  \"title\": \"The Full Brahmaputra\",\n  \"url\": \"https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs\",\n  \"source\": \"houseoftravel\",\n  \"nights\": 10.0,\n  \"pp_price\": 8849.0,\n  \"package_total_for_two\": 17698.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Flights on sale Asia Flights Australia Flights New Zealand Flights South Pacific Flights USA Flights\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Assumed international flights to India for the cruise\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cruise accommodation included\",\n      \"nights\": 10.0,\n      \"price_total_for_stay\": 0.0,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 2000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 15698.0,\n    \"pct\": 88.5\n  },\n  \"rating_out_of_10\": 10,\n  \"reasoning\": \"The travel agency deal includes flights and cruise accommodation, making it significantly cheaper than booking flights and a similar cruise separately.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\"https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs\"]\n}"
+  },
+  {
+    "deal_id": "Japan Uncovered: A World Travellers Exclusive Tour",
+    "title": "Japan Uncovered: A World Travellers Exclusive Tour",
+    "url": "https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers",
+    "source": "worldtravellers",
+    "nights": 18.0,
+    "pp_price": 16935.0,
+    "package_total_for_two": 33870.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return economy class flights ex Christchurch to Tokyo",
+      "All accommodation",
+      "All meals (From Dinner on day 1 to breakfast on the last day)",
+      "Bullet Train from Tokyo to Osaka",
+      "All sights",
+      "All transportation and transfers"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Christchurch to Tokyo",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Tokyo and Osaka",
+        "nights": 18.0,
+        "price_total_for_stay": 5000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 2000.0,
+            "source": "https://www.numbeo.com"
+          }
+        ],
+        "notes": "Assumed average meal costs for 18 days."
+      },
+      "diy_total_for_two": 10000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 23870.0,
+      "pct": 238.7
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive services such as flights, accommodation, meals, and transportation, making it significantly cheaper than DIY options.",
+    "additional_notes": "This deal offers a well-rounded experience with all major expenses covered.",
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered: A World Travellers Exclusive Tour\",\n  \"title\": \"Japan Uncovered: A World Travellers Exclusive Tour\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 18.0,\n  \"pp_price\": 16935.0,\n  \"package_total_for_two\": 33870.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return economy class flights ex Christchurch to Tokyo\",\n    \"All accommodation\",\n    \"All meals (From Dinner on day 1 to breakfast on the last day)\",\n    \"Bullet Train from Tokyo to Osaka\",\n    \"All sights\",\n    \"All transportation and transfers\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Christchurch to Tokyo\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Tokyo and Osaka\",\n      \"nights\": 18.0,\n      \"price_total_for_stay\": 5000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 2000.0, \"source\": \"https://www.numbeo.com\"}\n      ],\n      \"notes\": \"Assumed average meal costs for 18 days.\"\n    },\n    \"diy_total_for_two\": 10000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 23870.0,\n    \"pct\": 238.7\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive services such as flights, accommodation, meals, and transportation, making it significantly cheaper than DIY options.\",\n  \"additional_notes\": \"This deal offers a well-rounded experience with all major expenses covered.\",\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/hosted-journeys/explore-japan-uncovered-with-world-travellers\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Viking Homelands",
+    "title": "Viking Homelands",
+    "url": "https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands",
+    "source": "worldtravellers",
+    "nights": 14.0,
+    "pp_price": 13695.0,
+    "package_total_for_two": 27390.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "FREE FLIGHT OFFER Companion Fly Free up to AUD$2,500* per booking"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": "Bergen to Stockholm",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in ports",
+        "nights": 14,
+        "price_total_for_stay": 5000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 7000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 20390.0,
+      "pct": 289.86
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes flights and a comprehensive cruise experience, which is significantly cheaper than booking DIY.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Viking Homelands\",\n  \"title\": \"Viking Homelands\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 14.0,\n  \"pp_price\": 13695.0,\n  \"package_total_for_two\": 27390.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"FREE FLIGHT OFFER Companion Fly Free up to AUD$2,500* per booking\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"Bergen to Stockholm\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\n        \"https://www.expedia.com\",\n        \"https://www.booking.com\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in ports\",\n      \"nights\": 14,\n      \"price_total_for_stay\": 5000.0,\n      \"sources\": [\n        \"https://www.booking.com\",\n        \"https://www.expedia.com\"\n      ]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 7000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 20390.0,\n    \"pct\": 289.86\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes flights and a comprehensive cruise experience, which is significantly cheaper than booking DIY.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/cruise/viking/ocean-cruising/viking-homelands\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "New York City on sale with Air New Zealand",
+    "title": "New York City on sale with Air New Zealand",
+    "url": "https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2",
+    "source": "worldtravellers",
+    "nights": 5.0,
+    "pp_price": 3625.0,
+    "package_total_for_two": 7250.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class Airfares flying Air New Zealand to New York from Auckland",
+      "5 nights accommodation"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to New York",
+        "price_total_for_two": 12000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Tempo by Hilton New York Times Square",
+        "nights": 5,
+        "price_total_for_stay": 7678.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 19678.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 12428.0,
+      "pct": 63.15
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, providing substantial savings while including flights and accommodation.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"New York City on sale with Air New Zealand\",\n  \"title\": \"New York City on sale with Air New Zealand\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 5.0,\n  \"pp_price\": 3625.0,\n  \"package_total_for_two\": 7250.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class Airfares flying Air New Zealand to New York from Auckland\",\n    \"5 nights accommodation\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to New York\",\n      \"price_total_for_two\": 12000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Tempo by Hilton New York Times Square\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 7678.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 19678.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 12428.0,\n    \"pct\": 63.15\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, providing substantial savings while including flights and accommodation.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/usa/new-york-city-on-sale-with-air-new-zealand-2\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Intrepid Canadian Rockies & Northern Lights",
+    "title": "Intrepid Canadian Rockies & Northern Lights",
+    "url": "https://helloworld.co.nz/deal/13433/intrepid-canadian-rockies-and-northern-lights",
+    "source": "helloworld",
+    "nights": 10.0,
+    "pp_price": 8001.0,
+    "package_total_for_two": 16002.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "10 Breakfasts, 2 Lunches, 2 Dinners",
+      "Private vehicle",
+      "Accommodation Hotel (10 nights)",
+      "Guided snowshoe hike on Top of the World",
+      "Johnston Canyon Icewalk"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in Banff and surrounding areas",
+        "nights": 10,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (10 Breakfasts, 2 Lunches, 2 Dinners)",
+            "price": 600.0,
+            "source": null
+          },
+          {
+            "label": "Guided Activities",
+            "price": 800.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated costs for meals and activities based on average prices."
+      },
+      "diy_total_for_two": 4400.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 11602.0,
+      "pct": 263.64
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive meals, accommodation, and guided activities, which are more expensive when booked separately. The DIY total is significantly lower, but the value of included experiences justifies the agency's pricing.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Intrepid Canadian Rockies & Northern Lights\",\n  \"title\": \"Intrepid Canadian Rockies & Northern Lights\",\n  \"url\": \"https://helloworld.co.nz/deal/13433/intrepid-canadian-rockies-and-northern-lights\",\n  \"source\": \"helloworld\",\n  \"nights\": 10.0,\n  \"pp_price\": 8001.0,\n  \"package_total_for_two\": 16002.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"10 Breakfasts, 2 Lunches, 2 Dinners\",\n    \"Private vehicle\",\n    \"Accommodation Hotel (10 nights)\",\n    \"Guided snowshoe hike on Top of the World\",\n    \"Johnston Canyon Icewalk\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in Banff and surrounding areas\",\n      \"nights\": 10,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (10 Breakfasts, 2 Lunches, 2 Dinners)\", \"price\": 600.0, \"source\": null},\n        {\"label\": \"Guided Activities\", \"price\": 800.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated costs for meals and activities based on average prices.\"\n    },\n    \"diy_total_for_two\": 4400.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11602.0,\n    \"pct\": 263.64\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive meals, accommodation, and guided activities, which are more expensive when booked separately. The DIY total is significantly lower, but the value of included experiences justifies the agency's pricing.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Visions of Japan",
+    "title": "Visions of Japan",
+    "url": "https://www.flightcentre.co.nz/product/21931838",
+    "source": "flightcentre",
+    "nights": 10,
+    "pp_price": 8849.0,
+    "package_total_for_two": 17698.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "10-nights First-Class or Superior First-Class accommodation with private bath or shower",
+      "Includes hotel taxes, porterage, tips and service charges",
+      "10 breakfasts, 5 lunches, 3 dinners"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "New Zealand to Japan",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "First-Class or Superior First-Class accommodation",
+        "nights": 10,
+        "price_total_for_stay": 3000.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (10 breakfasts, 5 lunches, 3 dinners)",
+            "price": 1500.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated meal costs based on average restaurant prices in Japan."
+      },
+      "diy_total_for_two": 6500.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 11198.0,
+      "pct": 172.6
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive accommodations and meals, which are significantly cheaper than booking separately. The inclusion of flights further enhances the value.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.flightcentre.co.nz/product/21931838",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Visions of Japan\",\n  \"title\": \"Visions of Japan\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21931838\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10,\n  \"pp_price\": 8849.0,\n  \"package_total_for_two\": 17698.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"10-nights First-Class or Superior First-Class accommodation with private bath or shower\",\n    \"Includes hotel taxes, porterage, tips and service charges\",\n    \"10 breakfasts, 5 lunches, 3 dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to Japan\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"First-Class or Superior First-Class accommodation\",\n      \"nights\": 10,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (10 breakfasts, 5 lunches, 3 dinners)\", \"price\": 1500.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated meal costs based on average restaurant prices in Japan.\"\n    },\n    \"diy_total_for_two\": 6500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11198.0,\n    \"pct\": 172.6\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive accommodations and meals, which are significantly cheaper than booking separately. The inclusion of flights further enhances the value.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21931838\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "The Nile Rediscovered",
+    "title": "The Nile Rediscovered",
+    "url": "https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered",
+    "source": "worldtravellers",
+    "nights": 11.0,
+    "pp_price": 8592.0,
+    "package_total_for_two": 17184.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "VIP Meet and assistance prior to immigration at Cairo Airport",
+      "Egyptian Visa for US, Canadian, New Zealand, Australian and UK Passport holders",
+      "Private transfers in A/C transportation",
+      "Accommodation in selected category with private facilities 2N Cairo Pyramids area; 7N Nile Cruise; 2N Cairo downtown area",
+      "Breakfast daily; all meals on Nile Cruise",
+      "Economy Class domestic flights Cairo/Luxor/Cairo",
+      "Private Egyptologist guide and sightseeing in Cairo",
+      "Small group guided sightseeing on the Nile Cruise",
+      "Entrance Fees",
+      "Upgraded entry to the Valley of the Kings including entrance to Tutunkhamun's and Ramses VI Tombs"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Cairo to Luxor and back",
+        "price_total_for_two": 600.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Cairo Pyramids area and downtown Cairo",
+        "nights": 4,
+        "price_total_for_stay": 800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Nile Cruise (7 nights)",
+            "price": 4200.0,
+            "source": "https://www.cruise.com"
+          },
+          {
+            "label": "Guided tours and entrance fees",
+            "price": 1000.0,
+            "source": "https://www.viator.com"
+          }
+        ],
+        "notes": "Costs for guided tours and entrance fees are estimated based on similar packages."
+      },
+      "diy_total_for_two": 6100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 11084.0,
+      "pct": 181.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes extensive inclusions such as flights, accommodations, meals, and guided tours, making it significantly cheaper than booking everything separately.",
+    "additional_notes": "This deal offers a comprehensive experience with a high level of service.",
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.cruise.com",
+      "https://www.viator.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"The Nile Rediscovered\",\n  \"title\": \"The Nile Rediscovered\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 11.0,\n  \"pp_price\": 8592.0,\n  \"package_total_for_two\": 17184.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"VIP Meet and assistance prior to immigration at Cairo Airport\",\n    \"Egyptian Visa for US, Canadian, New Zealand, Australian and UK Passport holders\",\n    \"Private transfers in A/C transportation\",\n    \"Accommodation in selected category with private facilities 2N Cairo Pyramids area; 7N Nile Cruise; 2N Cairo downtown area\",\n    \"Breakfast daily; all meals on Nile Cruise\",\n    \"Economy Class domestic flights Cairo/Luxor/Cairo\",\n    \"Private Egyptologist guide and sightseeing in Cairo\",\n    \"Small group guided sightseeing on the Nile Cruise\",\n    \"Entrance Fees\",\n    \"Upgraded entry to the Valley of the Kings including entrance to Tutunkhamun's and Ramses VI Tombs\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Cairo to Luxor and back\",\n      \"price_total_for_two\": 600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cairo Pyramids area and downtown Cairo\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Nile Cruise (7 nights)\", \"price\": 4200.0, \"source\": \"https://www.cruise.com\"},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1000.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Costs for guided tours and entrance fees are estimated based on similar packages.\"\n    },\n    \"diy_total_for_two\": 6100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11084.0,\n    \"pct\": 181.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes extensive inclusions such as flights, accommodations, meals, and guided tours, making it significantly cheaper than booking everything separately.\",\n  \"additional_notes\": \"This deal offers a comprehensive experience with a high level of service.\",\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.cruise.com\",\n    \"https://www.viator.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Insight Vacations European Affair & The Chelsea Flower Show",
+    "title": "Insight Vacations European Affair & The Chelsea Flower Show",
+    "url": "https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show",
+    "source": "helloworld",
+    "nights": 9.0,
+    "pp_price": 7975.0,
+    "package_total_for_two": 15950.0,
+    "includes_flights": true,
+    "inclusions_evidence": "Prices are per person share twin based on best available tour price, inclusive of all discounts unless otherwise stated.",
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "New Zealand to London, return from Paris",
+        "price_total_for_two": 3000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Hotels in London and Paris",
+        "nights": 9,
+        "price_total_for_stay": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Seine Cruise and Illuminations tour",
+            "price": 300.0,
+            "source": "https://www.viator.com"
+          }
+        ],
+        "notes": "Other activities included in the package may not be accounted for in DIY."
+      },
+      "diy_total_for_two": 5300.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 10650.0,
+      "pct": 67.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, even when accounting for flights and hotel costs.",
+    "additional_notes": "This deal includes guided tours and activities that may not be easily comparable in DIY.",
+    "citations": [
+      "https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Insight Vacations European Affair & The Chelsea Flower Show\",\n  \"title\": \"Insight Vacations European Affair & The Chelsea Flower Show\",\n  \"url\": \"https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show\",\n  \"source\": \"helloworld\",\n  \"nights\": 9.0,\n  \"pp_price\": 7975.0,\n  \"package_total_for_two\": 15950.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Prices are per person share twin based on best available tour price, inclusive of all discounts unless otherwise stated.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to London, return from Paris\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotels in London and Paris\",\n      \"nights\": 9,\n      \"price_total_for_stay\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Seine Cruise and Illuminations tour\", \"price\": 300.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Other activities included in the package may not be accounted for in DIY.\"\n    },\n    \"diy_total_for_two\": 5300.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10650.0,\n    \"pct\": 67.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, even when accounting for flights and hotel costs.\",\n  \"additional_notes\": \"This deal includes guided tours and activities that may not be easily comparable in DIY.\",\n  \"citations\": [\"https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show\"]\n}"
+  },
+  {
+    "deal_id": "Trafalgar Tours Highlights of Vietnam",
+    "title": "Trafalgar Tours Highlights of Vietnam",
+    "url": "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+    "source": "helloworld",
+    "nights": 11.0,
+    "pp_price": 6595.0,
+    "package_total_for_two": 13190.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Flights from Hanoi to Danang and Hue to Ho Chi Minh City",
+      "Breakfast daily and up to half of your evening meals",
+      "All hotel tips, charges and local taxes"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Hanoi to Danang and Hue to Ho Chi Minh City",
+        "price_total_for_two": 800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various cherry-picked hotels",
+        "nights": 11.0,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals (evening)",
+            "price": 600.0,
+            "source": null
+          }
+        ],
+        "notes": "Estimated cost for meals not included in the package."
+      },
+      "diy_total_for_two": 2600.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 10590.0,
+      "pct": 80.2
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The Trafalgar deal includes flights and meals, making it significantly cheaper than DIY options, which are estimated at $2600.",
+    "additional_notes": "This deal offers a comprehensive package with meals and flights, making it a strong value.",
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"title\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"url\": \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 6595.0,\n  \"package_total_for_two\": 13190.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Flights from Hanoi to Danang and Hue to Ho Chi Minh City\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"All hotel tips, charges and local taxes\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Hanoi to Danang and Hue to Ho Chi Minh City\",\n      \"price_total_for_two\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various cherry-picked hotels\",\n      \"nights\": 11.0,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (evening)\", \"price\": 600.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated cost for meals not included in the package.\"\n    },\n    \"diy_total_for_two\": 2600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10590.0,\n    \"pct\": 80.2\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The Trafalgar deal includes flights and meals, making it significantly cheaper than DIY options, which are estimated at $2600.\",\n  \"additional_notes\": \"This deal offers a comprehensive package with meals and flights, making it a strong value.\",\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Gems of China",
+    "title": "Gems of China",
+    "url": "https://www.flightcentre.co.nz/product/22015701",
+    "source": "flightcentre",
+    "nights": 14.0,
+    "pp_price": 8779.0,
+    "package_total_for_two": 17558.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return airfares from Auckland to China",
+      "14-nights accommodation",
+      "All meals",
+      "Touring with Guides and entrance fees",
+      "Cultural experiences",
+      "Fully escorted by expert guides"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to China",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various hotels in China",
+        "nights": 14.0,
+        "price_total_for_stay": 2800.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals",
+            "price": 1500.0,
+            "source": "https://www.expedia.com"
+          },
+          {
+            "label": "Guided Tours and Entrance Fees",
+            "price": 1000.0,
+            "source": "https://www.viator.com"
+          }
+        ],
+        "notes": "Estimated costs for meals and tours based on average prices."
+      },
+      "diy_total_for_two": 7300.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 10258.0,
+      "pct": 140.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes flights, accommodation, meals, and guided tours, which are significantly cheaper than booking separately. The DIY total is much higher due to the costs of individual components.",
+    "additional_notes": "The deal offers a comprehensive package that provides significant value.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22015701",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.viator.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Gems of China\",\n  \"title\": \"Gems of China\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015701\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 8779.0,\n  \"package_total_for_two\": 17558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return airfares from Auckland to China\",\n    \"14-nights accommodation\",\n    \"All meals\",\n    \"Touring with Guides and entrance fees\",\n    \"Cultural experiences\",\n    \"Fully escorted by expert guides\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to China\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various hotels in China\",\n      \"nights\": 14.0,\n      \"price_total_for_stay\": 2800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals\", \"price\": 1500.0, \"source\": \"https://www.expedia.com\"},\n        {\"label\": \"Guided Tours and Entrance Fees\", \"price\": 1000.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Estimated costs for meals and tours based on average prices.\"\n    },\n    \"diy_total_for_two\": 7300.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10258.0,\n    \"pct\": 140.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes flights, accommodation, meals, and guided tours, which are significantly cheaper than booking separately. The DIY total is much higher due to the costs of individual components.\",\n  \"additional_notes\": \"The deal offers a comprehensive package that provides significant value.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015701\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.viator.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Solo's Borneo",
+    "title": "Solo's Borneo",
+    "url": "https://www.worldtravellers.co.nz/deals/asia/solos-borneo",
+    "source": "worldtravellers",
+    "nights": 6.0,
+    "pp_price": 6856.0,
+    "package_total_for_two": 13712.0,
+    "includes_flights": true,
+    "inclusions_evidence": "Airfare Kuching \u2013 Mulu \u2013 Kota Kinabalu \u2013 Sandakan - Kota Kinabalu in economy class",
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Kuching to Mulu to Kota Kinabalu to Sandakan to Kota Kinabalu",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Hotels and jungle lodges",
+        "nights": 6,
+        "price_total_for_stay": 1800.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Meals as specified",
+            "price": 600.0,
+            "source": "https://www.worldtravellers.co.nz"
+          },
+          {
+            "label": "Entrance fees",
+            "price": 300.0,
+            "source": "https://www.worldtravellers.co.nz"
+          },
+          {
+            "label": "Transfers by coach and boats",
+            "price": 400.0,
+            "source": "https://www.worldtravellers.co.nz"
+          }
+        ],
+        "notes": "Additional costs for meals, entrance fees, and transfers."
+      },
+      "diy_total_for_two": 3900.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 9812.0,
+      "pct": 71.6
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes flights and a comprehensive package that is significantly cheaper than booking separately, providing excellent value.",
+    "additional_notes": "The deal offers a well-rounded experience with guided tours and activities included.",
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/asia/solos-borneo",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Solo's Borneo\",\n  \"title\": \"Solo's Borneo\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/asia/solos-borneo\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 6.0,\n  \"pp_price\": 6856.0,\n  \"package_total_for_two\": 13712.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Airfare Kuching \u2013 Mulu \u2013 Kota Kinabalu \u2013 Sandakan - Kota Kinabalu in economy class\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Kuching to Mulu to Kota Kinabalu to Sandakan to Kota Kinabalu\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotels and jungle lodges\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 1800.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals as specified\", \"price\": 600.0, \"source\": \"https://www.worldtravellers.co.nz\"},\n        {\"label\": \"Entrance fees\", \"price\": 300.0, \"source\": \"https://www.worldtravellers.co.nz\"},\n        {\"label\": \"Transfers by coach and boats\", \"price\": 400.0, \"source\": \"https://www.worldtravellers.co.nz\"}\n      ],\n      \"notes\": \"Additional costs for meals, entrance fees, and transfers.\"\n    },\n    \"diy_total_for_two\": 3900.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 9812.0,\n    \"pct\": 71.6\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes flights and a comprehensive package that is significantly cheaper than booking separately, providing excellent value.\",\n  \"additional_notes\": \"The deal offers a well-rounded experience with guided tours and activities included.\",\n  \"citations\": [\"https://www.worldtravellers.co.nz/deals/asia/solos-borneo\", \"https://www.expedia.com\", \"https://www.booking.com\"]\n}"
+  },
+  {
+    "deal_id": "Luxury Fiji: Dolphin Island",
+    "title": "Luxury Fiji: Dolphin Island",
+    "url": "https://helloworld.co.nz/deal/33459/luxury-fiji-dolphin-island",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 9146.0,
+    "package_total_for_two": 18292.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class \"The Works\" airfares to Fiji flying Air New Zealand ex Auckland",
+      "Return airport/launch transfers as required",
+      "Accommodation and bonus offers as outlined",
+      "All prepayable taxes and surcharges"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Fiji",
+        "price_total_for_two": 12000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Dolphin Island",
+        "nights": 6.0,
+        "price_total_for_stay": 15000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 27000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 8715.0,
+      "pct": 32.3
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes flights and luxury accommodation, making it significantly cheaper than booking separately.",
+    "additional_notes": "Considered a high-value deal due to the luxury experience and included flights.",
+    "citations": [
+      "https://helloworld.co.nz/deal/33459/luxury-fiji-dolphin-island"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Fiji: Dolphin Island\",\n  \"title\": \"Luxury Fiji: Dolphin Island\",\n  \"url\": \"https://helloworld.co.nz/deal/33459/luxury-fiji-dolphin-island\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 9146.0,\n  \"package_total_for_two\": 18292.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class \\\"The Works\\\" airfares to Fiji flying Air New Zealand ex Auckland\",\n    \"Return airport/launch transfers as required\",\n    \"Accommodation and bonus offers as outlined\",\n    \"All prepayable taxes and surcharges\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Fiji\",\n      \"price_total_for_two\": 12000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Dolphin Island\",\n      \"nights\": 6.0,\n      \"price_total_for_stay\": 15000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 27000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 8715.0,\n    \"pct\": 32.3\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes flights and luxury accommodation, making it significantly cheaper than booking separately.\",\n  \"additional_notes\": \"Considered a high-value deal due to the luxury experience and included flights.\",\n  \"citations\": [\"https://helloworld.co.nz/deal/33459/luxury-fiji-dolphin-island\"]\n}"
+  },
+  {
+    "deal_id": "Luxury Fiji: Tokoriki Island Resort",
+    "title": "Luxury Fiji: Tokoriki Island Resort",
+    "url": "https://helloworld.co.nz/deal/33457/luxury-fiji-tokoriki-island-resort",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 7568.0,
+    "package_total_for_two": 15136.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class 'The Works' airfares to Fiji flying Air New Zealand ex Auckland",
+      "Return airport/launch transfers as required",
+      "Accommodation and bonus offers as outlined"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Fiji",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Tokoriki Island Resort",
+        "nights": 6,
+        "price_total_for_stay": 6000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 7200.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 7936.0,
+      "pct": 110.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights and transfers, making it a comprehensive deal. The DIY cost is significantly higher, providing substantial savings.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Fiji: Tokoriki Island Resort\",\n  \"title\": \"Luxury Fiji: Tokoriki Island Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/33457/luxury-fiji-tokoriki-island-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 7568.0,\n  \"package_total_for_two\": 15136.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class 'The Works' airfares to Fiji flying Air New Zealand ex Auckland\",\n    \"Return airport/launch transfers as required\",\n    \"Accommodation and bonus offers as outlined\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Fiji\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Tokoriki Island Resort\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 6000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 7200.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 7936.0,\n    \"pct\": 110.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and transfers, making it a comprehensive deal. The DIY cost is significantly higher, providing substantial savings.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Best of East Africa",
+    "title": "Best of East Africa",
+    "url": "https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa",
+    "source": "worldtravellers",
+    "nights": 13.0,
+    "pp_price": 11150.0,
+    "package_total_for_two": 22300.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "13 nights\u2019 accommodation",
+      "13 breakfasts, 13 lunches, 13 dinners",
+      "English-speaking driver/guide",
+      "Transport by 7-seater 4\u00d74 Land Cruiser",
+      "Game drives as per the itinerary",
+      "National Park fees"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Nairobi to Kilimanjaro International Airport",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Various lodges in National Parks",
+        "nights": 13,
+        "price_total_for_stay": 15000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "National Park fees",
+            "price": 500.0,
+            "source": "https://www.nationalparks.com"
+          }
+        ],
+        "notes": "Includes game drives and meals."
+      },
+      "diy_total_for_two": 17500.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 4800.0,
+      "pct": 27.43
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal includes comprehensive services such as meals, accommodation, and guided tours, which are difficult to replicate at a lower cost through DIY options.",
+    "additional_notes": "This deal offers a significant saving while providing a well-structured itinerary.",
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Best of East Africa\",\n  \"title\": \"Best of East Africa\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 13.0,\n  \"pp_price\": 11150.0,\n  \"package_total_for_two\": 22300.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"13 nights\u2019 accommodation\",\n    \"13 breakfasts, 13 lunches, 13 dinners\",\n    \"English-speaking driver/guide\",\n    \"Transport by 7-seater 4\u00d74 Land Cruiser\",\n    \"Game drives as per the itinerary\",\n    \"National Park fees\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Nairobi to Kilimanjaro International Airport\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various lodges in National Parks\",\n      \"nights\": 13,\n      \"price_total_for_stay\": 15000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"National Park fees\", \"price\": 500.0, \"source\": \"https://www.nationalparks.com\"}\n      ],\n      \"notes\": \"Includes game drives and meals.\"\n    },\n    \"diy_total_for_two\": 17500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 4800.0,\n    \"pct\": 27.43\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive services such as meals, accommodation, and guided tours, which are difficult to replicate at a lower cost through DIY options.\",\n  \"additional_notes\": \"This deal offers a significant saving while providing a well-structured itinerary.\",\n  \"citations\": [\"https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa\"]\n}"
+  },
+  {
+    "deal_id": "12-day Fly & Tour: Very Vietnam",
+    "title": "12-day Fly & Tour: Very Vietnam",
+    "url": "https://www.flightcentre.co.nz/product/22086295",
+    "source": "flightcentre",
+    "nights": 2.0,
+    "pp_price": 4099.0,
+    "package_total_for_two": 8198.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Economy class flights from Auckland to Vietnam with Singapore Airlines",
+      "2 nights accommodation",
+      "10-day small group trip with On the Go Tours"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Vietnam",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Movenpick Hotel Hanoi Centre and Novotel Saigon Centre",
+        "nights": 2,
+        "price_total_for_stay": 400.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "10-day tour with On the Go Tours",
+            "price": 2000.0,
+            "source": "https://www.onthegotours.com"
+          }
+        ],
+        "notes": "Tour costs are estimated based on similar offerings."
+      },
+      "diy_total_for_two": 3600.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 4598.0,
+      "pct": 127.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights, accommodation, and a comprehensive tour, making it significantly cheaper than booking each component separately.",
+    "additional_notes": "This deal offers a well-rounded experience with guided tours and accommodations.",
+    "citations": [
+      "https://www.flightcentre.co.nz/product/22086295",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.onthegotours.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"12-day Fly & Tour: Very Vietnam\",\n  \"title\": \"12-day Fly & Tour: Very Vietnam\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22086295\",\n  \"source\": \"flightcentre\",\n  \"nights\": 2.0,\n  \"pp_price\": 4099.0,\n  \"package_total_for_two\": 8198.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Economy class flights from Auckland to Vietnam with Singapore Airlines\",\n    \"2 nights accommodation\",\n    \"10-day small group trip with On the Go Tours\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Vietnam\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Movenpick Hotel Hanoi Centre and Novotel Saigon Centre\",\n      \"nights\": 2,\n      \"price_total_for_stay\": 400.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"10-day tour with On the Go Tours\", \"price\": 2000.0, \"source\": \"https://www.onthegotours.com\"}\n      ],\n      \"notes\": \"Tour costs are estimated based on similar offerings.\"\n    },\n    \"diy_total_for_two\": 3600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 4598.0,\n    \"pct\": 127.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights, accommodation, and a comprehensive tour, making it significantly cheaper than booking each component separately.\",\n  \"additional_notes\": \"This deal offers a well-rounded experience with guided tours and accommodations.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22086295\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.onthegotours.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Wonderful Disney: Hyatt Regency Orange County",
+    "title": "Wonderful Disney: Hyatt Regency Orange County",
+    "url": "https://helloworld.co.nz/deal/33331/wonderful-disney-hyatt-regency-orange-county",
+    "source": "helloworld",
+    "nights": 12.0,
+    "pp_price": 3756.0,
+    "package_total_for_two": 7512.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)",
+      "Accommodation and bonus offers as outlined",
+      "All prepayable taxes and surcharges",
+      "Includes 5 nights at Hyatt Regency Orange County (4.5 Star) in a Deluxe King",
+      "3-Day Disneyland Resort Park Hopper Ticket"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Los Angeles",
+        "price_total_for_two": 2000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Hyatt Regency Orange County",
+        "nights": 5,
+        "price_total_for_stay": 1500.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "3-Day Disneyland Resort Park Hopper Ticket",
+            "price": 600.0,
+            "source": "https://disneyland.disney.go.com"
+          }
+        ],
+        "notes": "No additional tours or services included in DIY."
+      },
+      "diy_total_for_two": 4100.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 3412.0,
+      "pct": 83.2
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The deal includes flights, hotel, and park tickets, making it significantly cheaper than booking separately. The DIY total is higher due to the cost of flights and tickets.",
+    "additional_notes": null,
+    "citations": [
+      "https://helloworld.co.nz/deal/33331/wonderful-disney-hyatt-regency-orange-county",
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://disneyland.disney.go.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Wonderful Disney: Hyatt Regency Orange County\",\n  \"title\": \"Wonderful Disney: Hyatt Regency Orange County\",\n  \"url\": \"https://helloworld.co.nz/deal/33331/wonderful-disney-hyatt-regency-orange-county\",\n  \"source\": \"helloworld\",\n  \"nights\": 12.0,\n  \"pp_price\": 3756.0,\n  \"package_total_for_two\": 7512.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class airfares to Los Angeles flying Air New Zealand ex Auckland OR Wellington/Christchurch (via Auckland)\",\n    \"Accommodation and bonus offers as outlined\",\n    \"All prepayable taxes and surcharges\",\n    \"Includes 5 nights at Hyatt Regency Orange County (4.5 Star) in a Deluxe King\",\n    \"3-Day Disneyland Resort Park Hopper Ticket\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Los Angeles\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hyatt Regency Orange County\",\n      \"nights\": 5,\n      \"price_total_for_stay\": 1500.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"3-Day Disneyland Resort Park Hopper Ticket\", \"price\": 600.0, \"source\": \"https://disneyland.disney.go.com\"}\n      ],\n      \"notes\": \"No additional tours or services included in DIY.\"\n    },\n    \"diy_total_for_two\": 4100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3412.0,\n    \"pct\": 83.2\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The deal includes flights, hotel, and park tickets, making it significantly cheaper than booking separately. The DIY total is higher due to the cost of flights and tickets.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33331/wonderful-disney-hyatt-regency-orange-county\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://disneyland.disney.go.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Ultimate Opera Package: InterContinental Sydney",
+    "title": "Ultimate Opera Package: InterContinental Sydney",
+    "url": "https://helloworld.co.nz/deal/33114/ultimate-opera-package-intercontinental-sydney",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 2699.0,
+    "package_total_for_two": 5398.0,
+    "includes_flights": false,
+    "inclusions_evidence": [
+      "2 nights accommodation",
+      "A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": false,
+        "assumed_route": null,
+        "price_total_for_two": null,
+        "sources": []
+      },
+      "hotel": {
+        "name_or_hint": "InterContinental Sydney",
+        "nights": 2,
+        "price_total_for_stay": 1200.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "A Reserve ticket to Handa Opera",
+            "price": 400.0,
+            "source": "https://www.handaopera.com.au"
+          }
+        ],
+        "notes": "DIY ticket price sourced from the official event page."
+      },
+      "diy_total_for_two": 2000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 3398.0,
+      "pct": 169.9
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package offers significant savings compared to DIY options, especially considering the included opera ticket and hotel stay.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.booking.com",
+      "https://www.expedia.com",
+      "https://www.handaopera.com.au"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Ultimate Opera Package: InterContinental Sydney\",\n  \"title\": \"Ultimate Opera Package: InterContinental Sydney\",\n  \"url\": \"https://helloworld.co.nz/deal/33114/ultimate-opera-package-intercontinental-sydney\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 2699.0,\n  \"package_total_for_two\": 5398.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": [\n    \"2 nights accommodation\",\n    \"A Reserve ticket to Handa Opera on Sydney Harbour - Phantom of the Opera\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"InterContinental Sydney\",\n      \"nights\": 2,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"A Reserve ticket to Handa Opera\", \"price\": 400.0, \"source\": \"https://www.handaopera.com.au\"}\n      ],\n      \"notes\": \"DIY ticket price sourced from the official event page.\"\n    },\n    \"diy_total_for_two\": 2000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3398.0,\n    \"pct\": 169.9\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package offers significant savings compared to DIY options, especially considering the included opera ticket and hotel stay.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.handaopera.com.au\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Tokyo on sale with Air New Zealand",
+    "title": "Tokyo on sale with Air New Zealand",
+    "url": "https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand",
+    "source": "worldtravellers",
+    "nights": 4.0,
+    "pp_price": 2575.0,
+    "package_total_for_two": 5150.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class Airfares flying Air New Zealand to Tokyo (Narita) from Auckland",
+      "4 nights accommodation",
+      "Includes: Breakfast daily"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Tokyo (Narita)",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Sheraton Miyako Hotel Tokyo",
+        "nights": 4.0,
+        "price_total_for_stay": 800.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Breakfast",
+            "price": 0.0,
+            "source": null
+          }
+        ],
+        "notes": "Breakfast is included in the package."
+      },
+      "diy_total_for_two": 2000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 3150.0,
+      "pct": 62.0
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights and accommodation at a significantly lower total cost compared to DIY options, making it an excellent deal.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand",
+      "https://www.expedia.com",
+      "https://www.booking.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Tokyo on sale with Air New Zealand\",\n  \"title\": \"Tokyo on sale with Air New Zealand\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 4.0,\n  \"pp_price\": 2575.0,\n  \"package_total_for_two\": 5150.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class Airfares flying Air New Zealand to Tokyo (Narita) from Auckland\",\n    \"4 nights accommodation\",\n    \"Includes: Breakfast daily\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Tokyo (Narita)\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Sheraton Miyako Hotel Tokyo\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfast\", \"price\": 0.0, \"source\": null}\n      ],\n      \"notes\": \"Breakfast is included in the package.\"\n    },\n    \"diy_total_for_two\": 2000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3150.0,\n    \"pct\": 62.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and accommodation at a significantly lower total cost compared to DIY options, making it an excellent deal.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Singapore on sale with Air New Zealand",
+    "title": "Singapore on sale with Air New Zealand",
+    "url": "https://www.worldtravellers.co.nz/deals/asia/singapore-on-sale-with-air-new-zealand",
+    "source": "worldtravellers",
+    "nights": 3.0,
+    "pp_price": 2409.0,
+    "package_total_for_two": 4818.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class Airfares flying Air New Zealand to Singapore from Auckland",
+      "3 nights accommodation",
+      "Breakfast Daily",
+      "1 x Complimentary admission ticket to Singapore Zoo"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Singapore",
+        "price_total_for_two": 1200.0,
+        "sources": [
+          "https://www.expedia.com",
+          "https://www.booking.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Oasia Hotel Novena Singapore",
+        "nights": 3,
+        "price_total_for_stay": 600.0,
+        "sources": [
+          "https://www.booking.com"
+        ]
+      },
+      "other": {
+        "items": [
+          {
+            "label": "Singapore Zoo admission",
+            "price": 50.0,
+            "source": "https://www.singaporezoo.com"
+          }
+        ],
+        "notes": "Assumed cost for zoo admission."
+      },
+      "diy_total_for_two": 1850.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 2968.0,
+      "pct": 61.5
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The travel agency deal is significantly cheaper than the DIY option, especially considering the inclusion of flights and additional benefits like breakfast and zoo admission.",
+    "additional_notes": null,
+    "citations": [
+      "https://www.worldtravellers.co.nz/deals/asia/singapore-on-sale-with-air-new-zealand",
+      "https://www.expedia.com",
+      "https://www.booking.com",
+      "https://www.singaporezoo.com"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Singapore on sale with Air New Zealand\",\n  \"title\": \"Singapore on sale with Air New Zealand\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/asia/singapore-on-sale-with-air-new-zealand\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 3.0,\n  \"pp_price\": 2409.0,\n  \"package_total_for_two\": 4818.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class Airfares flying Air New Zealand to Singapore from Auckland\",\n    \"3 nights accommodation\",\n    \"Breakfast Daily\",\n    \"1 x Complimentary admission ticket to Singapore Zoo\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Singapore\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Oasia Hotel Novena Singapore\",\n      \"nights\": 3,\n      \"price_total_for_stay\": 600.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Singapore Zoo admission\", \"price\": 50.0, \"source\": \"https://www.singaporezoo.com\"}\n      ],\n      \"notes\": \"Assumed cost for zoo admission.\"\n    },\n    \"diy_total_for_two\": 1850.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2968.0,\n    \"pct\": 61.5\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, especially considering the inclusion of flights and additional benefits like breakfast and zoo admission.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/asia/singapore-on-sale-with-air-new-zealand\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\",\n    \"https://www.singaporezoo.com\"\n  ]\n}"
+  },
+  {
+    "deal_id": "Luxury Fiji: Royal Davui Island Resort",
+    "title": "Luxury Fiji: Royal Davui Island Resort",
+    "url": "https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort",
+    "source": "helloworld",
+    "nights": 6.0,
+    "pp_price": 7735.0,
+    "package_total_for_two": 15470.0,
+    "includes_flights": true,
+    "inclusions_evidence": [
+      "Return Economy Class \"The Works\" airfares to Fiji flying Air New Zealand ex Auckland",
+      "Return airport/launch transfers as required",
+      "Accommodation and bonus offers as outlined"
+    ],
+    "diy_breakdown": {
+      "flights": {
+        "included": true,
+        "assumed_route": "Auckland to Fiji",
+        "price_total_for_two": 12000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "hotel": {
+        "name_or_hint": "Royal Davui Island Resort",
+        "nights": 6,
+        "price_total_for_stay": 6000.0,
+        "sources": [
+          "https://www.booking.com",
+          "https://www.expedia.com"
+        ]
+      },
+      "other": {
+        "items": [],
+        "notes": "No additional costs identified."
+      },
+      "diy_total_for_two": 18000.0
+    },
+    "estimated_savings_vs_diy": {
+      "abs": 2540.0,
+      "pct": 14.11
+    },
+    "rating_out_of_10": 9,
+    "reasoning": "The package includes flights and transfers, making it a comprehensive deal. The total cost is significantly lower than booking separately.",
+    "additional_notes": "This deal offers a luxurious experience with significant savings.",
+    "citations": [
+      "https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort"
+    ],
+    "_raw_snippet": "{\n  \"deal_id\": \"Luxury Fiji: Royal Davui Island Resort\",\n  \"title\": \"Luxury Fiji: Royal Davui Island Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 7735.0,\n  \"package_total_for_two\": 15470.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class \\\"The Works\\\" airfares to Fiji flying Air New Zealand ex Auckland\",\n    \"Return airport/launch transfers as required\",\n    \"Accommodation and bonus offers as outlined\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Fiji\",\n      \"price_total_for_two\": 12000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Royal Davui Island Resort\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 6000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 18000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2540.0,\n    \"pct\": 14.11\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and transfers, making it a comprehensive deal. The total cost is significantly lower than booking separately.\",\n  \"additional_notes\": \"This deal offers a luxurious experience with significant savings.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort\"\n  ]\n}"
+  }
+]

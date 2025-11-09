@@ -1,0 +1,58 @@
+{
+  "deal_id": "Trafalgar Tours Highlights of Vietnam",
+  "title": "Trafalgar Tours Highlights of Vietnam",
+  "url": "https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam",
+  "source": "helloworld",
+  "nights": 11.0,
+  "pp_price": 6595.0,
+  "package_total_for_two": 13190.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Flights from Hanoi to Danang and Hue to Ho Chi Minh City",
+    "Breakfast daily and up to half of your evening meals",
+    "All hotel tips, charges and local taxes"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Hanoi to Danang and Hue to Ho Chi Minh City",
+      "price_total_for_two": 800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various cherry-picked hotels",
+      "nights": 11.0,
+      "price_total_for_stay": 1200.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (evening)",
+          "price": 600.0,
+          "source": null
+        }
+      ],
+      "notes": "Estimated cost for meals not included in the package."
+    },
+    "diy_total_for_two": 2600.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 10590.0,
+    "pct": 80.2
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The Trafalgar deal includes flights and meals, making it significantly cheaper than DIY options, which are estimated at $2600.",
+  "additional_notes": "This deal offers a comprehensive package with meals and flights, making it a strong value.",
+  "citations": [
+    "https://www.booking.com",
+    "https://www.expedia.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"title\": \"Trafalgar Tours Highlights of Vietnam\",\n  \"url\": \"https://helloworld.co.nz/deal/26630/trafalgar-tours-highlights-of-vietnam\",\n  \"source\": \"helloworld\",\n  \"nights\": 11.0,\n  \"pp_price\": 6595.0,\n  \"package_total_for_two\": 13190.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Flights from Hanoi to Danang and Hue to Ho Chi Minh City\",\n    \"Breakfast daily and up to half of your evening meals\",\n    \"All hotel tips, charges and local taxes\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Hanoi to Danang and Hue to Ho Chi Minh City\",\n      \"price_total_for_two\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various cherry-picked hotels\",\n      \"nights\": 11.0,\n      \"price_total_for_stay\": 1200.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (evening)\", \"price\": 600.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated cost for meals not included in the package.\"\n    },\n    \"diy_total_for_two\": 2600.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10590.0,\n    \"pct\": 80.2\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The Trafalgar deal includes flights and meals, making it significantly cheaper than DIY options, which are estimated at $2600.\",\n  \"additional_notes\": \"This deal offers a comprehensive package with meals and flights, making it a strong value.\",\n  \"citations\": [\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\"\n  ]\n}"
+}

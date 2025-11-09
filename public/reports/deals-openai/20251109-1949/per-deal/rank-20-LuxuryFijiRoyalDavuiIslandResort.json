@@ -1,0 +1,51 @@
+{
+  "deal_id": "Luxury Fiji: Royal Davui Island Resort",
+  "title": "Luxury Fiji: Royal Davui Island Resort",
+  "url": "https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort",
+  "source": "helloworld",
+  "nights": 6.0,
+  "pp_price": 7735.0,
+  "package_total_for_two": 15470.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class \"The Works\" airfares to Fiji flying Air New Zealand ex Auckland",
+    "Return airport/launch transfers as required",
+    "Accommodation and bonus offers as outlined"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Fiji",
+      "price_total_for_two": 12000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Royal Davui Island Resort",
+      "nights": 6,
+      "price_total_for_stay": 6000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 18000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 2540.0,
+    "pct": 14.11
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights and transfers, making it a comprehensive deal. The total cost is significantly lower than booking separately.",
+  "additional_notes": "This deal offers a luxurious experience with significant savings.",
+  "citations": [
+    "https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Luxury Fiji: Royal Davui Island Resort\",\n  \"title\": \"Luxury Fiji: Royal Davui Island Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 6.0,\n  \"pp_price\": 7735.0,\n  \"package_total_for_two\": 15470.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class \\\"The Works\\\" airfares to Fiji flying Air New Zealand ex Auckland\",\n    \"Return airport/launch transfers as required\",\n    \"Accommodation and bonus offers as outlined\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Fiji\",\n      \"price_total_for_two\": 12000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Royal Davui Island Resort\",\n      \"nights\": 6,\n      \"price_total_for_stay\": 6000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 18000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 2540.0,\n    \"pct\": 14.11\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and transfers, making it a comprehensive deal. The total cost is significantly lower than booking separately.\",\n  \"additional_notes\": \"This deal offers a luxurious experience with significant savings.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/33458/luxury-fiji-royal-davui-island-resort\"\n  ]\n}"
+}

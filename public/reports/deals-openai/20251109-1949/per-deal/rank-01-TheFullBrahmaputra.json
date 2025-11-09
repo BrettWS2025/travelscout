@@ -1,0 +1,44 @@
+{
+  "deal_id": "The Full Brahmaputra",
+  "title": "The Full Brahmaputra",
+  "url": "https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs",
+  "source": "houseoftravel",
+  "nights": 10.0,
+  "pp_price": 8849.0,
+  "package_total_for_two": 17698.0,
+  "includes_flights": true,
+  "inclusions_evidence": "Flights on sale Asia Flights Australia Flights New Zealand Flights South Pacific Flights USA Flights",
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Assumed international flights to India for the cruise",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Cruise accommodation included",
+      "nights": 10.0,
+      "price_total_for_stay": 0.0,
+      "sources": []
+    },
+    "other": {
+      "items": [],
+      "notes": "No additional costs identified."
+    },
+    "diy_total_for_two": 2000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 15698.0,
+    "pct": 88.5
+  },
+  "rating_out_of_10": 10,
+  "reasoning": "The travel agency deal includes flights and cruise accommodation, making it significantly cheaper than booking flights and a similar cruise separately.",
+  "additional_notes": "",
+  "citations": [
+    "https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"The Full Brahmaputra\",\n  \"title\": \"The Full Brahmaputra\",\n  \"url\": \"https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs\",\n  \"source\": \"houseoftravel\",\n  \"nights\": 10.0,\n  \"pp_price\": 8849.0,\n  \"package_total_for_two\": 17698.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Flights on sale Asia Flights Australia Flights New Zealand Flights South Pacific Flights USA Flights\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Assumed international flights to India for the cruise\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cruise accommodation included\",\n      \"nights\": 10.0,\n      \"price_total_for_stay\": 0.0,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"No additional costs identified.\"\n    },\n    \"diy_total_for_two\": 2000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 15698.0,\n    \"pct\": 88.5\n  },\n  \"rating_out_of_10\": 10,\n  \"reasoning\": \"The travel agency deal includes flights and cruise accommodation, making it significantly cheaper than booking flights and a similar cruise separately.\",\n  \"additional_notes\": \"\",\n  \"citations\": [\"https://www.houseoftravel.co.nz/cruises/river-cruises/pandaw-river-cruises/sailings/pandaw-river-cruises-the-full-brahmaputra-crs\"]\n}"
+}

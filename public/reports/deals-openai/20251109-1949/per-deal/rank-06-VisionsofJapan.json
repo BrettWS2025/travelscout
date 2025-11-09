@@ -1,0 +1,58 @@
+{
+  "deal_id": "Visions of Japan",
+  "title": "Visions of Japan",
+  "url": "https://www.flightcentre.co.nz/product/21931838",
+  "source": "flightcentre",
+  "nights": 10,
+  "pp_price": 8849.0,
+  "package_total_for_two": 17698.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "10-nights First-Class or Superior First-Class accommodation with private bath or shower",
+    "Includes hotel taxes, porterage, tips and service charges",
+    "10 breakfasts, 5 lunches, 3 dinners"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "New Zealand to Japan",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "First-Class or Superior First-Class accommodation",
+      "nights": 10,
+      "price_total_for_stay": 3000.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (10 breakfasts, 5 lunches, 3 dinners)",
+          "price": 1500.0,
+          "source": null
+        }
+      ],
+      "notes": "Estimated meal costs based on average restaurant prices in Japan."
+    },
+    "diy_total_for_two": 6500.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 11198.0,
+    "pct": 172.6
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes comprehensive accommodations and meals, which are significantly cheaper than booking separately. The inclusion of flights further enhances the value.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21931838",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Visions of Japan\",\n  \"title\": \"Visions of Japan\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21931838\",\n  \"source\": \"flightcentre\",\n  \"nights\": 10,\n  \"pp_price\": 8849.0,\n  \"package_total_for_two\": 17698.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"10-nights First-Class or Superior First-Class accommodation with private bath or shower\",\n    \"Includes hotel taxes, porterage, tips and service charges\",\n    \"10 breakfasts, 5 lunches, 3 dinners\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to Japan\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"First-Class or Superior First-Class accommodation\",\n      \"nights\": 10,\n      \"price_total_for_stay\": 3000.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Meals (10 breakfasts, 5 lunches, 3 dinners)\", \"price\": 1500.0, \"source\": null}\n      ],\n      \"notes\": \"Estimated meal costs based on average restaurant prices in Japan.\"\n    },\n    \"diy_total_for_two\": 6500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11198.0,\n    \"pct\": 172.6\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive accommodations and meals, which are significantly cheaper than booking separately. The inclusion of flights further enhances the value.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/21931838\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

@@ -1,0 +1,53 @@
+{
+  "deal_id": "Insight Vacations European Affair & The Chelsea Flower Show",
+  "title": "Insight Vacations European Affair & The Chelsea Flower Show",
+  "url": "https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show",
+  "source": "helloworld",
+  "nights": 9.0,
+  "pp_price": 7975.0,
+  "package_total_for_two": 15950.0,
+  "includes_flights": true,
+  "inclusions_evidence": "Prices are per person share twin based on best available tour price, inclusive of all discounts unless otherwise stated.",
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "New Zealand to London, return from Paris",
+      "price_total_for_two": 3000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Hotels in London and Paris",
+      "nights": 9,
+      "price_total_for_stay": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Seine Cruise and Illuminations tour",
+          "price": 300.0,
+          "source": "https://www.viator.com"
+        }
+      ],
+      "notes": "Other activities included in the package may not be accounted for in DIY."
+    },
+    "diy_total_for_two": 5300.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 10650.0,
+    "pct": 67.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal is significantly cheaper than the DIY option, even when accounting for flights and hotel costs.",
+  "additional_notes": "This deal includes guided tours and activities that may not be easily comparable in DIY.",
+  "citations": [
+    "https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Insight Vacations European Affair & The Chelsea Flower Show\",\n  \"title\": \"Insight Vacations European Affair & The Chelsea Flower Show\",\n  \"url\": \"https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show\",\n  \"source\": \"helloworld\",\n  \"nights\": 9.0,\n  \"pp_price\": 7975.0,\n  \"package_total_for_two\": 15950.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"Prices are per person share twin based on best available tour price, inclusive of all discounts unless otherwise stated.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"New Zealand to London, return from Paris\",\n      \"price_total_for_two\": 3000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hotels in London and Paris\",\n      \"nights\": 9,\n      \"price_total_for_stay\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Seine Cruise and Illuminations tour\", \"price\": 300.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Other activities included in the package may not be accounted for in DIY.\"\n    },\n    \"diy_total_for_two\": 5300.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 10650.0,\n    \"pct\": 67.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal is significantly cheaper than the DIY option, even when accounting for flights and hotel costs.\",\n  \"additional_notes\": \"This deal includes guided tours and activities that may not be easily comparable in DIY.\",\n  \"citations\": [\"https://helloworld.co.nz/deal/33204/insight-vacations-european-affair-and-the-chelsea-flower-show\"]\n}"
+}

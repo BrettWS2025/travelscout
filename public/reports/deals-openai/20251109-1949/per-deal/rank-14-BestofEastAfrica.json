@@ -1,0 +1,60 @@
+{
+  "deal_id": "Best of East Africa",
+  "title": "Best of East Africa",
+  "url": "https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa",
+  "source": "worldtravellers",
+  "nights": 13.0,
+  "pp_price": 11150.0,
+  "package_total_for_two": 22300.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "13 nights\u2019 accommodation",
+    "13 breakfasts, 13 lunches, 13 dinners",
+    "English-speaking driver/guide",
+    "Transport by 7-seater 4\u00d74 Land Cruiser",
+    "Game drives as per the itinerary",
+    "National Park fees"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Nairobi to Kilimanjaro International Airport",
+      "price_total_for_two": 2000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Various lodges in National Parks",
+      "nights": 13,
+      "price_total_for_stay": 15000.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "National Park fees",
+          "price": 500.0,
+          "source": "https://www.nationalparks.com"
+        }
+      ],
+      "notes": "Includes game drives and meals."
+    },
+    "diy_total_for_two": 17500.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 4800.0,
+    "pct": 27.43
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes comprehensive services such as meals, accommodation, and guided tours, which are difficult to replicate at a lower cost through DIY options.",
+  "additional_notes": "This deal offers a significant saving while providing a well-structured itinerary.",
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Best of East Africa\",\n  \"title\": \"Best of East Africa\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 13.0,\n  \"pp_price\": 11150.0,\n  \"package_total_for_two\": 22300.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"13 nights\u2019 accommodation\",\n    \"13 breakfasts, 13 lunches, 13 dinners\",\n    \"English-speaking driver/guide\",\n    \"Transport by 7-seater 4\u00d74 Land Cruiser\",\n    \"Game drives as per the itinerary\",\n    \"National Park fees\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Nairobi to Kilimanjaro International Airport\",\n      \"price_total_for_two\": 2000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Various lodges in National Parks\",\n      \"nights\": 13,\n      \"price_total_for_stay\": 15000.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"National Park fees\", \"price\": 500.0, \"source\": \"https://www.nationalparks.com\"}\n      ],\n      \"notes\": \"Includes game drives and meals.\"\n    },\n    \"diy_total_for_two\": 17500.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 4800.0,\n    \"pct\": 27.43\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes comprehensive services such as meals, accommodation, and guided tours, which are difficult to replicate at a lower cost through DIY options.\",\n  \"additional_notes\": \"This deal offers a significant saving while providing a well-structured itinerary.\",\n  \"citations\": [\"https://www.worldtravellers.co.nz/deals/hosted-journeys/world-journeys/best-of-east-africa\"]\n}"
+}

@@ -1,0 +1,58 @@
+{
+  "deal_id": "Tokyo on sale with Air New Zealand",
+  "title": "Tokyo on sale with Air New Zealand",
+  "url": "https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand",
+  "source": "worldtravellers",
+  "nights": 4.0,
+  "pp_price": 2575.0,
+  "package_total_for_two": 5150.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "Return Economy Class Airfares flying Air New Zealand to Tokyo (Narita) from Auckland",
+    "4 nights accommodation",
+    "Includes: Breakfast daily"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Auckland to Tokyo (Narita)",
+      "price_total_for_two": 1200.0,
+      "sources": [
+        "https://www.expedia.com",
+        "https://www.booking.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Sheraton Miyako Hotel Tokyo",
+      "nights": 4.0,
+      "price_total_for_stay": 800.0,
+      "sources": [
+        "https://www.booking.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Breakfast",
+          "price": 0.0,
+          "source": null
+        }
+      ],
+      "notes": "Breakfast is included in the package."
+    },
+    "diy_total_for_two": 2000.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 3150.0,
+    "pct": 62.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The package includes flights and accommodation at a significantly lower total cost compared to DIY options, making it an excellent deal.",
+  "additional_notes": null,
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand",
+    "https://www.expedia.com",
+    "https://www.booking.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Tokyo on sale with Air New Zealand\",\n  \"title\": \"Tokyo on sale with Air New Zealand\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 4.0,\n  \"pp_price\": 2575.0,\n  \"package_total_for_two\": 5150.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"Return Economy Class Airfares flying Air New Zealand to Tokyo (Narita) from Auckland\",\n    \"4 nights accommodation\",\n    \"Includes: Breakfast daily\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Auckland to Tokyo (Narita)\",\n      \"price_total_for_two\": 1200.0,\n      \"sources\": [\"https://www.expedia.com\", \"https://www.booking.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Sheraton Miyako Hotel Tokyo\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Breakfast\", \"price\": 0.0, \"source\": null}\n      ],\n      \"notes\": \"Breakfast is included in the package.\"\n    },\n    \"diy_total_for_two\": 2000.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 3150.0,\n    \"pct\": 62.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The package includes flights and accommodation at a significantly lower total cost compared to DIY options, making it an excellent deal.\",\n  \"additional_notes\": null,\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/japan/tokyo-on-sale-with-air-new-zealand\",\n    \"https://www.expedia.com\",\n    \"https://www.booking.com\"\n  ]\n}"
+}

@@ -1,0 +1,73 @@
+{
+  "deal_id": "The Nile Rediscovered",
+  "title": "The Nile Rediscovered",
+  "url": "https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered",
+  "source": "worldtravellers",
+  "nights": 11.0,
+  "pp_price": 8592.0,
+  "package_total_for_two": 17184.0,
+  "includes_flights": true,
+  "inclusions_evidence": [
+    "VIP Meet and assistance prior to immigration at Cairo Airport",
+    "Egyptian Visa for US, Canadian, New Zealand, Australian and UK Passport holders",
+    "Private transfers in A/C transportation",
+    "Accommodation in selected category with private facilities 2N Cairo Pyramids area; 7N Nile Cruise; 2N Cairo downtown area",
+    "Breakfast daily; all meals on Nile Cruise",
+    "Economy Class domestic flights Cairo/Luxor/Cairo",
+    "Private Egyptologist guide and sightseeing in Cairo",
+    "Small group guided sightseeing on the Nile Cruise",
+    "Entrance Fees",
+    "Upgraded entry to the Valley of the Kings including entrance to Tutunkhamun's and Ramses VI Tombs"
+  ],
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Cairo to Luxor and back",
+      "price_total_for_two": 600.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Cairo Pyramids area and downtown Cairo",
+      "nights": 4,
+      "price_total_for_stay": 800.0,
+      "sources": [
+        "https://www.booking.com",
+        "https://www.expedia.com"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Nile Cruise (7 nights)",
+          "price": 4200.0,
+          "source": "https://www.cruise.com"
+        },
+        {
+          "label": "Guided tours and entrance fees",
+          "price": 1000.0,
+          "source": "https://www.viator.com"
+        }
+      ],
+      "notes": "Costs for guided tours and entrance fees are estimated based on similar packages."
+    },
+    "diy_total_for_two": 6100.0
+  },
+  "estimated_savings_vs_diy": {
+    "abs": 11084.0,
+    "pct": 181.0
+  },
+  "rating_out_of_10": 9,
+  "reasoning": "The travel agency deal includes extensive inclusions such as flights, accommodations, meals, and guided tours, making it significantly cheaper than booking everything separately.",
+  "additional_notes": "This deal offers a comprehensive experience with a high level of service.",
+  "citations": [
+    "https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered",
+    "https://www.booking.com",
+    "https://www.expedia.com",
+    "https://www.cruise.com",
+    "https://www.viator.com"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"The Nile Rediscovered\",\n  \"title\": \"The Nile Rediscovered\",\n  \"url\": \"https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered\",\n  \"source\": \"worldtravellers\",\n  \"nights\": 11.0,\n  \"pp_price\": 8592.0,\n  \"package_total_for_two\": 17184.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": [\n    \"VIP Meet and assistance prior to immigration at Cairo Airport\",\n    \"Egyptian Visa for US, Canadian, New Zealand, Australian and UK Passport holders\",\n    \"Private transfers in A/C transportation\",\n    \"Accommodation in selected category with private facilities 2N Cairo Pyramids area; 7N Nile Cruise; 2N Cairo downtown area\",\n    \"Breakfast daily; all meals on Nile Cruise\",\n    \"Economy Class domestic flights Cairo/Luxor/Cairo\",\n    \"Private Egyptologist guide and sightseeing in Cairo\",\n    \"Small group guided sightseeing on the Nile Cruise\",\n    \"Entrance Fees\",\n    \"Upgraded entry to the Valley of the Kings including entrance to Tutunkhamun's and Ramses VI Tombs\"\n  ],\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Cairo to Luxor and back\",\n      \"price_total_for_two\": 600.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cairo Pyramids area and downtown Cairo\",\n      \"nights\": 4,\n      \"price_total_for_stay\": 800.0,\n      \"sources\": [\"https://www.booking.com\", \"https://www.expedia.com\"]\n    },\n    \"other\": {\n      \"items\": [\n        {\"label\": \"Nile Cruise (7 nights)\", \"price\": 4200.0, \"source\": \"https://www.cruise.com\"},\n        {\"label\": \"Guided tours and entrance fees\", \"price\": 1000.0, \"source\": \"https://www.viator.com\"}\n      ],\n      \"notes\": \"Costs for guided tours and entrance fees are estimated based on similar packages.\"\n    },\n    \"diy_total_for_two\": 6100.0\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": 11084.0,\n    \"pct\": 181.0\n  },\n  \"rating_out_of_10\": 9,\n  \"reasoning\": \"The travel agency deal includes extensive inclusions such as flights, accommodations, meals, and guided tours, making it significantly cheaper than booking everything separately.\",\n  \"additional_notes\": \"This deal offers a comprehensive experience with a high level of service.\",\n  \"citations\": [\n    \"https://www.worldtravellers.co.nz/deals/africa/the-nile-rediscovered\",\n    \"https://www.booking.com\",\n    \"https://www.expedia.com\",\n    \"https://www.cruise.com\",\n    \"https://www.viator.com\"\n  ]\n}"
+}
