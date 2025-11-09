@@ -1,0 +1,102 @@
+[
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 2670.0,
+    "pp_price": 1335.0,
+    "nights": 20.0,
+    "url": "https://helloworld.co.nz/deal/18467/perth-with-air-new-zealand",
+    "title": "Perth with Air New Zealand",
+    "source": "helloworld",
+    "deal_id": "Perth with Air New Zealand"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 426.0,
+    "pp_price": 213.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28506/adelaide-majestic-minima-hotel",
+    "title": "Adelaide: Majestic Minima Hotel",
+    "source": "helloworld",
+    "deal_id": "Adelaide: Majestic Minima Hotel"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 912.0,
+    "pp_price": 456.0,
+    "nights": 4.0,
+    "url": "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa",
+    "title": "Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa",
+    "source": "helloworld",
+    "deal_id": "Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 690.0,
+    "pp_price": 345.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28540/darwin-city-stay-rydges-darwin-central",
+    "title": "Darwin City Stay: Rydges Darwin Central",
+    "source": "helloworld",
+    "deal_id": "Darwin City Stay: Rydges Darwin Central"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 2230.0,
+    "pp_price": 1115.0,
+    "nights": 9.0,
+    "url": "https://www.flightcentre.co.nz/product/22108259",
+    "title": "Family Fiji Cruise from Auckland - NEW CRUISING FROM NZ",
+    "source": "flightcentre",
+    "deal_id": "Family Fiji Cruise from Auckland - NEW CRUISING FROM NZ"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 744.0,
+    "pp_price": 372.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28543/discover-alice-springs-crowne-plaza-alice-springs-lasseters",
+    "title": "Discover Alice Springs : Crowne Plaza Alice Springs Lasseters",
+    "source": "helloworld",
+    "deal_id": "Discover Alice Springs : Crowne Plaza Alice Springs Lasseters"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 756.0,
+    "pp_price": 378.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28541/darwin-city-stay-adina-apartment-hotel-darwin-waterfront",
+    "title": "Darwin City Stay: Adina Apartment Hotel Darwin Waterfront",
+    "source": "helloworld",
+    "deal_id": "Darwin City Stay: Adina Apartment Hotel Darwin Waterfront"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 762.0,
+    "pp_price": 381.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28507/adelaide-holiday-inn-express-adelaide-city-centre",
+    "title": "Adelaide: Holiday Inn Express Adelaide City Centre",
+    "source": "helloworld",
+    "deal_id": "Adelaide: Holiday Inn Express Adelaide City Centre"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 1792.0,
+    "pp_price": 896.0,
+    "nights": 7.0,
+    "url": "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments",
+    "title": "Niue: Scenic Matavai Resort - Apartments",
+    "source": "helloworld",
+    "deal_id": "Niue: Scenic Matavai Resort - Apartments"
+  },
+  {
+    "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported value: 'temperature' does not support 0.2 with this model. Only the default (1) value is supported.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': 'unsupported_value'}}",
+    "package_total_for_two": 786.0,
+    "pp_price": 393.0,
+    "nights": 3.0,
+    "url": "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley",
+    "title": "Discovery Parks - Barossa Valley",
+    "source": "helloworld",
+    "deal_id": "Discovery Parks - Barossa Valley"
+  }
+]
