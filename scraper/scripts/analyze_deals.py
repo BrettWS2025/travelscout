@@ -439,17 +439,17 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 resp = client.chat.completions.create(
                     model=MODEL,
                     messages=messages,
-                    temperature=1,
+                    temperature=0.2,
                     response_format={"type": "json_object"},
-                    max_completion_tokens=3000,
+                    max_tokens=3000,
                 )
                 content = (resp.choices[0].message.content or "").strip()
             else:
                 resp = openai.ChatCompletion.create(
                     model=MODEL,
                     messages=messages,
-                    temperature=1,
-                    max_completion_tokens=3000,
+                    temperature=0.2,
+                    max_tokens=3000,
                 )
                 content = (resp["choices"][0]["message"]["content"] or "").strip()
             parsed = safe_json_parse(content)
