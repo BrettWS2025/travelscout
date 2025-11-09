@@ -1,0 +1,10 @@
+{
+  "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\", 'type': 'invalid_request_error', 'param': 'max_tokens', 'code': 'unsupported_parameter'}}",
+  "package_total_for_two": 2230.0,
+  "pp_price": 1115.0,
+  "nights": 9.0,
+  "url": "https://www.flightcentre.co.nz/product/22108259",
+  "title": "Family Fiji Cruise from Auckland - NEW CRUISING FROM NZ",
+  "source": "flightcentre",
+  "deal_id": "Family Fiji Cruise from Auckland - NEW CRUISING FROM NZ"
+}

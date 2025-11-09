@@ -1,0 +1,10 @@
+{
+  "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\", 'type': 'invalid_request_error', 'param': 'max_tokens', 'code': 'unsupported_parameter'}}",
+  "package_total_for_two": 786.0,
+  "pp_price": 393.0,
+  "nights": 3.0,
+  "url": "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley",
+  "title": "Discovery Parks - Barossa Valley",
+  "source": "helloworld",
+  "deal_id": "Discovery Parks - Barossa Valley"
+}
