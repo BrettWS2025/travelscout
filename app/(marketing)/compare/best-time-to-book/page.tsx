@@ -1,5 +1,7 @@
 import { Hero } from "@/components/Hero";
 import { FeatureCards } from "@/components/FeatureCards";
+import ComparisonTable, { type ProductsColumn } from "@/components/ComparisonTable";
+import type { ProductOffer } from "@/lib/products";
 import WhenToBookCarousel from "@/components/WhenToBookCarousel";
 
 import dynamic from "next/dynamic";
