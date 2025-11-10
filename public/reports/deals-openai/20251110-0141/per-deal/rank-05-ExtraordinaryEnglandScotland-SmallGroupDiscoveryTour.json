@@ -1,0 +1,67 @@
+{
+  "deal_id": "Extraordinary England & Scotland - Small Group Discovery Tour",
+  "title": "Extraordinary England & Scotland - Small Group Discovery Tour",
+  "url": "https://www.flightcentre.co.nz/product/21749003",
+  "source": "flightcentre",
+  "nights": 9,
+  "pp_price": 10289,
+  "package_total_for_two": 20578,
+  "includes_flights": false,
+  "inclusions_evidence": "\u2022 \"9 nights in first class hotel accommodation\"; \u2022 \"Transport by private, first-class, air-conditioned motorcoach with free Wi-Fi.\"; \u2022 \"Selected guided sightseeing\"; \u2022 \"Meals: 9 Breakfasts & 1 Lunche.\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/21749003"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "First-class hotels along itinerary (Windsor, Oxford, Stratford-upon-Avon, Lake District, Edinburgh, Glasgow) \u2014 Globus first-class / 4-4.5 star hotels per itinerary",
+      "nights": 9,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://globustourseurope.com/g-tour-details/extraordinary-england-scotland-5738469",
+        "https://www.globaljourneys.com/trip/globus-de",
+        "https://www.avoyatravel.com/tours/globus/extraordinary-england-scotland-149969/"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Private first-class air-conditioned motorcoach with driver (inter-city transfers and transport)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21749003"
+        },
+        {
+          "label": "Selected guided sightseeing / Tour Director / Local Favorites experiences",
+          "price": null,
+          "source": "https://globustourseurope.com/g-tour-details/extraordinary-england-scotland-5738469"
+        },
+        {
+          "label": "Meals included in package (9 breakfasts, 1 lunch)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21749003"
+        }
+      ],
+      "notes": "The package bundles transport, multiple city hotel stays, guided sightseeing and some meals \u2014 these bundled services are difficult to price precisely via OTAs without exact hotels, dates and coach/guide supplier quotes."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 5,
+  "reasoning": "Unable to produce a reliable DIY total in the same currency and level of service because: (1) the provided Flight Centre price appears to be in a different/local currency (likely NZD) while comparable supplier listings (Globus/resellers) show published prices in USD; (2) the package bundles multiple non-hotel items (private coach, tour director, guided experiences and some meals) that are not straightforward to replicate or price exactly on booking engines without specific hotels, suppliers and departure date; (3) preliminary checks of the tour operator/reseller pages show per-person 'from' prices materially lower than the supplied 10289 figure (see citations), suggesting the Flight Centre package is unlikely to be clearly cheaper \u2014 a definitive savings calculation requires the deal currency and exact travel dates.",
+  "additional_notes": "To perform a conclusive comparison and compute DIY totals you can provide: (a) the currency of the pp_price (e.g., NZD or AUD), (b) specific departure date, or (c) permission to assume a target departure date so I can price exact hotels (room-for-2), rail/coach legs or domestic flights and local supplier rates. If you want, I can re-run the analysis converting currencies and pricing hotels/transport for a chosen departure date.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21749003",
+    "https://www.globaljourneys.com/trip/globus-de",
+    "https://globustourseurope.com/g-tour-details/extraordinary-england-and-scotland-5738469",
+    "https://www.avoyatravel.com/tours/globus/extraordinary-england-scotland-149969/",
+    "https://pavlus.com/globus-tour-details/extraordinary-england-and-scotland-1592874"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Extraordinary England & Scotland - Small Group Discovery Tour\",\n  \"title\": \"Extraordinary England & Scotland - Small Group Discovery Tour\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21749003\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9,\n  \"pp_price\": 10289,\n  \"package_total_for_two\": 20578,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\u2022 \\\"9 nights in first class hotel accommodation\\\"; \u2022 \\\"Transport by private, first-class, air-conditioned motorcoach with free Wi-Fi.\\\"; \u2022 \\\"Selected guided sightseeing\\\"; \u2022 \\\"Meals: 9 Breakfasts & 1 Lunche.\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/21749003\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"First-class hotels along itinerary (Windsor, Oxford, Stratford-upon-Avon, Lake District, Edinburgh, Glasgow) \u2014 Globus first-class / 4-4.5 star hotels per itinerary\",\n      \"nights\": 9,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://globustourseurope.com/g-tour-details/extraordinary-england-scotland-5738469\",\n        \"https://www.globaljourneys.com/trip/globus-de\",\n        \"https://www.avoyatravel.com/tours/globus/extraordinary-england-scotland-149969/\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Private first-class air-conditioned motorcoach with driver (inter-city transfers and transport)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21749003\"\n        },\n        {\n          \"label\": \"Selected guided sightseeing / Tour Director / Local Favorites experiences\",\n          \"price\": null,\n          \"source\": \"https://globustourseurope.com/g-tour-details/extraordinary-england-scotland-5738469\"\n        },\n        {\n          \"label\": \"Meals included in package (9 breakfasts, 1 lunch)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21749003\"\n        }\n      ],\n      \"notes\": \"The package bundles transport, multiple city hotel stays, guided sightseeing and some meals \u2014 these bundled services are difficult to price precisely via OTAs without exact hotels, dates and coach/guide supplier quotes.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 5,\n  \"reasoning\": \"Unable to produce a reliable DIY total in the same currency and level of service because: (1) the provided Flight Centre price appears to be in a different/local currency (likely NZD) while comparable supplier listings (Globus/resellers) show published prices in USD; (2) the package bundles multiple non-hotel items (private coach, tour director, guided experiences and some meals) that are not straightforward to replicate or price exactly on booking engines without specific hotels, suppliers and departure date; (3) preliminary checks of the tour operator/resel"
+}

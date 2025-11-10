@@ -1,0 +1,10 @@
+{
+  "_error": "openai_failed: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\", 'type': 'invalid_request_error', 'param': 'max_tokens', 'code': 'unsupported_parameter'}}",
+  "package_total_for_two": 3410.0,
+  "pp_price": 1705.0,
+  "nights": 7.0,
+  "url": "https://www.flightcentre.co.nz/product/21991030",
+  "title": "Colombo, Caves & Kandy",
+  "source": "flightcentre",
+  "deal_id": "Colombo, Caves & Kandy"
+}

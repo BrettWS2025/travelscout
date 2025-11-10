@@ -1,0 +1,12 @@
+{
+  "_error": "bad_json",
+  "_raw": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n ",
+  "_raw_snippet": "{\n  \"deal_id\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"title\": \"10-night Fly & Tour: Vietnam Express Southbound\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21944634\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 3525.0,\n  \"package_total_for_two\": 7050.0,\n  \"includes_flights\": true,\n ",
+  "package_total_for_two": 7050.0,
+  "pp_price": 3525.0,
+  "nights": 7.0,
+  "url": "https://www.flightcentre.co.nz/product/21944634",
+  "title": "10-night Fly & Tour: Vietnam Express Southbound",
+  "source": "flightcentre",
+  "deal_id": "10-night Fly & Tour: Vietnam Express Southbound"
+}

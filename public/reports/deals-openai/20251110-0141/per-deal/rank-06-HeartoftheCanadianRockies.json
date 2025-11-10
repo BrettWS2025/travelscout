@@ -1,0 +1,66 @@
+{
+  "deal_id": "Heart of the Canadian Rockies",
+  "title": "Heart of the Canadian Rockies",
+  "url": "https://www.flightcentre.co.nz/product/21842293",
+  "source": "flightcentre",
+  "nights": 9.0,
+  "pp_price": 4319.0,
+  "package_total_for_two": 8638.0,
+  "includes_flights": false,
+  "inclusions_evidence": "\u2022 \"Airfares & transfers are additional.\" \u2022 \"Tickets for the Icefields Explorer Experience at Columbia Icefields\" \u2022 \"Entrance fee to Banff National Park and Jasper National Park\" \u2022 \"Selected guided sightseeing\" \u2022 \"accommodation in Cosmos' hand-selected accommodations\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/21842293"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Cosmos hand-selected hotels in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver (specific properties vary by departure/date)",
+      "nights": 9.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://www.cosmos.com/tour/heart-canadian-rockies/8910/",
+        "https://legacy.cosmosvacations.ca/tour/heart-of-the-canadian-rockies/8910/"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Icefields Explorer Experience (Columbia Icefields) - ticket included in package",
+          "price": null,
+          "source": "https://www.cosmos.com/tour/heart-canadian-rockies/8910/"
+        },
+        {
+          "label": "Entrance fees to Banff & Jasper National Parks (package states included)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21842293"
+        },
+        {
+          "label": "Guided sightseeing / coach transport (included in tour price)",
+          "price": null,
+          "source": "https://www.cosmos.com/tour/heart-canadian-rockies/8910/"
+        }
+      ],
+      "notes": "I found official Cosmos product pages showing the same tour sold directly (different prices by vendor and date). Exact DIY component prices (hotels, park fees, Icefields Explorer tickets, coach transport) vary by travel dates, room type and currency and could not be reliably totalled from publicly-available pages for an exact like-for-like comparison."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 3,
+  "reasoning": "The Flight Centre listing explicitly states \"Airfares & transfers are additional\" (so flights not included). Cosmos (the tour operator) and reseller listings found online show substantially lower per-person starting prices for the same 'Heart of the Canadian Rockies' Cosmos tour on published supplier/reseller sites. I could not reliably compute a like-for-like DIY total in the same currency for the exact dates/room types from the available pages, so numeric DIY totals are set to null. Given the readily-found lower direct Cosmos/reseller prices versus the Flight Centre pp_price, this Flight Centre deal does not appear to represent a savings.",
+  "additional_notes": "If you want a precise numeric comparison (and to confirm whether Flight Centre has extras or higher-grade hotels included), provide a target departure date and currency preference so I can fetch exact Cosmos direct pricing for that date and, if needed, price hotel rooms and Icefields Explorer tickets individually for an apples-to-apples comparison.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21842293",
+    "https://www.cosmos.com/tour/heart-canadian-rockies/8910/",
+    "https://legacy.cosmosvacations.ca/tour/heart-of-the-canadian-rockies/8910/",
+    "https://www.avoyatravel.com/tours/cosmos/heart-of-the-canadian-rockies-153202/",
+    "https://travel55.co.uk/holidays/holiday/1141/rockies-canada-holidays-cosmos-tours"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Heart of the Canadian Rockies\",\n  \"title\": \"Heart of the Canadian Rockies\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21842293\",\n  \"source\": \"flightcentre\",\n  \"nights\": 9.0,\n  \"pp_price\": 4319.0,\n  \"package_total_for_two\": 8638.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\u2022 \\\"Airfares & transfers are additional.\\\" \u2022 \\\"Tickets for the Icefields Explorer Experience at Columbia Icefields\\\" \u2022 \\\"Entrance fee to Banff National Park and Jasper National Park\\\" \u2022 \\\"Selected guided sightseeing\\\" \u2022 \\\"accommodation in Cosmos' hand-selected accommodations\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/21842293\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Cosmos hand-selected hotels in Calgary, Banff, Jasper, Kamloops, Victoria, Vancouver (specific properties vary by departure/date)\",\n      \"nights\": 9.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.cosmos.com/tour/heart-canadian-rockies/8910/\",\n        \"https://legacy.cosmosvacations.ca/tour/heart-of-the-canadian-rockies/8910/\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Icefields Explorer Experience (Columbia Icefields) - ticket included in package\",\n          \"price\": null,\n          \"source\": \"https://www.cosmos.com/tour/heart-canadian-rockies/8910/\"\n        },\n        {\n          \"label\": \"Entrance fees to Banff & Jasper National Parks (package states included)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21842293\"\n        },\n        {\n          \"label\": \"Guided sightseeing / coach transport (included in tour price)\",\n          \"price\": null,\n          \"source\": \"https://www.cosmos.com/tour/heart-canadian-rockies/8910/\"\n        }\n      ],\n      \"notes\": \"I found official Cosmos product pages showing the same tour sold directly (different prices by vendor and date). Exact DIY component prices (hotels, park fees, Icefields Explorer tickets, coach transport) vary by travel dates, room type and currency and could not be reliably totalled from publicly-available pages for an exact like-for-like comparison.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 3,\n  \"reasoning\": \"The Flight Centre listing explicitly states \\\"Airfares & transfers are additional\\\" (so flights not included). Cosmos (the tour operator) and reseller listings found online show substantially lower per-person starting prices for the same 'Heart of the Canadian Rockies' Cosmos tour on published supplier/reseller sites. I could not reliably compute a like-for-like DIY total in the same currency for the exact dates/room types from the available pages, so numeric DIY totals are set to null. Given the readily-found lower direct Cosmos/reseller prices versus the Flig"
+}

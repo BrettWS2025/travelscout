@@ -1,0 +1,61 @@
+{
+  "deal_id": "Legendary Greece - Small Group Discovery Tour",
+  "title": "Legendary Greece - Small Group Discovery Tour",
+  "url": "https://www.flightcentre.co.nz/product/21748934",
+  "source": "flightcentre",
+  "nights": 8.0,
+  "pp_price": 5849.0,
+  "package_total_for_two": 11698.0,
+  "includes_flights": false,
+  "inclusions_evidence": "8 Breakfasts, 2 Lunches, 3 Dinners; hand-selected hotels and guided sightseeing; 'Price is for land, cruise and specified internal flights. International flights not included.'; Small Group Discovery limited to 18 guests.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/21748934",
+        "https://www.globaljourneys.com/trip/globus-dg"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Crowne Plaza Athens City Centre; Olympia Europa; Grecotel Filoxenia Kalamata; Kyniska Palace (Mystras); NJV Athens Plaza (or equivalent first-class/first-class/deluxe hotels listed by Globus)",
+      "nights": 8.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://www.globaljourneys.com/trip/globus-dg",
+        "https://globustourseurope.com/g-tour-details/legendary-greece-1401042"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Guided tours, coach transport, local guides, some sightseeing and Local Favorites (e.g., honey farm, winery visit, Aegina ferry)",
+          "price": null,
+          "source": "https://globustourseurope.com/g-tour-details/legendary-greece-1401042"
+        },
+        {
+          "label": "Meals included (8B,2L,3D) as part of the tour",
+          "price": null,
+          "source": "https://www.globaljourneys.com/trip/globus-dg"
+        }
+      ],
+      "notes": "Exact DIY pricing for replicating included guided sightseeing, transfers, local-experience visits and meals requires specific travel dates, origin airport and supplier availability. Without concrete travel dates/origin and explicit currency on the Flight Centre page, reliable live quotes from booking.com/Expedia/airlines cannot be produced."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Unable to produce reliable DIY numeric comparison because the deal page lacks travel dates and explicit currency/route; however the tour offers strong inclusions (8 breakfasts, guided sightseeing, small group max 18, multiple first-class hotels) while explicitly excluding international flights. That makes the package good value for land/cruise/tour inclusions but prevents an apples-to-apples DIY price comparison without dates/origin.",
+  "additional_notes": "To produce a numeric DIY comparison and confirm if Flight Centre is cheaper, please provide: desired departure date(s), departure airport/city (country), and preferred currency. With those I will fetch live flight fares and hotel rates (booking.com/Expedia/direct suppliers) and return a full cost breakdown and savings calculation.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21748934",
+    "https://globustourseurope.com/g-tour-details/legendary-greece-1401042",
+    "https://www.globaljourneys.com/trip/globus-dg",
+    "https://www.affordabletours.com/t/208503-legendary-greece-2026-small-group"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"title\": \"Legendary Greece - Small Group Discovery Tour\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21748934\",\n  \"source\": \"flightcentre\",\n  \"nights\": 8.0,\n  \"pp_price\": 5849.0,\n  \"package_total_for_two\": 11698.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"8 Breakfasts, 2 Lunches, 3 Dinners; hand-selected hotels and guided sightseeing; 'Price is for land, cruise and specified internal flights. International flights not included.'; Small Group Discovery limited to 18 guests.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/21748934\",\n        \"https://www.globaljourneys.com/trip/globus-dg\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Crowne Plaza Athens City Centre; Olympia Europa; Grecotel Filoxenia Kalamata; Kyniska Palace (Mystras); NJV Athens Plaza (or equivalent first-class/first-class/deluxe hotels listed by Globus)\",\n      \"nights\": 8.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.globaljourneys.com/trip/globus-dg\",\n        \"https://globustourseurope.com/g-tour-details/legendary-greece-1401042\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Guided tours, coach transport, local guides, some sightseeing and Local Favorites (e.g., honey farm, winery visit, Aegina ferry)\",\n          \"price\": null,\n          \"source\": \"https://globustourseurope.com/g-tour-details/legendary-greece-1401042\"\n        },\n        {\n          \"label\": \"Meals included (8B,2L,3D) as part of the tour\",\n          \"price\": null,\n          \"source\": \"https://www.globaljourneys.com/trip/globus-dg\"\n        }\n      ],\n      \"notes\": \"Exact DIY pricing for replicating included guided sightseeing, transfers, local-experience visits and meals requires specific travel dates, origin airport and supplier availability. Without concrete travel dates/origin and explicit currency on the Flight Centre page, reliable live quotes from booking.com/Expedia/airlines cannot be produced.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Unable to produce reliable DIY numeric comparison because the deal page lacks travel dates and explicit currency/route; however the tour offers strong inclusions (8 breakfasts, guided sightseeing, small group max 18, multiple first-class hotels) while explicitly excluding international flights. That makes the package good value for land/cruise/tour inclusions but prevents an apples-to-apples DIY price comparison without dates/origin.\",\n  \"additional_notes\": \"To produce a numeric DIY comparison and confirm if Flight Centre is cheaper, please provide: desired departure date(s), departure airport/city (country), and preferred currency. With those I will fetch live flig"
+}

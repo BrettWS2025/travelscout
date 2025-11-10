@@ -1,0 +1,61 @@
+{
+  "deal_id": "Japan Uncovered",
+  "title": "Japan Uncovered",
+  "url": "https://www.flightcentre.co.nz/product/22015632",
+  "source": "flightcentre",
+  "nights": 14.0,
+  "pp_price": 14779.0,
+  "package_total_for_two": 29558.0,
+  "includes_flights": true,
+  "inclusions_evidence": "\u201cReturn airfares from Auckland to Japan PLUS ... 18-day fully inclusive tour with Wendy Wu Tours from Osaka to Tokyo, twin share\u201d; \u201c15-nights accommodation 15 Breakfasts, 14 Lunches, 15 Dinners Touring with Guides and entrance fees\u201d",
+  "diy_breakdown": {
+    "flights": {
+      "included": true,
+      "assumed_route": "Roundtrip Auckland (AKL) to Japan (Osaka KIX or Tokyo NRT/HND) matching tour dates (approx depart 05 May 2026, return 26 May 2026 \u2014 18-day tour window inferred from page text)",
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/22015632"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": null,
+      "nights": 15,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/22015632"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Meals (15 breakfasts, 14 lunches, 15 dinners)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22015632"
+        },
+        {
+          "label": "Guided tours & entrance fees",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22015632"
+        },
+        {
+          "label": "Local guides / fully escorted services",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22015632"
+        }
+      ],
+      "notes": "DIY component prices (flights, hotels, meals, tours, transfers) could not be reliably fetched during this run; numeric DIY component prices therefore set to null."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Package includes return international flights from Auckland, an 18-day fully escorted Wendy Wu tour (Osaka to Tokyo), 15 nights accommodation and most meals and entrance fees \u2014 strong inclusions for travellers prioritizing convenience and guided experiences. However the absolute per-person price is high and I could not verify DIY flight + 15-night independent-booking costs due to inability to fetch live supplier pricing in this session, so I cannot quantify savings.",
+  "additional_notes": "I attempted to fetch live DIY component prices but the web-fetch step failed; if you want precise savings calculations I can re-run live searches (flights on OTAs and hotels on booking platforms) and update numeric DIY totals and savings.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22015632"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Japan Uncovered\",\n  \"title\": \"Japan Uncovered\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22015632\",\n  \"source\": \"flightcentre\",\n  \"nights\": 14.0,\n  \"pp_price\": 14779.0,\n  \"package_total_for_two\": 29558.0,\n  \"includes_flights\": true,\n  \"inclusions_evidence\": \"\u201cReturn airfares from Auckland to Japan PLUS ... 18-day fully inclusive tour with Wendy Wu Tours from Osaka to Tokyo, twin share\u201d; \u201c15-nights accommodation 15 Breakfasts, 14 Lunches, 15 Dinners Touring with Guides and entrance fees\u201d\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": true,\n      \"assumed_route\": \"Roundtrip Auckland (AKL) to Japan (Osaka KIX or Tokyo NRT/HND) matching tour dates (approx depart 05 May 2026, return 26 May 2026 \u2014 18-day tour window inferred from page text)\",\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/22015632\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": null,\n      \"nights\": 15,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/22015632\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Meals (15 breakfasts, 14 lunches, 15 dinners)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22015632\"\n        },\n        {\n          \"label\": \"Guided tours & entrance fees\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22015632\"\n        },\n        {\n          \"label\": \"Local guides / fully escorted services\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22015632\"\n        }\n      ],\n      \"notes\": \"DIY component prices (flights, hotels, meals, tours, transfers) could not be reliably fetched during this run; numeric DIY component prices therefore set to null.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Package includes return international flights from Auckland, an 18-day fully escorted Wendy Wu tour (Osaka to Tokyo), 15 nights accommodation and most meals and entrance fees \u2014 strong inclusions for travellers prioritizing convenience and guided experiences. However the absolute per-person price is high and I could not verify DIY flight + 15-night independent-booking costs due to inability to fetch live supplier pricing in this session, so I cannot quantify savings.\",\n  \"additional_notes\": \"I attempted to fetch live DIY component prices but the web-fetch step failed; if you want precise savings calculations I can re-run live searches (flights on OTAs and hotels on booking platforms) and update numeric DIY totals and savings.\",\n  \"citations\": [\n    \"https://www.flightcentre.co.nz/product/22015632\"\n  ]\n}"
+}
