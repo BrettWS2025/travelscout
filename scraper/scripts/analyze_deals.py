@@ -5,9 +5,7 @@ Fast analyze: dedupe, prune, parallel fetch, snippet extraction, Top‑N outputs
 
 ENV (new + existing):
   OPENAI_API_KEY               (required)
-  OPENAI_MODEL=gpt-4o-mini     (optional; set to gpt-5-mini for best browsing behavior)
-  WEB_SEARCH=1                 (enable hosted web search tool; 1=on, 0=off)
-  FORCE_WEB_SEARCH=1           (force the model to run a search for each deal; 1=on, 0=off)
+  OPENAI_MODEL=gpt-4o-mini     (optional)
   TOP_N=20                     (save per-deal JSONs only for Top‑N)
   PRUNE_PERCENTILE=60          (keep cheapest X% by heuristic before OpenAI; 0=off)
   SHORTLIST_SIZE=400           (cap count after pruning; 0=off)
@@ -39,7 +37,7 @@ from bs4 import BeautifulSoup
 
 # OpenAI SDK (>=1.0 preferred)
 try:
-    from openai import OpenAI  # new client (supports Responses API + tools like web_search)
+    from openai import OpenAI  # new client
 except Exception:
     OpenAI = None
 try:
@@ -72,9 +70,6 @@ READ_TIMEOUT = int(os.environ.get("READ_TIMEOUT", "10"))
 PARALLEL_FETCH = int(os.environ.get("PARALLEL_FETCH", "12"))
 CACHE_PAGES = os.environ.get("CACHE_PAGES", "1") not in ("0", "false", "False", "")
 PAUSE_BETWEEN_CALLS = float(os.environ.get("PAUSE_BETWEEN_CALLS", "0.15"))
-WEB_SEARCH = os.environ.get("WEB_SEARCH", "1") not in ("0", "false", "False", "")
-FORCE_WEB_SEARCH = os.environ.get("FORCE_WEB_SEARCH", "1") not in ("0", "false", "False", "")
-
 USER_AGENT = os.environ.get(
     "USER_AGENT", "TravelScoutBot/1.0 (+https://travelscout.co.nz) PythonRequests"
 )
@@ -363,7 +358,6 @@ def openai_client():
         print("ERROR: OPENAI_API_KEY is not set.", file=sys.stderr)
         sys.exit(1)
     if OpenAI is not None:
-        # New SDK client; supports Responses API (with web_search tool)
         return OpenAI(api_key=api_key), "new"
     if openai is None:
         print("ERROR: openai SDK not installed.", file=sys.stderr)
@@ -399,9 +393,8 @@ def safe_json_parse(content: str) -> Dict[str, Any]:
 
 def build_messages_for_deal(deal_norm: Dict[str, Any], page_text_snippet: str) -> List[Dict[str, str]]:
     system = (
-        "You are a meticulous travel analyst. You can use a web_search tool to browse the web for current prices "
-        "and evidence. Always verify DIY prices with live sources and include direct URLs in the JSON 'citations' field. "
-        "Return only valid JSON per instructions. Do not include explanations outside JSON."
+        "You are a meticulous travel analyst. Return only valid JSON per instructions. "
+        "Do not include explanations outside JSON."
     )
     deal_block = {
         "id": deal_norm["id"],
@@ -436,82 +429,36 @@ This payload is ONE deal. Evaluate it in isolation and return the strict JSON sc
     ]
 
 def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
-    """
-    Use the Responses API with hosted web_search tool so the model can actually fetch & cite DIY prices.
-    Falls back to Chat Completions (no browsing) only if Responses is unavailable.
-    """
     client, flavor = openai_client()
     attempts = 0
     last_err: Optional[str] = None
-
-    # Configure tools
-    tools = [{"type": "web_search"}] if WEB_SEARCH else []
-    tool_choice = {"type": "web_search"} if (WEB_SEARCH and FORCE_WEB_SEARCH) else "auto"
-
     while attempts < 3:
         attempts += 1
         try:
             if flavor == "new":
-                # Prefer Responses API (supports tools like web_search)
-                try:
-                    resp = client.responses.create(
-                        model=MODEL,
-                        input=messages,              # ChatML-style messages
-                        tools=tools,                 # enable hosted web search
-                        tool_choice=tool_choice,     # force or auto
-                        max_output_tokens=3000,
-                    )
-                    content = getattr(resp, "output_text", None) or ""
-                    if not content:
-                        # Best-effort aggregation if SDK version lacks output_text
-                        try:
-                            parts = []
-                            out = getattr(resp, "output", None)
-                            if out:
-                                for item in out:
-                                    if getattr(item, "type", "") == "message":
-                                        for c in getattr(item, "content", []):
-                                            text_part = getattr(c, "text", None)
-                                            if isinstance(text_part, str):
-                                                parts.append(text_part)
-                            content = "".join(parts)
-                        except Exception:
-                            pass
-                    if not content:
-                        raise RuntimeError("No content from Responses API")
-                except Exception as e:
-                    # Fallback: Chat Completions (no browsing)
-                    resp = client.chat.completions.create(
-                        model=MODEL,
-                        messages=messages,
-                        temperature=1,
-                        max_tokens=3000,
-                    )
-                    content = (resp.choices[0].message.content or "").strip()
-
-                parsed = safe_json_parse(content)
-                if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
-                    parsed["_raw_snippet"] = content[:3000]
-                return parsed
-
+                resp = client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages,
+                    temperature=0.2,
+                    response_format={"type": "json_object"},
+                    max_tokens=3000,
+                )
+                content = (resp.choices[0].message.content or "").strip()
             else:
-                # Legacy shim: Chat Completions only (no browsing)
                 resp = openai.ChatCompletion.create(
                     model=MODEL,
                     messages=messages,
-                    temperature=1,
+                    temperature=0.2,
                     max_tokens=3000,
                 )
                 content = (resp["choices"][0]["message"]["content"] or "").strip()
-                parsed = safe_json_parse(content)
-                if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
-                    parsed["_raw_snippet"] = content[:3000]
-                return parsed
-
+            parsed = safe_json_parse(content)
+            if isinstance(parsed, dict) and "_raw_snippet" not in parsed:
+                parsed["_raw_snippet"] = content[:3000]
+            return parsed
         except Exception as e:
             last_err = str(e)
             time.sleep(0.8 * attempts)
-
     return {"_error": f"openai_failed: {last_err or 'unknown'}"}
 
 def ensure_dir(p: Path):
@@ -564,8 +511,6 @@ def main():
         "parallel_fetch": PARALLEL_FETCH,
         "read_timeout": READ_TIMEOUT,
         "cache_pages": bool(CACHE_PAGES),
-        "web_search": bool(WEB_SEARCH),
-        "force_web_search": bool(FORCE_WEB_SEARCH),
     }
     (out_dir / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
