@@ -1,3 +1,5 @@
+import { Hero } from "@/components/Hero";
+import { FeatureCards } from "@/components/FeatureCards";
 import WhenToBookCarousel from "@/components/WhenToBookCarousel";
 
 import dynamic from "next/dynamic";
@@ -14,3 +16,5 @@ const InternationalFlightBookingTimingChart = dynamic(
   () => import("@/components/InternationalFlightBookingTimingChart"),
   { ssr: false }
 );
+
+
