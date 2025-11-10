@@ -1,14 +1,13 @@
+// imports you KEEP
 import { Hero } from "@/components/Hero";
 import { FeatureCards } from "@/components/FeatureCards";
-import ProductsTable, { type ProductsColumn } from "@/components/ComparisonTable";
-import type { ProductOffer } from "@/lib/products";
 import { TopDestinationsTable } from "@/components/TopDestinationsTable";
 import { TopDealsTable } from "@/components/TopDealsTable";
-
-
 import WhenToBookCarousel from "@/components/WhenToBookCarousel";
-
+import Link from "next/link";
 import dynamic from "next/dynamic";
+
+// dynamic charts...
 const DomesticFlightBookingTimingChart = dynamic(
   () => import("@/components/DomesticFlightBookingTimingChart"),
   { ssr: false }
@@ -17,94 +16,10 @@ const AusPacificFlightBookingTimingChart = dynamic(
   () => import("@/components/AusPacificFlightBookingTimingChart"),
   { ssr: false }
 );
-// NEW: International
 const InternationalFlightBookingTimingChart = dynamic(
   () => import("@/components/InternationalFlightBookingTimingChart"),
   { ssr: false }
 );
-
-// --- Popular Comparisons (Cruises) ---
-const popularComparisonRows: ProductOffer[] = [
-  {
-    id: "cmp-Princess",
-    vendor: "Princess Cruises",
-    url: "#",
-    priceText: "$$",
-    policy: "Classic vibe",
-    title: "Princess Plus/Premier - $$-$$$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-NCL",
-    vendor: "Norwegian Cruise Lines",
-    url: "#",
-    priceText: "$$",
-    policy: "Dining and nightlife vibe",
-    title: "More At Sea - $$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-Carnival",
-    vendor: "Carnival Cruise Lines",
-    url: "https://www.carnival.com/",
-    priceText: "$",
-    policy: "Budget friendly family fun",
-    title: "CHEERS! - $-$$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-RC",
-    vendor: "Royal Caribbean",
-    url: "#",
-    priceText: "$$-$$$",
-    policy: "A little more expenny family fun",
-    title: "Beverage/Voom/The Key - $-$$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-Disney",
-    vendor: "Disney Cruise Line",
-    url: "#",
-    priceText: "$$$$",
-    policy: "Very expenny family fun",
-    title: "Various Upgrades - $$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-MSC",
-    vendor: "MSC Cruises",
-    url: "#",
-    priceText: "$-$$",
-    policy: "Euro family vibes",
-    title: "Drinks/Wifi Promos/MSC Yacht Club - $-$$$",
-    destination: "—",
-    brand: "No - additional costs apply",
-  },
-  {
-    id: "cmp-Virgin",
-    vendor: "Virgin Voyages",
-    url: "#",
-    priceText: "$$$",
-    policy: "Foodies and wellness retreat vibes",
-    title: "Premium Wifi upgrade - $",
-    destination: "—",
-    brand: "Yes",
-  },
-];
-
-const popularComparisonColumns: ProductsColumn[] = [
-  { key: "vendor", header: "Cruise Line", sortable: false },
-  { key: "price", header: "Cost", sortable: false, align: "left" },
-  { key: "title", header: "Add Ons", sortable: false },
-  { key: "policy", header: "Vibe Check", sortable: false },
-  { key: "brand", header: "Free wifi", sortable: false },
-  { key: "link", header: "", sortable: false, align: "right", widthClass: "whitespace-nowrap" },
-];
 
 export default function Home() {
   return (
@@ -113,48 +28,51 @@ export default function Home() {
       <FeatureCards />
 
       {/* When to Book – sliding gallery */}
-  <section className="card p-6">
-  <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
-    Best Time to Book
-  </h2>
-  <p className="mb-4" style={{ color: "var(--muted)" }}>
-    We analysed over 200,000 flights this year to bring you the best times to book to get the best deals
-  </p>
-
-  <WhenToBookCarousel
-    items={[
-      {
-        key: "domestic",
-        title: "Domestic New Zealand",
-        node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
-      },
-      {
-        key: "aus-pacific",
-        title: "Australia & Pacific Islands",
-        node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
-      },
-      {
-        key: "international",
-        title: "International",
-        node: <InternationalFlightBookingTimingChart currency="NZD" dark />,
-      },
-    ]}
-  />
-  </section>
-
-      {/* Cruise Comparisons */}
       <section className="card p-6">
-        <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
-        <p style={{ color: "var(--muted)" }} className="mb-4">
-          Cruising season is here and we are bringing you the best information to ensure you know what you are getting into before you set sail!
+        <h2 className="text-2xl font-semibold mb-2" style={{ color: "var(--text)" }}>
+          Best Time to Book
+        </h2>
+        <p className="mb-4" style={{ color: "var(--muted)" }}>
+          We analysed over 200,000 flights this year to bring you the best times to book to get the best deals
         </p>
-        <ProductsTable
-          rows={popularComparisonRows}
-          columns={popularComparisonColumns}
-          maxColumns={7}
-          emptyText="No comparison rows yet."
-          tone="onDark"
+
+        <WhenToBookCarousel
+          items={[
+            {
+              key: "domestic",
+              title: "Domestic New Zealand",
+              node: <DomesticFlightBookingTimingChart currency="NZD" dark />,
+            },
+            {
+              key: "aus-pacific",
+              title: "Australia & Pacific Islands",
+              node: <AusPacificFlightBookingTimingChart currency="NZD" dark />,
+            },
+            {
+              key: "international",
+              title: "International",
+              node: <InternationalFlightBookingTimingChart currency="NZD" dark />,
+            },
+          ]}
         />
+      </section>
+
+      {/* CTA to new Cruise page */}
+      <section className="card p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
+            <p style={{ color: "var(--muted)" }}>
+              Compare cruise lines, inclusions, and vibes in one place.
+            </p>
+          </div>
+          <Link
+            href="/compare/cruise"
+            className="inline-flex items-center rounded-2xl px-4 py-2 border border-[var(--border)] hover:bg-[var(--card)] transition"
+          >
+            View comparisons →
+          </Link>
+        </div>
       </section>
 
       {/* Top Destinations */}

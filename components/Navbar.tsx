@@ -36,9 +36,9 @@ const MENU: MenuSection[] = [
       { label: "Airlines", href: "/(product)/compare#airpoints" },
       { label: "Hotels", href: "/(product)/compare#cards" },
       { label: "Rental Cars", href: "/(product)/compare#lounges" },
-      { label: "Cruising", href: "/(product)/compare#lounges" },
-      { label: "Tours", href: "/(product)/compare#lounges" },
       { label: "Best Time to Book", href: "/compare/best-time-to-book" },
+      { label: "Cruises", href: "/compare/cruise" },
+      { label: "Tours", href: "/(product)/compare#lounges" },
       { label: "Travel Insurance", href: "/compare/travel-insurance" },
       {
         label: "Travel Agencies, OTAs and Direct Bookings",
@@ -92,8 +92,6 @@ const MENU: MenuSection[] = [
  * without deleting their configuration.
  */
 const HIDE_KEYS = new Set<string>(["guides", "tips"]);
-
-// Derived visible menu (desktop + mobile)
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
@@ -146,7 +144,6 @@ function NavDropdown({ section }: { section: MenuSection }) {
   const Icon = section.icon;
 
   return (
-    // pb-2 extends hover area; remove vertical gap between trigger and menu
     <div
       className="relative pb-2"
       onMouseEnter={() => setOpen(true)}
@@ -208,40 +205,47 @@ export function Navbar() {
         backdropFilter: "saturate(160%) blur(12px)",    // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
-        isolation: "isolate",                           // its own stacking context
+        isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* 2× bigger, perfectly centered, bar height unchanged.
-            Keep wrapper small (h-10) so layout height stays the same.
-            Center the absolutely-positioned image relative to the row by offsetting 32px (py-4).
-            Aspect ratio ≈ 706 / 313 ≈ 2.255 → widths below match height for no overlap.
-        */}
-        <Link href="/" className="relative flex items-center" style={{ color: "var(--text)" }}>
-          <span className="relative block h-10 w-[433px] md:w-[541px] overflow-visible">
+        {/* Keep desktop the same; clamp logo width on mobile so it can't push the burger off-screen */}
+        <Link
+          href="/"
+          className="relative flex items-center min-w-0 shrink"
+          style={{ color: "var(--text)" }}
+        >
+          <span
+            className="
+              relative block h-10
+              w-[433px] max-w-[calc(100vw-72px)]   /* <-- clamp on mobile */
+              md:w-[541px] md:max-w-none           /* <-- desktop unchanged */
+              overflow-visible
+            "
+          >
             <Image
-              src="/TravelScout Logo 1 (5).png"
+              src="/TravelScout-Main.png"
               alt="TravelScout"
               width={706}
               height={313}
               priority
               className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
-              sizes="(max-width: 768px) 433px, 541px"
+              sizes="(max-width: 768px) calc(100vw - 72px), 541px"
             />
           </span>
           <span className="sr-only">TravelScout</span>
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop nav (unchanged) */}
         <nav className="hidden md:flex items-center gap-6">
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
         </nav>
 
-        {/* Mobile burger */}
+        {/* Mobile burger: fixed 40×40 hit area; stays visible */}
         <button
-          className="md:hidden"
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
@@ -251,7 +255,7 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (unchanged) */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
           <div className="card p-2" style={{ color: "var(--text)" }}>

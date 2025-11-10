@@ -52,7 +52,7 @@ export function Hero() {
 
         {/* Centered CTA pill (only this part is clickable) */}
         <Link
-          href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010#Inclusions"
+          href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open the Plantation Island deal (opens in a new tab)"

@@ -4,3 +4,7 @@ rapidfuzz==3.9.6
 pydantic==2.9.2
 scrapy-playwright>=0.0.33
 playwright>=1.44
+openai>=1.40.0,<2
+requests>=2.32.0,<3
+beautifulsoup4>=4.12.3,<5
+lxml>=4.9.4,<6
