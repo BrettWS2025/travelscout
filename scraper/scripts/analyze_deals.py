@@ -439,7 +439,7 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 resp = client.chat.completions.create(
                     model=MODEL,
                     messages=messages,
-                    temperature=0,
+                    temperature=1,
                     response_format={"type": "json_object"},
                     max_completion_tokens=3000,
                 )
@@ -448,7 +448,7 @@ def call_openai(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 resp = openai.ChatCompletion.create(
                     model=MODEL,
                     messages=messages,
-                    temperature=0,
+                    temperature=1,
                     max_completion_tokens=3000,
                 )
                 content = (resp["choices"][0]["message"]["content"] or "").strip()
