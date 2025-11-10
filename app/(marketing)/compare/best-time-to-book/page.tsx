@@ -20,8 +20,6 @@ const InternationalFlightBookingTimingChart = dynamic(
 export default function Home() {
   return (
     <div className="space-y-12">
-      <Hero />
-      <FeatureCards />
 
       {/* When to Book – sliding gallery */}
       <section className="card p-6">
