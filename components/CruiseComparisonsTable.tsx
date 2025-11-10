@@ -71,7 +71,7 @@ const rows: ProductOffer[] = [
     vendor: "Virgin Voyages",
     url: "#",
     priceText: "$$$",
-    policy: "Foodies and wellness retreat vibes",
+    policy: "Foodies and wellness retreats",
     title: "Premium Wifi upgrade - $",
     destination: "—",
     brand: "Yes",
@@ -88,7 +88,7 @@ const columns: ProductsColumn[] = [
 ];
 
 type Props = {
-  tone?: "onDark" | "onLight";
+  tone?: "onDark" | "light";  // 👈 match the child component
   maxColumns?: number;
   emptyText?: string;
 };
@@ -104,7 +104,7 @@ export default function CruiseComparisonsTable({
       columns={columns}
       maxColumns={maxColumns}
       emptyText={emptyText}
-      tone={tone}
+      tone={tone}          // ✅ OK now
     />
   );
 }
