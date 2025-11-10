@@ -1,0 +1,71 @@
+{
+  "deal_id": "Getaway to Norfolk Island - NEW CRUISING FROM NZ",
+  "title": "Getaway to Norfolk Island - NEW CRUISING FROM NZ",
+  "url": "https://www.flightcentre.co.nz/product/22108397",
+  "source": "flightcentre",
+  "nights": 4.0,
+  "pp_price": 695.0,
+  "package_total_for_two": 1390.0,
+  "includes_flights": false,
+  "inclusions_evidence": "\"Inside Stateroom, twin share.\"; \"AUD$200* Onboard Spending Money per stateroom\"; \"Main meals onboard\"; \"Entertainment\"; \"Government & port taxes\"; \"Gratuities are included in your cruise fare.\"; \"Domestic airfares & transfers, if requried, are additional.\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": "Auckland return (domestic/international flights to/from Auckland not included)",
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/22108397"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Inside Stateroom on cruise ship (accommodation embedded in cruise fare)",
+      "nights": 4.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/22108397"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Onboard spending money per stateroom",
+          "price": 200,
+          "source": "https://www.flightcentre.co.nz/product/22108397"
+        },
+        {
+          "label": "Main meals onboard",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22108397"
+        },
+        {
+          "label": "Entertainment (onboard)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22108397"
+        },
+        {
+          "label": "Government & port taxes",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22108397"
+        },
+        {
+          "label": "Gratuities",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/22108397"
+        }
+      ],
+      "notes": "Deal is a cruise fare including stateroom, meals, entertainment, port taxes, gratuities and onboard credit. Domestic/international flights and transfers are explicitly stated as additional."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "I could not reliably source competitor (DIY) pricing from booking.com/Expedia or cruise line fares with the provided materials, so DIY totals are null. Based on the deal text, the cruise fare includes an inside stateroom (twin share), main meals, entertainment, port taxes, gratuities and AUD200 onboard credit per stateroom which represents good value for a short 4-night cruise. However flights/transfers are not included and would add to the true door-to-door cost, preventing a verified savings comparison.",
+  "additional_notes": "Numeric DIY comparisons were not possible because external pricing sources were not provided and cannot be invented. Deal length (4 nights) is within allowed range.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/22108397"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Getaway to Norfolk Island - NEW CRUISING FROM NZ\",\n  \"title\": \"Getaway to Norfolk Island - NEW CRUISING FROM NZ\",\n  \"url\": \"https://www.flightcentre.co.nz/product/22108397\",\n  \"source\": \"flightcentre\",\n  \"nights\": 4.0,\n  \"pp_price\": 695.0,\n  \"package_total_for_two\": 1390.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\\\"Inside Stateroom, twin share.\\\"; \\\"AUD$200* Onboard Spending Money per stateroom\\\"; \\\"Main meals onboard\\\"; \\\"Entertainment\\\"; \\\"Government & port taxes\\\"; \\\"Gratuities are included in your cruise fare.\\\"; \\\"Domestic airfares & transfers, if requried, are additional.\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": \"Auckland return (domestic/international flights to/from Auckland not included)\",\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/22108397\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Inside Stateroom on cruise ship (accommodation embedded in cruise fare)\",\n      \"nights\": 4.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/22108397\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Onboard spending money per stateroom\",\n          \"price\": 200,\n          \"source\": \"https://www.flightcentre.co.nz/product/22108397\"\n        },\n        {\n          \"label\": \"Main meals onboard\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22108397\"\n        },\n        {\n          \"label\": \"Entertainment (onboard)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22108397\"\n        },\n        {\n          \"label\": \"Government & port taxes\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22108397\"\n        },\n        {\n          \"label\": \"Gratuities\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/22108397\"\n        }\n      ],\n      \"notes\": \"Deal is a cruise fare including stateroom, meals, entertainment, port taxes, gratuities and onboard credit. Domestic/international flights and transfers are explicitly stated as additional.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"I could not reliably source competitor (DIY) pricing from booking.com/Expedia or cruise line fares with the provided materials, so DIY totals are null. Based on the deal text, the cruise fare includes an inside stateroom (twin share), main meals, entertainment, port taxes, gratuities and AUD200 onboard credit per stateroom which represents good value for a short 4-night cruise. However flights/transfers are not included and would add to the true door-to-door cost, preventing a verified savings comparison.\",\n  \"additional_notes\": \"Numeric DIY comparisons were not possible because external pricing sources were not "
+}

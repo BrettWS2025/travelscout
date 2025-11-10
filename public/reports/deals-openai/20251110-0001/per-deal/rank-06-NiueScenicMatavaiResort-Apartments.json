@@ -1,0 +1,54 @@
+{
+  "deal_id": "Niue: Scenic Matavai Resort - Apartments",
+  "title": "Niue: Scenic Matavai Resort - Apartments",
+  "url": "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments",
+  "source": "helloworld",
+  "nights": 7,
+  "pp_price": 896,
+  "package_total_for_two": 1792,
+  "includes_flights": false,
+  "inclusions_evidence": "INCLUSIONS: 7 nights accommodation & bonus offers as outlined. Return Airport transfers. IMPORTANT INFORMATION: International and domestic airfares are not included.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Scenic Matavai Resort - Apartments (self-catering Standard Studio apartments)",
+      "nights": 7,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Return airport transfers (not a DIY cost sourced)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments"
+        },
+        {
+          "label": "Bonus offers as outlined (unspecified on page)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments"
+        }
+      ],
+      "notes": "No external pricing for hotel rooms, flights or transfers was retrieved. DIY prices could not be reliably obtained from booking engines within this assessment."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Cannot verify DIY pricing because external booking site prices were not sourced. The package offers 7 nights plus return airport transfers for 1792 total for two (pp 896) and excludes international/domestic airfares. Given inclusion of transfers and the remote Niue location, the deal appears reasonable value, but absence of flight pricing and unspecified 'bonus offers' prevents confirming concrete savings.",
+  "additional_notes": "To confirm this as a top-10 saving, obtain hotel room-rate quotes for a 7-night studio and roundtrip flights to Niue for two from booking platforms (e.g., Booking.com, Expedia, and airline sites) and compare totals. Also clarify what the 'bonus offers' include.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Niue: Scenic Matavai Resort - Apartments\",\n  \"title\": \"Niue: Scenic Matavai Resort - Apartments\",\n  \"url\": \"https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments\",\n  \"source\": \"helloworld\",\n  \"nights\": 7,\n  \"pp_price\": 896,\n  \"package_total_for_two\": 1792,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: 7 nights accommodation & bonus offers as outlined. Return Airport transfers. IMPORTANT INFORMATION: International and domestic airfares are not included.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Scenic Matavai Resort - Apartments (self-catering Standard Studio apartments)\",\n      \"nights\": 7,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Return airport transfers (not a DIY cost sourced)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments\"\n        },\n        {\n          \"label\": \"Bonus offers as outlined (unspecified on page)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments\"\n        }\n      ],\n      \"notes\": \"No external pricing for hotel rooms, flights or transfers was retrieved. DIY prices could not be reliably obtained from booking engines within this assessment.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Cannot verify DIY pricing because external booking site prices were not sourced. The package offers 7 nights plus return airport transfers for 1792 total for two (pp 896) and excludes international/domestic airfares. Given inclusion of transfers and the remote Niue location, the deal appears reasonable value, but absence of flight pricing and unspecified 'bonus offers' prevents confirming concrete savings.\",\n  \"additional_notes\": \"To confirm this as a top-10 saving, obtain hotel room-rate quotes for a 7-night studio and roundtrip flights to Niue for two from booking platforms (e.g., Booking.com, Expedia, and airline sites) and compare totals. Also clarify what the 'bonus offers' include.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28852/niue-scenic-matavai-resort-apartments\"\n  ]\n}"
+}

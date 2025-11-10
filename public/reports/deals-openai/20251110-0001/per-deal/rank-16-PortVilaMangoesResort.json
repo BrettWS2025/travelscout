@@ -1,0 +1,57 @@
+{
+  "deal_id": "Port Vila: Mangoes Resort",
+  "title": "Port Vila: Mangoes Resort",
+  "url": "https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort",
+  "source": "helloworld",
+  "nights": 6,
+  "pp_price": 1086,
+  "package_total_for_two": 2172,
+  "includes_flights": false,
+  "inclusions_evidence": "Includes 6 nights at Mangoes Resort - Light breakfast daily per person. - FREE Wi-Fi. - Use of gym and tennis court via The Terraces Boutique Apartments. Return airport transfers",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": []
+    },
+    "hotel": {
+      "name_or_hint": "Mangoes Resort (Lagoon View / Pool Bungalow referenced on page)",
+      "nights": 6,
+      "price_total_for_stay": null,
+      "sources": []
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Light breakfast (daily) - DIY cost estimate",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Return airport transfers - DIY cost estimate",
+          "price": null,
+          "source": null
+        },
+        {
+          "label": "Free Wi-Fi / gym / tennis - included in agency deal",
+          "price": 0,
+          "source": "https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort"
+        }
+      ],
+      "notes": "I could not retrieve real-time DIY hotel, transfer or flight prices (external booking sites) from this environment. Numeric DIY fields are therefore null. The agency deal includes breakfast and return airport transfers which would otherwise be additional or require booking separately."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Cannot fetch live DIY prices to compute exact savings. Based on the inclusions (6 nights, daily light breakfast, free Wi\u2011Fi, gym/tennis access and return airport transfers) and the advertised total for two (2172), the package appears reasonably good value for a 6-night Port Vila stay without flights. The rating reflects solid inclusions (particularly transfers) but is conservative because I could not verify comparable room rates or availability on booking platforms or include flight costs.",
+  "additional_notes": "The deal text also references a 'Lagoon View Pool Bungalow' and an alternate twin price line (fr 1650) which suggests multiple room options/rates; confirm exact room type when comparing DIY. For a definitive savings calculation, obtain current rates for the identical room on booking.com/Expedia/hotel direct and quotes for airport transfers and flights for the intended travel dates.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Port Vila: Mangoes Resort\",\n  \"title\": \"Port Vila: Mangoes Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 6,\n  \"pp_price\": 1086,\n  \"package_total_for_two\": 2172,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Includes 6 nights at Mangoes Resort - Light breakfast daily per person. - FREE Wi-Fi. - Use of gym and tennis court via The Terraces Boutique Apartments. Return airport transfers\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": []\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Mangoes Resort (Lagoon View / Pool Bungalow referenced on page)\",\n      \"nights\": 6,\n      \"price_total_for_stay\": null,\n      \"sources\": []\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Light breakfast (daily) - DIY cost estimate\",\n          \"price\": null,\n          \"source\": null\n        },\n        {\n          \"label\": \"Return airport transfers - DIY cost estimate\",\n          \"price\": null,\n          \"source\": null\n        },\n        {\n          \"label\": \"Free Wi-Fi / gym / tennis - included in agency deal\",\n          \"price\": 0,\n          \"source\": \"https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort\"\n        }\n      ],\n      \"notes\": \"I could not retrieve real-time DIY hotel, transfer or flight prices (external booking sites) from this environment. Numeric DIY fields are therefore null. The agency deal includes breakfast and return airport transfers which would otherwise be additional or require booking separately.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Cannot fetch live DIY prices to compute exact savings. Based on the inclusions (6 nights, daily light breakfast, free Wi\u2011Fi, gym/tennis access and return airport transfers) and the advertised total for two (2172), the package appears reasonably good value for a 6-night Port Vila stay without flights. The rating reflects solid inclusions (particularly transfers) but is conservative because I could not verify comparable room rates or availability on booking platforms or include flight costs.\",\n  \"additional_notes\": \"The deal text also references a 'Lagoon View Pool Bungalow' and an alternate twin price line (fr 1650) which suggests multiple room options/rates; confirm exact room type when comparing DIY. For a definitive savings calculation, obtain current rates for the identical room on booking.com/Expedia/hotel direct and quotes for airport transfers and flights for the intended travel dates.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28916/port-vila-mangoes-resort\"\n  ]\n}"
+}

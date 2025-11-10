@@ -1,0 +1,76 @@
+{
+  "deal_id": "Santo: Aore Island Resort",
+  "title": "Santo: Aore Island Resort",
+  "url": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort",
+  "source": "helloworld",
+  "nights": 6,
+  "pp_price": 1088,
+  "package_total_for_two": 2176,
+  "includes_flights": false,
+  "inclusions_evidence": "Includes 6 nights at Aore Island Resort - Return airport/boat transfers - Tropical breakfast daily - Use of bikes, kayaks and SUP's - Wi-Fi in restaurant and lounge area - Cultural nightly entertainment; Per Person, from $1,088",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Aore Island Resort",
+      "nights": 6,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Return airport/boat transfers",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        },
+        {
+          "label": "Tropical breakfast daily",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        },
+        {
+          "label": "Use of bikes, kayaks and SUPs",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        },
+        {
+          "label": "Wi-Fi in restaurant and lounge area",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        },
+        {
+          "label": "Cultural nightly entertainment",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        },
+        {
+          "label": "Tourism levy VT100 per room per night (payable direct)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+        }
+      ],
+      "notes": "All 'other' item prices could not be independently sourced. The page states a tourism levy of VT100 per room per night payable direct."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Cannot reliably obtain DIY prices from booking platforms with provided data, so numeric comparison is not possible. The package includes 6 nights, return airport/boat transfers, daily breakfast and complimentary activities (bikes, kayaks, SUPs) which add tangible value especially for a remote island property; flights are not included and a tourism levy is payable on checkout, which reduces net value. Given inclusions and likely higher standalone cost for transfers/activities at Aore Island, this appears to be a good mid-high value hotel-only package, but unable to quantify savings.",
+  "additional_notes": "If flights to Luganville/Santo are sourced separately they could materially affect total trip cost; to confirm this deal as a top-10 bargain, independent price pulls from airlines and hotel booking sites are required.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28920/santo-aore-island-resort"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Santo: Aore Island Resort\",\n  \"title\": \"Santo: Aore Island Resort\",\n  \"url\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\",\n  \"source\": \"helloworld\",\n  \"nights\": 6,\n  \"pp_price\": 1088,\n  \"package_total_for_two\": 2176,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"Includes 6 nights at Aore Island Resort - Return airport/boat transfers - Tropical breakfast daily - Use of bikes, kayaks and SUP's - Wi-Fi in restaurant and lounge area - Cultural nightly entertainment; Per Person, from $1,088\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Aore Island Resort\",\n      \"nights\": 6,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Return airport/boat transfers\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        },\n        {\n          \"label\": \"Tropical breakfast daily\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        },\n        {\n          \"label\": \"Use of bikes, kayaks and SUPs\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        },\n        {\n          \"label\": \"Wi-Fi in restaurant and lounge area\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        },\n        {\n          \"label\": \"Cultural nightly entertainment\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        },\n        {\n          \"label\": \"Tourism levy VT100 per room per night (payable direct)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28920/santo-aore-island-resort\"\n        }\n      ],\n      \"notes\": \"All 'other' item prices could not be independently sourced. The page states a tourism levy of VT100 per room per night payable direct.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Cannot reliably obtain DIY prices from booking platforms with provided data, so numeric comparison is not possible. The package includes 6 nights, return airport/boat transfers, daily breakfast and complimentary activities (bikes, kayaks, SUPs) which add tangible value especially for a remote island property; flights are not included and a tourism levy is payable on checkout, which reduces net value. Given inclusions and likely higher standalone cost for transfers/activities at Aore Island, this appears to be a good mid-high value hotel-only package"
+}

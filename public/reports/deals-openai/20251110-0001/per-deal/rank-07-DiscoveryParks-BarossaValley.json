@@ -1,0 +1,45 @@
+{
+  "deal_id": "Discovery Parks - Barossa Valley",
+  "title": "Discovery Parks - Barossa Valley",
+  "url": "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 393.0,
+  "package_total_for_two": 786.0,
+  "includes_flights": false,
+  "inclusions_evidence": "INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Discovery Parks - Barossa Valley",
+      "nights": 3.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley"
+      ]
+    },
+    "other": {
+      "items": [],
+      "notes": "Deal page states accommodation and unspecified bonuses are included. Unable to reliably obtain independent DIY hotel or ancillary pricing from booking.com/Expedia/suppliers because external site lookups were not performed; therefore DIY item prices are null."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The package is a 3-night accommodation-only offer at Discovery Parks - Barossa Valley for 786 total (393pp). Flights are explicitly not included per the deal page. I could not obtain or verify independent DIY pricing for the same room/stay on booking sites or suppliers from the provided materials, so savings cannot be calculated. Given the low per-person price for 3 nights in the Barossa region, the deal appears reasonably priced as a budget accommodation offer, but verification against live hotel rates and any included 'bonuses' is required to confirm true value.",
+  "additional_notes": "If you want a full comparison I can fetch live rates from booking.com, Expedia or supplier sites to compute DIY totals and precise savings vs this package.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Discovery Parks - Barossa Valley\",\n  \"title\": \"Discovery Parks - Barossa Valley\",\n  \"url\": \"https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 393.0,\n  \"package_total_for_two\": 786.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: Accommodation and bonuses as specified; IMPORTANT INFORMATION: International and domestic flights are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Discovery Parks - Barossa Valley\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley\"\n      ]\n    },\n    \"other\": {\n      \"items\": [],\n      \"notes\": \"Deal page states accommodation and unspecified bonuses are included. Unable to reliably obtain independent DIY hotel or ancillary pricing from booking.com/Expedia/suppliers because external site lookups were not performed; therefore DIY item prices are null.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The package is a 3-night accommodation-only offer at Discovery Parks - Barossa Valley for 786 total (393pp). Flights are explicitly not included per the deal page. I could not obtain or verify independent DIY pricing for the same room/stay on booking sites or suppliers from the provided materials, so savings cannot be calculated. Given the low per-person price for 3 nights in the Barossa region, the deal appears reasonably priced as a budget accommodation offer, but verification against live hotel rates and any included 'bonuses' is required to confirm true value.\",\n  \"additional_notes\": \"If you want a full comparison I can fetch live rates from booking.com, Expedia or supplier sites to compute DIY totals and precise savings vs this package.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28401/discovery-parks-barossa-valley\"\n  ]\n}"
+}

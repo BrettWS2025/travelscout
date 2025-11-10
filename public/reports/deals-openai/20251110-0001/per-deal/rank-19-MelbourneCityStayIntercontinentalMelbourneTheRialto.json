@@ -1,0 +1,51 @@
+{
+  "deal_id": "Melbourne City Stay: Intercontinental Melbourne The Rialto",
+  "title": "Melbourne City Stay: Intercontinental Melbourne The Rialto",
+  "url": "https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 615.0,
+  "package_total_for_two": 1230.0,
+  "includes_flights": false,
+  "inclusions_evidence": "INCLUSIONS: Accommodation, touring and bonus offers as specified; IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "InterContinental Melbourne The Rialto",
+      "nights": 3.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "touring and bonus offers (unspecified)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto"
+        }
+      ],
+      "notes": "The deal page references 'touring and bonus offers as specified' but does not list specific inclusions or prices in the provided excerpt, preventing an itemised DIY comparison."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Cannot reliably compute a DIY total because live hotel and airfare rates from third-party sites or suppliers were not fetched. Based on the advertised 3-night stay at a luxury InterContinental property for 1230 total (615pp), the price appears competitive for a high-end Melbourne city hotel room-only package; flights are excluded which reduces overall package completeness. A full DIY comparison (hotel room rate for 3 nights + applicable taxes + any touring extras + return flights) is required to confirm real savings.",
+  "additional_notes": "To confirm whether this is truly cheaper than DIY, fetch current room rates from IHG/booking.com/expedia for the same room type and dates and add lowest available return airfare for the travellers' origin; include any taxes/fees and the specific 'touring and bonus' values listed on the full deal page.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Melbourne City Stay: Intercontinental Melbourne The Rialto\",\n  \"title\": \"Melbourne City Stay: Intercontinental Melbourne The Rialto\",\n  \"url\": \"https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 615.0,\n  \"package_total_for_two\": 1230.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: Accommodation, touring and bonus offers as specified; IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"InterContinental Melbourne The Rialto\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"touring and bonus offers (unspecified)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto\"\n        }\n      ],\n      \"notes\": \"The deal page references 'touring and bonus offers as specified' but does not list specific inclusions or prices in the provided excerpt, preventing an itemised DIY comparison.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Cannot reliably compute a DIY total because live hotel and airfare rates from third-party sites or suppliers were not fetched. Based on the advertised 3-night stay at a luxury InterContinental property for 1230 total (615pp), the price appears competitive for a high-end Melbourne city hotel room-only package; flights are excluded which reduces overall package completeness. A full DIY comparison (hotel room rate for 3 nights + applicable taxes + any touring extras + return flights) is required to confirm real savings.\",\n  \"additional_notes\": \"To confirm whether this is truly cheaper than DIY, fetch current room rates from IHG/booking.com/expedia for the same room type and dates and add lowest available return airfare for the travellers' origin; include any taxes/fees and the specific 'touring and bonus' values listed on the full deal page.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28528/melbourne-city-stay-intercontinental-melbourne-the-rialto\"\n  ]\n}"
+}

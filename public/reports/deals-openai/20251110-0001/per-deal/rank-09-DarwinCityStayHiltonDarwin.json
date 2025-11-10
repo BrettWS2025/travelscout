@@ -1,0 +1,51 @@
+{
+  "deal_id": "Darwin City Stay: Hilton Darwin",
+  "title": "Darwin City Stay: Hilton Darwin",
+  "url": "https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin",
+  "source": "helloworld",
+  "nights": 3.0,
+  "pp_price": 432.0,
+  "package_total_for_two": 864.0,
+  "includes_flights": false,
+  "inclusions_evidence": "INCLUSIONS: Accommodation, sightseeing and bonus offers as outlined; \"International and domestic flights within Australia are not included, please add best available airfare.\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Hilton Darwin",
+      "nights": 3.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Sightseeing and bonus offers (unspecified)",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin"
+        }
+      ],
+      "notes": "Deal page lists sightseeing/bonus offers but provides no itemised prices. Flights explicitly excluded. No dates provided to obtain comparable DIY pricing from booking engines or suppliers."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Cannot reliably compute a DIY comparison because no travel dates were provided and external price checks (hotel + flights + any sightseeing) cannot be performed. The package is 864 for two for 3 nights (room cost equivalent ~288 per night) with flights excluded; that nightly room rate at a Hilton property in Darwin appears plausible value-wise but verification against booking.com/Expedia/airlines is required to confirm true savings.",
+  "additional_notes": "To produce a validated comparison and numeric savings, specific travel dates (or permission to fetch live prices) are required so hotel room rates and airfares can be sourced and compared. Also need details of the included sightseeing/bonus offers to price 'other' elements.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Darwin City Stay: Hilton Darwin\",\n  \"title\": \"Darwin City Stay: Hilton Darwin\",\n  \"url\": \"https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin\",\n  \"source\": \"helloworld\",\n  \"nights\": 3.0,\n  \"pp_price\": 432.0,\n  \"package_total_for_two\": 864.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: Accommodation, sightseeing and bonus offers as outlined; \\\"International and domestic flights within Australia are not included, please add best available airfare.\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Hilton Darwin\",\n      \"nights\": 3.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Sightseeing and bonus offers (unspecified)\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin\"\n        }\n      ],\n      \"notes\": \"Deal page lists sightseeing/bonus offers but provides no itemised prices. Flights explicitly excluded. No dates provided to obtain comparable DIY pricing from booking engines or suppliers.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Cannot reliably compute a DIY comparison because no travel dates were provided and external price checks (hotel + flights + any sightseeing) cannot be performed. The package is 864 for two for 3 nights (room cost equivalent ~288 per night) with flights excluded; that nightly room rate at a Hilton property in Darwin appears plausible value-wise but verification against booking.com/Expedia/airlines is required to confirm true savings.\",\n  \"additional_notes\": \"To produce a validated comparison and numeric savings, specific travel dates (or permission to fetch live prices) are required so hotel room rates and airfares can be sourced and compared. Also need details of the included sightseeing/bonus offers to price 'other' elements.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28542/darwin-city-stay-hilton-darwin\"\n  ]\n}"
+}

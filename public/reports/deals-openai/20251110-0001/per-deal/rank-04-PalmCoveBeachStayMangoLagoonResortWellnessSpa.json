@@ -1,0 +1,51 @@
+{
+  "deal_id": "Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa",
+  "title": "Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa",
+  "url": "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa",
+  "source": "helloworld",
+  "nights": 4,
+  "pp_price": 456,
+  "package_total_for_two": 912,
+  "includes_flights": false,
+  "inclusions_evidence": "INCLUSIONS: Accommodation and inclusions as specified; IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "Mango Lagoon Resort & Wellness Spa",
+      "nights": 4,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Accommodation inclusions as specified by deal",
+          "price": null,
+          "source": "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa"
+        }
+      ],
+      "notes": "Unable to obtain competitor (DIY) pricing for flights and hotel (booking.com/Expedia/supplier) from provided data. Therefore numeric DIY pricing fields are null."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "Deal is a 4-night twin-share land-only package at 456 per person (912 total) which implies a room rate of 228 per night. Flights explicitly excluded. I could not reliably source competitor hotel+flight pricing from booking/airline sites given only the provided deal page, so DIY totals are null. Given the nightly room rate appears reasonable for Palm Cove resort-level accommodation, I rate this a good value for land-only bookings but advise comparing live rates on booking sites and flights for final savings verification.",
+  "additional_notes": "To confirm savings, fetch room rate for Mango Lagoon Resort for the exact dates and return airfares to Cairns (or nearest port) on booking.com/Expedia/airline sites and compare to the package total shown here.",
+  "citations": [
+    "https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa\",\n  \"title\": \"Palm Cove Beach Stay: Mango Lagoon Resort & Wellness Spa\",\n  \"url\": \"https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa\",\n  \"source\": \"helloworld\",\n  \"nights\": 4,\n  \"pp_price\": 456,\n  \"package_total_for_two\": 912,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"INCLUSIONS: Accommodation and inclusions as specified; IMPORTANT INFORMATION: International and domestic flights within Australia are not included, please add best available airfare.\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"Mango Lagoon Resort & Wellness Spa\",\n      \"nights\": 4,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Accommodation inclusions as specified by deal\",\n          \"price\": null,\n          \"source\": \"https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa\"\n        }\n      ],\n      \"notes\": \"Unable to obtain competitor (DIY) pricing for flights and hotel (booking.com/Expedia/supplier) from provided data. Therefore numeric DIY pricing fields are null.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"Deal is a 4-night twin-share land-only package at 456 per person (912 total) which implies a room rate of 228 per night. Flights explicitly excluded. I could not reliably source competitor hotel+flight pricing from booking/airline sites given only the provided deal page, so DIY totals are null. Given the nightly room rate appears reasonable for Palm Cove resort-level accommodation, I rate this a good value for land-only bookings but advise comparing live rates on booking sites and flights for final savings verification.\",\n  \"additional_notes\": \"To confirm savings, fetch room rate for Mango Lagoon Resort for the exact dates and return airfares to Cairns (or nearest port) on booking.com/Expedia/airline sites and compare to the package total shown here.\",\n  \"citations\": [\n    \"https://helloworld.co.nz/deal/28497/palm-cove-beach-stay-mango-lagoon-resort-and-wellness-spa\"\n  ]\n}"
+}

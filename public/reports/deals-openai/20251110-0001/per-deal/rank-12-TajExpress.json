@@ -1,0 +1,66 @@
+{
+  "deal_id": "Taj Express",
+  "title": "Taj Express",
+  "url": "https://www.flightcentre.co.nz/product/21990961",
+  "source": "flightcentre",
+  "nights": 7.0,
+  "pp_price": 1109.0,
+  "package_total_for_two": 2218.0,
+  "includes_flights": false,
+  "inclusions_evidence": "\"8-day small group trip with On the Go Tours from Delhi return, twin share\"; \"Accommodation: 7 nights in 3 & 4 star heritage hotels.\"; \"Meals: Breakfast daily and 1 Dinner.\"; \"Travel by jeep to beautiful Amber Fort in Jaipur. Guided sightseeing - Delhi, Jaipur, Agra and Karauli or Dholpur\"; \"All relevant transfers and transportation in private air-conditioned vehicles\"; \"Airfares & transfers are additional.\"",
+  "diy_breakdown": {
+    "flights": {
+      "included": false,
+      "assumed_route": null,
+      "price_total_for_two": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/21990961"
+      ]
+    },
+    "hotel": {
+      "name_or_hint": "7 nights in 3 & 4 star heritage hotels (various: Delhi, Jaipur, Agra, Karauli/Dholpur)",
+      "nights": 7.0,
+      "price_total_for_stay": null,
+      "sources": [
+        "https://www.flightcentre.co.nz/product/21990961"
+      ]
+    },
+    "other": {
+      "items": [
+        {
+          "label": "Breakfast daily and 1 dinner",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21990961"
+        },
+        {
+          "label": "Guided sightseeing (Delhi, Jaipur, Agra, Karauli/Dholpur)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21990961"
+        },
+        {
+          "label": "Transfers and transportation in private air-conditioned vehicles (within tour)",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21990961"
+        },
+        {
+          "label": "Jeep to Amber Fort experience",
+          "price": null,
+          "source": "https://www.flightcentre.co.nz/product/21990961"
+        }
+      ],
+      "notes": "Unable to reliably price individual components (hotels, local transport, guides, excursions) against OTA/supplier rates without live searches on booking/airline sites. Airfares explicitly excluded by the tour page."
+    },
+    "diy_total_for_two": null
+  },
+  "estimated_savings_vs_diy": {
+    "abs": null,
+    "pct": null
+  },
+  "rating_out_of_10": 7,
+  "reasoning": "The tour offers strong inclusions for the price (7 nights in 3-4 star heritage hotels, daily breakfast, guided sightseeing and local transport) and at 1109 per person appears attractively priced. However flights are explicitly excluded (\"Airfares & transfers are additional.\"), and I could not perform live OTA/supplier price checks to compute a DIY total, so numerical savings cannot be confirmed.",
+  "additional_notes": "Numeric DIY comparison fields set to null because external OTA and airline pricing could not be retrieved in this analysis. To confirm savings, run live searches for return international flights to Delhi from the travellers' origin and for sample 7-night room bookings in Delhi/Agra/Jaipur on Booking.com/Expedia, plus estimated local tour costs.",
+  "citations": [
+    "https://www.flightcentre.co.nz/product/21990961"
+  ],
+  "_raw_snippet": "{\n  \"deal_id\": \"Taj Express\",\n  \"title\": \"Taj Express\",\n  \"url\": \"https://www.flightcentre.co.nz/product/21990961\",\n  \"source\": \"flightcentre\",\n  \"nights\": 7.0,\n  \"pp_price\": 1109.0,\n  \"package_total_for_two\": 2218.0,\n  \"includes_flights\": false,\n  \"inclusions_evidence\": \"\\\"8-day small group trip with On the Go Tours from Delhi return, twin share\\\"; \\\"Accommodation: 7 nights in 3 & 4 star heritage hotels.\\\"; \\\"Meals: Breakfast daily and 1 Dinner.\\\"; \\\"Travel by jeep to beautiful Amber Fort in Jaipur. Guided sightseeing - Delhi, Jaipur, Agra and Karauli or Dholpur\\\"; \\\"All relevant transfers and transportation in private air-conditioned vehicles\\\"; \\\"Airfares & transfers are additional.\\\"\",\n  \"diy_breakdown\": {\n    \"flights\": {\n      \"included\": false,\n      \"assumed_route\": null,\n      \"price_total_for_two\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/21990961\"\n      ]\n    },\n    \"hotel\": {\n      \"name_or_hint\": \"7 nights in 3 & 4 star heritage hotels (various: Delhi, Jaipur, Agra, Karauli/Dholpur)\",\n      \"nights\": 7.0,\n      \"price_total_for_stay\": null,\n      \"sources\": [\n        \"https://www.flightcentre.co.nz/product/21990961\"\n      ]\n    },\n    \"other\": {\n      \"items\": [\n        {\n          \"label\": \"Breakfast daily and 1 dinner\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21990961\"\n        },\n        {\n          \"label\": \"Guided sightseeing (Delhi, Jaipur, Agra, Karauli/Dholpur)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21990961\"\n        },\n        {\n          \"label\": \"Transfers and transportation in private air-conditioned vehicles (within tour)\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21990961\"\n        },\n        {\n          \"label\": \"Jeep to Amber Fort experience\",\n          \"price\": null,\n          \"source\": \"https://www.flightcentre.co.nz/product/21990961\"\n        }\n      ],\n      \"notes\": \"Unable to reliably price individual components (hotels, local transport, guides, excursions) against OTA/supplier rates without live searches on booking/airline sites. Airfares explicitly excluded by the tour page.\"\n    },\n    \"diy_total_for_two\": null\n  },\n  \"estimated_savings_vs_diy\": {\n    \"abs\": null,\n    \"pct\": null\n  },\n  \"rating_out_of_10\": 7,\n  \"reasoning\": \"The tour offers strong inclusions for the price (7 nights in 3-4 star heritage hotels, daily breakfast, guided sightseeing and local transport) and at 1109 per person appears attractively priced. However flights are explicitly excluded (\\\"Airfares & transfers are additional.\\\"), and I could not perform live OTA/supplier price checks to compute a DIY total, so numerical savings cannot be confirmed.\",\n  \"additional_notes\": \"Numeric DIY comparison fields set to null because external OTA and airline pricing could not be retrieved in this analysis. To confirm savings, run live searches for return international flights to Delhi fro"
+}
