@@ -61,8 +61,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-5-mini
-          WEB_SEARCH: "1"        # <-- enable hosted web search tool
-          FORCE_WEB_SEARCH: "1" 
           TOP_N: 20              # write per-deal JSON only for Top 20
           PRUNE_PERCENTILE: 60   # keep cheapest 60% by heuristic before OpenAI
           SHORTLIST_SIZE: 400    # cap analysis set after pruning (0=off)
@@ -70,22 +68,11 @@ jobs:
           READ_TIMEOUT: 10       # seconds per request
           CACHE_PAGES: 1         # use disk cache for page HTML
           PAUSE_BETWEEN_CALLS: 0.15
-          MAX_DEALS: 50           # 0 = analyze all (after nights filter)
+          MAX_DEALS: 200           # 0 = analyze all (after nights filter)
           # REPO_ROOT: ${{ github.workspace }}                 # optional override
           # PACKAGES_FILE: public/data/packages.final.jsonl     # optional override
         run: |
           python scraper/scripts/analyze_deals.py
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f "scraper/requirements.txt" ]; then
-            pip install -r scraper/requirements.txt
-          else
-            pip install -r requirements.txt
-          fi
-          # Make sure the SDK supports the Responses API + tools
-          pip install --upgrade openai
 
       - name: Commit and push generated report (if any changes)
         run: |
