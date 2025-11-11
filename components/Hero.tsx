@@ -42,8 +42,8 @@ export function Hero() {
         }}
       >
         <Image
-          src="/7th_Nov_Deal_of_the_Day.png"
-          alt="Deal of the Day — Plantation Island Resort"
+          src="/11NovDoD.png"
+          alt="Deal of the Day"
           fill
           priority
           className="object-cover object-center"
@@ -52,10 +52,10 @@ export function Hero() {
 
         {/* Centered CTA pill (only this part is clickable) */}
         <Link
-          href="https://www.houseoftravel.co.nz/deals/pacific-islands/fiji/plantation-island-resort-cmptffj2010"
+          href="https://helloworld.gocruising.co.nz/cruise/fly-stay-cruise-hawaiian-islands-NCL53189/"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Open the Plantation Island deal (opens in a new tab)"
+          aria-label="Open the deal (opens in a new tab)"
           className="
             absolute left-1/2 -translate-x-1/2 bottom-4 z-10
             inline-flex items-center justify-center gap-2
