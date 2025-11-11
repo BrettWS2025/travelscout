@@ -41,27 +41,31 @@ export function Hero() {
           borderColor: "rgba(255,255,255,0.10)",
         }}
       >
+        {/* 👇 Key change: contain on mobile to show the whole image; cover on md+ */}
         <Image
           src="/11NovDoD.png"
           alt="Deal of the Day"
           fill
           priority
-          className="object-cover object-center"
+          className="object-contain md:object-cover object-center"
           sizes="(max-width: 768px) 100vw, 50vw"
         />
 
-        {/* Centered CTA pill (only this part is clickable) */}
+        {/* Centered CTA pill (clickable) */}
+        {/* 👇 Key change: smaller base size on mobile; larger on md+ */}
         <Link
           href="https://helloworld.gocruising.co.nz/cruise/fly-stay-cruise-hawaiian-islands-NCL53189/"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open the deal (opens in a new tab)"
           className="
-            absolute left-1/2 -translate-x-1/2 bottom-4 z-10
+            absolute left-1/2 -translate-x-1/2 bottom-3 md:bottom-4 z-10
             inline-flex items-center justify-center gap-2
-            rounded-xl px-6 py-3 text-sm md:text-base font-semibold
-            shadow-md transition-transform hover:scale-[1.02]
+            rounded-lg md:rounded-xl
+            px-4 py-2 text-xs sm:text-sm md:px-6 md:py-3 md:text-base font-semibold
+            shadow-md transition-transform hover:scale-[1.02] active:scale-95
             focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+            max-w-[calc(100%-1.5rem)] whitespace-nowrap
           "
           style={{ background: "#16223A", color: "#FFFFFF" }}
         >
