@@ -31,25 +31,26 @@ export function Hero() {
       </div>
 
       {/* Right box with image */}
-      <div
-        className="
-          relative w-full overflow-hidden rounded-2xl border
-          aspect-[16/10] md:aspect-[5/4]
-        "
-        style={{
-          background: "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
-          borderColor: "rgba(255,255,255,0.10)",
-        }}
-      >
-        {/* 👇 Key change: contain on mobile to show the whole image; cover on md+ */}
-        <Image
-          src="/11NovDoD.png"
-          alt="Deal of the Day"
-          fill
-          priority
-          className="object-contain md:object-cover object-center"
-          sizes="(max-width: 768px) 100vw, 50vw"
-        />
+<div
+  className="
+    relative w-full overflow-hidden rounded-2xl border
+-   aspect-[16/10] md:aspect-[5/4]
++   aspect-[4/3] sm:aspect-[3/2] md:aspect-[5/4]
+  "
+  style={{
+    background: "linear-gradient(135deg, rgba(110,231,255,0.3), rgba(68,255,154,0.2))",
+    borderColor: "rgba(255,255,255,0.10)",
+  }}
+>
+  <Image
+    src="/11NovDoD.png"
+    alt="Deal of the Day"
+    fill
+    priority
+-   className="object-cover object-center"
++   className="object-contain md:object-cover object-center"
+    sizes="(max-width: 768px) 100vw, 50vw"
+  />
 
         {/* Centered CTA pill (clickable) */}
         {/* 👇 Key change: smaller base size on mobile; larger on md+ */}
