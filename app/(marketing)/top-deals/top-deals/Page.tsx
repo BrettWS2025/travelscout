@@ -1,5 +1,5 @@
 import React from "react";
-import AllTravelDeals from "@/components/AllTravelDeals";
+import AllTravelDeals from "@/components/AllTravelDeals"; // adjust if your alias differs
 
 
 export const metadata = {
@@ -14,7 +14,7 @@ return (
 <div className="mb-8 flex items-end justify-between">
 <div>
 <h1 className="text-3xl font-bold tracking-tight">Top deals</h1>
-<p className="mt-1 text-muted-foreground">
+<p className="mt-1 text-gray-500">
 Up to 3 rows of 3 tiles — half image, half details with a big price and a friendly pill CTA.
 </p>
 </div>
