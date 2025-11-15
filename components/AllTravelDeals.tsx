@@ -150,12 +150,12 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 
   return (
     <section aria-labelledby="top-deals-heading" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      /* <header className="mb-6 flex items-end justify-between gap-3">
+      <header className="hidden mb-6 flex items-end justify-between gap-3">
         <div>
           <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight">Top deals</h2>
           <p className="text-sm text-gray-500">Hand‑picked offers across flights, cruises, and holiday packages.</p>
         </div>
-      </header> */
+      </header>
 
       <div className={classNames("grid gap-6", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
         {items.map((deal) => (
