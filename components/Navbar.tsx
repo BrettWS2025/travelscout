@@ -33,7 +33,7 @@ const MENU: MenuSection[] = [
     href: "/compare",
     icon: PanelsTopLeft,
     items: [
-      { label: "Airlines", href: "/(product)/compare#airpoints" },
+      /* { label: "Airlines", href: "/(product)/compare#airpoints" },*/
       { label: "Hotels", href: "/(product)/compare#cards" },
       { label: "Rental Cars", href: "/(product)/compare#lounges" },
       { label: "Best Time to Book", href: "/compare/best-time-to-book" },
@@ -91,7 +91,7 @@ const MENU: MenuSection[] = [
  * Add keys here to hide sections from the navbar
  * without deleting their configuration.
  */
-const HIDE_KEYS = new Set<string>(["guides", "tips", "Airlines"]);
+const HIDE_KEYS = new Set<string>(["guides", "tips"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
