@@ -15,7 +15,7 @@ return (
 <div>
 <h1 className="text-3xl font-bold tracking-tight">Top deals</h1>
 <p className="mt-1 text-gray-500">
-/* Up to 3 rows of 3 tiles — half image, half details with a big price and a friendly pill CTA.*/
+Bringing you the best deals
 </p>
 </div>
 </div>
