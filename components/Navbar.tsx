@@ -64,7 +64,7 @@ const MENU: MenuSection[] = [
     href: "/top-deals",
     icon: Percent,
     items: [
-      { label: "Top Deals", href: "/top-deals/top-deals" },
+      { label: "Top Deals", href: "/top-deals/topdeals" },
       /*{ label: "Weekly Sales", href: "/(marketing)/top-deals#weekly" },*/
       /*{ label: "Error Fares", href: "/(marketing)/top-deals#error-fares" },*/
     ],
