@@ -98,7 +98,7 @@ const defaultDeals: Deal[] = [
   {
     id: "deal-europe-cruise",
     title: "Mediterranean Cruise 10N",
-    subtitle: "Drinks & Wi-Fi included",
+    subtitle: "Drinks & Wi‑Fi included",
     price: "$2,799",
     priceLabel: "pp",
     imageUrl:
@@ -143,29 +143,32 @@ function classNames(...classes: (string | false | null | undefined)[]) {
 export type AllTravelDealsProps = {
   deals?: Deal[]; // if omitted, uses defaultDeals
   max?: number; // safety cap; defaults to 9
+  showHeader?: boolean; // controls visual header inside the component
 };
 
-export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTravelDealsProps) {
+export default function AllTravelDeals({ deals = defaultDeals, max = 9, showHeader = false }: AllTravelDealsProps) {
   const items = deals.slice(0, Math.min(max, 9)); // 3 rows x 3 items
 
   return (
     <section aria-labelledby="top-deals-heading" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <header className="hidden mb-6 flex items-end justify-between gap-3">
-        <div>
-          <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight text-[#1e2c4b]">
-            Top deals
-          </h2>
-          <p className="text-sm text-[#2f3e5b]">
-            Hand-picked offers across flights, cruises, and holiday packages.
-          </p>
-        </div>
-      </header>
+      {showHeader ? (
+        <header className="mb-6 flex items-end justify-between gap-3">
+          <div>
+            <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight text-[#1e2c4b]">Top deals</h2>
+            <p className="text-sm text-[#2f3e5b]">Hand‑picked offers across flights, cruises, and holiday packages.</p>
+          </div>
+        </header>
+      ) : (
+        <h2 id="top-deals-heading" className="sr-only">Top deals</h2>
+      )}
 
-      <div className={classNames("grid gap-6", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
+      <div className={classNames("grid gap-6", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>        
         {items.map((deal) => (
-          <article
+          <Link
             key={deal.id}
-            className="group overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus-within:ring-2 focus-within:ring-blue-600"
+            href={deal.ctaUrl}
+            aria-label={`Open deal: ${deal.title}${deal.price ? ` — ${deal.price}` : ""}`}
+            className="group block overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e2c4b]"
           >
             {/* Split tile: image + text */}
             <div className="grid h-full grid-cols-1 md:grid-cols-2">
@@ -187,9 +190,7 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
               {/* Text half */}
               <div className="flex flex-col justify-between p-4">
                 <div>
-                  <h3 className="text-base font-semibold leading-tight text-[#1e2c4b]">
-                    {deal.title}
-                  </h3>
+                  <h3 className="text-base font-semibold leading-tight text-[#1e2c4b]">{deal.title}</h3>
                   {deal.subtitle && (
                     <p className="mt-1 text-sm text-[#2f3e5b]">{deal.subtitle}</p>
                   )}
@@ -201,39 +202,29 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
                 <div className="mt-4 flex items-end justify-between">
                   <div>
                     {deal.priceLabel && (
-                      <span className="block text-xs uppercase tracking-wide text-[#2f3e5b]">
-                        {deal.priceLabel}
-                      </span>
+                      <span className="block text-xs uppercase tracking-wide text-[#2f3e5b]">{deal.priceLabel}</span>
                     )}
-                    <span className="text-2xl font-bold leading-none text-[#1e2c4b]">
-                      {deal.price}
-                    </span>
+                    <span className="text-2xl font-bold leading-none text-[#1e2c4b]">{deal.price}</span>
                     {deal.validUntil && (
                       <p className="mt-1 text-[11px] text-[#2f3e5b]">{deal.validUntil}</p>
                     )}
                   </div>
 
-                  <Link
-                    href={deal.ctaUrl}
-                    aria-label={`Take me there: ${deal.title}`}
-                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition text-[#1e2c4b] hover:bg-[#1e2c4b] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1e2c4b]"
+                  {/* Chevron affordance (visual only) */}
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 24 24"
+                    className="ml-3 h-5 w-5 opacity-60 transition group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
                   >
-                    Take me there
-                    <svg
-                      aria-hidden
-                      viewBox="0 0 24 24"
-                      className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                    <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
@@ -243,3 +234,26 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 // Optional: named export to reuse the default seed data elsewhere
 export { defaultDeals };
 
+
+// File: app/(marketing)/top-deals/page.tsx
+import React from "react";
+import AllTravelDeals from "@/components/AllTravelDeals"; // adjust path if you don't use the @ alias
+
+export const metadata = {
+  title: "Top deals • Travel Scout",
+  description: "Up to 9 of our hottest flight, cruise and holiday deals right now.",
+};
+
+export default function TopDealsPage() {
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-[#1e2c4b]">Top deals</h1>
+        <p className="mt-1 text-[#2f3e5b]">Browse our best flights, cruises and holiday packages, hand-picked for you.</p>
+      </div>
+
+      {/* Component houses and renders all items. Header inside component is hidden by default. */}
+      <AllTravelDeals max={9} />
+    </main>
+  );
+}
