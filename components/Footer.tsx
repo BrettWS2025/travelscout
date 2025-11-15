@@ -19,7 +19,7 @@ export function Footer() {
           <h3 className="text-white font-semibold mb-2">Connect</h3>
           <ul className="space-y-1">
             <li><a className="https://www.instagram.com/travelscoutnz/" href="#">Instagram</a></li>
-          <! --<li><a className="link" href="#">YouTube</a></li> -->
+            <li><a className="link" href="#">YouTube</a></li>
             <li><a className="link" href="#">Newsletter</a></li>
           </ul>
         </div>
