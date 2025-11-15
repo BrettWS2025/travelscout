@@ -36,11 +36,11 @@ const MENU: MenuSection[] = [
       /* { label: "Airlines", href: "/(product)/compare#airpoints" },*/
       /*{ label: "Hotels", href: "/(product)/compare#cards" },*/
       /*{ label: "Rental Cars", href: "/(product)/compare#lounges" },*/
+      { label: "Travel Agencies, OTAs and Direct Bookings",href: "/compare/travel-agencies-otas-and-direct"},
       { label: "Best Time to Book", href: "/compare/best-time-to-book" },
       { label: "Cruises", href: "/compare/cruise" },
       /*{ label: "Tours", href: "/(product)/compare#lounges" },*/
-      { label: "Travel Insurance", href: "/compare/travel-insurance" },
-      {label: "Travel Agencies, OTAs and Direct Bookings",href: "/compare/travel-agencies-otas-and-direct",},
+      { label: "Travel Insurance", href: "/compare/travel-insurance" },      
     ],
   },
   {
