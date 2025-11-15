@@ -98,7 +98,7 @@ const defaultDeals: Deal[] = [
   {
     id: "deal-europe-cruise",
     title: "Mediterranean Cruise 10N",
-    subtitle: "Drinks & Wi‑Fi included",
+    subtitle: "Drinks & Wi-Fi included",
     price: "$2,799",
     priceLabel: "pp",
     imageUrl:
@@ -152,8 +152,12 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
     <section aria-labelledby="top-deals-heading" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <header className="hidden mb-6 flex items-end justify-between gap-3">
         <div>
-          <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight">Top deals</h2>
-          <p className="text-sm text-gray-500">Hand‑picked offers across flights, cruises, and holiday packages.</p>
+          <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight text-[#1e2c4b]">
+            Top deals
+          </h2>
+          <p className="text-sm text-[#2f3e5b]">
+            Hand-picked offers across flights, cruises, and holiday packages.
+          </p>
         </div>
       </header>
 
@@ -174,7 +178,7 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 {deal.tag && (
-                  <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-medium shadow">
+                  <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-medium shadow text-[#1e2c4b]">
                     {deal.tag}
                   </span>
                 )}
@@ -183,30 +187,36 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
               {/* Text half */}
               <div className="flex flex-col justify-between p-4">
                 <div>
-                  <h3 className="text-base font-semibold leading-tight">{deal.title}</h3>
+                  <h3 className="text-base font-semibold leading-tight text-[#1e2c4b]">
+                    {deal.title}
+                  </h3>
                   {deal.subtitle && (
-                    <p className="mt-1 text-sm text-gray-500">{deal.subtitle}</p>
+                    <p className="mt-1 text-sm text-[#2f3e5b]">{deal.subtitle}</p>
                   )}
                   {deal.location && (
-                    <p className="mt-1 text-sm text-gray-500">{deal.location}</p>
+                    <p className="mt-1 text-sm text-[#2f3e5b]">{deal.location}</p>
                   )}
                 </div>
 
                 <div className="mt-4 flex items-end justify-between">
                   <div>
                     {deal.priceLabel && (
-                      <span className="block text-xs uppercase tracking-wide text-gray-500">{deal.priceLabel}</span>
+                      <span className="block text-xs uppercase tracking-wide text-[#2f3e5b]">
+                        {deal.priceLabel}
+                      </span>
                     )}
-                    <span className="text-2xl font-bold leading-none">{deal.price}</span>
+                    <span className="text-2xl font-bold leading-none text-[#1e2c4b]">
+                      {deal.price}
+                    </span>
                     {deal.validUntil && (
-                      <p className="mt-1 text-[11px] text-gray-500">{deal.validUntil}</p>
+                      <p className="mt-1 text-[11px] text-[#2f3e5b]">{deal.validUntil}</p>
                     )}
                   </div>
 
                   <Link
                     href={deal.ctaUrl}
                     aria-label={`Take me there: ${deal.title}`}
-                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition text-[#1e2c4b] hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
                     Take me there
                     <svg
@@ -232,3 +242,4 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 
 // Optional: named export to reuse the default seed data elsewhere
 export { defaultDeals };
+
