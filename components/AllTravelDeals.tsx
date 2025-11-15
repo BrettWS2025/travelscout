@@ -1,4 +1,5 @@
 // File: components/AllTravelDeals.tsx
+"use client";
 import React from "react";
 import Link from "next/link";
 
@@ -152,23 +153,15 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
       <header className="mb-6 flex items-end justify-between gap-3">
         <div>
           <h2 id="top-deals-heading" className="text-2xl font-semibold tracking-tight">Top deals</h2>
-          <p className="text-sm text-muted-foreground">Hand‑picked offers across flights, cruises, and holiday packages.</p>
+          <p className="text-sm text-gray-500">Hand‑picked offers across flights, cruises, and holiday packages.</p>
         </div>
       </header>
 
-      <div
-        className={
-          classNames(
-            "grid gap-6",
-            // 3 columns on large, 2 on small tablets, 1 on mobile
-            "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          )
-        }
-      >
+      <div className={classNames("grid gap-6", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
         {items.map((deal) => (
           <article
             key={deal.id}
-            className="group overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus-within:ring-2 focus-within:ring-primary"
+            className="group overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus-within:ring-2 focus-within:ring-blue-600"
           >
             {/* Split tile: image + text */}
             <div className="grid h-full grid-cols-1 md:grid-cols-2">
@@ -192,28 +185,28 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
                 <div>
                   <h3 className="text-base font-semibold leading-tight">{deal.title}</h3>
                   {deal.subtitle && (
-                    <p className="mt-1 text-sm text-muted-foreground">{deal.subtitle}</p>
+                    <p className="mt-1 text-sm text-gray-500">{deal.subtitle}</p>
                   )}
                   {deal.location && (
-                    <p className="mt-1 text-sm text-muted-foreground">{deal.location}</p>
+                    <p className="mt-1 text-sm text-gray-500">{deal.location}</p>
                   )}
                 </div>
 
                 <div className="mt-4 flex items-end justify-between">
                   <div>
                     {deal.priceLabel && (
-                      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{deal.priceLabel}</span>
+                      <span className="block text-xs uppercase tracking-wide text-gray-500">{deal.priceLabel}</span>
                     )}
                     <span className="text-2xl font-bold leading-none">{deal.price}</span>
                     {deal.validUntil && (
-                      <p className="mt-1 text-[11px] text-muted-foreground">{deal.validUntil}</p>
+                      <p className="mt-1 text-[11px] text-gray-500">{deal.validUntil}</p>
                     )}
                   </div>
 
                   <Link
                     href={deal.ctaUrl}
                     aria-label={`Take me there: ${deal.title}`}
-                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition group-hover:bg-primary group-hover:text-primary-foreground group-focus:bg-primary group-focus:text-primary-foreground"
+                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
                     Take me there
                     <svg
@@ -239,6 +232,3 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 
 // Optional: named export to reuse the default seed data elsewhere
 export { defaultDeals };
-
-  );
-}
