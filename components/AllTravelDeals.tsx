@@ -216,7 +216,7 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
                   <Link
                     href={deal.ctaUrl}
                     aria-label={`Take me there: ${deal.title}`}
-                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition text-[#1e2c4b] hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition text-[#1e2c4b] hover:bg-[#1e2c4b] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1e2c4b]"
                   >
                     Take me there
                     <svg
