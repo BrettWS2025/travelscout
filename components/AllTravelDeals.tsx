@@ -141,8 +141,8 @@ function classNames(...classes: (string | false | null | undefined)[]) {
 }
 
 export type AllTravelDealsProps = {
-  deals?: Deal[]; // if omitted, uses defaultDeals
-  max?: number; // safety cap; defaults to 9
+  deals?: Deal[];
+  max?: number;
 };
 
 export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTravelDealsProps) {
@@ -163,9 +163,11 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 
       <div className={classNames("grid gap-6", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3")}>
         {items.map((deal) => (
-          <article
+          <Link
             key={deal.id}
-            className="group overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus-within:ring-2 focus-within:ring-blue-600"
+            href={deal.ctaUrl}
+            aria-label={`Open deal: ${deal.title}${deal.price ? ` — ${deal.price}` : ""}`}
+            className="group block overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/5 transition hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e2c4b]"
           >
             {/* Split tile: image + text */}
             <div className="grid h-full grid-cols-1 md:grid-cols-2">
@@ -213,27 +215,21 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
                     )}
                   </div>
 
-                  <Link
-                    href={deal.ctaUrl}
-                    aria-label={`Take me there: ${deal.title}`}
-                    className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition text-[#1e2c4b] hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  {/* Visual affordance only (not a button) */}
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 24 24"
+                    className="ml-3 h-5 w-5 opacity-60 transition group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
                   >
-                    Take me there
-                    <svg
-                      aria-hidden
-                      viewBox="0 0 24 24"
-                      className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                    <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
