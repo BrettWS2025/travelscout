@@ -240,34 +240,5 @@ export default function AllTravelDeals({ deals = defaultDeals, max = 9 }: AllTra
 // Optional: named export to reuse the default seed data elsewhere
 export { defaultDeals };
 
-
-// File: app/top-deals/page.tsx
-import React from "react";
-import AllTravelDeals from "@/components/AllTravelDeals";
-
-export const metadata = {
-  title: "Top deals • Travel Scout",
-  description: "Up to 9 of our hottest flight, cruise and holiday deals right now.",
-};
-
-export default function TopDealsPage() {
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Top deals</h1>
-          <p className="mt-1 text-muted-foreground">
-            Up to 3 rows of 3 tiles — half image, half details with a big price and a friendly pill CTA.
-          </p>
-        </div>
-      </div>
-
-      {/* The component below houses and renders all items. */}
-      <AllTravelDeals />
-
-      {/* If you want to pass deals from a CMS/API later:
-      <AllTravelDeals deals={myDealsFromAPI} max={9} />
-      */}
-    </main>
   );
 }
