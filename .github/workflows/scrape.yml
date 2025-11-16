@@ -13,21 +13,22 @@ on:
 permissions:
   contents: write
 
+# Prevent overlapping pushes from concurrent runs
+concurrency:
+  group: crawl-travel-packages
+  cancel-in-progress: false
+
 jobs:
   crawl:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout dev branch
-        uses: actions/checkout@v4
-        with:
-          ref: Dev
-
-      - name: Checkout MAIN branch
+      - name: Checkout main (full history)
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -109,7 +110,6 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -s out/packages.all.coerced.jsonl ]]; then
-            # If backfill script fails for some reason, fall back to the coerced file
             python scripts/backfill_prices_flightcentre.py out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl || \
               cp out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl
           else
@@ -127,19 +127,56 @@ jobs:
             : > out/packages.final.jsonl
           fi
 
-      - name: Commit dataset into public/data
+      - name: Prepare dataset file (do not commit yet)
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public/data
           cp scraper/out/packages.final.jsonl public/data/packages.final.jsonl
+          # Keep a safe copy outside the repo so we can switch branches cleanly
+          cp public/data/packages.final.jsonl /tmp/packages.final.jsonl
 
+      - name: Configure Git
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Avoid "dubious ownership" warnings in some runners
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-          git add public/data/packages.final.jsonl
-          git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
+      - name: Commit & push dataset to main and Dev (rebase-safe)
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATA_TMP="/tmp/packages.final.jsonl"
+          TARGET_PATH="public/data/packages.final.jsonl"
 
-          # Push to both branches
-          git push origin HEAD:Dev
-          git push origin HEAD:main
+          # Ensure we know about both remote branches
+          git fetch origin main Dev || true
+
+          for BR in main Dev; do
+            echo "::group::Update $BR"
+            # Create local branch if needed
+            if git show-ref --verify --quiet "refs/heads/$BR"; then
+              git checkout "$BR"
+            else
+              git checkout -b "$BR" "origin/$BR"
+            fi
+
+            # Rebase on latest remote to avoid non-fast-forward issues
+            git pull --rebase origin "$BR"
+
+            # Copy the dataset and commit if changed
+            mkdir -p public/data
+            cp -f "$DATA_TMP" "$TARGET_PATH"
+            git add "$TARGET_PATH"
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit on $BR"
+            else
+              git commit -m "chore(data): update packages dataset"
+              git push origin "$BR"
+            fi
+            echo "::endgroup::"
+          done
