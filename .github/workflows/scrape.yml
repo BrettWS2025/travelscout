@@ -16,11 +16,13 @@ permissions:
 jobs:
   crawl:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout dev branch
         uses: actions/checkout@v4
         with:
           ref: Dev
+
       - name: Checkout MAIN branch
         uses: actions/checkout@v4
         with:
@@ -34,6 +36,7 @@ jobs:
 
       - name: Install deps
         run: |
+          python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
       - name: Install Playwright browser
@@ -44,8 +47,9 @@ jobs:
         working-directory: scraper
         env:
           INPUT_SPIDERS: ${{ github.event.inputs.spiders }}
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p out
 
           # Sitemap-first, then JS/listings (FC sitemap first)
@@ -61,8 +65,9 @@ jobs:
 
       - name: Normalize & dedupe
         working-directory: scraper
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           shopt -s nullglob
 
           for raw in out/*.raw.jsonl; do
@@ -79,55 +84,53 @@ jobs:
             echo "::endgroup::"
           done
 
-          # Merge whatever we produced
-          cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
-
-      # NEW: make sure every row has a 'price' and 'currency' so fx_apply won't crash
-      - name: Ensure 'price' field exists
-        working-directory: scraper
-        run: |
-          set -e
-          if [ -s out/packages.all.jsonl ]; then
-            python scripts/ensure_price_field.py out/packages.all.jsonl out/packages.all.coerced.jsonl
+          # Merge all deduped rows for downstream steps
+          dedupes=(out/*.dedupe.jsonl)
+          if ((${#dedupes[@]})); then
+            cat "${dedupes[@]}" > out/packages.all.jsonl
           else
-            echo "{}" > out/packages.all.coerced.jsonl
+            : > out/packages.all.jsonl
           fi
 
-      # Optional: fill remaining FC prices by fetching FC detail pages with price==0
+      - name: Ensure 'price' field exists
+        working-directory: scraper
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -s out/packages.all.jsonl ]]; then
+            python scripts/ensure_price_field.py out/packages.all.jsonl out/packages.all.coerced.jsonl
+          else
+            : > out/packages.all.coerced.jsonl
+          fi
+
       - name: Backfill prices for Flight Centre
         working-directory: scraper
+        shell: bash
         run: |
-          set -e
-          if [ -s out/packages.all.coerced.jsonl ]; then
-            python scripts/backfill_prices_flightcentre.py out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl || cp out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl
+          set -euo pipefail
+          if [[ -s out/packages.all.coerced.jsonl ]]; then
+            # If backfill script fails for some reason, fall back to the coerced file
+            python scripts/backfill_prices_flightcentre.py out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl || \
+              cp out/packages.all.coerced.jsonl out/packages.all.pricefix.jsonl
           else
-            echo "{}" > out/packages.all.pricefix.jsonl
+            : > out/packages.all.pricefix.jsonl
           fi
 
       - name: FX & derived fields
         working-directory: scraper
+        shell: bash
         run: |
-          set -e
-          if [ -s out/packages.all.pricefix.jsonl ]; then
+          set -euo pipefail
+          if [[ -s out/packages.all.pricefix.jsonl ]]; then
             python scripts/fx_apply.py out/packages.all.pricefix.jsonl out/packages.final.jsonl
-
-          # Merge whatever we produced
-          cat out/*.dedupe.jsonl > out/packages.all.jsonl || true
-
-      # Optional: fill remaining FC prices by fetching FC detail pages with price==0
-      # (Writes directly to packages.final.jsonl now that fx_apply is removed)
-      - name: Backfill prices for Flight Centre
-        working-directory: scraper
-        run: |
-          set -e
-          if [ -s out/packages.all.jsonl ]; then
-            python scripts/backfill_prices_flightcentre.py out/packages.all.jsonl out/packages.final.jsonl || cp out/packages.all.jsonl out/packages.final.jsonl
           else
-            echo "{}" > out/packages.final.jsonl
+            : > out/packages.final.jsonl
           fi
 
       - name: Commit dataset into public/data
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p public/data
           cp scraper/out/packages.final.jsonl public/data/packages.final.jsonl
 
@@ -136,11 +139,7 @@ jobs:
 
           git add public/data/packages.final.jsonl
           git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
+
+          # Push to both branches
           git push origin HEAD:Dev
-
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add public/data/packages.final.jsonl
-          git commit -m "chore(data): update packages dataset" || echo "No changes to commit"
           git push origin HEAD:main
