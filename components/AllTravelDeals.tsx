@@ -37,7 +37,7 @@ const defaultDeals: Deal[] = [
     price: "$899",
     priceLabel: "pp",
     imageUrl:
-      "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=80&w=1512&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1549180030-48bf079fb38a?w=1512&auto=format&fit=crop",
     ctaUrl: "/deals/sydney-weekender",
     tag: "Package",
     location: "Sydney, Australia",
