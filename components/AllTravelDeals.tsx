@@ -50,7 +50,7 @@ const defaultDeals: Deal[] = [
     price: "$1,499",
     priceLabel: "pp",
     imageUrl:
-      "https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?q=80&w=1470&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1580286374075-7279567e29ae?w=80&w=1470&auto=format&fit=crop",
     ctaUrl: "/deals/south-pacific-cruise",
     tag: "Cruise",
     location: "Roundtrip Auckland",
