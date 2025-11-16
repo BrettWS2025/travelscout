@@ -29,6 +29,7 @@ jobs:
           ref: main
           fetch-depth: 0
           persist-credentials: true
+          clean: true  # ensure a clean workspace at start
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,11 +38,13 @@ jobs:
 
       - name: Install deps
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
       - name: Install Playwright browser
         run: |
+          set -euo pipefail
           python -m playwright install --with-deps chromium
 
       - name: Crawl sources
@@ -127,14 +130,12 @@ jobs:
             : > out/packages.final.jsonl
           fi
 
-      - name: Prepare dataset file (do not commit yet)
+      # IMPORTANT: do NOT write into the repo yet; keep the dataset only in /tmp
+      - name: Stage dataset to temp (keep repo clean)
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/data
-          cp scraper/out/packages.final.jsonl public/data/packages.final.jsonl
-          # Keep a safe copy outside the repo so we can switch branches cleanly
-          cp public/data/packages.final.jsonl /tmp/packages.final.jsonl
+          cp scraper/out/packages.final.jsonl /tmp/packages.final.jsonl
 
       - name: Configure Git
         shell: bash
@@ -142,7 +143,6 @@ jobs:
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Avoid "dubious ownership" warnings in some runners
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Commit & push dataset to main and Dev (rebase-safe)
@@ -152,22 +152,24 @@ jobs:
           DATA_TMP="/tmp/packages.final.jsonl"
           TARGET_PATH="public/data/packages.final.jsonl"
 
-          # Ensure we know about both remote branches
+          # Make sure the remotes are up to date
           git fetch origin main Dev || true
 
           for BR in main Dev; do
             echo "::group::Update $BR"
-            # Create local branch if needed
+
+            # Create or switch to the local branch tracking origin/$BR
             if git show-ref --verify --quiet "refs/heads/$BR"; then
               git checkout "$BR"
             else
               git checkout -b "$BR" "origin/$BR"
             fi
 
-            # Rebase on latest remote to avoid non-fast-forward issues
+            # Ensure a clean tree before rebase
+            git reset --hard
             git pull --rebase origin "$BR"
 
-            # Copy the dataset and commit if changed
+            # Copy dataset and commit if changed
             mkdir -p public/data
             cp -f "$DATA_TMP" "$TARGET_PATH"
             git add "$TARGET_PATH"
