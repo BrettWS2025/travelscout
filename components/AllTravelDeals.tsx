@@ -24,7 +24,7 @@ const defaultDeals: Deal[] = [
     price: "$699",
     priceLabel: "from",
     imageUrl:
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1470&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1579264670959-286d7b06f1ae?q=80&w=1470&auto=format&fit=crop",
     ctaUrl: "/deals/fiji-flights",
     tag: "Flights",
     location: "Nadi, Fiji",
