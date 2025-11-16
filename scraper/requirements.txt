@@ -8,3 +8,7 @@ openai>=1.40.0,<2
 requests>=2.32.0,<3
 beautifulsoup4>=4.12.3,<5
 lxml>=4.9.4,<6
+
+# Added for TravelScout spiders/utils:
+python-dateutil>=2.9.0
+pytz>=2024.1
