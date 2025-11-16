@@ -1,23 +1,28 @@
-BOT_NAME = "TravelScoutBot"
+# TravelScout Scrapy settings
+
+BOT_NAME = "TravelScoutBot"  # kept
 SPIDER_MODULES = ["tscraper.spiders"]
 NEWSPIDER_MODULE = "tscraper.spiders"
 
+# Crawl politeness
 ROBOTSTXT_OBEY = True
-DOWNLOAD_DELAY = 1.5
-AUTOTHROTTLE_ENABLED = True
+DOWNLOAD_DELAY = 1.5           # kept from your file
 CONCURRENT_REQUESTS = 8
+AUTOTHROTTLE_ENABLED = True
 
+# Headers
 DEFAULT_REQUEST_HEADERS = {
-    "User-Agent": "TravelScoutBot/1.0 (+contact: brettstrawbridge@windowslive.com)"
+    "User-Agent": "TravelScoutBot/1.0 (+contact: brettstrawbridge@windowslive.com)",
+    "Accept-Language": "en-NZ,en;q=0.9",
 }
 
+# Caching & logging
 HTTPCACHE_ENABLED = True
 HTTPCACHE_DIR = "httpcache"
 FEED_EXPORT_ENCODING = "utf-8"
 LOG_LEVEL = "INFO"
 
-
-# --- Playwright for JS-rendered sites (Flight Centre) ---
+# Playwright (kept as-is for any JS sites you already crawl)
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 DOWNLOAD_HANDLERS = {
     "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
@@ -25,4 +30,3 @@ DOWNLOAD_HANDLERS = {
 }
 PLAYWRIGHT_BROWSER_TYPE = "chromium"
 PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT = 20000
-CONCURRENT_REQUESTS = 8
