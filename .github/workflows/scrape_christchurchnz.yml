@@ -1,15 +1,21 @@
-name: scrape-christchurchnz
+name: Event and Things to Do
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 16 * * 1"   # every Monday 16:17 UTC (Tue morning NZT)
+    - cron: "17 16 * * 1"   # every Monday 16:17 UTC (Tue AM NZT)
+
+permissions:
+  contents: write   # allow commit of data files back to the repo
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -20,15 +26,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      - name: Run spiders
+      - name: Run spiders (fast mode, in parallel)
         working-directory: scraper
         run: |
           mkdir -p data
-          python -m scrapy crawl christchurch_whats_on -O data/christchurchnz_events.jsonl
-          python -m scrapy crawl christchurch_things -O data/christchurchnz_things.jsonl
+          # run both spiders concurrently with speedier inline settings
+          python -m scrapy crawl christchurch_whats_on \
+            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
+            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
+            -O data/christchurchnz_events.jsonl &
+
+          python -m scrapy crawl christchurch_things \
+            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
+            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
+            -O data/christchurchnz_things.jsonl &
+
+          wait
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: christchurchnz-jsonl
           path: scraper/data/*.jsonl
+
+      - name: Commit scraped data back to repo
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scraper/data/*.jsonl
+          git commit -m "data: update ChristchurchNZ JSONL ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))" || echo "No changes to commit"
+          git push
