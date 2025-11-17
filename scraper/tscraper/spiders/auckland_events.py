@@ -10,84 +10,92 @@ from tscraper.utils import clean, parse_date_range, parse_prices, build_embeddin
 BASE = "https://heartofthecity.co.nz"
 ROOT = f"{BASE}/auckland-events"
 
-# Detail pages look like: /auckland-events/<slug>
-EVENT_DETAIL_RE = re.compile(r"^/auckland-events/[^/]+/?$", re.I)
-
-# Common listing/category pages under /auckland-events
 CATEGORY_SLUGS = {
-    "today", "tomorrow", "this-week", "this-weekend", "whats-on-this-month",
-    "food-drink-events", "food-and-drink-events", "theatre", "exhibitions",
-    "music-events", "festivals"
+    "today","tomorrow","this-week","this-weekend","whats-on-this-month",
+    "food-drink-events","food-and-drink-events","theatre","exhibitions",
+    "music-events","festivals"
 }
 
-class AucklandHotCEventsSpider(scrapy.Spider):
-    name = "auckland_events"
-    allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
+def is_event_detail(path: str) -> bool:
+    # matches /auckland-events/<slug>
+    seg = path.strip("/").split("/")
+    return len(seg) == 2 and seg[0] == "auckland-events"
 
-    # Per-spider settings: enable Playwright and ignore robots.txt ONLY for this spider
+class AucklandEventsSpider(scrapy.Spider):
+    name = "auckland_events"
+    allowed_domains = ["heartofthecity.co.nz","www.heartofthecity.co.nz"]
+
     custom_settings = {
-        "ROBOTSTXT_OBEY": False,
+        # Keep it polite and bounded
+        "ROBOTSTXT_OBEY": True,
         "DEPTH_LIMIT": 2,
-        "CLOSESPIDER_PAGECOUNT": 4000,
-        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
-        "DOWNLOAD_HANDLERS": {
-            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-        },
-        "PLAYWRIGHT_BROWSER_TYPE": "chromium",
-        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 25000,
+        "CLOSESPIDER_PAGECOUNT": 3000,
+        "LOG_LEVEL": "INFO",
         "DEFAULT_REQUEST_HEADERS": {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/123.0 Safari/537.36",
+            "User-Agent": "TravelScoutScraper/1.0 (+https://airnz.co.nz)",
             "Accept-Language": "en-NZ,en;q=0.9",
         },
-        "LOG_LEVEL": "INFO",
     }
 
+    def __init__(self, test_url: str = None, **kwargs):
+        super().__init__(**kwargs)
+        self.test_url = test_url
+
     def start_requests(self):
-        yield scrapy.Request(
-            ROOT, callback=self.parse_listing, meta={"playwright": True}
-        )
+        # Single-page test mode (great for troubleshooting):
+        if self.test_url:
+            yield scrapy.Request(self.test_url, callback=self.parse_event)
+            return
+
+        # Crawl the hub + common category pages (server-rendered)
+        yield scrapy.Request(ROOT, callback=self.parse_listing)
         for slug in CATEGORY_SLUGS:
-            yield scrapy.Request(
-                f"{ROOT}/{slug}", callback=self.parse_listing, meta={"playwright": True}
-            )
+            yield scrapy.Request(f"{ROOT}/{slug}", callback=self.parse_listing)
 
     def parse_listing(self, response: scrapy.http.Response):
-        # Harvest anchors (absolute or relative), filter by path
-        for href in response.css("a::attr(href)").getall():
+        anchors = response.css("a::attr(href)").getall()
+        total = 0
+        enqueued = 0
+
+        for href in anchors:
             if not href or href.startswith("#"):
                 continue
             absu = urljoin(response.url, href)
             path = urlparse(absu).path.rstrip("/")
 
-            # Follow listing/category pages to harvest more cards
+            # Follow categories to harvest more cards
             if path.startswith("/auckland-events/"):
                 tail = path.split("/")[-1]
                 if tail in CATEGORY_SLUGS:
-                    yield scrapy.Request(absu, callback=self.parse_listing, meta={"playwright": True})
+                    total += 1
+                    yield scrapy.Request(absu, callback=self.parse_listing)
                     continue
 
-            # Follow detail pages
-            if EVENT_DETAIL_RE.match(path):
-                yield scrapy.Request(absu, callback=self.parse_event, meta={"playwright": True})
+            # Enqueue event detail pages
+            if is_event_detail(path):
+                total += 1
+                enqueued += 1
+                yield scrapy.Request(absu, callback=self.parse_event)
+
+        self.logger.info("[auckland_events] scanned=%d enqueued_detail=%d url=%s",
+                         total, enqueued, response.url)
 
     def parse_event(self, response: scrapy.http.Response):
         url = response.url
         name = clean(response.xpath("//h1/text()").get())
         if not name:
+            self.logger.debug("[auckland_events] no H1 on %s", url)
             return
 
         venue = clean(response.xpath("(//h1/following::a[1]/text())[1]").get())
         desc = clean(" ".join(response.xpath("(//h1/following::p)[1]//text()").getall())) or None
 
-        # Price cues anywhere near the top
         price_text = clean(" ".join(response.xpath(
             "//*[contains(text(),'$') or contains(translate(.,'FREE','free'),'free')]//text()"
         ).getall()))
         price = parse_prices(price_text or "")
 
-        # Dates: below a 'Dates' label OR fallback to any ' | ' date-time string
+        # Prefer a 'Dates' label, fall back to the first "DATE | TIME" text
         date_text = clean(" ".join(
             response.xpath("//*[normalize-space()='Dates']/following::text()[normalize-space()][1]").getall()
         )) or clean(" ".join(
@@ -99,23 +107,18 @@ class AucklandHotCEventsSpider(scrapy.Spider):
                 dpart, tpart = [x.strip() for x in date_text.split("|", 1)]
                 d = dp.parse(dpart, dayfirst=True)
                 st = dp.parse(tpart).time()
-                start = datetime.combine(d.date(), st)
-                end = datetime.combine(d.date(), time(23, 59, 59))
-                start_iso, end_iso = start.isoformat(), end.isoformat()
+                start_iso = datetime.combine(d.date(), st).isoformat()
+                end_iso = datetime.combine(d.date(), time(23, 59, 59)).isoformat()
             except Exception:
                 start_iso, end_iso = None, None
 
-        # Booking link
         booking_url = response.xpath(
             "//a[contains(.,'Book Tickets') or contains(.,'Buy Tickets')]/@href"
         ).get()
         if booking_url:
             booking_url = urljoin(url, booking_url)
 
-        # Image
-        img = response.xpath(
-            "//img[contains(@src,'.jpg') or contains(@src,'.jpeg') or contains(@src,'.png')]/@src"
-        ).get()
+        img = response.xpath("//img[contains(@src,'.jpg') or contains(@src,'.png')]/@src").get()
         if img and img.startswith("/"):
             img = urljoin(url, img)
 
