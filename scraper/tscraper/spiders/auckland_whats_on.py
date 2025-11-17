@@ -25,7 +25,7 @@ class AucklandHotCEntertainmentSpider(scrapy.Spider):
     From listing sections, follow detail pages (paths vary across site sections).
     Parse place detail: title, description, price cues, address, phone, website, hours, image.
     """
-    name = "auckland_entertainment_hotc"
+    name = "auckland_whats_on"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     custom_settings = {
