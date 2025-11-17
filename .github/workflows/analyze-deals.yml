@@ -31,7 +31,7 @@ on:
         required: false
         default: "false"
   schedule:
-    - cron: "25 3 * * *"   # daily at ~03:25 UTC
+    - cron: "25 3 1 * *"   # daily at ~03:25 UTC
   push:
     paths:
       - "public/data/packages.final*.jsonl"
