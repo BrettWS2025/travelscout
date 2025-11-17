@@ -33,17 +33,14 @@ const MENU: MenuSection[] = [
     href: "/compare",
     icon: PanelsTopLeft,
     items: [
-      { label: "Airlines", href: "/(product)/compare#airpoints" },
-      { label: "Hotels", href: "/(product)/compare#cards" },
-      { label: "Rental Cars", href: "/(product)/compare#lounges" },
+      /* { label: "Airlines", href: "/(product)/compare#airpoints" },*/
+      /*{ label: "Hotels", href: "/(product)/compare#cards" },*/
+      /*{ label: "Rental Cars", href: "/(product)/compare#lounges" },*/
+      { label: "Travel Agencies, OTAs and Direct Bookings",href: "/compare/travel-agencies-otas-and-direct"},
       { label: "Best Time to Book", href: "/compare/best-time-to-book" },
       { label: "Cruises", href: "/compare/cruise" },
-      { label: "Tours", href: "/(product)/compare#lounges" },
-      { label: "Travel Insurance", href: "/compare/travel-insurance" },
-      {
-        label: "Travel Agencies, OTAs and Direct Bookings",
-        href: "/compare/travel-agencies-otas-and-direct",
-      },
+      /*{ label: "Tours", href: "/(product)/compare#lounges" },*/
+      { label: "Travel Insurance", href: "/compare/travel-insurance" },      
     ],
   },
   {
@@ -67,9 +64,9 @@ const MENU: MenuSection[] = [
     href: "/top-deals",
     icon: Percent,
     items: [
-      { label: "Top Deals", href: "/(marketing)/top-deals" },
-      { label: "Weekly Sales", href: "/(marketing)/top-deals#weekly" },
-      { label: "Error Fares", href: "/(marketing)/top-deals#error-fares" },
+      { label: "Top Deals", href: "/top-deals/topdeals" },
+      /*{ label: "Weekly Sales", href: "/(marketing)/top-deals#weekly" },*/
+      /*{ label: "Error Fares", href: "/(marketing)/top-deals#error-fares" },*/
     ],
   },
   {

@@ -57,23 +57,6 @@ export default function Home() {
         />
       </section>
 
-      {/* CTA to new Cruise page */}
-      <section className="card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Cruise Comparisons</h2>
-            <p style={{ color: "var(--muted)" }}>
-              Compare cruise lines, inclusions, and vibes in one place.
-            </p>
-          </div>
-          <Link
-            href="/compare/cruise"
-            className="inline-flex items-center rounded-2xl px-4 py-2 border border-[var(--border)] hover:bg-[var(--card)] transition"
-          >
-            View comparisons →
-          </Link>
-        </div>
-      </section>
 
       {/* Top Destinations */}
       <section className="card p-6">
