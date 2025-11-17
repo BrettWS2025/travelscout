@@ -20,6 +20,8 @@ DEFAULT_REQUEST_HEADERS = {
     "Accept-Language": "en-NZ,en;q=0.9",
 }
 
+TELNETCONSOLE_ENABLED = False
+
 # Caching & logging
 HTTPCACHE_ENABLED = True
 HTTPCACHE_DIR = "httpcache"
