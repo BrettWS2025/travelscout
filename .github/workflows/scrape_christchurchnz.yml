@@ -3,7 +3,7 @@ name: Whats On and Events
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 16 * * 1"   # Mon 16:17 UTC (Tue morning NZT)
+    - cron: "17 16 1 * *"   # run monthly on the 1st at 16:17 UTC
 
 permissions:
   contents: write
@@ -26,32 +26,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      - name: Run spiders (sequential per target file to avoid file contention)
+      - name: Run spiders (sequential per target file)
         working-directory: scraper
         run: |
           mkdir -p data
 
           # --------------------- EVENTS ---------------------
-          # Overwrite canonical Events.jsonl with Christchurch first
           python -m scrapy crawl christchurch_whats_on \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
             -O data/Events.jsonl
 
-          # Append Auckland HOTC events
           python -m scrapy crawl auckland_events \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
             -o data/Events.jsonl
 
           # ----------------- THINGS TO DO -------------------
-          # Overwrite canonical Things_to_do.jsonl with Christchurch first
           python -m scrapy crawl christchurch_things \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
             -O data/Things_to_do.jsonl
 
-          # Append Auckland HOTC activities
           python -m scrapy crawl auckland_whats_on \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
