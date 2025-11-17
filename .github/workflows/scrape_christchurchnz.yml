@@ -2,8 +2,13 @@ name: Whats On and Events
 
 on:
   workflow_dispatch:
+    inputs:
+      spiders:
+        description: "Comma-separated spider names to run (e.g. christchurch_whats_on,auckland_events). Leave blank for all."
+        required: false
+        default: ""
   schedule:
-    - cron: "17 16 1 * *"   # run monthly on the 1st at 16:17 UTC
+    - cron: "17 16 1 * *"   # monthly on the 1st at 16:17 UTC
 
 permissions:
   contents: write
@@ -26,32 +31,69 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      - name: Run spiders (sequential per target file)
+      - name: Decide spider list
+        id: decide
+        run: |
+          ALL="christchurch_whats_on,auckland_events,christchurch_things,auckland_whats_on"
+          INPUT="${{ github.event.inputs.spiders }}"
+          if [ -z "$INPUT" ]; then LIST="$ALL"; else LIST="$INPUT"; fi
+          echo "list=$LIST" >> $GITHUB_OUTPUT
+
+      - name: Run selected spiders
         working-directory: scraper
         run: |
+          set -euo pipefail
           mkdir -p data
 
-          # --------------------- EVENTS ---------------------
-          python -m scrapy crawl christchurch_whats_on \
-            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
-            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -O data/Events.jsonl
+          IFS=',' read -ra SPIDERS <<< "${{ steps.decide.outputs.list }}"
 
-          python -m scrapy crawl auckland_events \
-            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
-            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -o data/Events.jsonl
+          EVENTS=()
+          THINGS=()
+          for s in "${SPIDERS[@]}"; do
+            s_trimmed="$(echo "$s" | xargs)"
+            case "$s_trimmed" in
+              christchurch_whats_on|auckland_events) EVENTS+=("$s_trimmed");;
+              christchurch_things|auckland_whats_on) THINGS+=("$s_trimmed");;
+              *) echo "Skipping unknown spider: $s_trimmed" ;;
+            esac
+          done
 
-          # ----------------- THINGS TO DO -------------------
-          python -m scrapy crawl christchurch_things \
-            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
-            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -O data/Things_to_do.jsonl
+          run_spider () {
+            local spider="$1"; local mode="$2"; local outfile="$3"
+            # Speedy-but-polite defaults
+            FLAGS="-s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1"
+            if [ "$mode" = "overwrite" ]; then
+              python -m scrapy crawl "$spider" $FLAGS -O "$outfile"
+            else
+              python -m scrapy crawl "$spider" $FLAGS -o "$outfile"
+            fi
+          }
 
-          python -m scrapy crawl auckland_whats_on \
-            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
-            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -o data/Things_to_do.jsonl
+          # -------- Events.jsonl --------
+          if [ ${#EVENTS[@]} -gt 0 ]; then
+            FIRST=1
+            for s in "${EVENTS[@]}"; do
+              if [ $FIRST -eq 1 ]; then
+                run_spider "$s" "overwrite" "data/Events.jsonl"
+                FIRST=0
+              else
+                run_spider "$s" "append" "data/Events.jsonl"
+              fi
+            done
+          fi
+
+          # -------- Things_to_do.jsonl --------
+          if [ ${#THINGS[@]} -gt 0 ]; then
+            FIRST=1
+            for s in "${THINGS[@]}"; do
+              if [ $FIRST -eq 1 ]; then
+                run_spider "$s" "overwrite" "data/Things_to_do.jsonl"
+                FIRST=0
+              else
+                run_spider "$s" "append" "data/Things_to_do.jsonl"
+              fi
+            done
+          fi
 
       - name: Detect data changes
         id: detect
@@ -59,8 +101,14 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add scraper/data/Events.jsonl scraper/data/Things_to_do.jsonl 2>/dev/null || true
-          if git diff --cached --quiet -- scraper/data/Events.jsonl scraper/data/Things_to_do.jsonl; then
+          # Stage only files that exist
+          ADDED=0
+          if [ -f scraper/data/Events.jsonl ]; then git add scraper/data/Events.jsonl; ADDED=1; fi
+          if [ -f scraper/data/Things_to_do.jsonl ]; then git add scraper/data/Things_to_do.jsonl; ADDED=1; fi
+
+          if [ "$ADDED" = "0" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          elif git diff --cached --quiet; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -69,7 +117,7 @@ jobs:
       - name: Commit scraped data
         if: steps.detect.outputs.changed == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         run: |
-          git commit -m "data: update Events/Things_to_do ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+          git commit -m "data: update scraped JSONL ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
           git push
 
       - name: Upload artifact (only when changed)
