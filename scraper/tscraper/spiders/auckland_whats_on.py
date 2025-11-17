@@ -9,7 +9,7 @@ from tscraper.utils import clean, parse_prices, build_embedding_text
 BASE = "https://heartofthecity.co.nz"
 LIST_URL = f"{BASE}/activities/entertainment-activities"
 
-# Detail pages appear across sections, e.g. /section/subsection/slug
+# Detail pages appear across sections: /section/subsection/slug
 DETAIL_PATH_RE = re.compile(r"^/[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-]+/?$", re.I)
 PHONE_RE = re.compile(r"\b(?:\+?64|0)\d[\d\s\-]{6,}\b")
 
@@ -18,12 +18,26 @@ class AucklandHotCEntertainmentSpider(scrapy.Spider):
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     custom_settings = {
+        "ROBOTSTXT_OBEY": False,
         "DEPTH_LIMIT": 2,
         "CLOSESPIDER_PAGECOUNT": 4000,
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        "PLAYWRIGHT_BROWSER_TYPE": "chromium",
+        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 25000,
+        "DEFAULT_REQUEST_HEADERS": {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/123.0 Safari/537.36",
+            "Accept-Language": "en-NZ,en;q=0.9",
+        },
+        "LOG_LEVEL": "INFO",
     }
 
     def start_requests(self):
-        yield scrapy.Request(LIST_URL, callback=self.parse_listing, headers={"Accept-Language": "en-NZ,en;q=0.9"})
+        yield scrapy.Request(LIST_URL, callback=self.parse_listing, meta={"playwright": True})
 
     def parse_listing(self, response: scrapy.http.Response):
         for href in response.css("a::attr(href)").getall():
@@ -32,13 +46,12 @@ class AucklandHotCEntertainmentSpider(scrapy.Spider):
             absu = urljoin(response.url, href)
             path = urlparse(absu).path.rstrip("/")
 
-            # Skip event pages; this spider is for activities/places
+            # Skip events hub; this spider is for activities/places
             if path.startswith("/auckland-events"):
                 continue
 
-            # Follow plausible detail pages: /section/subsection/slug
             if DETAIL_PATH_RE.match(path):
-                yield scrapy.Request(absu, callback=self.parse_place)
+                yield scrapy.Request(absu, callback=self.parse_place, meta={"playwright": True})
 
     def parse_place(self, response: scrapy.http.Response):
         url = response.url
@@ -53,12 +66,13 @@ class AucklandHotCEntertainmentSpider(scrapy.Spider):
         ).getall()))
         price = parse_prices(price_text or "")
 
-        # Address (best-effort: look for common street types near top)
+        # Address: grab the first plausible address line near the top
         address = clean(" ".join(response.xpath(
-            "//*[self::p or self::div][contains(., 'Street') or contains(., 'Road') or contains(., 'Quay') or contains(., 'Avenue') or contains(., 'Lane')][1]//text()"
+            "(//h1/following::p | //h1/following::div)[position()<=10]"
+            "[contains(., 'Street') or contains(., 'Road') or contains(., 'Quay') or contains(., 'Avenue') or contains(., 'Lane')]//text()"
         ).getall())) or None
 
-        # Phone
+        # Phone: scan text following H1
         phone = None
         for t in response.xpath("//h1/following::text()").getall():
             t = clean(t)
@@ -69,17 +83,17 @@ class AucklandHotCEntertainmentSpider(scrapy.Spider):
                 phone = m.group(0)
                 break
 
-        # Website link
         website = response.xpath("//a[contains(.,'Website')]/@href").get()
         if website:
             website = urljoin(url, website)
 
-        # Opening hours
         hours_block = clean(" ".join(response.xpath(
             "//*[contains(., 'Opening hours')]/following::*[self::p or self::li or self::div][position()<=12]//text()"
         ).getall())) or None
 
-        img = response.xpath("//img[contains(@src,'.jpg') or contains(@src,'.jpeg') or contains(@src,'.png')]/@src").get()
+        img = response.xpath(
+            "//img[contains(@src,'.jpg') or contains(@src,'.jpeg') or contains(@src,'.png')]/@src"
+        ).get()
         if img and img.startswith("/"):
             img = urljoin(url, img)
 
