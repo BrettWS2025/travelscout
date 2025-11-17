@@ -1,7 +1,11 @@
-
 from __future__ import annotations
-from typing import List, Optional
-from pydantic import BaseModel, validator
+from typing import List, Optional, Literal
+from pydantic import BaseModel, Field, HttpUrl, validator, constr
+from datetime import datetime
+
+# ---------------------------
+# Existing package models (kept)
+# ---------------------------
 
 class Includes(BaseModel):
     flights: Optional[bool] = None
@@ -44,3 +48,60 @@ class PackageModel(BaseModel):
         if not v or not str(v).strip():
             raise ValueError("url missing")
         return v
+
+# ---------------------------
+# TravelScout schema (new)
+# ---------------------------
+
+class Price(BaseModel):
+    currency: constr(min_length=3, max_length=3) = "NZD"
+    min: Optional[float] = None
+    max: Optional[float] = None
+    text: Optional[str] = None
+    free: bool = False
+
+class Location(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = "Canterbury"
+    country: Optional[str] = "New Zealand"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+class Booking(BaseModel):
+    url: Optional[HttpUrl] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+class EventDates(BaseModel):
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+    timezone: str = "Pacific/Auckland"
+
+class TravelScoutRecord(BaseModel):
+    """
+    Unified record for events & places (attractions/activities).
+    """
+    id: str
+    record_type: Literal["event", "place"]
+    name: str
+    description: Optional[str] = None
+    categories: List[str] = []
+    tags: List[str] = []
+    url: HttpUrl
+    source: str = "christchurchnz.com"
+    images: List[HttpUrl] = []
+    location: Location = Location()
+    price: Price = Price()
+    booking: Booking = Booking()
+    event_dates: Optional[EventDates] = None
+    opening_hours: Optional[str] = None
+    operating_months: Optional[List[str]] = None
+    data_collected_at: Optional[datetime] = None
+    text_for_embedding: Optional[str] = None
+
+if __name__ == "__main__":
+    # Handy: print JSON Schema for the TravelScoutRecord
+    import json
+    print(json.dumps(TravelScoutRecord.model_json_schema(), indent=2))
