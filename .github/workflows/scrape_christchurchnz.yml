@@ -1,4 +1,4 @@
-name: Whats on and Events
+name: Whats On and Events
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     - cron: "17 16 * * 1"   # Mon 16:17 UTC (Tue morning NZT)
 
 permissions:
-  contents: write   # allow committing updated data
+  contents: write
 
 jobs:
   scrape:
@@ -26,24 +26,36 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      - name: Run spiders (parallel, fast) -> canonical filenames
+      - name: Run spiders (sequential per target file to avoid file contention)
         working-directory: scraper
         run: |
           mkdir -p data
 
-          # EVENTS (Christchurch "What's On")
+          # --------------------- EVENTS ---------------------
+          # Overwrite canonical Events.jsonl with Christchurch first
           python -m scrapy crawl christchurch_whats_on \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -O data/Events.jsonl &
+            -O data/Events.jsonl
 
-          # THINGS TO DO (Christchurch attractions/activities)
+          # Append Auckland HOTC events
+          python -m scrapy crawl auckland_events \
+            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
+            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
+            -o data/Events.jsonl
+
+          # ----------------- THINGS TO DO -------------------
+          # Overwrite canonical Things_to_do.jsonl with Christchurch first
           python -m scrapy crawl christchurch_things \
             -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
             -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
-            -O data/Things_to_do.jsonl &
+            -O data/Things_to_do.jsonl
 
-          wait
+          # Append Auckland HOTC activities
+          python -m scrapy crawl auckland_whats_on \
+            -s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 \
+            -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1 \
+            -o data/Things_to_do.jsonl
 
       - name: Detect data changes
         id: detect
