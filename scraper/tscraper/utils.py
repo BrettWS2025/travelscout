@@ -1,8 +1,9 @@
+# ---------------------------
+# Your existing helpers (kept)
+# ---------------------------
 import re, json, hashlib
 from parsel import Selector
-
 from urllib.parse import urljoin, urlparse
-
 
 def parse_jsonld(response_text: str):
     sel = Selector(text=response_text)
@@ -45,7 +46,6 @@ def title_from_jsonld(objs):
         if isinstance(n, str) and n.strip():
             return n.strip()
     return None
-
 
 CURRENCY_SIGNS = ["$", "NZ$", "NZD", "NZD$"]
 
@@ -91,14 +91,12 @@ def build_item(source, url, title, price, currency, nights, sale_ends_at, page_t
         "sale_ends_at": sale_ends_at,
     }
 
-
 def extract_price_from_scripts(response_text: str):
     prices = []
     for m in re.finditer(r'"price"\s*:\s*"?([0-9]{2,7}(?:\.[0-9]{1,2})?)"?', response_text or "", re.I):
         try: prices.append(float(m.group(1)))
         except: pass
     return min(prices) if prices else None
-
 
 def _norm_path(href: str) -> str:
     try:
@@ -134,3 +132,79 @@ def page_has_price_signal(response_text: str) -> bool:
     body_text = " ".join(sel.xpath("//body//text()").getall())
     p2 = parse_price_text(body_text)
     return isinstance(p2, (int, float)) and p2 >= 99
+
+# ---------------------------
+# TravelScout helpers (new)
+# ---------------------------
+from datetime import datetime, time
+from dateutil import parser as dp
+import pytz
+
+NZ = pytz.timezone("Pacific/Auckland")
+
+def clean(s):
+    return re.sub(r"\s+", " ", s).strip() if s else None
+
+def parse_date_range(text: str):
+    """
+    Accepts:
+      - "17 - 19 April 2026"
+      - "2 - 6 December 2025"
+      - "14 Feb 2026 | 6:25 pm - 9:40 pm"
+    Returns (start_iso, end_iso)
+    """
+    if not text:
+        return None, None
+    t = " ".join(text.split())
+
+    if "|" in t and "-" in t.split("|")[1]:
+        date_part, time_part = [x.strip() for x in t.split("|", 1)]
+        start_time_txt, end_time_txt = [x.strip() for x in time_part.split("-", 1)]
+        d = dp.parse(date_part, dayfirst=True, default=datetime.now(NZ)).date()
+        st = dp.parse(start_time_txt).time()
+        et = dp.parse(end_time_txt).time()
+        start = NZ.localize(datetime.combine(d, st))
+        end = NZ.localize(datetime.combine(d, et))
+        if end <= start:
+            end = NZ.localize(datetime.combine(d, time(23, 59, 59)))
+        return start.isoformat(), end.isoformat()
+
+    m = re.match(r"(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})", t)
+    if m:
+        d1, d2, month, year = m.groups()
+        start = NZ.localize(dp.parse(f"{d1} {month} {year}"))
+        end = NZ.localize(dp.parse(f"{d2} {month} {year} 23:59:59"))
+        return start.isoformat(), end.isoformat()
+
+    try:
+        d = NZ.localize(dp.parse(t))
+        return d.isoformat(), d.isoformat()
+    except Exception:
+        return None, None
+
+def parse_prices(text: str):
+    if not text:
+        return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
+    free = bool(re.search(r"\bfree\b", text, re.I))
+    nums = [float(x.replace(",", "")) for x in re.findall(r"\$?\s*([0-9]+(?:\.[0-9]{1,2})?)", text)]
+    minv = min(nums) if nums else (0.0 if free else None)
+    maxv = max(nums) if nums else None
+    return {"currency": "NZD", "min": minv, "max": maxv, "text": clean(text), "free": free}
+
+def nz_months(text: str):
+    if not text:
+        return None
+    months = ["January","February","March","April","May","June","July","August","September","October","November","December",
+              "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    found = []
+    for m in months:
+        if re.search(rf"\b{re.escape(m)}\b", text, re.I):
+            key = m[:3].title()
+            if key not in found:
+                found.append(key)
+    return found or None
+
+def build_embedding_text(name, description, location, dates_text, price_text, categories):
+    bits = [name, description, location.get("address"), location.get("city"), location.get("region"),
+            dates_text, price_text, ", ".join(categories or [])]
+    return clean(" | ".join([b for b in bits if b]))
