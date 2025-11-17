@@ -21,7 +21,7 @@ class AucklandHotCEventsSpider(scrapy.Spider):
     From listing pages, follow event detail links: /auckland-events/<slug>
     Parse event detail pages: title, description, price, dates, booking link, venue, image.
     """
-    name = "auckland_events_hotc"
+    name = "auckland_events"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     custom_settings = {
