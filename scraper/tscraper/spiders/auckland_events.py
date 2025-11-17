@@ -10,23 +10,43 @@ from tscraper.utils import clean, parse_date_range, parse_prices, build_embeddin
 BASE = "https://heartofthecity.co.nz"
 ROOT = f"{BASE}/auckland-events"
 
+# Explicitly treat these as listing/category pages, NOT detail
 CATEGORY_SLUGS = {
-    "today","tomorrow","this-week","this-weekend","whats-on-this-month",
-    "food-drink-events","food-and-drink-events","theatre","exhibitions",
-    "music-events","festivals"
+    "today", "tomorrow", "this-week", "this-weekend", "this-month",
+    "whats-on-this-month", "food-drink-events", "food-and-drink-events",
+    "theatre", "exhibitions", "music-events", "festivals", "sports-events",
+    "family", "free"
 }
 
-def is_event_detail(path: str) -> bool:
-    # matches /auckland-events/<slug>
+def is_event_detail_path(path: str) -> bool:
+    # True detail looks like /auckland-events/<slug> (exactly 2 segments)
     seg = path.strip("/").split("/")
-    return len(seg) == 2 and seg[0] == "auckland-events"
+    if len(seg) != 2 or seg[0] != "auckland-events":
+        return False
+    tail = seg[1]
+    return tail not in CATEGORY_SLUGS and tail != "" and "-" in tail  # sluggy tail
+
+def is_event_detail_page(response: scrapy.http.Response) -> bool:
+    """
+    Defensive check so we never emit category pages.
+    Consider it a detail page if we see a Dates label or a ticket CTA,
+    or Drupal event node classes.
+    """
+    if response.xpath("//*[normalize-space()='Dates']"):
+        return True
+    if response.xpath("//a[contains(.,'Book Tickets') or contains(.,'Buy Tickets')]"):
+        return True
+    if response.xpath("//*[contains(@class,'node--type-event') or contains(@class,'node--event')]"):
+        return True
+    # As a last resort, look for a time separator pattern near the top (e.g. "18 NOV, 2025 | 7pm")
+    maybe = clean(" ".join(response.xpath("(//h1/following::p | //h1/following::div)[position()<=6]//text()").getall()))
+    return bool(maybe and "|" in maybe and re.search(r"\b\d{1,2}\s?[AP]M\b", maybe, re.I))
 
 class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
-    allowed_domains = ["heartofthecity.co.nz","www.heartofthecity.co.nz"]
+    allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     custom_settings = {
-        # Keep it polite and bounded
         "ROBOTSTXT_OBEY": True,
         "DEPTH_LIMIT": 2,
         "CLOSESPIDER_PAGECOUNT": 3000,
@@ -42,64 +62,80 @@ class AucklandEventsSpider(scrapy.Spider):
         self.test_url = test_url
 
     def start_requests(self):
-        # Single-page test mode (great for troubleshooting):
+        # Single-page test (fastest way to verify selectors)
         if self.test_url:
             yield scrapy.Request(self.test_url, callback=self.parse_event)
             return
 
         # Crawl the hub + common category pages (server-rendered)
         yield scrapy.Request(ROOT, callback=self.parse_listing)
-        for slug in CATEGORY_SLUGS:
+        for slug in sorted(CATEGORY_SLUGS):
             yield scrapy.Request(f"{ROOT}/{slug}", callback=self.parse_listing)
 
     def parse_listing(self, response: scrapy.http.Response):
         anchors = response.css("a::attr(href)").getall()
-        total = 0
-        enqueued = 0
+        scanned = 0
+        queued = 0
 
-        for href in anchors:
+        # Prefer anchors inside obvious event containers if present; fall back to page-wide
+        candidate_hrefs = set(anchors) | set(response.xpath(
+            "//*[contains(@id,'event') or contains(@class,'event')]//a/@href"
+        ).getall())
+
+        for href in candidate_hrefs:
             if not href or href.startswith("#"):
                 continue
             absu = urljoin(response.url, href)
             path = urlparse(absu).path.rstrip("/")
 
-            # Follow categories to harvest more cards
+            # Follow category/list pages to harvest more cards
+            if path == "/auckland-events":
+                scanned += 1
+                continue
             if path.startswith("/auckland-events/"):
                 tail = path.split("/")[-1]
                 if tail in CATEGORY_SLUGS:
-                    total += 1
+                    scanned += 1
+                    # follow listing
                     yield scrapy.Request(absu, callback=self.parse_listing)
                     continue
 
-            # Enqueue event detail pages
-            if is_event_detail(path):
-                total += 1
-                enqueued += 1
+            # Queue only true detail paths
+            if is_event_detail_path(path):
+                scanned += 1
+                queued += 1
                 yield scrapy.Request(absu, callback=self.parse_event)
+            else:
+                scanned += 1
 
         self.logger.info("[auckland_events] scanned=%d enqueued_detail=%d url=%s",
-                         total, enqueued, response.url)
+                         scanned, queued, response.url)
 
     def parse_event(self, response: scrapy.http.Response):
+        if not is_event_detail_page(response):
+            self.logger.debug("[auckland_events] skipped (not detail) %s", response.url)
+            return
+
         url = response.url
         name = clean(response.xpath("//h1/text()").get())
-        if not name:
-            self.logger.debug("[auckland_events] no H1 on %s", url)
+        if not name or name.lower().strip() in {"events", "what's on", "what’s on"}:
+            self.logger.debug("[auckland_events] skipped (bad h1) %s", url)
             return
 
         venue = clean(response.xpath("(//h1/following::a[1]/text())[1]").get())
         desc = clean(" ".join(response.xpath("(//h1/following::p)[1]//text()").getall())) or None
 
+        # Price cues near the top
         price_text = clean(" ".join(response.xpath(
-            "//*[contains(text(),'$') or contains(translate(.,'FREE','free'),'free')]//text()"
+            "(//h1/following::p | //h1/following::li | //h1/following::div)[position()<=20][contains(.,'$') or contains(translate(.,'FREE','free'),'free')]//text()"
         ).getall()))
         price = parse_prices(price_text or "")
 
-        # Prefer a 'Dates' label, fall back to the first "DATE | TIME" text
+        # Dates
         date_text = clean(" ".join(
             response.xpath("//*[normalize-space()='Dates']/following::text()[normalize-space()][1]").getall()
         )) or clean(" ".join(
-            response.xpath("//*[contains(text(),'|') and contains(text(),',')][1]//text()").getall()
+            response.xpath("(//h1/following::p | //h1/following::div)[position()<=8][contains(.,'|')]//text()").getall()
         ))
         start_iso, end_iso = parse_date_range(date_text or "")
         if (not start_iso and date_text and "|" in date_text):
@@ -112,13 +148,15 @@ class AucklandEventsSpider(scrapy.Spider):
             except Exception:
                 start_iso, end_iso = None, None
 
+        # Booking link
         booking_url = response.xpath(
             "//a[contains(.,'Book Tickets') or contains(.,'Buy Tickets')]/@href"
         ).get()
         if booking_url:
             booking_url = urljoin(url, booking_url)
 
-        img = response.xpath("//img[contains(@src,'.jpg') or contains(@src,'.png')]/@src").get()
+        # Image
+        img = response.xpath("(//img[contains(@src,'.jpg') or contains(@src,'.png')])[1]/@src").get()
         if img and img.startswith("/"):
             img = urljoin(url, img)
 
