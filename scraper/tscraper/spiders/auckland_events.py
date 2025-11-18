@@ -48,7 +48,7 @@ class AucklandEventsSpider(scrapy.Spider):
       opening_hours, operating_months, data_collected_at
     """
 
-    name = "auckland_events_lean"
+    name = "auckland_events"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
     start_urls = START_URLS
 
