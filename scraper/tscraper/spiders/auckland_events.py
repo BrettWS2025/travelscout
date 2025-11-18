@@ -271,4 +271,75 @@ class AucklandEventsSpider(scrapy.Spider):
                     date_text = m.group(1)
 
         return {
-            "start": start
+            "start": start,
+            "end": end,
+            "timezone": "Pacific/Auckland",
+            "text": date_text or None,
+        }
+
+    # --------------- detail ---------------
+
+    def parse_event(self, response):
+        article = self._event_article(response)
+        ld = self._from_ldjson(response)
+
+        # title
+        title = (
+            self._clean(article.css("h1::text").get())
+            or self._clean(response.css('meta[property="og:title"]::attr(content)').get())
+            or ld.get("name")
+            or ""
+        )
+        if not title:
+            self.logger.debug("No title on %s", response.url)
+            return
+
+        # venue: something sane near the title in the meta area
+        venue = None
+        for t in article.xpath(
+            ".//h1/following::*[self::a or self::span or self::strong][position()<=10]//text()"
+        ).getall():
+            t = self._clean(t)
+            if not t:
+                continue
+            low = t.lower()
+            if low in {"add to favourites", "show on map", "book tickets", "more info"}:
+                continue
+            if len(t) <= 80:
+                venue = t
+                break
+        if not venue:
+            venue = ld.get("venue") or None
+
+        # price + dates
+        price = self._extract_price(article, ld)
+        event_dates = self._extract_dates(article, ld)
+
+        # collection timestamp (RFC 2822 style for consistency with previous output)
+        collected = response.headers.get("Date", b"").decode().strip()
+        if not collected:
+            collected = format_datetime(datetime.now(timezone.utc))
+
+        # build LEAN record
+        record = {
+            "id": f"{abs(hash(response.url)) & 0xFFFFFFFFFFFFFFFF:016x}",
+            "record_type": "event",
+            "name": title,
+            "url": response.url,
+            "source": "heartofthecity.co.nz",
+            "location": {
+                "name": venue or None,
+                "address": ld.get("address") or None,
+                "city": "Auckland",
+                "region": "Auckland",
+                "country": "New Zealand",
+                "latitude": None,
+                "longitude": None,
+            },
+            "price": price,
+            "event_dates": event_dates,
+            "opening_hours": None,
+            "operating_months": None,
+            "data_collected_at": collected,
+        }
+        yield record
