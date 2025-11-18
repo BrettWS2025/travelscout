@@ -8,7 +8,7 @@ import scrapy
 
 class AucklandWhatsOnSpider(scrapy.Spider):
     """
-    Heart of the City — 'What's On' / Things-to-do spider (LEAN FIELDS)
+    Heart of the City — What's On / Things-to-do (LEAN FIELDS)
 
     Emits ONLY:
       id, record_type, name, categories, url, source,
@@ -16,7 +16,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     """
 
     name = "auckland_whats_on"
-    allowed_domains = ["heartofthecity.co.nz"]
+    allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     start_urls = [
         "https://heartofthecity.co.nz/activities",
@@ -26,6 +26,29 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         "https://heartofthecity.co.nz/attractions/tourist-attractions",
         "https://heartofthecity.co.nz/auckland-nightlife/party-time",
     ]
+
+    custom_settings = {
+        "USER_AGENT": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/127.0.0.0 Safari/537.36"
+        ),
+        "ROBOTSTXT_OBEY": True,
+        "TELNETCONSOLE_ENABLED": False,
+        "DOWNLOAD_DELAY": 0.5,
+        "CONCURRENT_REQUESTS": 6,
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 0.5,
+        "AUTOTHROTTLE_MAX_DELAY": 6.0,
+        # Write here by default (you can override with: -O things_to_do.jsonl)
+        "FEEDS": {
+            "things_to_do.jsonl": {
+                "format": "jsonlines",
+                "encoding": "utf8",
+                "overwrite": False,
+            }
+        },
+    }
 
     # families we allow
     PATH_PREFIXES = ("/activities/", "/attractions/", "/auckland-nightlife/")
@@ -91,11 +114,10 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     def _is_detail_path(self, url):
         """
-        Detail page heuristic:
-        - Any allowed-family path with >= 3 segments is a detail page.
-          e.g. /attractions/tourist-attractions/skywalk
-               /activities/getting-active/auckland-adventure-jet
-               /activities/entertainment-activities/auckland-bridge-bungy
+        Detail page heuristic (captures e.g.):
+          /activities/getting-active/auckland-adventure-jet
+          /attractions/tourist-attractions/skywalk
+          /activities/entertainment-activities/auckland-bridge-bungy
         """
         parts = [p for p in urlparse(url).path.split("/") if p]
         if len(parts) >= 3:
@@ -112,26 +134,22 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         )
 
     def _extract_address(self, response):
-        # common address containers
         bits = response.css('.address, [itemprop="address"], .field--name-field-address ::text').getall()
         if not bits:
-            # header/meta area near title
             bits = response.xpath(
                 "//article//*[contains(@class,'promotion__link') or contains(@class,'meta') or contains(@class,'node')]"
                 "/descendant::text()[normalize-space()]"
             ).getall()
         text = self._clean(" ".join(bits)) or self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
-        # pull address-like span
         m = re.search(
             r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^\n,]*,?\s*Auckland)\b",
-            text,
-            re.I,
+            text, re.I
         )
         if m:
             return self._clean(m.group(1))
         m = re.search(
             r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^\n,]*,\s*[A-Za-z\- ]{2,})",
-            text,
+            text
         )
         return self._clean(m.group(1)) if m else None
 
@@ -144,36 +162,23 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             )
         if not box:
             return None
-        lines = [
-            self._clean(" ".join(x.xpath(".//text()").getall())) for x in box.css("li, p, div, span")
-        ]
+        lines = [self._clean(" ".join(x.xpath(".//text()").getall())) for x in box.css("li, p, div, span")]
         lines = [l for l in lines if l and re.search(r"\d", l)]
         lines = [l for l in lines if not re.search(r"Back to top|Open main menu|Close main menu", l, re.I)]
         return "; ".join(dict.fromkeys(lines))[:600] if lines else None
 
     def _extract_price(self, response):
         block = self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
-        # filter parking/transport promos that include $ values
         block = re.sub(r"(?i)(parking|car ?park|public transport)[^$]{0,120}\$[0-9.,]+", "", block)
-        amounts = [
-            float(m.replace(",", ""))
-            for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", block)
-        ]
+        amounts = [float(m.replace(",", "")) for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", block)]
         amounts = [a for a in amounts if 0 <= a < 2000]
         min_price = min(amounts) if amounts else None
         max_price = max(amounts) if amounts else None
         is_free = bool(re.search(r"\bfree\b", block, re.I)) and (min_price is None or min_price == 0)
-        return {
-            "currency": "NZD",
-            "min": min_price,
-            "max": max_price,
-            "text": None,   # keep lean; omit verbose snippets
-            "free": bool(is_free),
-        }
+        return {"currency": "NZD", "min": min_price, "max": max_price, "text": None, "free": bool(is_free)}
 
     # -------------------- crawling --------------------
     def parse(self, response):
-        # follow every link on page; filter to same-site + families
         for href in response.css("a[href]::attr(href)").getall():
             url = urljoin(response.url, href.split("#")[0])
             if not self._is_internal_content_url(url):
@@ -200,8 +205,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             "name": name,
             "categories": (
                 ["Activities & Attractions", primary_cat]
-                if primary_cat != "Activities & Attractions"
-                else [primary_cat]
+                if primary_cat != "Activities & Attractions" else [primary_cat]
             ),
             "url": url,
             "source": "heartofthecity.co.nz",
