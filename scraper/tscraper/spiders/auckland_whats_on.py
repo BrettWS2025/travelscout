@@ -19,165 +19,182 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
     start_urls = [
+        # Hubs (we’ll recurse through these)
         "https://heartofthecity.co.nz/activities",
         "https://heartofthecity.co.nz/activities/entertainment-activities",
         "https://heartofthecity.co.nz/activities/getting-active",
         "https://heartofthecity.co.nz/activities/lessons",
+        "https://heartofthecity.co.nz/activities/tourist-attractions",
         "https://heartofthecity.co.nz/attractions/tourist-attractions",
-        "https://heartofthecity.co.nz/auckland-nightlife/party-time",
     ]
 
     custom_settings = {
         "USER_AGENT": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit(537.36) (KHTML, like Gecko) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/127.0.0.0 Safari/537.36"
         ),
-        "DEFAULT_REQUEST_HEADERS": {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-NZ,en;q=0.9",
-        },
         "ROBOTSTXT_OBEY": True,
-        "COOKIES_ENABLED": False,
         "TELNETCONSOLE_ENABLED": False,
-        "DOWNLOAD_DELAY": 0.4,
+        "DOWNLOAD_DELAY": 0.5,
         "CONCURRENT_REQUESTS": 6,
         "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 0.3,
+        "AUTOTHROTTLE_START_DELAY": 0.5,
         "AUTOTHROTTLE_MAX_DELAY": 6.0,
-        "DOWNLOAD_FAIL_ON_DATALOSS": False,
-        # Write here by default (override with: -O data/things_to_do.jsonl)
+        # Write here by default (override with -O if you like)
         "FEEDS": {
-            "data/things_to_do.jsonl": {
+            "things_to_do.jsonl": {
                 "format": "jsonlines",
                 "encoding": "utf8",
                 "overwrite": False,
             }
         },
-        "LOG_LEVEL": "INFO",
     }
 
-    # families we allow
-    PATH_PREFIXES = ("/activities/", "/attractions/", "/auckland-nightlife/")
-
-    # 2nd path segment hubs (list pages)
-    HUB_TAILS = {
-        "entertainment-activities",
-        "getting-active",
-        "free-things-do",
-        "lessons",
-        "tourist-attractions",
-        "party-time",
-        "family-fun",
-    }
+    # Families we allow
+    PATH_PREFIXES = ("/activities/", "/attractions/")
 
     PRIMARY_CATS = {
+        # activities sub-hubs
         "entertainment-activities": "Entertainment",
         "getting-active": "Getting Active",
         "free-things-do": "Free Things To Do",
         "lessons": "Lessons",
         "tourist-attractions": "Attractions",
-        "party-time": "Nightlife",
-        "family-fun": "Family Fun",
+        # attractions family always “Attractions”
+        "__attractions__": "Attractions",
     }
 
     # -------------------- helpers --------------------
-    def _clean(self, s: str | None) -> str:
+    def _clean(self, s):
         if not s:
             return ""
         s = re.sub(r"\s+", " ", s)
         return s.replace("\xa0", " ").strip()
 
-    def _hash_id(self, url: str) -> str:
+    def _hash_id(self, url):
         return hashlib.md5(url.encode("utf-8")).hexdigest()[:16]
 
-    def _primary_category(self, url: str) -> str:
+    def _primary_category(self, url):
         parts = [p for p in urlparse(url).path.split("/") if p]
-        if len(parts) >= 2 and parts[0] in ("activities", "attractions", "auckland-nightlife"):
-            base = self.PRIMARY_CATS.get(parts[1])
-            if base:
-                return base
+        if len(parts) >= 2 and parts[0] in ("activities", "attractions"):
             if parts[0] == "attractions":
-                return "Attractions"
-            if parts[0] == "auckland-nightlife":
-                return "Nightlife"
+                return self.PRIMARY_CATS["__attractions__"]
+            return self.PRIMARY_CATS.get(parts[1], "Activities & Attractions")
         return "Activities & Attractions"
 
-    def _allow_family(self, url: str) -> bool:
-        """Allow only the 3 families and block search/ajax/etc."""
+    def _is_internal_content_url(self, url):
         u = urlparse(url)
-        if u.scheme in ("mailto", "tel", ""):
-            return False
-        if u.netloc and not u.netloc.endswith("heartofthecity.co.nz"):
+        # same-site only
+        if u.scheme and u.netloc and not u.netloc.endswith("heartofthecity.co.nz"):
             return False
         if "ajax_form=" in u.query or "/search" in u.path:
             return False
-        return any(u.path.startswith(prefix) for prefix in self.PATH_PREFIXES)
+        if u.scheme in ("mailto", "tel"):
+            return False
+        parts = [p for p in u.path.split("/") if p]
+        if not parts:
+            return False
+        if f"/{parts[0]}/" not in self.PATH_PREFIXES:
+            return False
+        return True
 
-    def _is_detail_path(self, url: str) -> bool:
+    def _is_detail_path(self, url):
         """
         Detail page heuristic (captures e.g.):
           /activities/getting-active/auckland-adventure-jet
-          /attractions/tourist-attractions/skywalk
-          /activities/entertainment-activities/auckland-bridge-bungy
+          /activities/entertainment-activities/great-escape
+          /attractions/tourist-attractions/skyjump
         """
         parts = [p for p in urlparse(url).path.split("/") if p]
-        if len(parts) < 2:
-            return False
-        # page is NOT a hub root or hub listing
-        if len(parts) == 2 and parts[1] in self.HUB_TAILS:
-            return False
-        # everything with >=3 segments under allowed families is a detail page
-        if len(parts) >= 3:
-            return True
-        # rare two-level detail like /activities/<slug> (allow if not a known hub)
-        return parts[0] in {"activities", "attractions", "auckland-nightlife"} and parts[1] not in self.HUB_TAILS
+        return len(parts) >= 3
 
-    def _extract_title(self, response) -> str:
+    def _detail_page_guard(self, response):
+        """
+        Ensure we’re on a detail page, not a hub:
+        require <article> with <h1> and one of:
+        - 'Opening hours' section
+        - a 'Website' link in the details area
+        - 'Show on map'
+        - 'Last updated'
+        """
+        if not response.xpath("//article//h1"):
+            return False
+        hints = response.xpath(
+            "//article//*[contains(translate(.,'OPENING','opening'),'opening') and contains(translate(.,'HOUR','hour'),'hour')]"
+            " | //article//*[contains(text(),'Website')]"
+            " | //article//*[contains(text(),'Show on map')]"
+            " | //article//*[contains(translate(.,'LAST UPDATED','last updated'),'last updated')]"
+        )
+        return bool(hints)
+
+    def _extract_title(self, response):
         return self._clean(
-            response.css("h1::text").get()
+            response.css("article h1::text").get()
+            or response.css("h1::text").get()
             or response.css("meta[property='og:title']::attr(content)").get()
             or response.css("title::text").get()
         )
 
-    def _extract_address(self, response) -> str | None:
-        bits = response.css('.address, [itemprop="address"], .field--name-field-address ::text').getall()
+    def _extract_address(self, response):
+        # Try common address containers first
+        bits = response.css(
+            ".address ::text, [itemprop='address'] ::text, .field--name-field-address ::text"
+        ).getall()
+
         if not bits:
-            bits = response.xpath(
-                "//article//*[contains(@class,'promotion__link') or contains(@class,'meta') or contains(@class,'node')]"
-                "/descendant::text()[normalize-space()]"
+            # Many detail pages put address as a short line near the top, above Opening hours
+            near = response.xpath(
+                "(//article//h1/following::text()[normalize-space()])[position()<=20]"
             ).getall()
-        text = self._clean(" ".join(bits)) or self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
-        # common NZ street patterns incl. Auckland
+            bits = near
+
+        text = self._clean(" ".join(bits))
+        if not text:
+            text = self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
+
+        # Pull an address-like span
         m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq|Drive|Dr|Place|Pl)[^\n,]*,?\s*Auckland)\b",
-            text, re.I
+            r"(\b(?:Cnr|Corner)\b[^,]+,?\s*Auckland|\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,?\s*Auckland)",
+            text,
+            re.I,
         )
         if m:
             return self._clean(m.group(1))
+
+        # relaxed fallback (Street + suburb)
         m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq|Drive|Dr|Place|Pl)[^\n,]*,\s*[A-Za-z\- ]{2,})",
-            text
+            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,\s*[A-Za-z\- ]{2,})",
+            text,
         )
         return self._clean(m.group(1)) if m else None
 
-    def _extract_hours_text(self, response) -> str | None:
-        box = response.css('.office-hours, [class*="office-hours"], [class*="opening-hours"]')
+    def _extract_hours_text(self, response):
+        # Opening hours heading then first container
+        box = response.xpath(
+            "//h2[contains(translate(.,'OPENING','opening'),'opening') and "
+            "contains(translate(.,'HOUR','hour'),'hour')]/following-sibling::*[1]"
+        )
         if not box:
-            box = response.xpath(
-                "//h2[contains(translate(.,'OPENING','opening'),'opening') and "
-                "contains(translate(.,'HOUR','hour'),'hour')]/following-sibling::*[1]"
-            )
+            box = response.css('.office-hours, [class*="office-hours"], [class*="opening-hours"]')
+
         if not box:
             return None
-        lines = [self._clean(" ".join(x.xpath(".//text()").getall())) for x in box.css("li, p, div, span")]
-        lines = [l for l in lines if l and re.search(r"\d", l)]
+
+        lines = []
+        for node in box.css("li, p, div, span"):
+            t = self._clean(" ".join(node.xpath(".//text()").getall()))
+            if t and re.search(r"\d", t):
+                lines.append(t)
+
+        # drop nav noise
         lines = [l for l in lines if not re.search(r"Back to top|Open main menu|Close main menu", l, re.I)]
         return "; ".join(dict.fromkeys(lines))[:600] if lines else None
 
-    def _extract_price(self, response) -> dict:
+    def _extract_price(self, response):
+        # Article-only to avoid header/footer promos
         block = self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
-        # ignore parking/transport promos with dollar amounts
+        # Ignore parking / transport promos with $ amounts
         block = re.sub(r"(?i)(parking|car ?park|public transport)[^$]{0,120}\$[0-9.,]+", "", block)
         amounts = [float(m.replace(",", "")) for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", block)]
         amounts = [a for a in amounts if 0 <= a < 2000]
@@ -188,28 +205,39 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     # -------------------- crawling --------------------
     def parse(self, response):
-        self.logger.info("SCAN %s (%s)", response.url, response.status)
-        # follow only links within our three families
-        for href in response.css("a[href]::attr(href)").getall():
+        # Follow detail pages FIRST
+        for href in response.css(
+            'a[href^="/activities/"]::attr(href), a[href^="/attractions/"]::attr(href)'
+        ).getall():
             url = urljoin(response.url, href.split("#")[0])
-            if not self._allow_family(url):
+
+            if not self._is_internal_content_url(url):
                 continue
+
             if self._is_detail_path(url):
-                self.logger.info("DETAIL_MATCH %s", url)
                 yield response.follow(url, callback=self.parse_place, headers={"Referer": response.url})
             else:
+                # listing / hub
                 yield response.follow(url, callback=self.parse, headers={"Referer": response.url})
-        # simple pagination
+
+        # simple pagination on hubs
         for href in response.css('a[href*="?page="]::attr(href)').getall():
-            nxt = urljoin(response.url, href.split("#")[0])
-            if self._allow_family(nxt):
-                yield response.follow(nxt, callback=self.parse, headers={"Referer": response.url})
+            url = urljoin(response.url, href.split("#")[0])
+            if self._is_internal_content_url(url):
+                yield response.follow(url, callback=self.parse, headers={"Referer": response.url})
 
     def parse_place(self, response):
+        # Extra HTML guard to avoid hub pages being emitted
+        if not self._detail_page_guard(response):
+            return
+
         url = response.url.split("#")[0]
+        parts = [p for p in urlparse(url).path.split("/") if p]
+        if len(parts) < 3:
+            return  # belt & braces
+
         name = self._extract_title(response)
         if not name:
-            self.logger.info("SKIP(no-title) %s", url)
             return
 
         address = self._extract_address(response)
@@ -241,5 +269,4 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             "operating_months": None,
             "data_collected_at": datetime.now(timezone.utc).isoformat(),
         }
-        self.logger.info("EMIT %s | %s", item["name"], item["url"])
         yield item
