@@ -1,5 +1,4 @@
 import hashlib
-import json
 import re
 from datetime import datetime, timezone
 from urllib.parse import urljoin, urlparse
@@ -9,51 +8,72 @@ import scrapy
 
 class AucklandWhatsOnSpider(scrapy.Spider):
     """
-    Crawl "things to do" (non-dated activities/attractions) from Heart of the City.
+    Heart of the City — What's On / Things-to-do (LEAN FIELDS)
 
-    Coverage:
-      - /activities/**
-      - /attractions/tourist-attractions/**
-      - /auckland-nightlife/party-time/**
+    Emits ONLY:
+      id, record_type, name, categories, url, source,
+      location, price, opening_hours, operating_months, data_collected_at
     """
 
     name = "auckland_whats_on"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
+    # Seed main hubs + a few must-have detail pages to guarantee coverage
     start_urls = [
+        # Hubs
         "https://heartofthecity.co.nz/activities",
         "https://heartofthecity.co.nz/activities/entertainment-activities",
         "https://heartofthecity.co.nz/activities/getting-active",
         "https://heartofthecity.co.nz/activities/lessons",
         "https://heartofthecity.co.nz/attractions/tourist-attractions",
+        "https://heartofthecity.co.nz/attractions/auckland-tourist-attractions",
         "https://heartofthecity.co.nz/auckland-nightlife/party-time",
+        # Must-haves (examples you listed)
+        "https://heartofthecity.co.nz/auckland-nightlife/party-time/holey-moley-golf-club",
+        "https://heartofthecity.co.nz/attractions/tourist-attractions/all-blacks-experience",
+        "https://heartofthecity.co.nz/activities/entertainment-activities/great-escape",
     ]
 
     custom_settings = {
+        # Important: robots.txt was blocking detail pages per your logs
+        "ROBOTSTXT_OBEY": True,
+        # Be polite, but keep it moving
+        "DOWNLOAD_DELAY": 0.25,
+        "CONCURRENT_REQUESTS": 16,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 0.4,
+        "AUTOTHROTTLE_MAX_DELAY": 6.0,
         "USER_AGENT": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/127.0.0.0 Safari/537.36"
         ),
-        "ROBOTSTXT_OBEY": True,
         "TELNETCONSOLE_ENABLED": False,
-        "DOWNLOAD_DELAY": 0.4,
-        "CONCURRENT_REQUESTS": 12,
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 0.4,
-        "AUTOTHROTTLE_MAX_DELAY": 6.0,
+        # Write here by default (override with -O if you like)
+        "FEEDS": {
+            "data/Things_to_do.jsonl": {
+                "format": "jsonlines",
+                "encoding": "utf8",
+                "overwrite": False,
+            }
+        },
+        # Avoid reusing possibly stale cached versions during debugging
+        # (remove if you prefer your project’s cache)
+        "HTTPCACHE_ENABLED": False,
     }
 
-    # hub families we allow
+    # Families we allow (by first path segment)
     PATH_PREFIXES = ("/activities/", "/attractions/", "/auckland-nightlife/")
 
-    # 2nd path segment hubs (list pages)
+    # 2nd segment hubs (listing pages)
     HUB_TAILS = {
         "entertainment-activities",
         "getting-active",
         "free-things-do",
         "lessons",
         "tourist-attractions",
+        "auckland-tourist-attractions",
         "party-time",
         "family-fun",
     }
@@ -64,6 +84,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         "free-things-do": "Free Things To Do",
         "lessons": "Lessons",
         "tourist-attractions": "Attractions",
+        "auckland-tourist-attractions": "Attractions",
         "party-time": "Nightlife",
         "family-fun": "Family Fun",
     }
@@ -91,7 +112,6 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     def _is_internal_content_url(self, url):
         u = urlparse(url)
-        # internal only
         if u.scheme in ("mailto", "tel"):
             return False
         if u.netloc and not u.netloc.endswith("heartofthecity.co.nz"):
@@ -105,8 +125,8 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     def _is_detail_path(self, url):
         """
-        Treat anything with 3+ path segments under our families as a detail page.
-        Examples that become True:
+        Treat anything with 3+ segments under our families as a detail page.
+        e.g.
           /activities/entertainment-activities/great-escape
           /attractions/tourist-attractions/all-blacks-experience
           /auckland-nightlife/party-time/holey-moley-golf-club
@@ -118,7 +138,6 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         last = parts[-1].lower()
         if last in {"search"}:
             return False
-        # ignore pure pagination routes; querystring pagination is fine to follow as listing
         if re.match(r"^page-\d+$", last) or "page=" in u.query:
             return False
         return True
@@ -176,7 +195,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     # -------------------- crawling --------------------
     def parse(self, response):
-        # IMPORTANT: follow ALL hrefs (absolute OR relative), then filter internally
+        # Follow ALL links (absolute & relative), then filter
         for href in response.css("a[href]::attr(href)").getall():
             url = urljoin(response.url, href.split("#")[0])
             if not self._is_internal_content_url(url):
@@ -184,11 +203,10 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             if self._is_detail_path(url):
                 yield response.follow(url, callback=self.parse_place, headers={"Referer": response.url})
             else:
-                # keep exploring listings/category hubs & pagination
                 yield response.follow(url, callback=self.parse, headers={"Referer": response.url})
 
     def parse_place(self, response):
-        # Prefer canonical for stable IDs/URLs
+        # Normalize to canonical so IDs are stable and dupes collapse
         canonical = response.css("link[rel='canonical']::attr(href)").get() or response.url
         url = urljoin(response.url, canonical).split("#")[0]
 
