@@ -8,49 +8,52 @@ import scrapy
 
 class AucklandWhatsOnSpider(scrapy.Spider):
     """
-    Heart of the City — What's On / Things-to-do (LEAN FIELDS)
+    Heart of the City — What's On / Things-to-do
 
-    Emits ONLY:
-      id, record_type, name, categories, url, source,
-      location, price, opening_hours, operating_months, data_collected_at
+    Coverage:
+      - /activities/**/*
+      - /attractions/**/*
+      - /auckland-nightlife/**/*
+
+    NOTE: We keep ROBOTSTXT_OBEY controlled by project settings (do not flip here).
     """
 
     name = "auckland_whats_on"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
-    # Seed main hubs + a few must-have detail pages to guarantee coverage
+    # Seed hubs + a few high-value details to ensure coverage
     start_urls = [
-        # Hubs
         "https://heartofthecity.co.nz/activities",
         "https://heartofthecity.co.nz/activities/entertainment-activities",
         "https://heartofthecity.co.nz/activities/getting-active",
         "https://heartofthecity.co.nz/activities/lessons",
         "https://heartofthecity.co.nz/attractions/tourist-attractions",
-        "https://heartofthecity.co.nz/attractions/auckland-tourist-attractions",
         "https://heartofthecity.co.nz/auckland-nightlife/party-time",
-        # Must-haves (examples you listed)
+
+        # manual detail seeds requested
         "https://heartofthecity.co.nz/auckland-nightlife/party-time/holey-moley-golf-club",
         "https://heartofthecity.co.nz/attractions/tourist-attractions/all-blacks-experience",
         "https://heartofthecity.co.nz/activities/entertainment-activities/great-escape",
+        "https://heartofthecity.co.nz/attractions/tourist-attractions/skyjump",
+        "https://heartofthecity.co.nz/attractions/tourist-attractions/skywalk",
+        "https://heartofthecity.co.nz/activities/getting-active/auckland-adventure-jet",
+        "https://heartofthecity.co.nz/activities/tourist-attractions/thrillzone",
     ]
 
     custom_settings = {
-        # Important: robots.txt was blocking detail pages per your logs
-        "ROBOTSTXT_OBEY": True,
-        # Be polite, but keep it moving
+        # leave ROBOTSTXT_OBEY to project setting (do not override)
+        "USER_AGENT": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/127.0.0.0 Safari/537.36"
+        ),
         "DOWNLOAD_DELAY": 0.25,
         "CONCURRENT_REQUESTS": 16,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 0.4,
         "AUTOTHROTTLE_MAX_DELAY": 6.0,
-        "USER_AGENT": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/127.0.0.0 Safari/537.36"
-        ),
-        "TELNETCONSOLE_ENABLED": False,
-        # Write here by default (override with -O if you like)
+        # default feed path can be overridden with -O / -o
         "FEEDS": {
             "data/Things_to_do.jsonl": {
                 "format": "jsonlines",
@@ -58,87 +61,46 @@ class AucklandWhatsOnSpider(scrapy.Spider):
                 "overwrite": False,
             }
         },
-        # Avoid reusing possibly stale cached versions during debugging
-        # (remove if you prefer your project’s cache)
-        "HTTPCACHE_ENABLED": False,
     }
 
-    # Families we allow (by first path segment)
-    PATH_PREFIXES = ("/activities/", "/attractions/", "/auckland-nightlife/")
-
-    # 2nd segment hubs (listing pages)
-    HUB_TAILS = {
-        "entertainment-activities",
-        "getting-active",
-        "free-things-do",
-        "lessons",
-        "tourist-attractions",
-        "auckland-tourist-attractions",
-        "party-time",
-        "family-fun",
-    }
-
-    PRIMARY_CATS = {
-        "entertainment-activities": "Entertainment",
-        "getting-active": "Getting Active",
-        "free-things-do": "Free Things To Do",
-        "lessons": "Lessons",
-        "tourist-attractions": "Attractions",
-        "auckland-tourist-attractions": "Attractions",
-        "party-time": "Nightlife",
-        "family-fun": "Family Fun",
-    }
+    PATH_FAMILIES = ("/activities/", "/attractions/", "/auckland-nightlife/")
 
     # -------------------- helpers --------------------
-    def _clean(self, s):
+    @staticmethod
+    def _clean(s):
         if not s:
             return ""
-        return re.sub(r"\s+", " ", s.replace("\xa0", " ")).strip()
+        s = re.sub(r"\s+", " ", s)
+        return s.replace("\xa0", " ").strip()
 
-    def _hash_id(self, url):
+    @staticmethod
+    def _hash_id(url):
         return hashlib.md5(url.encode("utf-8")).hexdigest()[:16]
 
-    def _primary_category(self, url):
+    def _primary_category(self, url: str) -> str:
         parts = [p for p in urlparse(url).path.split("/") if p]
-        if len(parts) >= 2 and parts[0] in ("activities", "attractions", "auckland-nightlife"):
-            base = self.PRIMARY_CATS.get(parts[1])
-            if base:
-                return base
-            if parts[0] == "attractions":
-                return "Attractions"
-            if parts[0] == "auckland-nightlife":
-                return "Nightlife"
+        if not parts:
+            return "Activities & Attractions"
+        root = parts[0]
+        if root == "attractions":
+            return "Attractions"
+        if root == "auckland-nightlife":
+            return "Nightlife"
         return "Activities & Attractions"
 
-    def _is_internal_content_url(self, url):
-        u = urlparse(url)
-        if u.scheme in ("mailto", "tel"):
-            return False
-        if u.netloc and not u.netloc.endswith("heartofthecity.co.nz"):
-            return False
-        if "ajax_form=" in u.query or "/search" in u.path:
-            return False
-        parts = [p for p in u.path.split("/") if p]
-        if not parts:
-            return False
-        return f"/{parts[0]}/" in self.PATH_PREFIXES
+    def _is_allowed_family(self, url: str) -> bool:
+        path = urlparse(url).path or ""
+        return path.startswith(self.PATH_FAMILIES)
 
-    def _is_detail_path(self, url):
-        """
-        Treat anything with 3+ segments under our families as a detail page.
-        e.g.
-          /activities/entertainment-activities/great-escape
-          /attractions/tourist-attractions/all-blacks-experience
-          /auckland-nightlife/party-time/holey-moley-golf-club
-        """
-        u = urlparse(url)
-        parts = [p for p in u.path.split("/") if p]
+    def _is_detail_url(self, url: str) -> bool:
+        """Detail pages have at least 3 path segments under our families."""
+        parts = [p for p in urlparse(url).path.split("/") if p]
         if len(parts) < 3:
             return False
-        last = parts[-1].lower()
-        if last in {"search"}:
+        if not self._is_allowed_family(url):
             return False
-        if re.match(r"^page-\d+$", last) or "page=" in u.query:
+        tail = parts[-1].lower()
+        if tail in {"page", "search"}:
             return False
         return True
 
@@ -150,22 +112,28 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         )
 
     def _extract_address(self, response):
-        bits = response.css('.address, [itemprop="address"], .field--name-field-address ::text').getall()
+        bits = response.css(
+            '.address ::text, [itemprop="address"] ::text, '
+            '.field--name-field-address ::text'
+        ).getall()
         if not bits:
             bits = response.xpath(
                 "//article//*[contains(@class,'promotion__link') or contains(@class,'meta') or contains(@class,'node')]"
                 "/descendant::text()[normalize-space()]"
             ).getall()
-        text = self._clean(" ".join(bits)) or self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
+        text = self._clean(" ".join(bits)) or self._clean(
+            " ".join(response.xpath("//article//text()[normalize-space()]").getall())
+        )
         m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^\n,]*,?\s*Auckland)\b",
-            text, re.I
+            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,?\s*Auckland)\b",
+            text,
+            re.I,
         )
         if m:
             return self._clean(m.group(1))
         m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^\n,]*,\s*[A-Za-z\- ]{2,})",
-            text
+            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,\s*[A-Za-z\- ]{2,})",
+            text,
         )
         return self._clean(m.group(1)) if m else None
 
@@ -195,21 +163,26 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     # -------------------- crawling --------------------
     def parse(self, response):
-        # Follow ALL links (absolute & relative), then filter
-        for href in response.css("a[href]::attr(href)").getall():
+        # Only look at our three families; ignore /auckland-events and others.
+        for href in response.css(
+            "a[href^='/activities/']::attr(href), "
+            "a[href^='/attractions/']::attr(href), "
+            "a[href^='/auckland-nightlife/']::attr(href)"
+        ).getall():
             url = urljoin(response.url, href.split("#")[0])
-            if not self._is_internal_content_url(url):
+            # strip query params for stability (pagination will be re-crawled anyway)
+            u = urlparse(url)
+            url = f"{u.scheme}://{u.netloc}{u.path}"
+            if not self._is_allowed_family(url):
                 continue
-            if self._is_detail_path(url):
+            if self._is_detail_url(url):
                 yield response.follow(url, callback=self.parse_place, headers={"Referer": response.url})
             else:
+                # keep crawling hubs/category pages
                 yield response.follow(url, callback=self.parse, headers={"Referer": response.url})
 
     def parse_place(self, response):
-        # Normalize to canonical so IDs are stable and dupes collapse
-        canonical = response.css("link[rel='canonical']::attr(href)").get() or response.url
-        url = urljoin(response.url, canonical).split("#")[0]
-
+        url = response.url.split("#")[0]
         name = self._extract_title(response)
         if not name:
             return
@@ -223,12 +196,15 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             "id": self._hash_id(url),
             "record_type": "place",
             "name": name,
+            "description": None,   # (keeping payload smaller; you can add back if you want)
             "categories": (
                 ["Activities & Attractions", primary_cat]
                 if primary_cat != "Activities & Attractions" else [primary_cat]
             ),
+            "tags": [],
             "url": url,
             "source": "heartofthecity.co.nz",
+            "images": [],          # omit to reduce bandwidth; add back if you need
             "location": {
                 "name": None,
                 "address": address,
@@ -239,8 +215,11 @@ class AucklandWhatsOnSpider(scrapy.Spider):
                 "longitude": None,
             },
             "price": price,
+            "booking": {"url": None, "email": None, "phone": None},
+            "event_dates": None,
             "opening_hours": {"text": hours_text} if hours_text else None,
             "operating_months": None,
             "data_collected_at": datetime.now(timezone.utc).isoformat(),
+            "text_for_embedding": None,
         }
         yield item
