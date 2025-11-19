@@ -8,9 +8,9 @@ import scrapy
 
 class AucklandWhatsOnSpider(scrapy.Spider):
     """
-    Heart of the City — What's On / Things to do (lean output)
+    Heart of the City — What's On / Things to do (lean fields)
 
-    Crawls:
+    Crawls (robots-respecting):
       - /activities/**
       - /attractions/**
       - /auckland-nightlife/**
@@ -23,7 +23,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     name = "auckland_whats_on"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
-    # Focus hub + must-have detail seeds
+    # Focus hub + force-seeded details you asked for
     start_urls = [
         "https://heartofthecity.co.nz/activities",
         "https://heartofthecity.co.nz/auckland-nightlife/party-time/holey-moley-golf-club",
@@ -31,7 +31,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         "https://heartofthecity.co.nz/activities/getting-active/auckland-adventure-jet",
     ]
 
-    # We do NOT override ROBOTSTXT_OBEY here.
+    # We DO NOT flip ROBOTSTXT_OBEY here; project default is respected.
     custom_settings = {
         "USER_AGENT": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -44,7 +44,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 0.4,
         "AUTOTHROTTLE_MAX_DELAY": 6.0,
-        # default output (override with -O/-o if you like)
+        # Default output; override with -O/-o as needed
         "FEEDS": {
             "data/Things_to_do.jsonl": {
                 "format": "jsonlines",
@@ -55,19 +55,6 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     }
 
     PATH_FAMILIES = ("/activities/", "/attractions/", "/auckland-nightlife/")
-
-    # ---------- request bootstrap (playwright on) ----------
-    def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(
-                url,
-                callback=self.parse,
-                errback=self.errback,
-                meta={"playwright": True},
-            )
-
-    def errback(self, failure):
-        self.logger.debug(f"Request failed: {failure.request.url} -> {failure.value!r}")
 
     # -------------------- helpers --------------------
     @staticmethod
@@ -92,21 +79,16 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             return "Nightlife"
         return "Activities & Attractions"
 
-    def _is_allowed_family(self, url: str) -> bool:
-        path = urlparse(url).path or ""
-        return path.startswith(self.PATH_FAMILIES)
-
     def _normalize_no_query(self, url: str) -> str:
         u = urlparse(url)
         return urlunparse((u.scheme, u.netloc, u.path, "", "", ""))
 
+    def _is_allowed_family(self, url: str) -> bool:
+        path = urlparse(url).path or ""
+        return path.startswith(self.PATH_FAMILIES)
+
     def _is_detail_url(self, url: str) -> bool:
-        """
-        Any allowed-family URL with ≥3 path segments is considered a detail page, e.g.:
-          /activities/entertainment-activities/cue-city
-          /activities/getting-active/auckland-adventure-jet
-          /auckland-nightlife/party-time/holey-moley-golf-club
-        """
+        """Allowed-family URL with ≥3 segments (e.g. /activities/getting-active/slug)."""
         if not self._is_allowed_family(url):
             return False
         parts = [p for p in urlparse(url).path.split("/") if p]
@@ -115,7 +97,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         tail = parts[-1].lower()
         return tail not in {"page", "search"}
 
-    # ---------- field extraction ----------
+    # -------------------- field extraction --------------------
     def _extract_title(self, response) -> str:
         return self._clean(
             response.css("h1::text").get()
@@ -137,14 +119,13 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         )
         m = re.search(
             r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,?\s*Auckland)\b",
-            text,
-            re.I,
+            text, re.I
         )
         if m:
             return self._clean(m.group(1))
         m = re.search(
             r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,\s*[A-Za-z\- ]{2,})",
-            text,
+            text
         )
         return self._clean(m.group(1)) if m else None
 
@@ -178,14 +159,12 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     # -------------------- crawling --------------------
     def parse(self, response):
-        """
-        Handle both hubs and details (so seeded detail URLs produce items too).
-        """
-        # If this very page is a detail page, emit it.
-        if self._is_detail_url(response.url):
+        # If current page is a detail page, emit it.
+        if self._is_detail_url(self._normalize_no_query(response.url)):
+            # yield-from so Scrapy receives the item this function yields
             yield from self.parse_place(response)
 
-        # Explore only allowed families
+        # Explore only allowed families; keep query for hub pagination (strip later on detail)
         link_sel = (
             "a[href*='/activities/']::attr(href), "
             "a[href*='/attractions/']::attr(href), "
@@ -193,29 +172,15 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         )
         for href in response.css(link_sel).getall():
             abs_url = urljoin(response.url, href.split("#")[0])
-
-            # keep queries for pagination discovery; strip when deciding detail
-            is_detail = self._is_detail_url(self._normalize_no_query(abs_url))
+            norm = self._normalize_no_query(abs_url)
             if not self._is_allowed_family(abs_url):
                 continue
-
-            if is_detail:
-                yield scrapy.Request(
-                    self._normalize_no_query(abs_url),
-                    callback=self.parse_place,
-                    errback=self.errback,
-                    meta={"playwright": True, "referer": response.url},
-                    headers={"Referer": response.url},
-                )
+            if self._is_detail_url(norm):
+                # detail: strip query/frag to avoid dupes
+                yield scrapy.Request(norm, callback=self.parse_place, headers={"Referer": response.url})
             else:
-                # follow hubs and pagination (keep query like ?page=2)
-                yield scrapy.Request(
-                    abs_url,
-                    callback=self.parse,
-                    errback=self.errback,
-                    meta={"playwright": True, "referer": response.url},
-                    headers={"Referer": response.url},
-                )
+                # hub/pagination: follow as-is (query kept)
+                yield scrapy.Request(abs_url, callback=self.parse, headers={"Referer": response.url})
 
     def parse_place(self, response):
         url = self._normalize_no_query(response.url)
