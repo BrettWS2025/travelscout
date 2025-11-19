@@ -8,30 +8,31 @@ import scrapy
 
 class AucklandWhatsOnSpider(scrapy.Spider):
     """
-    Heart of the City — What's On / Things to do (lean fields)
+    Heart of the City — What's On / Things to do (hub-only, robots-friendly)
 
-    Crawls (robots-respecting):
-      - /activities/**
-      - /attractions/**
-      - /auckland-nightlife/**
-
-    Emits ONLY:
-      id, record_type, name, categories, url, source,
-      location, price, opening_hours, operating_months, data_collected_at
+    Strategy:
+      - Visit hub/listing pages only (e.g. /activities)
+      - Parse link cards and emit items without visiting detail pages
+      - Seed a few known detail URLs as synthetic items (derived from slug)
     """
 
     name = "auckland_whats_on"
     allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
 
-    # Focus hub + force-seeded details you asked for
-    start_urls = [
+    # Hubs we can crawl safely with robots obeyed
+    HUB_START_URLS = [
         "https://heartofthecity.co.nz/activities",
+        "https://heartofthecity.co.nz/attractions/tourist-attractions",
+        "https://heartofthecity.co.nz/auckland-nightlife/party-time",
+    ]
+
+    # Specific detail pages you want included even if we can't fetch them
+    FORCE_SEED_DETAILS = [
         "https://heartofthecity.co.nz/auckland-nightlife/party-time/holey-moley-golf-club",
         "https://heartofthecity.co.nz/activities/entertainment-activities/cue-city",
         "https://heartofthecity.co.nz/activities/getting-active/auckland-adventure-jet",
     ]
 
-    # We DO NOT flip ROBOTSTXT_OBEY here; project default is respected.
     custom_settings = {
         "USER_AGENT": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -44,6 +45,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 0.4,
         "AUTOTHROTTLE_MAX_DELAY": 6.0,
+        "DEPTH_LIMIT": 2,  # stick to hubs/pagination
         # Default output; override with -O/-o as needed
         "FEEDS": {
             "data/Things_to_do.jsonl": {
@@ -56,7 +58,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
 
     PATH_FAMILIES = ("/activities/", "/attractions/", "/auckland-nightlife/")
 
-    # -------------------- helpers --------------------
+    # -------------- helpers --------------
     @staticmethod
     def _clean(s: str | None) -> str:
         if not s:
@@ -67,6 +69,11 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     @staticmethod
     def _hash_id(url: str) -> str:
         return hashlib.md5(url.encode("utf-8")).hexdigest()[:16]
+
+    @staticmethod
+    def _normalize(url: str) -> str:
+        u = urlparse(url)
+        return urlunparse((u.scheme, u.netloc, u.path, "", "", ""))
 
     def _primary_category(self, url: str) -> str:
         parts = [p for p in urlparse(url).path.split("/") if p]
@@ -79,142 +86,87 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             return "Nightlife"
         return "Activities & Attractions"
 
-    def _normalize_no_query(self, url: str) -> str:
-        u = urlparse(url)
-        return urlunparse((u.scheme, u.netloc, u.path, "", "", ""))
+    def _slug_title(self, url: str) -> str:
+        slug = urlparse(url).path.strip("/").split("/")[-1]
+        slug = re.sub(r"[-_]+", " ", slug)
+        return slug.strip().title() if slug else "Untitled"
 
-    def _is_allowed_family(self, url: str) -> bool:
-        path = urlparse(url).path or ""
-        return path.startswith(self.PATH_FAMILIES)
-
-    def _is_detail_url(self, url: str) -> bool:
-        """Allowed-family URL with ≥3 segments (e.g. /activities/getting-active/slug)."""
-        if not self._is_allowed_family(url):
-            return False
-        parts = [p for p in urlparse(url).path.split("/") if p]
-        if len(parts) < 3:
-            return False
-        tail = parts[-1].lower()
-        return tail not in {"page", "search"}
-
-    # -------------------- field extraction --------------------
-    def _extract_title(self, response) -> str:
-        return self._clean(
-            response.css("h1::text").get()
-            or response.css("meta[property='og:title']::attr(content)").get()
-            or response.css("title::text").get()
+    def _emit_item(self, url: str, name: str | None, category_hint: str | None):
+        norm = self._normalize(url)
+        primary = category_hint or self._primary_category(norm)
+        cats = (
+            ["Activities & Attractions", primary]
+            if primary != "Activities & Attractions"
+            else [primary]
         )
-
-    def _extract_address(self, response) -> str | None:
-        bits = response.css(
-            ".address ::text, [itemprop='address'] ::text, .field--name-field-address ::text"
-        ).getall()
-        if not bits:
-            bits = response.xpath(
-                "//article//*[contains(@class,'promotion__link') or contains(@class,'meta') or contains(@class,'node')]"
-                "/descendant::text()[normalize-space()]"
-            ).getall()
-        text = self._clean(" ".join(bits)) or self._clean(
-            " ".join(response.xpath("//article//text()[normalize-space()]").getall())
-        )
-        m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,?\s*Auckland)\b",
-            text, re.I
-        )
-        if m:
-            return self._clean(m.group(1))
-        m = re.search(
-            r"(\d+\s+[A-Za-z][^,]+(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Quay|Wharf|Square|Sq)[^,]*,\s*[A-Za-z\- ]{2,})",
-            text
-        )
-        return self._clean(m.group(1)) if m else None
-
-    def _extract_hours_text(self, response) -> str | None:
-        box = response.css(".office-hours, [class*='office-hours'], [class*='opening-hours']")
-        if not box:
-            box = response.xpath(
-                "//h2[contains(translate(.,'OPENING','opening'),'opening') and "
-                "contains(translate(.,'HOUR','hour'),'hour')]/following-sibling::*[1]"
-            )
-        if not box:
-            return None
-        lines = [self._clean(" ".join(x.xpath(".//text()").getall())) for x in box.css("li, p, div, span")]
-        lines = [l for l in lines if l and re.search(r"\d", l)]
-        lines = [l for l in lines if not re.search(r"Back to top|Open main menu|Close main menu", l, re.I)]
-        return "; ".join(dict.fromkeys(lines))[:600] if lines else None
-
-    def _extract_price(self, response) -> dict:
-        block = self._clean(" ".join(response.xpath("//article//text()[normalize-space()]").getall()))
-        block = re.sub(r"(?i)(parking|car ?park|public transport|kids ride free)[^$]{0,120}\$[0-9.,]+", "", block)
-        amounts = [float(m.replace(",", "")) for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", block)]
-        amounts = [a for a in amounts if 0 <= a < 2000]
-        is_free = bool(re.search(r"\bfree\b", block, re.I)) and (not amounts or min(amounts) == 0)
         return {
-            "currency": "NZD",
-            "min": min(amounts) if amounts else None,
-            "max": max(amounts) if amounts else None,
-            "text": None,
-            "free": bool(is_free),
-        }
-
-    # -------------------- crawling --------------------
-    def parse(self, response):
-        # If current page is a detail page, emit it.
-        if self._is_detail_url(self._normalize_no_query(response.url)):
-            # yield-from so Scrapy receives the item this function yields
-            yield from self.parse_place(response)
-
-        # Explore only allowed families; keep query for hub pagination (strip later on detail)
-        link_sel = (
-            "a[href*='/activities/']::attr(href), "
-            "a[href*='/attractions/']::attr(href), "
-            "a[href*='/auckland-nightlife/']::attr(href)"
-        )
-        for href in response.css(link_sel).getall():
-            abs_url = urljoin(response.url, href.split("#")[0])
-            norm = self._normalize_no_query(abs_url)
-            if not self._is_allowed_family(abs_url):
-                continue
-            if self._is_detail_url(norm):
-                # detail: strip query/frag to avoid dupes
-                yield scrapy.Request(norm, callback=self.parse_place, headers={"Referer": response.url})
-            else:
-                # hub/pagination: follow as-is (query kept)
-                yield scrapy.Request(abs_url, callback=self.parse, headers={"Referer": response.url})
-
-    def parse_place(self, response):
-        url = self._normalize_no_query(response.url)
-        name = self._extract_title(response)
-        if not name:
-            return
-
-        address = self._extract_address(response)
-        hours_text = self._extract_hours_text(response)
-        price = self._extract_price(response)
-        primary_cat = self._primary_category(url)
-
-        yield {
-            "id": self._hash_id(url),
+            "id": self._hash_id(norm),
             "record_type": "place",
-            "name": name,
-            "categories": (
-                ["Activities & Attractions", primary_cat]
-                if primary_cat != "Activities & Attractions"
-                else [primary_cat]
-            ),
-            "url": url,
+            "name": name or self._slug_title(norm),
+            "categories": cats,
+            "url": norm,
             "source": "heartofthecity.co.nz",
             "location": {
                 "name": None,
-                "address": address,
+                "address": None,
                 "city": "Auckland",
                 "region": "Auckland",
                 "country": "New Zealand",
                 "latitude": None,
                 "longitude": None,
             },
-            "price": price,
-            "opening_hours": {"text": hours_text} if hours_text else None,
+            "price": {"currency": "NZD", "min": None, "max": None, "text": None, "free": False},
+            "opening_hours": None,
             "operating_months": None,
             "data_collected_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    # -------------- crawl --------------
+    def start_requests(self):
+        # Yield hub pages
+        for u in self.HUB_START_URLS:
+            yield scrapy.Request(u, callback=self.parse_hub)
+
+        # Emit synthetic items for forced details (no network hit needed)
+        for u in self.FORCE_SEED_DETAILS:
+            yield self._emit_item(u, self._slug_title(u), self._primary_category(u))
+
+    def parse_hub(self, response: scrapy.http.Response):
+        # 1) Extract candidate cards/links to details, emit items straight from anchor text
+        # Try common containers first (Drupal views and promo grids), but also keep a fallback
+        link_sets = [
+            response.css(".view-content a[href^='/activities/']"),
+            response.css(".view-content a[href^='/attractions/']"),
+            response.css(".view-content a[href^='/auckland-nightlife/']"),
+            response.css(".grid a[href^='/activities/'], .grid a[href^='/attractions/'], .grid a[href^='/auckland-nightlife/']"),
+            # fallback to any on-page link in our families
+            response.css("a[href^='/activities/'], a[href^='/attractions/'], a[href^='/auckland-nightlife/']"),
+        ]
+
+        seen = set()
+        for selgroup in link_sets:
+            for a in selgroup:
+                href = a.attrib.get("href") or ""
+                href = href.split("#")[0]
+                if not href:
+                    continue
+                abs_url = urljoin(response.url, href)
+                # Only consider detail-ish paths (>= 3 segments)
+                parts = [p for p in urlparse(abs_url).path.split("/") if p]
+                if len(parts) < 3:
+                    continue
+                norm = self._normalize(abs_url)
+                if norm in seen:
+                    continue
+                seen.add(norm)
+
+                # Use the anchor's own text (or inner heading) as name; fallback to slug
+                name = self._clean(a.xpath("normalize-space(.)").get())
+                if not name:
+                    # look for inner heading text
+                    name = self._clean(a.css("h2::text, h3::text, .title::text").get())
+                yield self._emit_item(norm, name or None, self._primary_category(norm))
+
+        # 2) Paginate hubs (keep query strings for paging)
+        for href in response.css("a[href*='?page=']::attr(href)").getall():
+            yield response.follow(href.split("#")[0], callback=self.parse_hub)
