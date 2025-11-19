@@ -1,164 +1,135 @@
-import hashlib
+@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from urllib.parse import urljoin
 from urllib.parse import urljoin, urlparse
-
+from datetime import datetime
 import scrapy
-
-
+from tscraper.items import TravelScoutItem, make_id
+@@ -8,82 +8,82 @@
 BASE = "https://www.christchurchnz.com"
 ROOT = f"{BASE}/visit/whats-on/"
 
-# Match detail pages like:
+EVENT_PATTERNS = (
+    re.compile(r"^/visit/whats-on/listing/[A-Za-z0-9\-]+(?:-\d+)?/?$"),
+    re.compile(r"^/visit/whats-on/[A-Za-z0-9\-]+/?$"),   # e.g. /visit/whats-on/supercars-christchurch
+# match only detail pages:
+#   /visit/whats-on/listing/<slug-or-slug-id>
 #   /visit/whats-on/<slug>
-#   /visit/whats-on/listing/<slug> or <slug>-<id>
-DETAIL_RE = re.compile(
-    r"^/visit/whats-on/(?:listing/)?(?!subscribe|search|categories|category|tag|about|contact|news|events/?$)[A-Za-z0-9\-]+(?:-\d+)?/?$"
+EVENT_PATH_RE = re.compile(
+    r"^/visit/whats-on/(?:listing/)?(?!subscribe|search|categories|category|tag|about|contact|news|events/?$)[a-z0-9\-]+(?:-\d+)?/?$",
+    re.I,
 )
 
-
 class ChristchurchWhatsOnSpider(scrapy.Spider):
-    """
-    Christchurch — What's On (lean fields)
-
-    Emits ONLY:
-      id, record_type, name, categories, url, source,
-      location, price, opening_hours, operating_months, data_collected_at
-    """
-
     name = "christchurch_whats_on"
     allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
 
-    # paginate server-side pages explicitly
+    # Crawl JS-driven pagination endpoints explicitly (safe upper bound; adjust if needed)
+    MAX_PAGES = 20
+    # Cap pagination to a sane bound; bump if you find later pages
     MAX_PAGES = 25
 
     custom_settings = {
-        # You can override output with -O on the CLI if you prefer
-        "FEEDS": {
-            "data/WhatsOn_Christchurch.jsonl": {
-                "format": "jsonlines",
-                "encoding": "utf8",
-                "overwrite": False,
-            }
-        },
-        "DOWNLOAD_DELAY": 0.35,
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 0.3,
-        "AUTOTHROTTLE_MAX_DELAY": 4.0,
-        "CONCURRENT_REQUESTS": 8,
-        "TELNETCONSOLE_ENABLED": False,
-        "ROBOTSTXT_OBEY": True,
-        "USER_AGENT": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/127.0.0.0 Safari/537.36"
-        ),
+        # Extra hard guard per spider (in addition to global)
+        "CLOSESPIDER_PAGECOUNT": 4000,
     }
 
-    # ---------------- helpers ----------------
-    @staticmethod
-    def _clean(s: str | None) -> str:
-        if not s:
-            return ""
-        return re.sub(r"\s+", " ", s.replace("\xa0", " ")).strip()
-
-    @staticmethod
-    def _hash_id(url: str) -> str:
-        return hashlib.md5(url.encode("utf-8")).hexdigest()[:16]
-
-    def _extract_address(self, response) -> str | None:
-        # Common “Address” block under event info
-        txt = " ".join(
-            response.xpath("//*[normalize-space()='Address']/following::*[1]//text()").getall()
-        )
-        txt = self._clean(txt)
-        return txt or None
-
-    def _extract_price(self, response) -> dict:
-        """
-        Simple price sniff: look for $ amounts or 'Free' near pricing blocks.
-        Returns a compact price object; text omitted by request.
-        """
-        block = " ".join(
-            response.xpath(
-                "//*[contains(., 'Ticket pricing') or contains(., 'Pricing') or contains(translate(.,'FREE','free'),'free')]//text()"
-            ).getall()
-        )
-        if not block:
-            block = " ".join(response.xpath("//article//text()[normalize-space()]").getall())
-        block = self._clean(block)
-
-        # filter out obvious transport/parking promos if present
-        block = re.sub(r"(?i)(parking|car ?park|public transport)[^$]{0,120}\$[0-9.,]+", "", block)
-
-        amounts = [
-            float(m.replace(",", ""))
-            for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", block)
-        ]
-        amounts = [a for a in amounts if 0 <= a < 2000]
-        is_free = bool(re.search(r"\bfree\b", block, re.I)) and (not amounts or min(amounts) == 0)
-
-        return {
-            "currency": "NZD",
-            "min": min(amounts) if amounts else None,
-            "max": max(amounts) if amounts else None,
-            "text": None,   # not requested
-            "free": bool(is_free),
-        }
-
-    # --------------- crawl ---------------
     def start_requests(self):
+        # Page 1 is the root; include root + explicit pages to discover server-rendered cards
+        # Seed the paginated server pages explicitly (avoids JS-driven infinite scroll)
         yield scrapy.Request(ROOT, callback=self.parse_listing, headers={"Accept-Language": "en-NZ,en;q=0.9"})
         for p in range(2, self.MAX_PAGES + 1):
-            yield scrapy.Request(
-                f"{ROOT}?page={p}",
-                callback=self.parse_listing,
-                headers={"Accept-Language": "en-NZ,en;q=0.9"},
-            )
+            yield scrapy.Request(f"{ROOT}?page={p}", callback=self.parse_listing, headers={"Accept-Language": "en-NZ,en;q=0.9"}, dont_filter=True)
+            yield scrapy.Request(f"{ROOT}?page={p}", callback=self.parse_listing, headers={"Accept-Language": "en-NZ,en;q=0.9"})
 
     def parse_listing(self, response: scrapy.http.Response):
-        found = 0
-        for href in response.css("a[href]::attr(href)").getall():
+        # harvest every candidate event URL on the page
+        hrefs = set(x.strip() for x in response.css("a::attr(href)").getall())
+        for h in hrefs:
+            if not h or h.startswith("#"):
+        # ONLY push detail pages discovered on these list pages
+        for href in response.css("a::attr(href)").getall():
             if not href or href.startswith("#"):
                 continue
-            url = urljoin(BASE, href.split("#")[0])
+            url = urljoin(BASE, h)
+            path = "/" + "/".join(url.split("/", 3)[3:])  # keep path portion
+            if any(pat.match(path) for pat in EVENT_PATTERNS):
+                yield scrapy.Request(url, callback=self.parse_event)
+            url = urljoin(BASE, href)
             path = urlparse(url).path
-            if DETAIL_RE.match(path):
-                found += 1
+            if EVENT_PATH_RE.match(path):
                 yield response.follow(url, callback=self.parse_event)
-        if found:
-            self.logger.info("Found %d detail links on %s", found, response.url)
+
+        # Be thorough: follow any internal "what's on" links recursively to discover more anchors
+        for h in hrefs:
+            if h.startswith("/visit/whats-on/") and "subscribe" not in h:
+                yield scrapy.Request(urljoin(BASE, h), callback=self.parse_listing, dont_filter=True)
+        # Do NOT recursively follow more listing pages here.
+        # (Prevents crawl explosion.)
 
     def parse_event(self, response: scrapy.http.Response):
         url = response.url
-        name = self._clean(response.xpath("//h1/text()").get())
+
+        # title
+        name = clean(response.xpath("//h1/text()").get())
         if not name:
-            self.logger.debug("Skipping (no title): %s", url)
             return
 
-        # Minimal fields only (as requested)
-        address = self._extract_address(response)
-        price = self._extract_price(response)
+        # summary/description (first paragraph after H1 works well across pages)
+        # Summary
+        desc = clean(" ".join(response.xpath("(//h1/following::p)[1]//text()").getall())) or None
 
-        item = {
-            "id": self._hash_id(url),
-            "record_type": "event",
-            "name": name,
-            "categories": ["Events"],
-            "url": url,
-            "source": "christchurchnz.com",
-            "location": {
-                "name": None,
-                "address": address,
-                "city": "Christchurch" if address and "christchurch" in address.lower() else None,
-                "region": "Canterbury",
-                "country": "New Zealand",
-                "latitude": None,
-                "longitude": None,
-            },
-            "price": price,
-            "opening_hours": None,
-            "operating_months": None,
-            "data_collected_at": datetime.now(timezone.utc).isoformat(),
-        }
-        yield item
+        # date/time block (handles "17 Nov 2025 | 7:00 pm - 9:30 pm"
+        # and ranges like "17 - 19 April 2026")
+        # Date/time: works for "17 Nov 2025 | 7:00 pm - 9:30 pm" and "17 - 19 April 2026"
+        date_text = clean(" ".join(
+            response.xpath("//*[contains(., 'Event info')]/following::*[1]//text()").getall()
+        )) or clean(" ".join(
+            response.xpath("//*[contains(., 'Event info')]//text()").getall()
+        ))
+        start_iso, end_iso = parse_date_range(date_text or "")
+
+        # address / venue (these labels are present on listing pages)
+        # Address/venue
+        address = clean(" ".join(response.xpath("//*[normalize-space()='Address']/following::*[1]//text()").getall()))
+        loc_name = None
+        if address and "," in address:
+            loc_name = address.split(",")[0].strip()
+        loc_name = address.split(",")[0].strip() if address and "," in address else None
+
+        # booking / ticket link (covers “View website” & “Ticket info/Buy tickets” variants)
+        # Booking / ticket link
+        ticket = response.xpath(
+            "//a[contains(translate(., 'TICKET', 'ticket'),'ticket') or contains(translate(., 'BUY', 'buy'),'buy')]/@href"
+        ).get()
+        site = response.xpath("//a[contains(.,'View website')]/@href").get()
+        booking_url = urljoin(url, ticket or site) if (ticket or site) else None
+
+        # price (covers "Ticket pricing …", "Pricing …", and generic $/Free mentions)
+        # Price (Ticket pricing / Pricing block, or $/Free mentions)
+        price_block = clean(" ".join(
+            response.xpath("//*[contains(., 'Ticket pricing') or contains(., 'Pricing')]/following::*[1]//text()").getall()
+        )) or clean(" ".join(
+            response.xpath("//p[contains(.,'$') or contains(.,'Free') or contains(.,'free')]//text()").getall()
+        ))
+        price = parse_prices(price_block or "")
+
+        # image
+        # Hero image
+        img = response.xpath("//img[contains(@src,'.jpg') or contains(@src,'.jpeg') or contains(@src,'.png')]/@src").get()
+        if img and img.startswith("/"):
+            img = urljoin(BASE, img)
+@@ -120,7 +120,10 @@ def parse_event(self, response: scrapy.http.Response):
+        )
+        yield item.to_dict()
+
+        # Deepen discovery via "Related events" section on each detail page
+        # Optional: follow only *detail* links from this page (not listing)
+        for rel in response.css("a::attr(href)").getall():
+            if rel and rel.startswith("/visit/whats-on/"):
+                yield scrapy.Request(urljoin(BASE, rel), callback=self.parse_event, dont_filter=True)
+            if not rel or rel.startswith("#"):
+                continue
+            absu = urljoin(BASE, rel)
+            if EVENT_PATH_RE.match(urlparse(absu).path):
+                yield response.follow(absu, callback=self.parse_event)
