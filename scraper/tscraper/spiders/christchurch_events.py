@@ -9,7 +9,7 @@ from tscraper.utils import clean, parse_prices, nz_months, build_embedding_text
 BASE = "https://www.christchurchnz.com"
 
 class ChristchurchThingsSpider(CrawlSpider):
-    name = "christchurch_things"
+    name = "christchurch_events"
     allowed_domains = ["christchurchnz.com","www.christchurchnz.com"]
     start_urls = ["https://www.christchurchnz.com/visit/things-to-do/"]
 
