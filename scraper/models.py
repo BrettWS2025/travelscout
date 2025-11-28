@@ -50,7 +50,7 @@ class PackageModel(BaseModel):
         return v
 
 # ---------------------------
-# TravelScout schema (new)
+# TravelScout schema
 # ---------------------------
 
 class Price(BaseModel):
@@ -64,7 +64,7 @@ class Location(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
-    region: Optional[str] = None
+    region: Optional[str] = None        # was "Canterbury"
     country: Optional[str] = "New Zealand"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -81,7 +81,8 @@ class EventDates(BaseModel):
 
 class TravelScoutRecord(BaseModel):
     """
-    Unified record for events & places (attractions/activities).
+    Unified record for events & places.
+    Set per-spider values such as `source` and `location.region`.
     """
     id: str
     record_type: Literal["event", "place"]
@@ -90,7 +91,7 @@ class TravelScoutRecord(BaseModel):
     categories: List[str] = []
     tags: List[str] = []
     url: HttpUrl
-    source: Optional[str] = None
+    source: Optional[str] = None        # was "christchurchnz.com"
     images: List[HttpUrl] = []
     location: Location = Location()
     price: Price = Price()
@@ -102,6 +103,5 @@ class TravelScoutRecord(BaseModel):
     text_for_embedding: Optional[str] = None
 
 if __name__ == "__main__":
-    # Handy: print JSON Schema for the TravelScoutRecord
     import json
     print(json.dumps(TravelScoutRecord.model_json_schema(), indent=2))
