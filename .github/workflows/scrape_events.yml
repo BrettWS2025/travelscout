@@ -17,16 +17,15 @@ jobs:
     name: Run Scrapy spiders
     runs-on: ubuntu-latest
 
-    # Run every shell step inside the scraper/ directory
     defaults:
       run:
         shell: bash
         working-directory: scraper
 
     env:
-      # Tell Scrapy which settings module to use
+      # Make Scrapy load your project
       SCRAPY_SETTINGS_MODULE: tscraper.settings
-      # Make sure Python can import tscraper from ./scraper
+      # Ensure 'tscraper' is importable when the CWD is 'scraper'
       PYTHONPATH: ${{ github.workspace }}/scraper
       PYTHONUNBUFFERED: "1"
       PYTHONIOENCODING: "utf-8"
@@ -50,19 +49,22 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
-      - name: Prepare folders
+      - name: Prepare folders (debug/httpcache and feed directory)
         run: |
+          set -e
           mkdir -p debug httpcache
-          mkdir -p "$(dirname "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}")"
+          FEED_PATH="${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}"
+          mkdir -p "$(dirname "$FEED_PATH")"
+          # Ensure the file exists even if no items are scraped
+          : > "$FEED_PATH"
 
       - name: Sanity check Python package resolution
         run: |
           python - <<'PY'
-          import os, sys, pkgutil
+          import os, pkgutil
           print("CWD:", os.getcwd())
           print("PYTHONPATH:", os.environ.get("PYTHONPATH"))
-          import tscraper
-          import tscraper.spiders
+          import tscraper, tscraper.spiders
           print("tscraper path:", list(tscraper.__path__))
           print("discovered spiders:", [m.name for m in pkgutil.iter_modules(tscraper.spiders.__path__)])
           PY
@@ -72,27 +74,38 @@ jobs:
           scrapy version -v
           scrapy list | tee debug/spiders.txt
 
-      - name: Run spiders
+      - name: Run spiders (write JSONL via -O, store even if empty)
         run: |
           set -euo pipefail
           FEED_PATH="${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}"
-          # Use FEEDS at the CLI so it does NOT affect other spiders globally
-          FEEDS_JSON="{\"$FEED_PATH\": {\"format\": \"jsonlines\", \"encoding\": \"utf8\", \"overwrite\": false}}"
-
           IFS=',' read -ra S <<< "${{ github.event.inputs.spiders }}"
           for s in "${S[@]}"; do
             s="$(echo "$s" | xargs)"
             [[ -z "$s" ]] && continue
             echo "::group::scrapy crawl $s"
-            scrapy crawl "$s" -s FEEDS="$FEEDS_JSON"
+            scrapy crawl "$s" \
+              -O "$FEED_PATH" \
+              -s FEED_FORMAT=jsonlines \
+              -s FEED_EXPORT_ENCODING=utf-8 \
+              -s FEED_STORE_EMPTY=True
             echo "::endgroup::"
           done
+
+      - name: Inspect resulting file
+        run: |
+          FEED_PATH="${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}"
+          echo "Expecting: $FEED_PATH"
+          ls -la "$(dirname "$FEED_PATH")" || true
+          echo "Head:"
+          head -n 5 "$FEED_PATH" || true
+          echo "Line count:"
+          wc -l "$FEED_PATH" || true
 
       - name: Upload data (JSONL)
         uses: actions/upload-artifact@v4
         with:
           name: events-jsonl
-          # actions/upload-artifact resolves from the repo root, so prefix with scraper/
+          # upload from the repo root, so prefix with scraper/
           path: scraper/${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
           if-no-files-found: warn
           retention-days: 10
