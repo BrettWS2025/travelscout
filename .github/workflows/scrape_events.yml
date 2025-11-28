@@ -1,43 +1,42 @@
-name: Scrape Events (Auckland)
+name: Scrape events
 
 on:
   workflow_dispatch:
     inputs:
       spiders:
         description: "Comma-separated spider names to run"
-        required: false
         default: "auckland_events"
+        required: true
       feed_path:
-        description: "Relative path (under scraper/) for FEED output"
-        required: false
+        description: "Relative path under scraper/ to write the JSON Lines feed"
         default: "data/Events.jsonl"
-      overwrite:
-        description: "Overwrite the output file? (true/false). Use false to append when running multiple spiders."
-        required: false
-        default: "true"
+        required: true
 
 jobs:
   scrape:
+    name: Run Scrapy spiders
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
-    env:
-      # Make sure Scrapy loads your project settings module
-      SCRAPY_SETTINGS_MODULE: tscraper.settings
-      PYTHONUNBUFFERED: "1"
-      PYTHONIOENCODING: "utf-8"
-      PIP_DISABLE_PIP_VERSION_CHECK: "1"
-
+    # Run every shell step inside the scraper/ directory
     defaults:
       run:
         shell: bash
         working-directory: scraper
 
+    env:
+      # Tell Scrapy which settings module to use
+      SCRAPY_SETTINGS_MODULE: tscraper.settings
+      # Make sure Python can import tscraper from ./scraper
+      PYTHONPATH: ${{ github.workspace }}/scraper
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "utf-8"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -47,26 +46,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-ms-playwright-
-
       - name: Install Playwright (Chromium) with system deps
         run: |
           python -m playwright install --with-deps chromium
 
       - name: Prepare folders
         run: |
-          mkdir -p data debug
+          mkdir -p debug httpcache
+          mkdir -p "$(dirname "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}")"
 
-      - name: Show Scrapy env & discovered spiders
-        # This should work now that working-directory is 'scraper' and SCRAPY_SETTINGS_MODULE is set.
+      - name: Sanity check Python package resolution
         run: |
-          echo "SCRAPY_SETTINGS_MODULE=$SCRAPY_SETTINGS_MODULE"
+          python - <<'PY'
+          import os, sys, pkgutil
+          print("CWD:", os.getcwd())
+          print("PYTHONPATH:", os.environ.get("PYTHONPATH"))
+          import tscraper
+          import tscraper.spiders
+          print("tscraper path:", list(tscraper.__path__))
+          print("discovered spiders:", [m.name for m in pkgutil.iter_modules(tscraper.spiders.__path__)])
+          PY
+
+      - name: Show Scrapy version & discovered spiders
+        run: |
           scrapy version -v
           scrapy list | tee debug/spiders.txt
 
@@ -74,52 +76,34 @@ jobs:
         run: |
           set -euo pipefail
           FEED_PATH="${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}"
-          SPIDERS="${{ github.event.inputs.spiders || 'auckland_events' }}"
-          OVERWRITE="${{ github.event.inputs.overwrite || 'true' }}"
+          # Use FEEDS at the CLI so it does NOT affect other spiders globally
+          FEEDS_JSON="{\"$FEED_PATH\": {\"format\": \"jsonlines\", \"encoding\": \"utf8\", \"overwrite\": false}}"
 
-          # choose -O (overwrite) or -o (append)
-          if [[ "${OVERWRITE,,}" == "true" ]]; then
-            FEED_FLAG="-O"
-            # ensure file is reset if it exists
-            : > "${FEED_PATH}"
-          else
-            FEED_FLAG="-o"
-          fi
-
-          echo "Spiders: ${SPIDERS}"
-          echo "Output:  ${FEED_PATH} (overwrite=${OVERWRITE})"
-
-          IFS=',' read -ra SARR <<< "${SPIDERS}"
-          for s in "${SARR[@]}"; do
+          IFS=',' read -ra S <<< "${{ github.event.inputs.spiders }}"
+          for s in "${S[@]}"; do
             s="$(echo "$s" | xargs)"
             [[ -z "$s" ]] && continue
-            echo "running ${s}"
-            scrapy crawl "${s}" ${FEED_FLAG} "${FEED_PATH}" 2>&1 | tee "debug/scrapy-${s}.log"
+            echo "::group::scrapy crawl $s"
+            scrapy crawl "$s" -s FEEDS="$FEEDS_JSON"
+            echo "::endgroup::"
           done
 
-      - name: Quick result peek
-        run: |
-          if [[ -f "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}" ]]; then
-            echo "Events.jsonl lines: $(wc -l < "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}")"
-            head -n 5 "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}" || true
-          else
-            echo "No output file found at ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}."
-          fi
-
-      - name: Upload data (jsonl)
+      - name: Upload data (JSONL)
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: data-jsonl
-          path: scraper/data/*.jsonl
+          name: events-jsonl
+          # actions/upload-artifact resolves from the repo root, so prefix with scraper/
+          path: scraper/${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 10
 
-      - name: Upload debug logs
-        uses: actions/upload-artifact@v4
+      - name: Upload debug (optional)
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: debug-artifacts
-          path: scraper/debug/**
+          path: |
+            scraper/debug/**
+            scraper/httpcache/**
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 7
