@@ -34,7 +34,7 @@ jobs:
       - name: Decide spider list
         id: decide
         run: |
-          ALL="christchurch_whats_on,auckland_events,christchurch_things,auckland_whats_on"
+          ALL="christchurch_whats_on,auckland_events,christchurch_events,auckland_whats_on"
           INPUT="${{ github.event.inputs.spiders }}"
           if [ -z "$INPUT" ]; then LIST="$ALL"; else LIST="$INPUT"; fi
           echo "list=$LIST" >> $GITHUB_OUTPUT
