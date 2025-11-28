@@ -6,14 +6,15 @@ from urllib.parse import urljoin
 
 import scrapy
 from parsel import Selector
+from scrapy_playwright.page import PageMethod
 
-# Try both package and root-level imports to match your repo layout
+# Flexible imports to match your repo layout
 try:
     from tscraper.utils import (
         parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
     )
     from tscraper.items import make_id
-except Exception:  # fall back to root-level modules
+except Exception:
     from utils import (
         parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
     )
@@ -26,8 +27,12 @@ class AucklandEventsSpider(scrapy.Spider):
     start_urls = ["https://heartofthecity.co.nz/auckland-events"]
 
     custom_settings = {
-        # Localized override so other spiders aren't affected
-        "ROBOTSTXT_OBEY": False,  # site sometimes gates listings; local override only
+        # Local overrides only for this spider
+        "ROBOTSTXT_OBEY": False,
+        "RETRY_TIMES": 2,
+        "RETRY_HTTP_CODES": [403, 429, 503],
+        "HTTPERROR_ALLOWED_CODES": [403, 429, 503],
+        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 45000,
         "FEEDS": {
             "Events.JSONL": {
                 "format": "jsonlines",
@@ -35,38 +40,87 @@ class AucklandEventsSpider(scrapy.Spider):
                 "overwrite": True,
             }
         },
-        "DOWNLOAD_DELAY": 0.25,
-        "AUTOTHROTTLE_ENABLED": True,
-        # A realistic UA for the Playwright context (Scrapy headers don't apply to PW page fetches)
-        "PLAYWRIGHT_CONTEXTS": {
-            "default": {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
-                "locale": "en-NZ",
-            }
-        },
-        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 45000,
-        "LOG_LEVEL": "INFO",
     }
 
     def start_requests(self):
+        proxy = os.getenv("HOTC_PROXY", "").strip() or None
+
+        # Highly realistic headers (Chrome on Windows); helps with some WAFs
+        extra_headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-NZ,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+        }
+        ctx_kwargs = {
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            "locale": "en-NZ",
+            "timezone_id": "Pacific/Auckland",
+            "viewport": {"width": 1366, "height": 768},
+            "extra_http_headers": extra_headers,
+        }
+        if proxy:
+            ctx_kwargs["proxy"] = {"server": proxy}
+
+        # Minimal stealth to hide webdriver and automation fingerprints
+        stealth_scripts = [
+            # navigator.webdriver
+            PageMethod("add_init_script", "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"),
+            # chrome.runtime (fake)
+            PageMethod("add_init_script", "window.chrome = window.chrome || { runtime: {} };"),
+            # permissions query (notifications) -> 'default' to mimic real browser
+            PageMethod("add_init_script", """
+                const originalQuery = window.navigator.permissions && window.navigator.permissions.query;
+                if (originalQuery) {
+                  window.navigator.permissions.query = (parameters) => (
+                    parameters && parameters.name === 'notifications'
+                      ? Promise.resolve({ state: Notification.permission })
+                      : originalQuery(parameters)
+                  );
+                }
+            """),
+        ]
+
         for url in self.start_urls:
             yield scrapy.Request(
                 url,
+                callback=self.parse_listing,
+                errback=self.errback,
                 meta={
                     "playwright": True,
-                    "playwright_include_page": True,  # keep page to click "Load more"
-                    "errback": self.errback,
+                    "playwright_include_page": True,
+                    "playwright_context_kwargs": ctx_kwargs,
+                    "playwright_page_methods": stealth_scripts,
+                    # Let us see the 403 body if WAF blocks
+                    "handle_httpstatus_list": [403, 429, 503],
                 },
-                callback=self.parse_listing,
+                dont_filter=True,
             )
 
     async def parse_listing(self, response):
         page = response.meta.get("playwright_page")
-        if not page:
-            self.logger.error("Playwright page missing; check scrapy-playwright setup.")
+        status = getattr(response, "status", None)
+
+        # If blocked, save artifacts and bail early
+        if status in (403, 429, 503):
+            try:
+                await page.screenshot(path="hotc_blocked.png", full_page=True)
+                html = await page.content()
+                with open("hotc_blocked.html", "w", encoding="utf-8") as f:
+                    f.write(html)
+            except Exception:
+                pass
+            self.logger.warning("Blocked (%s) at listing. Saved hotc_blocked.* for debugging.", status)
+            if page:
+                await page.close()
             return
 
-        # Try to accept cookie banners if present
+        # Accept cookie banners if present
         try:
             for text in ["Accept", "I agree", "Got it", "Allow all", "Accept all"]:
                 loc = page.get_by_role("button", name=re.compile(text, re.I))
@@ -76,16 +130,13 @@ class AucklandEventsSpider(scrapy.Spider):
         except Exception:
             pass
 
-        # Expand the list (supports both 'Load more' buttons and bottom scrolling)
+        # Expand list by clicking 'Load more' and lazy scroll
         last_count = 0
-        max_clicks = 60
-        for _ in range(max_clicks):
+        for _ in range(60):
             try:
-                # Scroll to bottom to trigger lazy loads
                 await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await page.wait_for_timeout(600)
+                await page.wait_for_timeout(750)
 
-                # Prefer a visible "Load more" control if present
                 btn = None
                 for locator in [
                     page.get_by_role("button", name=re.compile(r"load\\s*more", re.I)),
@@ -96,12 +147,10 @@ class AucklandEventsSpider(scrapy.Spider):
                     if await locator.count() > 0 and await locator.first.is_visible():
                         btn = locator.first
                         break
-
                 if btn:
                     await btn.click()
                     await page.wait_for_timeout(900)
 
-                # Count likely cards
                 card_count = await page.eval_on_selector_all(
                     "css=.views-row, .card, article, li[class*='view']",
                     "els => els.length"
@@ -110,57 +159,44 @@ class AucklandEventsSpider(scrapy.Spider):
                 if card_count <= last_count and not btn:
                     break
                 last_count = card_count
-            except Exception as e:
-                self.logger.info("No more items or click failed: %s", e)
+            except Exception:
                 break
 
-        # Grab fully rendered HTML and all anchors
         html = await page.content()
         hrefs = await page.eval_on_selector_all("a[href]", "els => els.map(e => e.getAttribute('href'))")
         await page.screenshot(path="hotc_listing.png", full_page=True)
         await page.close()
 
-        self.logger.info("Total anchors found on expanded listing: %d", len(hrefs))
-
-        # Build candidate detail links
         allow = [
-            r"^/auckland-events/[^/?#]+$",         # /auckland-events/slug
-            r"^/auckland-events/[^/]+/[^/?#]+$",   # /auckland-events/section/slug
+            r"^/auckland-events/[^/?#]+$",
+            r"^/auckland-events/[^/]+/[^/?#]+$",
         ]
         deny = [
-            r"/auckland-events/exhibitions$",
-            r"/auckland-events/festivals$",
-            r"/auckland-events/music-events$",
-            r"/auckland-events/food-drink-events$",
-            r"/auckland-events/theatre$",
-            r"/auckland-events/today$",
-            r"/auckland-events/tomorrow$",
-            r"/auckland-events/this-week$",
-            r"/auckland-events/this-month$",
-            r"/auckland-events/next-7-days$",
-            r"/auckland-events/next-30-days$",
-            r"/auckland-events/weekend",
-            r"/auckland-events/search",
-            r"/whats-on",
+            r"/auckland-events/(?:exhibitions|festivals|music-events|food-drink-events|theatre|today|tomorrow|this-week|this-month|next-7-days|next-30-days|weekend|search)\\b",
             r"\\?$",
         ]
         links = filter_links(response.url, hrefs, allow, deny)
         self.logger.info("Candidate detail pages kept after filtering: %d", len(links))
 
         if not links:
-            # Dump debug artifacts to help diagnose locally
             os.makedirs("debug", exist_ok=True)
-            with open(os.path.join("debug", "hotc_listing.html"), "w", encoding="utf-8") as f:
+            with open(os.path.join("debug","hotc_listing.html"), "w", encoding="utf-8") as f:
                 f.write(html)
-            with open(os.path.join("debug", "hotc_links.txt"), "w", encoding="utf-8") as f:
+            with open(os.path.join("debug","hotc_links.txt"), "w", encoding="utf-8") as f:
                 f.write("\\n".join([str(h) for h in hrefs]))
-            self.logger.warning("Saved debug artifacts under ./debug/ (hotc_listing.html, hotc_links.txt)")
+            self.logger.warning("Saved debug artifacts under ./debug/")
 
         for link in links:
             yield scrapy.Request(
                 link,
                 callback=self.parse_event,
-                meta={"playwright": True, "errback": self.errback},
+                errback=self.errback,
+                meta={
+                    "playwright": True,
+                    "playwright_context_kwargs": response.request.meta.get("playwright_context_kwargs"),
+                    "playwright_page_methods": response.request.meta.get("playwright_page_methods"),
+                    "handle_httpstatus_list": [403, 429, 503],
+                },
                 dont_filter=True,
             )
 
@@ -200,8 +236,6 @@ class AucklandEventsSpider(scrapy.Spider):
                "latitude": None, "longitude": None}
         try:
             for obj in (jsonld_objs or []):
-                if obj.get("@type") and "Event" not in str(obj.get("@type")):
-                    continue
                 v = obj.get("location") or {}
                 if isinstance(v, dict):
                     loc["name"] = loc["name"] or clean(v.get("name"))
@@ -273,6 +307,11 @@ class AucklandEventsSpider(scrapy.Spider):
         return months
 
     def parse_event(self, response):
+        status = getattr(response, "status", None)
+        if status in (403, 429, 503):
+            self.logger.warning("Blocked (%s) at detail: %s", status, response.url)
+            return
+
         sel = response.selector
         jsonld_objs = parse_jsonld(response.text)
 
