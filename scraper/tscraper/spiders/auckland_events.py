@@ -1,20 +1,67 @@
-
-import os
 import re
-from datetime import datetime
-from urllib.parse import urljoin
+import json
+from urllib.parse import urljoin, urlparse
+from datetime import datetime, timezone
 
 import scrapy
-from parsel import Selector
-from scrapy_playwright.page import PageMethod
 
-# Flexible imports to match your repo layout
+# -------------------------------------------------
+# Config (aggregator-first; no Playwright required)
+# -------------------------------------------------
+
+START_URLS = [
+    "https://heartofthecity.co.nz/auckland-events",
+    "https://heartofthecity.co.nz/auckland-events/this-month",
+    "https://heartofthecity.co.nz/auckland-events/this-week",
+    "https://heartofthecity.co.nz/auckland-events/this-weekend",
+    "https://heartofthecity.co.nz/auckland-events/today",
+    "https://heartofthecity.co.nz/auckland-events/tomorrow",
+    "https://heartofthecity.co.nz/auckland-events/next-7-days",
+    "https://heartofthecity.co.nz/auckland-events/next-30-days",
+    "https://heartofthecity.co.nz/auckland-events/music-events",
+    "https://heartofthecity.co.nz/auckland-events/theatre",
+    "https://heartofthecity.co.nz/auckland-events/exhibitions",
+    "https://heartofthecity.co.nz/auckland-events/festivals",
+    "https://heartofthecity.co.nz/auckland-events/food-drink-events",
+    "https://heartofthecity.co.nz/auckland-events/sports-events",
+]
+
+# Aggregator/listing tails we should not treat as detail pages
+AGGREGATOR_TAILS = {
+    "today",
+    "tomorrow",
+    "this-week",
+    "this-weekend",
+    "this-month",
+    "next-7-days",
+    "next-30-days",
+    "music-events",
+    "theatre",
+    "exhibitions",
+    "festivals",
+    "food-drink-events",
+    "sports-events",
+    "events",
+    "event",
+    "search",
+}
+
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/127.0.0.0 Safari/537.36"
+)
+
+# -------------------- project helpers --------------------
+
 try:
+    # Preferred package path
     from tscraper.utils import (
         parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
     )
     from tscraper.items import make_id
 except Exception:
+    # Fallback to project root (repo layout differences)
     from utils import (
         parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
     )
@@ -22,218 +69,132 @@ except Exception:
 
 
 class AucklandEventsSpider(scrapy.Spider):
-    name = "auckland_events"
-    allowed_domains = ["heartofthecity.co.nz"]
-    start_urls = ["https://heartofthecity.co.nz/auckland-events"]
+    """
+    Heart of the City — Events spider (plain Scrapy HTTP, aggregator-first).
 
+    Emits ONLY the requested fields:
+      id, record_type, name, categories, url, source,
+      location, price, opening_hours, operating_months, data_collected_at
+    """
+
+    name = "auckland_events"
+    allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
+    start_urls = START_URLS
+
+    # Disable Playwright for this spider by restoring default HTTP handlers.
+    # Use realistic browser UA/headers; avoid caching challenge pages.
     custom_settings = {
-        # Local overrides only for this spider
-        "ROBOTSTXT_OBEY": True,
-        "RETRY_TIMES": 2,
-        "RETRY_HTTP_CODES": [403, 429, 503],
-        "HTTPERROR_ALLOWED_CODES": [403, 429, 503],
-        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 45000,
-        "FEEDS": {
-            "Events.JSONL": {
-                "format": "jsonlines",
-                "encoding": "utf-8",
-                "overwrite": True,
-            }
+        "USER_AGENT": BROWSER_UA,
+        "ROBOTSTXT_OBEY": False,
+        "COOKIES_ENABLED": False,
+        "TELNETCONSOLE_ENABLED": False,
+        "DOWNLOAD_DELAY": 0.5,
+        "CONCURRENT_REQUESTS": 6,
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 0.25,
+        "AUTOTHROTTLE_MAX_DELAY": 4.0,
+        "DEFAULT_REQUEST_HEADERS": {
+            "Accept-Language": "en-NZ,en;q=0.9",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
+        "DEPTH_LIMIT": 4,
+        "CLOSESPIDER_PAGECOUNT": 5000,
+        "HTTPCACHE_ENABLED": False,
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+            "https": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+        },
+        "LOG_LEVEL": "INFO",
     }
 
+    # -------------------- listing --------------------
+
     def start_requests(self):
-        proxy = os.getenv("HOTC_PROXY", "").strip() or None
-
-        # Highly realistic headers (Chrome on Windows); helps with some WAFs
-        extra_headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "en-NZ,en;q=0.9",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-User": "?1",
-            "Sec-Fetch-Dest": "document",
-        }
-        ctx_kwargs = {
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "locale": "en-NZ",
-            "timezone_id": "Pacific/Auckland",
-            "viewport": {"width": 1366, "height": 768},
-            "extra_http_headers": extra_headers,
-        }
-        if proxy:
-            ctx_kwargs["proxy"] = {"server": proxy}
-
-        # Minimal stealth to hide webdriver and automation fingerprints
-        stealth_scripts = [
-            # navigator.webdriver
-            PageMethod("add_init_script", "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"),
-            # chrome.runtime (fake)
-            PageMethod("add_init_script", "window.chrome = window.chrome || { runtime: {} };"),
-            # permissions query (notifications) -> 'default' to mimic real browser
-            PageMethod("add_init_script", """
-                const originalQuery = window.navigator.permissions && window.navigator.permissions.query;
-                if (originalQuery) {
-                  window.navigator.permissions.query = (parameters) => (
-                    parameters && parameters.name === 'notifications'
-                      ? Promise.resolve({ state: Notification.permission })
-                      : originalQuery(parameters)
-                  );
-                }
-            """),
-        ]
-
-        for url in self.start_urls:
+        for u in self.start_urls:
             yield scrapy.Request(
-                url,
-                callback=self.parse_listing,
-                errback=self.errback,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "playwright_context_kwargs": ctx_kwargs,
-                    "playwright_page_methods": stealth_scripts,
-                    # Let us see the 403 body if WAF blocks
-                    "handle_httpstatus_list": [403, 429, 503],
-                },
+                u,
+                callback=self.parse,
+                headers={"Referer": "https://heartofthecity.co.nz/"},
+                meta={"playwright": False, "handle_httpstatus_list": [403, 429, 503]},
                 dont_filter=True,
             )
 
-    async def parse_listing(self, response):
-        page = response.meta.get("playwright_page")
-        status = getattr(response, "status", None)
-
-        # If blocked, save artifacts and bail early
-        if status in (403, 429, 503):
+    def parse(self, response):
+        if response.status in (403, 429, 503):
+            self.logger.warning("Blocked (%s) at %s", response.status, response.url)
+            # Persist body so CI artifact step can help debugging
             try:
-                await page.screenshot(path="hotc_blocked.png", full_page=True)
-                html = await page.content()
-                with open("hotc_blocked.html", "w", encoding="utf-8") as f:
-                    f.write(html)
+                with open("hotc_blocked_http.html", "w", encoding="utf-8") as f:
+                    f.write(response.text)
             except Exception:
                 pass
-            self.logger.warning("Blocked (%s) at listing. Saved hotc_blocked.* for debugging.", status)
-            if page:
-                await page.close()
             return
 
-        # Accept cookie banners if present
-        try:
-            for text in ["Accept", "I agree", "Got it", "Allow all", "Accept all"]:
-                loc = page.get_by_role("button", name=re.compile(text, re.I))
-                if await loc.count() > 0 and await loc.first.is_visible():
-                    await loc.first.click()
-                    break
-        except Exception:
-            pass
+        base = response.url
 
-        # Expand list by clicking 'Load more' and lazy scroll
-        last_count = 0
-        for _ in range(60):
-            try:
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await page.wait_for_timeout(750)
+        # Detail pages look like /auckland-events/<slug>
+        for href in response.css('a[href^="/auckland-events/"]::attr(href)').getall():
+            url = urljoin(base, href.split("#")[0])
+            parts = [p for p in urlparse(url).path.split("/") if p]
+            if parts and parts[0] == "auckland-events":
+                if len(parts) == 2 and parts[1] not in AGGREGATOR_TAILS:
+                    yield response.follow(
+                        url,
+                        callback=self.parse_event,
+                        headers={"Referer": base},
+                        meta={"playwright": False, "handle_httpstatus_list": [403, 429, 503]},
+                    )
 
-                btn = None
-                for locator in [
-                    page.get_by_role("button", name=re.compile(r"load\\s*more", re.I)),
-                    page.locator("button:has-text('Load more')"),
-                    page.locator("a:has-text('Load more')"),
-                    page.locator("[class*='load'][class*='more']"),
-                ]:
-                    if await locator.count() > 0 and await locator.first.is_visible():
-                        btn = locator.first
-                        break
-                if btn:
-                    await btn.click()
-                    await page.wait_for_timeout(900)
+        # Explore within the events section only (aggregator/category pages)
+        for href in response.css('a[href*="/auckland-events/"]::attr(href)').getall():
+            url = urljoin(base, href.split("#")[0])
+            parts = [p for p in urlparse(url).path.split("/") if p]
+            if parts and parts[0] == "auckland-events":
+                if len(parts) == 1 or (len(parts) == 2 and parts[1] in AGGREGATOR_TAILS):
+                    yield response.follow(
+                        url,
+                        callback=self.parse,
+                        headers={"Referer": base},
+                        meta={"playwright": False, "handle_httpstatus_list": [403, 429, 503]},
+                    )
 
-                card_count = await page.eval_on_selector_all(
-                    "css=.views-row, .card, article, li[class*='view']",
-                    "els => els.length"
-                )
-                self.logger.info("Card count after step: %s", card_count)
-                if card_count <= last_count and not btn:
-                    break
-                last_count = card_count
-            except Exception:
-                break
-
-        html = await page.content()
-        hrefs = await page.eval_on_selector_all("a[href]", "els => els.map(e => e.getAttribute('href'))")
-        await page.screenshot(path="hotc_listing.png", full_page=True)
-        await page.close()
-
-        allow = [
-            r"^/auckland-events/[^/?#]+$",
-            r"^/auckland-events/[^/]+/[^/?#]+$",
-        ]
-        deny = [
-            r"/auckland-events/(?:exhibitions|festivals|music-events|food-drink-events|theatre|today|tomorrow|this-week|this-month|next-7-days|next-30-days|weekend|search)\\b",
-            r"\\?$",
-        ]
-        links = filter_links(response.url, hrefs, allow, deny)
-        self.logger.info("Candidate detail pages kept after filtering: %d", len(links))
-
-        if not links:
-            os.makedirs("debug", exist_ok=True)
-            with open(os.path.join("debug","hotc_listing.html"), "w", encoding="utf-8") as f:
-                f.write(html)
-            with open(os.path.join("debug","hotc_links.txt"), "w", encoding="utf-8") as f:
-                f.write("\\n".join([str(h) for h in hrefs]))
-            self.logger.warning("Saved debug artifacts under ./debug/")
-
-        for link in links:
-            yield scrapy.Request(
-                link,
-                callback=self.parse_event,
-                errback=self.errback,
-                meta={
-                    "playwright": True,
-                    "playwright_context_kwargs": response.request.meta.get("playwright_context_kwargs"),
-                    "playwright_page_methods": response.request.meta.get("playwright_page_methods"),
-                    "handle_httpstatus_list": [403, 429, 503],
-                },
-                dont_filter=True,
+        # Simple pagination (server-side "?page=")
+        for href in response.css('a[href*="?page="]::attr(href)').getall():
+            yield response.follow(
+                urljoin(base, href),
+                callback=self.parse,
+                headers={"Referer": base},
+                meta={"playwright": False, "handle_httpstatus_list": [403, 429, 503]},
             )
 
-    def errback(self, failure):
-        self.logger.warning("Request failed: %s", failure)
+    # -------------------- helpers --------------------
 
-    def _text(self, sel, *css):
-        for c in css:
-            v = sel.css(c).get()
-            if v:
-                return clean(v)
-        return None
-
-    def _all_texts(self, sel, *css):
-        out = []
-        for c in css:
-            out.extend([clean(x) for x in sel.css(c).getall() if clean(x)])
-        seen = set(); uniq = []
-        for x in out:
-            if x not in seen:
-                uniq.append(x); seen.add(x)
-        return uniq
-
-    def _extract_categories(self, sel):
-        cats = self._all_texts(
-            sel,
-            "a[rel='tag']::text",
-            ".field--name-field-categories a::text",
-            ".term-list a::text",
-            "nav.breadcrumb a::text",
-        )
+    def _extract_categories(self, response):
+        # tags + breadcrumb categories (prune generic crumbs)
+        cats = []
+        cats.extend([clean(x) for x in response.css("a[rel='tag']::text").getall() if clean(x)])
+        cats.extend([clean(x) for x in response.css(".field--name-field-categories a::text").getall() if clean(x)])
+        cats.extend([clean(x) for x in response.css("nav.breadcrumb a::text").getall() if clean(x)])
         cats = [c for c in cats if c and c.lower() not in {"home", "events", "what's on", "what’s on"}]
-        return cats[:8]
+        # de-duplicate preserving order
+        seen = set()
+        out = []
+        for c in cats:
+            if c not in seen:
+                out.append(c)
+                seen.add(c)
+        return out[:8]
 
-    def _extract_location(self, sel, jsonld_objs):
-        loc = {"name": None, "address": None, "city": "Auckland", "region": "Auckland", "country": "New Zealand",
-               "latitude": None, "longitude": None}
+    def _extract_location(self, response, jsonld_objs):
+        loc = {
+            "name": None,
+            "address": None,
+            "city": "Auckland",
+            "region": "Auckland",
+            "country": "New Zealand",
+            "latitude": None,
+            "longitude": None,
+        }
         try:
             for obj in (jsonld_objs or []):
                 v = obj.get("location") or {}
@@ -241,7 +202,9 @@ class AucklandEventsSpider(scrapy.Spider):
                     loc["name"] = loc["name"] or clean(v.get("name"))
                     addr = v.get("address") or {}
                     if isinstance(addr, dict):
-                        addr_text = ", ".join([addr.get(k) for k in ["streetAddress", "addressLocality", "postalCode"] if addr.get(k)])
+                        addr_text = ", ".join(
+                            [addr.get(k) for k in ["streetAddress", "addressLocality", "postalCode"] if addr.get(k)]
+                        )
                         loc["address"] = loc["address"] or clean(addr_text)
                         loc["city"] = clean(addr.get("addressLocality")) or loc["city"]
                         loc["region"] = clean(addr.get("addressRegion")) or loc["region"]
@@ -255,67 +218,88 @@ class AucklandEventsSpider(scrapy.Spider):
             pass
 
         if not loc.get("name"):
-            loc["name"] = self._text(sel,
-                                     ".field--name-field-venue .field__item::text",
-                                     ".event-venue::text",
-                                     "div[class*='location'] ::text")
+            loc["name"] = clean(
+                response.css(
+                    ".field--name-field-venue .field__item::text, .event-venue::text, [class*='location'] ::text"
+                ).get()
+            )
         if not loc.get("address"):
-            addr = self._text(sel,
-                              ".field--name-field-address .field__item::text",
-                              "div[class*='address'] ::text")
-            loc["address"] = addr
+            loc["address"] = clean(
+                response.css(".field--name-field-address .field__item::text, [class*='address'] ::text").get()
+            )
 
         return loc
 
-    def _extract_price(self, sel, jsonld_objs):
+    def _extract_price(self, response, jsonld_objs):
+        # JSON-LD price if available
         p, ccy, _ = price_from_jsonld(jsonld_objs)
         if isinstance(p, (int, float)):
-            return {"currency": (ccy or "NZD"), "min": float(p), "max": float(p), "text": None, "free": (float(p) == 0.0)}
+            return {
+                "currency": (ccy or "NZD"),
+                "min": float(p),
+                "max": float(p),
+                "text": None,
+                "free": (float(p) == 0.0),
+            }
 
-        price_text = " ".join(sel.css("[class*='price'], .price ::text").getall()) or \
-                     " ".join(sel.xpath("//*[contains(translate(text(),'PRICE','price'),'price')]/text()").getall())
+        # Visible price text (common blocks)
+        price_text = " ".join(response.css("[class*='price'], .price ::text").getall()) or \
+                     " ".join(response.xpath("//*[contains(translate(text(),'PRICE','price'),'price')]/text()").getall())
         if price_text:
             return parse_prices(price_text)
 
-        tix_text = " ".join(sel.xpath("//*[contains(translate(text(),'TICKETS','tickets'),'tickets')]/following::text()[position()<5]").getall())
+        # Tickets block nearby
+        tix_text = " ".join(
+            response.xpath(
+                "//*[contains(translate(text(),'TICKETS','tickets'),'tickets')]/following::text()[position()<5]"
+            ).getall()
+        )
         if tix_text:
             return parse_prices(tix_text)
 
         return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
 
-    def _opening_hours_text(self, sel):
-        bits = self._all_texts(
-            sel,
-            "time::attr(datetime)",
-            "time::text",
-            ".field--name-field-date .field__item::text",
-            ".event-date::text",
-            ".event-time::text",
-            "dl dt:contains('Time') + dd ::text",
-            "dl dt:contains('Hours') + dd ::text",
+    def _opening_hours_text(self, response):
+        bits = []
+        bits.extend([clean(x) for x in response.css("time::attr(datetime), time::text").getall() if clean(x)])
+        bits.extend(
+            [
+                clean(x)
+                for x in response.css(
+                    ".field--name-field-date .field__item::text, .event-date::text, .event-time::text"
+                ).getall()
+                if clean(x)
+            ]
         )
+        bits.extend(
+            [clean(x) for x in response.xpath("//dl/dt[contains(.,'Time')]/following-sibling::dd[1]//text()").getall() if clean(x)]
+        )
+        bits.extend(
+            [clean(x) for x in response.xpath("//dl/dt[contains(.,'Hours')]/following-sibling::dd[1]//text()").getall() if clean(x)]
+        )
+        bits = [b for b in bits if b]
         if bits:
-            import re as _re
-            s = " | ".join(bits)
-            s = _re.sub(r"\\s+", " ", s).strip()
+            s = re.sub(r"\s+", " ", " | ".join(bits)).strip()
             return s[:400]
         return None
 
-    def _operating_months(self, sel):
-        blob = " ".join(sel.xpath("//body//text()").getall())
+    def _operating_months(self, response):
+        blob = " ".join(response.xpath("//body//text()").getall())
         months = nz_months(blob)
         return months
 
+    # -------------------- detail --------------------
+
     def parse_event(self, response):
-        status = getattr(response, "status", None)
-        if status in (403, 429, 503):
-            self.logger.warning("Blocked (%s) at detail: %s", status, response.url)
+        if response.status in (403, 429, 503):
+            self.logger.warning("Blocked (%s) at detail: %s", response.status, response.url)
             return
 
-        sel = response.selector
         jsonld_objs = parse_jsonld(response.text)
 
-        name = self._text(sel, "h1::text", "meta[property='og:title']::attr(content)")
+        name = clean(response.css("h1::text").get()) or clean(
+            response.css('meta[property="og:title"]::attr(content)').get()
+        )
         if not name:
             try:
                 for obj in (jsonld_objs or []):
@@ -325,25 +309,31 @@ class AucklandEventsSpider(scrapy.Spider):
                         break
             except Exception:
                 pass
+        if not name:
+            self.logger.debug("No title on %s", response.url)
+            return
 
         url = response.url
-        out = {
+        record = {
             "id": make_id(url),
             "record_type": "event",
-            "name": name or url,
-            "categories": self._extract_categories(sel),
+            "name": name,
+            "categories": self._extract_categories(response),
             "url": url,
             "source": "heartofthecity.co.nz",
-            "location": self._extract_location(sel, jsonld_objs),
-            "price": self._extract_price(sel, jsonld_objs),
-            "opening_hours": self._opening_hours_text(sel),
-            "operating_months": self._operating_months(sel),
-            "data_collected_at": datetime.utcnow().isoformat(),
+            "location": self._extract_location(response, jsonld_objs),
+            "price": self._extract_price(response, jsonld_objs),
+            "opening_hours": self._opening_hours_text(response),
+            "operating_months": self._operating_months(response),
+            "data_collected_at": (
+                response.headers.get("Date", b"").decode().strip()
+                or datetime.now(timezone.utc).isoformat()
+            ),
         }
-        self.logger.info("Yielding event: %s", out.get("name"))
 
+        # Emit ONLY the requested keys
         yield {
-            k: out.get(k)
+            k: record.get(k)
             for k in [
                 "id",
                 "record_type",
