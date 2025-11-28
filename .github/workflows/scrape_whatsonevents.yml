@@ -1,168 +1,210 @@
-name: Whats On and Events
+# GitHub Actions workflow to run TravelScout scrapers with extra debugging
+# Settings reference: tscraper/settings.py :contentReference[oaicite:0]{index=0}
+# Helper utilities reference (parsers, date/price helpers): tscraper/utils.py (or equivalent) :contentReference[oaicite:1]{index=1}
+name: Scrape (Auckland Events) — Debug
 
 on:
   workflow_dispatch:
     inputs:
       spiders:
-        description: "Comma-separated spider names to run (e.g. christchurch_whats_on,auckland_events). Leave blank for all."
+        description: "Comma-separated spider names to run"
+        default: "auckland_events"
         required: false
+      robots_obey:
+        description: "Override ROBOTSTXT_OBEY (true/false). Leave empty to use project setting."
         default: ""
+        required: false
+      clear_httpcache:
+        description: "Clear Scrapy HTTPCACHE before run (true/false)"
+        default: "false"
+        required: false
   schedule:
-    - cron: "17 16 1 * *"   # monthly on the 1st at 16:17 UTC
+    # Run every day at 03:30 UTC
+    - cron: "30 3 * * *"
+  push:
+    branches: [ main ]
+    paths:
+      - "scraper/**"
+      - ".github/workflows/scrape.yml"
 
-permissions:
-  contents: write
-
-defaults:
-  run:
-    shell: bash
+concurrency:
+  group: scrape-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   scrape:
+    name: Run spiders
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "utf-8"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      # Default list of spiders; can be overridden in workflow_dispatch
+      SPIDERS: ${{ github.event.inputs.spiders || 'auckland_events' }}
+      # Turn on simple, opt-in debug artifacts from spiders if they read these flags
+      TS_DEBUG: "1"
+      TS_SAVE_HTML: "1"
+      # Ensure Scrapy project uses the repo settings module
+      SCRAPY_SETTINGS_MODULE: "tscraper.settings"
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: scraper
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Show runner info
+        run: |
+          uname -a || true
+          python3 --version || true
+          node --version || true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Python deps
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r scraper/requirements.txt
+          pip install -r requirements.txt
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
-          path: ~/.cache/ms-playwright
+          path: |
+            ~/.cache/ms-playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
 
-      - name: Install Playwright browsers (+ OS deps)
-        run: python -m playwright install --with-deps chromium
-
-      - name: Decide spider list
-        id: decide
+      - name: Install Playwright (Chromium) with system deps
         run: |
-          ALL="christchurch_whats_on,auckland_events,christchurch_events,auckland_whats_on"
-          INPUT="${{ github.event.inputs.spiders }}"
-          if [ -z "$INPUT" ]; then LIST="$ALL"; else LIST="$INPUT"; fi
-          echo "list=$LIST" >> "$GITHUB_OUTPUT"
+          python -m playwright install --with-deps chromium
 
-      - name: Run selected spiders
-        working-directory: scraper
-        env:
-          # Optional: add a repo secret if the site blocks runner IPs (e.g. http://user:pass@host:port)
-          HOTC_PROXY: ${{ secrets.HOTC_PROXY }}
+      - name: Prepare debug directories
+        run: |
+          mkdir -p debug data httpcache
+          echo "Started at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" | tee debug/run.meta
+
+      - name: Preflight: dump Scrapy config & discovered spiders
+        run: |
+          scrapy version -v | tee -a debug/preflight.txt
+          echo -e "\n--- settings snapshot ---" | tee -a debug/preflight.txt
+          # print a few key settings to verify overrides
+          for k in BOT_NAME ROBOTSTXT_OBEY DOWNLOAD_DELAY AUTOTHROTTLE_ENABLED AUTOTHROTTLE_START_DELAY AUTOTHROTTLE_MAX_DELAY HTTPCACHE_ENABLED TWISTED_REACTOR PLAYWRIGHT_BROWSER_TYPE; do
+            echo "$k=$(scrapy settings --get $k)" | tee -a debug/preflight.txt
+          done
+          echo -e "\n--- spider list ---" | tee -a debug/preflight.txt
+          scrapy list | tee debug/spiders.txt
+
+      - name: Preflight: fetch sample pages (raw HTML) for troubleshooting
+        run: |
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+          set -x
+          curl -fsSL -A "$UA" -D debug/aucklandnz_events_headers.txt -o debug/aucklandnz_events.html https://www.aucklandnz.com/events-hub/events || true
+          # A couple of example event/detail URLs the user provided, to help debug selectors server-side
+          curl -fsSL -A "$UA" -D debug/the_nutcracker_headers.txt -o debug/the_nutcracker.html https://www.aucklandnz.com/events-hub/events/the-nutcracker-2025 || true
+          curl -fsSL -A "$UA" -D debug/pasifika_headers.txt -o debug/pasifika.html https://www.aucklandnz.com/pasifika || true
+          set +x
+
+      - name: Optionally clear HTTP cache
+        if: ${{ github.event.inputs.clear_httpcache == 'true' }}
+        run: |
+          rm -rf httpcache || true
+          echo "Cleared httpcache/" | tee -a debug/preflight.txt
+
+      - name: Run spiders (with optional ROBOTSTXT_OBEY override)
+        id: runspiders
         run: |
           set -euo pipefail
-          mkdir -p data
+          set -x
 
-          LIST="${{ steps.decide.outputs.list }}"
-          EVENTS=()
-          THINGS=()
-
-          # Split LIST on commas without here-strings (portable)
-          OLDIFS="$IFS"
-          IFS=','
-          for s in $LIST; do
-            s_trimmed="$(echo "$s" | xargs)"
-            case "$s_trimmed" in
-              christchurch_events|auckland_events) EVENTS+=("$s_trimmed");;
-              christchurch_whats_on|auckland_whats_on) THINGS+=("$s_trimmed");;
-              *) [ -n "$s_trimmed" ] && echo "Skipping unknown spider: $s_trimmed" || true ;;
-            esac
-          done
-          IFS="$OLDIFS"
-
-          run_spider () {
-            local spider="$1"; local mode="$2"; local outfile="$3"
-            FLAGS=(
-              -s CONCURRENT_REQUESTS=16
-              -s CONCURRENT_REQUESTS_PER_DOMAIN=16
-              -s DOWNLOAD_DELAY=0.25
-              -s AUTOTHROTTLE_ENABLED=1
-              -s ROBOTSTXT_OBEY=False
-              -s HTTPERROR_ALLOWED_CODES=403,429,503
-            )
-            if [ "$mode" = "overwrite" ]; then
-              python -m scrapy crawl "$spider" "${FLAGS[@]}" -O "$outfile"
-            else
-              python -m scrapy crawl "$spider" "${FLAGS[@]}" -o "$outfile"
+          # Prepare the override flag if provided
+          ROBOT_FLAG=""
+          if [[ -n "${{ github.event.inputs.robots_obey }}" ]]; then
+            ROBOT_VAL="${{ github.event.inputs.robots_obey }}"
+            # Normalize to true/false lower-case
+            ROBOT_VAL="$(echo "$ROBOT_VAL" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$ROBOT_VAL" == "true" || "$ROBOT_VAL" == "false" ]]; then
+              ROBOT_FLAG="-s ROBOTSTXT_OBEY=$ROBOT_VAL"
             fi
-          }
-
-          # -------- Events.jsonl --------
-          if [ ${#EVENTS[@]} -gt 0 ]; then
-            FIRST=1
-            for s in "${EVENTS[@]}"; do
-              if [ $FIRST -eq 1 ]; then
-                run_spider "$s" "overwrite" "data/Events.jsonl"
-                FIRST=0
-              else
-                run_spider "$s" "append" "data/Events.jsonl"
-              fi
-            done
           fi
 
-          # -------- Things_to_do.jsonl --------
-          if [ ${#THINGS[@]} -gt 0 ]; then
-            FIRST=1
-            for s in "${THINGS[@]}"; do
-              if [ $FIRST -eq 1 ]; then
-                run_spider "$s" "overwrite" "data/Things_to_do.jsonl"
-                FIRST=0
-              else
-                run_spider "$s" "append" "data/Things_to_do.jsonl"
-              fi
-            done
-          fi
+          echo "Spiders to run: ${SPIDERS}" | tee -a debug/run.meta
+          IFS=',' read -ra SARR <<< "${SPIDERS}"
 
-      - name: Upload debug artifacts (if present)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hotc-debug
-          path: |
-            scraper/hotc_blocked.html
-            scraper/hotc_blocked.png
-            scraper/hotc_listing.png
-            scraper/debug/hotc_listing.html
-            scraper/debug/hotc_links.txt
-          if-no-files-found: ignore
+          # A simple summary file to accumulate item counts per spider
+          : > debug/summary.tsv
+          echo -e "spider\titems\tstatus" >> debug/summary.tsv
 
-      - name: Detect data changes
-        id: detect
+          for sp in "${SARR[@]}"; do
+            s="$(echo "$sp" | xargs)"
+            [[ -z "$s" ]] && continue
+            echo "::group::Running $s"
+            # Each spider writes to shared feed path configured in settings (data/Events.jsonl)
+            # We also tee logs to debug/scrapy-$s.log
+            (scrapy crawl "$s" $ROBOT_FLAG 2>&1 | tee "debug/scrapy-${s}.log") || true
+            echo "::endgroup::"
+
+            # Count items appended by the spider (Scrapy feed appends by default if overwrite=False)
+            ITEMS=0
+            if [[ -f data/Events.jsonl ]]; then
+              ITEMS=$(wc -l < data/Events.jsonl | tr -d ' ')
+            fi
+            STATUS="ok"
+            if ! grep -q "Spider closed (finished)" "debug/scrapy-${s}.log"; then
+              STATUS="error"
+            fi
+            echo -e "${s}\t${ITEMS}\t${STATUS}" >> debug/summary.tsv
+          done
+
+          echo -e "\n--- SUMMARY ---"
+          column -t -s$'\t' debug/summary.tsv || cat debug/summary.tsv
+
+      - name: Print quick results summary
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          ADDED=0
-          if [ -f scraper/data/Events.jsonl ]; then git add scraper/data/Events.jsonl; ADDED=1; fi
-          if [ -f scraper/data/Things_to_do.jsonl ]; then git add scraper/data/Things_to_do.jsonl; ADDED=1; fi
-
-          if [ "$ADDED" = "0" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          elif git diff --cached --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          if [[ -f data/Events.jsonl ]]; then
+            echo "Events.jsonl lines: $(wc -l < data/Events.jsonl | tr -d ' ')"
+            echo "First 3 lines:"
+            head -n 3 data/Events.jsonl || true
           else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "No data/Events.jsonl found."
           fi
 
-      - name: Commit scraped data
-        if: steps.detect.outputs.changed == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        run: |
-          git commit -m "data: update scraped JSONL ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
-          git push
-
-      - name: Upload data artifacts (only when changed)
-        if: steps.detect.outputs.changed == 'true'
+      - name: Upload scraped data
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: nz-events-and-things-jsonl
+          name: data-jsonl
           path: |
-            scraper/data/Events.jsonl
-            scraper/data/Things_to_do.jsonl
+            scraper/data/*.jsonl
+          if-no-files-found: warn
+          retention-days: 10
+
+      - name: Upload debug bundle (logs, preflight HTML, httpcache)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: debug-artifacts
+          path: |
+            scraper/debug/**
+            scraper/httpcache/**
+          if-no-files-found: warn
+          retention-days: 10
+
+      - name: Upload Playwright traces/screens if produced by spiders
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-artifacts
+          path: |
+            scraper/traces/**
+            scraper/screens/**
+            scraper/screenshots/**
+          if-no-files-found: warn
+          retention-days: 7
