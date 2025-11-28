@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -31,7 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      - name: Cache Playwright browsers (optional)
+      - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -46,80 +50,48 @@ jobs:
           ALL="christchurch_whats_on,auckland_events,christchurch_events,auckland_whats_on"
           INPUT="${{ github.event.inputs.spiders }}"
           if [ -z "$INPUT" ]; then LIST="$ALL"; else LIST="$INPUT"; fi
-          echo "list=$LIST" >> $GITHUB_OUTPUT
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
 
-      - name: Run selected spiders (headed Chromium + NZ UA/headers)
+      - name: Run selected spiders
         working-directory: scraper
         env:
-          # Optional: add a repo secret HOTC_PROXY like http://user:pass@host:port if the site blocks GH runners
+          # Optional: add a repo secret if the site blocks runner IPs (e.g. http://user:pass@host:port)
           HOTC_PROXY: ${{ secrets.HOTC_PROXY }}
         run: |
           set -euo pipefail
           mkdir -p data
 
-          # ---- Build a Playwright context (UA, locale, headers; optional proxy) as compact JSON ----
-          PW_CTX="$(python - <<'PY'
-import json, os
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-ctx = {
-  "default": {
-    "user_agent": UA,
-    "locale": "en-NZ",
-    "extra_http_headers": {
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-NZ,en;q=0.9",
-      "Upgrade-Insecure-Requests": "1",
-      "Sec-Fetch-Site": "none",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-User": "?1",
-      "Sec-Fetch-Dest": "document"
-    }
-  }
-}
-proxy = os.environ.get("HOTC_PROXY", "").strip()
-if proxy:
-    ctx["default"]["proxy"] = {"server": proxy}
-print(json.dumps(ctx, separators=(",", ":")))
-PY
-          )"
-
-          # Run headed Chromium under Xvfb; reduce obvious automation flags
-          PW_LAUNCH='{"headless":false,"args":["--disable-blink-features=AutomationControlled","--no-sandbox","--disable-dev-shm-usage"]}'
-
-          IFS=',' read -ra SPIDERS <<< "${{ steps.decide.outputs.list }}"
-
+          LIST="${{ steps.decide.outputs.list }}"
           EVENTS=()
           THINGS=()
-          for s in "${SPIDERS[@]}"; do
+
+          # Split LIST on commas without here-strings (portable)
+          OLDIFS="$IFS"
+          IFS=','
+          for s in $LIST; do
             s_trimmed="$(echo "$s" | xargs)"
             case "$s_trimmed" in
               christchurch_events|auckland_events) EVENTS+=("$s_trimmed");;
               christchurch_whats_on|auckland_whats_on) THINGS+=("$s_trimmed");;
-              *) echo "Skipping unknown spider: $s_trimmed" ;;
+              *) [ -n "$s_trimmed" ] && echo "Skipping unknown spider: $s_trimmed" || true ;;
             esac
           done
+          IFS="$OLDIFS"
 
           run_spider () {
             local spider="$1"; local mode="$2"; local outfile="$3"
-
-            # Build CLI args safely (avoid quoting issues) using a Bash array
-            args=(
-              -s "CONCURRENT_REQUESTS=16"
-              -s "CONCURRENT_REQUESTS_PER_DOMAIN=16"
-              -s "DOWNLOAD_DELAY=0.25"
-              -s "AUTOTHROTTLE_ENABLED=1"
-              -s "ROBOTSTXT_OBEY=False"
-              -s "HTTPCACHE_ENABLED=0"
-              -s "HTTPERROR_ALLOWED_CODES=403,429,503"
-              -s "PLAYWRIGHT_CONTEXTS=$PW_CTX"
-              -s "PLAYWRIGHT_LAUNCH_OPTIONS=$PW_LAUNCH"
-              -s "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT=45000"
+            FLAGS=(
+              -s CONCURRENT_REQUESTS=16
+              -s CONCURRENT_REQUESTS_PER_DOMAIN=16
+              -s DOWNLOAD_DELAY=0.25
+              -s AUTOTHROTTLE_ENABLED=1
+              -s ROBOTSTXT_OBEY=False
+              -s HTTPERROR_ALLOWED_CODES=403,429,503
             )
-
             if [ "$mode" = "overwrite" ]; then
-              xvfb-run -a python -m scrapy crawl "$spider" "${args[@]}" -O "$outfile"
+              python -m scrapy crawl "$spider" "${FLAGS[@]}" -O "$outfile"
             else
-              xvfb-run -a python -m scrapy crawl "$spider" "${args[@]}" -o "$outfile"
+              python -m scrapy crawl "$spider" "${FLAGS[@]}" -o "$outfile"
             fi
           }
 
@@ -149,6 +121,19 @@ PY
             done
           fi
 
+      - name: Upload debug artifacts (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hotc-debug
+          path: |
+            scraper/hotc_blocked.html
+            scraper/hotc_blocked.png
+            scraper/hotc_listing.png
+            scraper/debug/hotc_listing.html
+            scraper/debug/hotc_links.txt
+          if-no-files-found: ignore
+
       - name: Detect data changes
         id: detect
         run: |
@@ -160,11 +145,11 @@ PY
           if [ -f scraper/data/Things_to_do.jsonl ]; then git add scraper/data/Things_to_do.jsonl; ADDED=1; fi
 
           if [ "$ADDED" = "0" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           elif git diff --cached --quiet; then
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit scraped data
@@ -173,7 +158,7 @@ PY
           git commit -m "data: update scraped JSONL ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
           git push
 
-      - name: Upload artifact (only when changed)
+      - name: Upload data artifacts (only when changed)
         if: steps.detect.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -181,15 +166,3 @@ PY
           path: |
             scraper/data/Events.jsonl
             scraper/data/Things_to_do.jsonl
-
-      - name: Upload HOTC debug artifacts (if present)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hotc-debug
-          path: |
-            scraper/hotc_blocked.html
-            scraper/hotc_blocked.png
-            scraper/hotc_listing.png
-            scraper/debug/
-          if-no-files-found: ignore
