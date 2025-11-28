@@ -1,6 +1,4 @@
-# GitHub Actions workflow to run TravelScout scrapers with extra debugging
-# Settings module used below should match your project layout.
-name: "Scrape (WhatsOn Events) — Debug"
+name: "Scrape (Auckland Events) - Debug"
 
 on:
   workflow_dispatch:
@@ -18,33 +16,31 @@ on:
         default: "false"
         required: false
   schedule:
-    # Run every day at 03:30 UTC
-    - cron: "30 3 * * *"
+    - cron: "30 3 * * *" # every day at 03:30 UTC
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
       - "scraper/**"
       - ".github/workflows/scrape_whatsonevents.yml"
 
 concurrency:
-  group: "scrape-${{ github.ref }}"
+  group: scrape-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   scrape:
-    name: "Run spiders"
+    name: Run spiders
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONIOENCODING: "utf-8"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
-      # Default list of spiders; can be overridden in workflow_dispatch
-      SPIDERS: "${{ github.event.inputs.spiders || 'auckland_events' }}"
-      # Turn on simple, opt-in debug artifacts from spiders if they read these flags
+      # If the dispatch input is present and non-empty, use it; otherwise default to auckland_events
+      SPIDERS: ${{ github.event.inputs.spiders && github.event.inputs.spiders || 'auckland_events' }}
       TS_DEBUG: "1"
       TS_SAVE_HTML: "1"
-      # Ensure Scrapy project uses the repo settings module
       SCRAPY_SETTINGS_MODULE: "tscraper.settings"
 
     defaults:
@@ -53,45 +49,46 @@ jobs:
         working-directory: scraper
 
     steps:
-      - name: Checkout repo
+      - name: "Checkout repo"
         uses: actions/checkout@v4
 
-      - name: Show runner info
+      - name: "Show runner info"
         run: |
           uname -a || true
           python3 --version || true
           node --version || true
 
-      - name: Set up Python 3.11
+      - name: "Set up Python 3.11"
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Python dependencies
+      - name: "Install Python dependencies"
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Cache Playwright browsers
+      - name: "Cache Playwright browsers"
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/ms-playwright
-          key: "${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}"
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-ms-playwright-
 
-      - name: Install Playwright (Chromium) with system deps
+      - name: "Install Playwright (Chromium) with system deps"
         run: |
           python -m playwright install --with-deps chromium
 
-      - name: Prepare debug directories
+      - name: "Prepare debug directories"
         run: |
           mkdir -p debug data httpcache
           echo "Started at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" | tee debug/run.meta
 
-      - name: Preflight: dump Scrapy config & discovered spiders
+      - name: "Preflight: dump Scrapy config & discovered spiders"
         run: |
+          set -e
           scrapy version -v | tee -a debug/preflight.txt
           echo -e "\n--- settings snapshot ---" | tee -a debug/preflight.txt
           # print a few key settings to verify overrides
@@ -101,23 +98,22 @@ jobs:
           echo -e "\n--- spider list ---" | tee -a debug/preflight.txt
           scrapy list | tee debug/spiders.txt
 
-      - name: Preflight: fetch sample pages (raw HTML) for troubleshooting
+      - name: "Preflight: fetch sample pages (raw HTML) for troubleshooting"
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
           set -x
           curl -fsSL -A "$UA" -D debug/aucklandnz_events_headers.txt -o debug/aucklandnz_events.html https://www.aucklandnz.com/events-hub/events || true
-          # A couple of example event/detail URLs the user provided, to help debug selectors server-side
           curl -fsSL -A "$UA" -D debug/the_nutcracker_headers.txt -o debug/the_nutcracker.html https://www.aucklandnz.com/events-hub/events/the-nutcracker-2025 || true
           curl -fsSL -A "$UA" -D debug/pasifika_headers.txt -o debug/pasifika.html https://www.aucklandnz.com/pasifika || true
           set +x
 
-      - name: Optionally clear HTTP cache
+      - name: "Optionally clear HTTP cache"
         if: ${{ github.event.inputs.clear_httpcache == 'true' }}
         run: |
           rm -rf httpcache || true
           echo "Cleared httpcache/" | tee -a debug/preflight.txt
 
-      - name: Run spiders (with optional ROBOTSTXT_OBEY override)
+      - name: "Run spiders (with optional ROBOTSTXT_OBEY override)"
         id: runspiders
         run: |
           set -euo pipefail
@@ -137,20 +133,19 @@ jobs:
           echo "Spiders to run: ${SPIDERS}" | tee -a debug/run.meta
           IFS=',' read -ra SARR <<< "${SPIDERS}"
 
-          # A simple summary file to accumulate item counts per spider
           : > debug/summary.tsv
           echo -e "spider\titems\tstatus" >> debug/summary.tsv
+
+          # Start with a clean output file for each job run
+          : > data/Events.jsonl
 
           for sp in "${SARR[@]}"; do
             s="$(echo "$sp" | xargs)"
             [[ -z "$s" ]] && continue
             echo "::group::Running $s"
-            # Each spider writes to shared feed path configured in settings (data/Events.jsonl)
-            # We also tee logs to debug/scrapy-$s.log
             (scrapy crawl "$s" $ROBOT_FLAG 2>&1 | tee "debug/scrapy-${s}.log") || true
             echo "::endgroup::"
 
-            # Count items appended by the spider (Scrapy feed appends by default if overwrite=False)
             ITEMS=0
             if [[ -f data/Events.jsonl ]]; then
               ITEMS=$(wc -l < data/Events.jsonl | tr -d ' ')
@@ -169,7 +164,7 @@ jobs:
             cat debug/summary.tsv
           fi
 
-      - name: Print quick results summary
+      - name: "Print quick results summary"
         run: |
           if [[ -f data/Events.jsonl ]]; then
             echo "Events.jsonl lines: $(wc -l < data/Events.jsonl | tr -d ' ')"
@@ -179,9 +174,9 @@ jobs:
             echo "No data/Events.jsonl found."
           fi
 
-      - name: Upload scraped data
+      - name: "Upload scraped data"
         uses: actions/upload-artifact@v4
-        if: ${{ always() }}
+        if: always()
         with:
           name: data-jsonl
           path: |
@@ -189,9 +184,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 10
 
-      - name: Upload debug bundle (logs, preflight HTML, httpcache)
+      - name: "Upload debug bundle (logs, preflight HTML, httpcache)"
         uses: actions/upload-artifact@v4
-        if: ${{ always() }}
+        if: always()
         with:
           name: debug-artifacts
           path: |
@@ -200,9 +195,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 10
 
-      - name: Upload Playwright traces/screens if produced by spiders
+      - name: "Upload Playwright traces/screens if produced by spiders"
         uses: actions/upload-artifact@v4
-        if: ${{ always() }}
+        if: always()
         with:
           name: playwright-artifacts
           path: |
