@@ -64,7 +64,7 @@ class Location(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
-    region: Optional[str] = "Canterbury"
+    region: Optional[str] = None
     country: Optional[str] = "New Zealand"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -90,7 +90,7 @@ class TravelScoutRecord(BaseModel):
     categories: List[str] = []
     tags: List[str] = []
     url: HttpUrl
-    source: str = "christchurchnz.com"
+    source: Optional[str] = None
     images: List[HttpUrl] = []
     location: Location = Location()
     price: Price = Price()
