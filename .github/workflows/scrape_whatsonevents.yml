@@ -31,14 +31,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scraper/requirements.txt
 
-      # (Optional) Speed up: cache Playwright browser downloads
-      - name: Cache Playwright browsers
+      - name: Cache Playwright browsers (optional)
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}
 
-      # ✅ Critical fix: install the actual Chromium browser for Playwright
       - name: Install Playwright browsers (+ OS deps)
         run: python -m playwright install --with-deps chromium
 
@@ -50,11 +48,43 @@ jobs:
           if [ -z "$INPUT" ]; then LIST="$ALL"; else LIST="$INPUT"; fi
           echo "list=$LIST" >> $GITHUB_OUTPUT
 
-      - name: Run selected spiders
+      - name: Run selected spiders (headed Chromium + NZ UA/headers)
         working-directory: scraper
+        env:
+          # Optional: add a repo secret HOTC_PROXY like http://user:pass@host:port if the site blocks GH runners
+          HOTC_PROXY: ${{ secrets.HOTC_PROXY }}
         run: |
           set -euo pipefail
           mkdir -p data
+
+          # ---- Build a Playwright context (UA, locale, headers; optional proxy) as compact JSON ----
+          PW_CTX="$(python - <<'PY'
+import json, os
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+ctx = {
+  "default": {
+    "user_agent": UA,
+    "locale": "en-NZ",
+    "extra_http_headers": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-NZ,en;q=0.9",
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document"
+    }
+  }
+}
+proxy = os.environ.get("HOTC_PROXY", "").strip()
+if proxy:
+    ctx["default"]["proxy"] = {"server": proxy}
+print(json.dumps(ctx, separators=(",", ":")))
+PY
+          )"
+
+          # Run headed Chromium under Xvfb; reduce obvious automation flags
+          PW_LAUNCH='{"headless":false,"args":["--disable-blink-features=AutomationControlled","--no-sandbox","--disable-dev-shm-usage"]}'
 
           IFS=',' read -ra SPIDERS <<< "${{ steps.decide.outputs.list }}"
 
@@ -71,11 +101,25 @@ jobs:
 
           run_spider () {
             local spider="$1"; local mode="$2"; local outfile="$3"
-            FLAGS="-s CONCURRENT_REQUESTS=16 -s CONCURRENT_REQUESTS_PER_DOMAIN=16 -s DOWNLOAD_DELAY=0.25 -s AUTOTHROTTLE_ENABLED=1"
+
+            # Build CLI args safely (avoid quoting issues) using a Bash array
+            args=(
+              -s "CONCURRENT_REQUESTS=16"
+              -s "CONCURRENT_REQUESTS_PER_DOMAIN=16"
+              -s "DOWNLOAD_DELAY=0.25"
+              -s "AUTOTHROTTLE_ENABLED=1"
+              -s "ROBOTSTXT_OBEY=False"
+              -s "HTTPCACHE_ENABLED=0"
+              -s "HTTPERROR_ALLOWED_CODES=403,429,503"
+              -s "PLAYWRIGHT_CONTEXTS=$PW_CTX"
+              -s "PLAYWRIGHT_LAUNCH_OPTIONS=$PW_LAUNCH"
+              -s "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT=45000"
+            )
+
             if [ "$mode" = "overwrite" ]; then
-              python -m scrapy crawl "$spider" $FLAGS -O "$outfile"
+              xvfb-run -a python -m scrapy crawl "$spider" "${args[@]}" -O "$outfile"
             else
-              python -m scrapy crawl "$spider" $FLAGS -o "$outfile"
+              xvfb-run -a python -m scrapy crawl "$spider" "${args[@]}" -o "$outfile"
             fi
           }
 
@@ -137,3 +181,15 @@ jobs:
           path: |
             scraper/data/Events.jsonl
             scraper/data/Things_to_do.jsonl
+
+      - name: Upload HOTC debug artifacts (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hotc-debug
+          path: |
+            scraper/hotc_blocked.html
+            scraper/hotc_blocked.png
+            scraper/hotc_listing.png
+            scraper/debug/
+          if-no-files-found: ignore
