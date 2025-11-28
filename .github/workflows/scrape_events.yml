@@ -1,4 +1,4 @@
-name: Scrape (Events)
+name: Scrape Events
 
 on:
   workflow_dispatch:
@@ -7,60 +7,55 @@ on:
         description: "Comma-separated spider names to run"
         default: "auckland_events"
         required: false
+      robots_obey:
+        description: "Override ROBOTSTXT_OBEY (true/false). Leave empty to use project setting."
+        default: ""
+        required: false
       clear_httpcache:
         description: "Clear Scrapy HTTPCACHE before run (true/false)"
         default: "false"
         required: false
-  schedule:
-    - cron: "30 3 * * *"   # daily at 03:30 UTC
-  push:
-    branches: [ main ]
-    paths:
-      - "scraper/**"
-      - ".github/workflows/scrape_events.yml"
-
-concurrency:
-  group: scrape-events-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
-  run:
+  run-scrapy:
     name: Run Scrapy spiders
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
+    # Make tscraper importable and wire in settings
     env:
-      # default; can be overridden via workflow_dispatch input
-      SPIDERS: ${{ github.event.inputs.spiders || 'auckland_events' }}
-      # make sure Scrapy can import your project (tscraper/settings.py)
-      SCRAPY_SETTINGS_MODULE: "tscraper.settings"
+      SCRAPY_SETTINGS_MODULE: tscraper.settings
       PYTHONUNBUFFERED: "1"
       PYTHONIOENCODING: "utf-8"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
-      # simple, opt-in debug flags some spiders may read
       TS_DEBUG: "1"
       TS_SAVE_HTML: "1"
+      # default to auckland_events; user can override in dispatch form
+      SPIDERS: ${{ github.event.inputs.spiders || 'auckland_events' }}
+      # Add the 'scraper/' folder to module search path so 'tscraper' can be imported
+      PYTHONPATH: ${{ github.workspace }}/scraper
 
     defaults:
       run:
         shell: bash
+        # All shell steps execute within the scraper/ directory
         working-directory: scraper
 
     steps:
-      - name: Checkout repository
+      - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: "Set up Python 3.11"
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Python dependencies
+      - name: "Install Python dependencies"
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Cache Playwright browsers
+      - name: "Cache Playwright browsers"
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -68,58 +63,66 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ms-playwright-
 
-      - name: Install Playwright (Chromium) with system deps
+      - name: "Install Playwright (Chromium) with system deps"
         run: |
           python -m playwright install --with-deps chromium
 
-      - name: Prepare folders
+      - name: "Create working folders"
         run: |
-          mkdir -p data debug httpcache
-          date -u +"Started at %Y-%m-%d %H:%M:%S UTC" | tee debug/run.meta
+          mkdir -p debug data httpcache
 
-      - name: Show discovered spiders (quick sanity check)
+      - name: "Preflight: prove tscraper is importable & list spiders"
         run: |
+          echo "CWD: $(pwd)"
+          echo "PYTHONPATH=$PYTHONPATH"
           echo "SCRAPY_SETTINGS_MODULE=$SCRAPY_SETTINGS_MODULE"
-          scrapy version -v
+          # Prove Python can import tscraper and show where it loads from
+          python -c "import sys; import tscraper; print('tscraper package:', tscraper.__file__)"
+          scrapy version -v | tee -a debug/preflight.txt
           scrapy list | tee debug/spiders.txt
 
-      - name: Optionally clear HTTP cache
+      - name: "Optionally clear HTTP cache"
         if: ${{ github.event.inputs.clear_httpcache == 'true' }}
-        run: rm -rf httpcache || true
-
-      - name: Run spiders
         run: |
-          IFS=',' read -ra SARR <<< "$SPIDERS"
+          rm -rf httpcache || true
+          echo "Cleared httpcache/" | tee -a debug/preflight.txt
+
+      - name: "Run spiders"
+        run: |
+          set -euo pipefail
+
+          ROBOT_FLAG=""
+          if [[ -n "${{ github.event.inputs.robots_obey }}" ]]; then
+            v="$(echo "${{ github.event.inputs.robots_obey }}" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$v" == "true" || "$v" == "false" ]]; then
+              ROBOT_FLAG="-s ROBOTSTXT_OBEY=$v"
+            fi
+          fi
+
+          echo "Spiders to run: ${SPIDERS}" | tee -a debug/run.meta
+          IFS=',' read -ra SARR <<< "${SPIDERS}"
+
           : > debug/summary.tsv
           echo -e "spider\titems\tstatus" >> debug/summary.tsv
 
           for sp in "${SARR[@]}"; do
             s="$(echo "$sp" | xargs)"
-            [ -z "$s" ] && continue
-            echo "::group::scrapy crawl ${s}"
-            scrapy crawl "$s" 2>&1 | tee "debug/scrapy-${s}.log" || true
+            [[ -z "$s" ]] && continue
+            echo "::group::running ${s}"
+            (scrapy crawl "$s" $ROBOT_FLAG 2>&1 | tee "debug/scrapy-${s}.log") || true
             echo "::endgroup::"
 
-            LINES=0
-            [ -f data/Events.jsonl ] && LINES=$(wc -l < data/Events.jsonl || echo 0)
+            ITEMS=0
+            [[ -f data/Events.jsonl ]] && ITEMS=$(wc -l < data/Events.jsonl | tr -d ' ')
             STATUS="ok"
             grep -q "Spider closed (finished)" "debug/scrapy-${s}.log" || STATUS="error"
-            echo -e "${s}\t${LINES}\t${STATUS}" >> debug/summary.tsv
+            echo -e "${s}\t${ITEMS}\t${STATUS}" >> debug/summary.tsv
           done
 
           echo -e "\n--- SUMMARY ---"
-          (command -v column >/dev/null 2>&1 && column -t -s$'\t' debug/summary.tsv) || cat debug/summary.tsv
+          column -t -s$'\t' debug/summary.tsv || cat debug/summary.tsv
 
-      - name: Print first few lines of Events.jsonl
-        run: |
-          if [ -f data/Events.jsonl ]; then
-            echo "Events.jsonl lines: $(wc -l < data/Events.jsonl)"
-            head -n 5 data/Events.jsonl
-          else
-            echo "No data/Events.jsonl produced."
-          fi
-
-      - name: Upload scraped data
+      - name: "Upload scraped data"
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -128,7 +131,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 10
 
-      - name: Upload debug bundle
+      - name: "Upload debug bundle"
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -136,8 +139,5 @@ jobs:
           path: |
             scraper/debug/**
             scraper/httpcache/**
-            scraper/traces/**
-            scraper/screens/**
-            scraper/screenshots/**
           if-no-files-found: warn
           retention-days: 10
