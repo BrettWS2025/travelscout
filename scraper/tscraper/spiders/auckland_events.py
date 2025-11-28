@@ -1,4 +1,5 @@
 
+import os
 import re
 from datetime import datetime
 from urllib.parse import urljoin
@@ -6,16 +7,17 @@ from urllib.parse import urljoin
 import scrapy
 from parsel import Selector
 
-# Scrapy-Playwright is required by requirements.txt and settings.py
-# We will use it to click the "Load more" button until all events are visible.
-# (See settings.py for the download handlers and reactor configuration.)
-
-from tscraper.utils import (
-    parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
-)
-from tscraper.items import make_id
-
-NZ_TZ = "Pacific/Auckland"
+# Try both package and root-level imports to match your repo layout
+try:
+    from tscraper.utils import (
+        parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
+    )
+    from tscraper.items import make_id
+except Exception:  # fall back to root-level modules
+    from utils import (
+        parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
+    )
+    from items import make_id
 
 
 class AucklandEventsSpider(scrapy.Spider):
@@ -24,8 +26,8 @@ class AucklandEventsSpider(scrapy.Spider):
     start_urls = ["https://heartofthecity.co.nz/auckland-events"]
 
     custom_settings = {
-        # Write ONLY the requested fields to Events.JSONL on each run.
-        # Use -o to append if you prefer (scrapy crawl auckland_events -o Events.JSONL).
+        # Localized override so other spiders aren't affected
+        "ROBOTSTXT_OBEY": False,  # site sometimes gates listings; local override only
         "FEEDS": {
             "Events.JSONL": {
                 "format": "jsonlines",
@@ -33,9 +35,17 @@ class AucklandEventsSpider(scrapy.Spider):
                 "overwrite": True,
             }
         },
-        # Be polite; these play nicely with the base settings you already have.
         "DOWNLOAD_DELAY": 0.25,
         "AUTOTHROTTLE_ENABLED": True,
+        # A realistic UA for the Playwright context (Scrapy headers don't apply to PW page fetches)
+        "PLAYWRIGHT_CONTEXTS": {
+            "default": {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+                "locale": "en-NZ",
+            }
+        },
+        "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 45000,
+        "LOG_LEVEL": "INFO",
     }
 
     def start_requests(self):
@@ -44,40 +54,41 @@ class AucklandEventsSpider(scrapy.Spider):
                 url,
                 meta={
                     "playwright": True,
-                    "playwright_include_page": True,  # we need the Page to click "Load more"
+                    "playwright_include_page": True,  # keep page to click "Load more"
                     "errback": self.errback,
                 },
                 callback=self.parse_listing,
             )
 
     async def parse_listing(self, response):
-        """
-        Render the full listing by clicking "Load more" repeatedly.
-        Then collect the event detail URLs for parsing.
-        """
-        page = response.meta["playwright_page"]
+        page = response.meta.get("playwright_page")
+        if not page:
+            self.logger.error("Playwright page missing; check scrapy-playwright setup.")
+            return
 
-        # Opportunistically accept cookie banners if present.
+        # Try to accept cookie banners if present
         try:
-            for text in ["Accept", "I agree", "Got it"]:
+            for text in ["Accept", "I agree", "Got it", "Allow all", "Accept all"]:
                 loc = page.get_by_role("button", name=re.compile(text, re.I))
-                if await loc.is_visible():
-                    await loc.click()
+                if await loc.count() > 0 and await loc.first.is_visible():
+                    await loc.first.click()
                     break
         except Exception:
             pass
 
-        # Keep clicking "Load more" until it disappears or no new cards are added.
+        # Expand the list (supports both 'Load more' buttons and bottom scrolling)
         last_count = 0
-        max_clicks = 60  # safety cap
+        max_clicks = 60
         for _ in range(max_clicks):
             try:
-                # Scroll so the button is in view.
+                # Scroll to bottom to trigger lazy loads
                 await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                # Try common ways the site might label the control.
+                await page.wait_for_timeout(600)
+
+                # Prefer a visible "Load more" control if present
                 btn = None
                 for locator in [
-                    page.get_by_role("button", name=re.compile(r"load more", re.I)),
+                    page.get_by_role("button", name=re.compile(r"load\\s*more", re.I)),
                     page.locator("button:has-text('Load more')"),
                     page.locator("a:has-text('Load more')"),
                     page.locator("[class*='load'][class*='more']"),
@@ -86,40 +97,64 @@ class AucklandEventsSpider(scrapy.Spider):
                         btn = locator.first
                         break
 
-                if not btn:
-                    break
+                if btn:
+                    await btn.click()
+                    await page.wait_for_timeout(900)
 
-                await btn.click()
-                # Wait for new cards to appear (try common card containers)
-                await page.wait_for_timeout(800)  # small delay for the ajax render
-                # Count possible event tiles
+                # Count likely cards
                 card_count = await page.eval_on_selector_all(
                     "css=.views-row, .card, article, li[class*='view']",
                     "els => els.length"
                 )
-                if card_count <= last_count:
-                    # No increase -> assume we're done
+                self.logger.info("Card count after step: %s", card_count)
+                if card_count <= last_count and not btn:
                     break
                 last_count = card_count
-            except Exception:
+            except Exception as e:
+                self.logger.info("No more items or click failed: %s", e)
                 break
 
-        # Grab the fully rendered HTML
+        # Grab fully rendered HTML and all anchors
         html = await page.content()
-        await page.close()  # tidy up
-        sel = Selector(text=html)
+        hrefs = await page.eval_on_selector_all("a[href]", "els => els.map(e => e.getAttribute('href'))")
+        await page.screenshot(path="hotc_listing.png", full_page=True)
+        await page.close()
 
-        # Collect candidate links from the rendered listing
-        hrefs = sel.css("a::attr(href)").getall()
+        self.logger.info("Total anchors found on expanded listing: %d", len(hrefs))
 
-        # Keep only event detail pages under /auckland-events/<slug>
-        allow = [r"^/auckland-events/[^/?#]+$"]
+        # Build candidate detail links
+        allow = [
+            r"^/auckland-events/[^/?#]+$",         # /auckland-events/slug
+            r"^/auckland-events/[^/]+/[^/?#]+$",   # /auckland-events/section/slug
+        ]
         deny = [
-            r"/auckland-events/(?:today|this-week|board\.php|search|page)",
-            r"/auckland-events/.+-events",  # category listings like music-events
-            r"\?$",
+            r"/auckland-events/exhibitions$",
+            r"/auckland-events/festivals$",
+            r"/auckland-events/music-events$",
+            r"/auckland-events/food-drink-events$",
+            r"/auckland-events/theatre$",
+            r"/auckland-events/today$",
+            r"/auckland-events/tomorrow$",
+            r"/auckland-events/this-week$",
+            r"/auckland-events/this-month$",
+            r"/auckland-events/next-7-days$",
+            r"/auckland-events/next-30-days$",
+            r"/auckland-events/weekend",
+            r"/auckland-events/search",
+            r"/whats-on",
+            r"\\?$",
         ]
         links = filter_links(response.url, hrefs, allow, deny)
+        self.logger.info("Candidate detail pages kept after filtering: %d", len(links))
+
+        if not links:
+            # Dump debug artifacts to help diagnose locally
+            os.makedirs("debug", exist_ok=True)
+            with open(os.path.join("debug", "hotc_listing.html"), "w", encoding="utf-8") as f:
+                f.write(html)
+            with open(os.path.join("debug", "hotc_links.txt"), "w", encoding="utf-8") as f:
+                f.write("\\n".join([str(h) for h in hrefs]))
+            self.logger.warning("Saved debug artifacts under ./debug/ (hotc_listing.html, hotc_links.txt)")
 
         for link in links:
             yield scrapy.Request(
@@ -143,7 +178,6 @@ class AucklandEventsSpider(scrapy.Spider):
         out = []
         for c in css:
             out.extend([clean(x) for x in sel.css(c).getall() if clean(x)])
-        # de-dup while preserving order
         seen = set(); uniq = []
         for x in out:
             if x not in seen:
@@ -158,16 +192,16 @@ class AucklandEventsSpider(scrapy.Spider):
             ".term-list a::text",
             "nav.breadcrumb a::text",
         )
-        # prune generic crumbs
-        cats = [c for c in cats if c.lower() not in {"home", "events", "what's on", "what’s on"}]
-        return cats[:8]  # keep it compact
+        cats = [c for c in cats if c and c.lower() not in {"home", "events", "what's on", "what’s on"}]
+        return cats[:8]
 
     def _extract_location(self, sel, jsonld_objs):
         loc = {"name": None, "address": None, "city": "Auckland", "region": "Auckland", "country": "New Zealand",
                "latitude": None, "longitude": None}
-        # Prefer JSON-LD if available
         try:
             for obj in (jsonld_objs or []):
+                if obj.get("@type") and "Event" not in str(obj.get("@type")):
+                    continue
                 v = obj.get("location") or {}
                 if isinstance(v, dict):
                     loc["name"] = loc["name"] or clean(v.get("name"))
@@ -186,7 +220,6 @@ class AucklandEventsSpider(scrapy.Spider):
         except Exception:
             pass
 
-        # Fallbacks from visible page
         if not loc.get("name"):
             loc["name"] = self._text(sel,
                                      ".field--name-field-venue .field__item::text",
@@ -201,18 +234,15 @@ class AucklandEventsSpider(scrapy.Spider):
         return loc
 
     def _extract_price(self, sel, jsonld_objs):
-        # JSON-LD single price if present
         p, ccy, _ = price_from_jsonld(jsonld_objs)
         if isinstance(p, (int, float)):
             return {"currency": (ccy or "NZD"), "min": float(p), "max": float(p), "text": None, "free": (float(p) == 0.0)}
 
-        # Otherwise, scan visible price text
         price_text = " ".join(sel.css("[class*='price'], .price ::text").getall()) or \
                      " ".join(sel.xpath("//*[contains(translate(text(),'PRICE','price'),'price')]/text()").getall())
         if price_text:
             return parse_prices(price_text)
 
-        # Or any "Tickets" block
         tix_text = " ".join(sel.xpath("//*[contains(translate(text(),'TICKETS','tickets'),'tickets')]/following::text()[position()<5]").getall())
         if tix_text:
             return parse_prices(tix_text)
@@ -220,7 +250,6 @@ class AucklandEventsSpider(scrapy.Spider):
         return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
 
     def _opening_hours_text(self, sel):
-        # A compact human string with times/dates that users expect under "opening_hours"
         bits = self._all_texts(
             sel,
             "time::attr(datetime)",
@@ -232,10 +261,10 @@ class AucklandEventsSpider(scrapy.Spider):
             "dl dt:contains('Hours') + dd ::text",
         )
         if bits:
+            import re as _re
             s = " | ".join(bits)
-            # squash excessive whitespace
-            s = re.sub(r"\s+", " ", s).strip()
-            return s[:400]  # keep tidy
+            s = _re.sub(r"\\s+", " ", s).strip()
+            return s[:400]
         return None
 
     def _operating_months(self, sel):
@@ -247,10 +276,8 @@ class AucklandEventsSpider(scrapy.Spider):
         sel = response.selector
         jsonld_objs = parse_jsonld(response.text)
 
-        # Name/title
         name = self._text(sel, "h1::text", "meta[property='og:title']::attr(content)")
         if not name:
-            # Try JSON-LD
             try:
                 for obj in (jsonld_objs or []):
                     n = obj.get("name")
@@ -260,7 +287,6 @@ class AucklandEventsSpider(scrapy.Spider):
             except Exception:
                 pass
 
-        # Build fields
         url = response.url
         out = {
             "id": make_id(url),
@@ -273,9 +299,10 @@ class AucklandEventsSpider(scrapy.Spider):
             "price": self._extract_price(sel, jsonld_objs),
             "opening_hours": self._opening_hours_text(sel),
             "operating_months": self._operating_months(sel),
-            "data_collected_at": datetime.now().astimezone().isoformat(),
+            "data_collected_at": datetime.utcnow().isoformat(),
         }
-        # Only yield the requested keys (guard in case helpers return extras)
+        self.logger.info("Yielding event: %s", out.get("name"))
+
         yield {
             k: out.get(k)
             for k in [
