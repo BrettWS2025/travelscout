@@ -27,7 +27,7 @@ class AucklandEventsSpider(scrapy.Spider):
 
     custom_settings = {
         # Localized override so other spiders aren't affected
-        "ROBOTSTXT_OBEY": False,  # site sometimes gates listings; local override only
+        "ROBOTSTXT_OBEY": True,  # site sometimes gates listings; local override only
         "FEEDS": {
             "Events.JSONL": {
                 "format": "jsonlines",
