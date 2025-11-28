@@ -28,7 +28,7 @@ class AucklandEventsSpider(scrapy.Spider):
 
     custom_settings = {
         # Local overrides only for this spider
-        "ROBOTSTXT_OBEY": False,
+        "ROBOTSTXT_OBEY": True,
         "RETRY_TIMES": 2,
         "RETRY_HTTP_CODES": [403, 429, 503],
         "HTTPERROR_ALLOWED_CODES": [403, 429, 503],
