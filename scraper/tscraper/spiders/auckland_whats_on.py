@@ -1,3 +1,4 @@
+# scraper/tscraper/spiders/auckland_whats_on.py
 import hashlib
 import re
 from datetime import datetime, timezone
@@ -10,10 +11,9 @@ class AucklandWhatsOnSpider(scrapy.Spider):
     """
     Heart of the City — What's On / Things to do (hub-only, robots-friendly)
 
-    Strategy:
-      - Visit hub/listing pages only (e.g. /activities)
-      - Parse link cards and emit items without visiting detail pages
-      - Seed a few known detail URLs as synthetic items (derived from slug)
+    Emits ONLY:
+      id, record_type, name, categories, url, source,
+      location, price, opening_hours, operating_months, data_collected_at
     """
 
     name = "auckland_whats_on"
@@ -39,6 +39,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/127.0.0.0 Safari/537.36"
         ),
+        "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_DELAY": 0.25,
         "CONCURRENT_REQUESTS": 16,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 16,
@@ -132,8 +133,7 @@ class AucklandWhatsOnSpider(scrapy.Spider):
             yield self._emit_item(u, self._slug_title(u), self._primary_category(u))
 
     def parse_hub(self, response: scrapy.http.Response):
-        # 1) Extract candidate cards/links to details, emit items straight from anchor text
-        # Try common containers first (Drupal views and promo grids), but also keep a fallback
+        # Extract candidate cards/links to details, emit items straight from anchor text
         link_sets = [
             response.css(".view-content a[href^='/activities/']"),
             response.css(".view-content a[href^='/attractions/']"),
@@ -146,15 +146,16 @@ class AucklandWhatsOnSpider(scrapy.Spider):
         seen = set()
         for selgroup in link_sets:
             for a in selgroup:
-                href = a.attrib.get("href") or ""
-                href = href.split("#")[0]
+                href = (a.attrib.get("href") or "").split("#")[0]
                 if not href:
                     continue
                 abs_url = urljoin(response.url, href)
+
                 # Only consider detail-ish paths (>= 3 segments)
                 parts = [p for p in urlparse(abs_url).path.split("/") if p]
                 if len(parts) < 3:
                     continue
+
                 norm = self._normalize(abs_url)
                 if norm in seen:
                     continue
@@ -163,10 +164,9 @@ class AucklandWhatsOnSpider(scrapy.Spider):
                 # Use the anchor's own text (or inner heading) as name; fallback to slug
                 name = self._clean(a.xpath("normalize-space(.)").get())
                 if not name:
-                    # look for inner heading text
                     name = self._clean(a.css("h2::text, h3::text, .title::text").get())
                 yield self._emit_item(norm, name or None, self._primary_category(norm))
 
-        # 2) Paginate hubs (keep query strings for paging)
+        # Paginate hubs (keep query strings for paging)
         for href in response.css("a[href*='?page=']::attr(href)").getall():
             yield response.follow(href.split("#")[0], callback=self.parse_hub)
