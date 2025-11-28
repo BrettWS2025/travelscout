@@ -5,19 +5,21 @@ Auckland NZ Events spider
 - Seeds from sitemap.xml + listing hub + specific known-missing examples
 - Uses scrapy-playwright where needed (set in project settings)
 - Safer price parser (currency-required) and robust title extraction
-- Writes items as plain dicts that match your current clean JSONL schema:
-  {
-    "source": "aucklandnz",
-    "url": "...",
-    "title": "...",
-    "description": "...",
-    "dates": {"start": "...", "end": "...", "text": "..."},
-    "price": {"currency": "NZD", "min": 40.0, "max": 70.0, "text": "NZ$40.00 - NZ$70.00 + BF", "free": false},
-    "location": {"name": "...", "address": "...", "city": "...", "region": "...", "country": "NZ"},
-    "categories": [...],
-    "image": "...",
-    "updated_at": "ISO-8601"
-  }
+- Items are plain dicts; output is decided by workflow via -O/FEED_FORMAT
+
+Emitted item shape (example):
+{
+  "source": "aucklandnz",
+  "url": "...",
+  "title": "...",
+  "description": "...",
+  "dates": {"start": "...", "end": "...", "text": "..."},
+  "price": {"currency": "NZD", "min": 40.0, "max": 70.0, "text": "NZ$40.00 - NZ$70.00 + BF", "free": false},
+  "location": {"name": "...", "address": "...", "city": "...", "region": "...", "country": "NZ"},
+  "categories": [...],
+  "image": "...",
+  "updated_at": "ISO-8601"
+}
 """
 import logging
 import re
@@ -28,7 +30,7 @@ from urllib.parse import urljoin
 import scrapy
 from parsel import Selector
 
-# ---------- Helpers (kept in-spider to be self-contained) ----------
+# ---------- Helpers ----------
 CURRENCY = "NZD"
 _CURRENCY_SIGNS = (r"NZD?\$", r"\$")  # NZ$, NZD$, $
 _RE_PRICE = re.compile(rf"(?:{'|'.join(_CURRENCY_SIGNS)})\s*([0-9]{{1,5}}(?:\.[0-9]{{1,2}})?)")
@@ -40,7 +42,6 @@ def _norm_spaces(x):
     return re.sub(r"[\u00A0\u202F\s]+", " ", x).strip()
 
 def _jsonld_objects(response_text):
-    """Extract JSON-LD objects from the page."""
     out = []
     sel = Selector(text=response_text or "")
     for node in sel.xpath("//script[@type='application/ld+json']/text()").getall():
@@ -52,7 +53,6 @@ def _jsonld_objects(response_text):
     return out
 
 def _first(obj, *paths):
-    """Get first non-empty string from obj by keys (depth 1 or 2)."""
     for p in paths:
         if isinstance(p, (list, tuple)) and len(p) == 2:
             a, b = p
@@ -76,7 +76,6 @@ def _find_event_jsonld(objs):
     return None
 
 def _title_from(response):
-    """Prefer JSON-LD name, then <h1>, then og:title."""
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
     if ev:
@@ -89,7 +88,6 @@ def _title_from(response):
     og = _norm_spaces(response.css("meta[property='og:title']::attr(content)").get())
     if og:
         return og
-    # final fallback: <title>
     return _norm_spaces(response.css("title::text").get())
 
 def _desc_from(response):
@@ -101,48 +99,35 @@ def _desc_from(response):
     if not d:
         d = _norm_spaces(response.css("meta[name='description']::attr(content)").get())
     if not d:
-        # compact visible paragraph text as fallback
         ptxt = _norm_spaces(response.css("article p::text, .event__description *::text, .field--name-body *::text").getall())
         if ptxt:
             d = ptxt
     return d or None
 
 def _dates_from(response):
-    """
-    Return (start_iso, end_iso, text) from JSON-LD if possible, else heuristics.
-    """
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
     st = en = None
     if ev:
         st = _first(ev, "startDate")
         en = _first(ev, "endDate")
-    # normalize to ISO if possible (accept page-provided ISO strings)
     st_iso = st if st and re.match(r"^\d{4}-\d{2}-\d{2}", st) else (st or None)
     en_iso = en if en and re.match(r"^\d{4}-\d{2}-\d{2}", en) else (en or None)
 
-    # textual dates for reference
     dates_text = None
-    # common containers that hold dates/times
     candidates = response.css(
         "[class*='date'] ::text, [class*='Date'] ::text, .event__date ::text, .field--name-field-event-date *::text"
     ).getall()
     if candidates:
         dates_text = _norm_spaces(candidates)
-
     return st_iso, en_iso, dates_text
 
 def _venue_location_from(response):
-    """
-    Returns:
-      venue_name, {"name","address","city","region","country"}
-    """
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
     name = address = city = region = None
     if ev:
         loc = ev.get("location") or {}
-        # location can be a string, dict, or array
         if isinstance(loc, dict):
             name = loc.get("name") or None
             addr = loc.get("address") or {}
@@ -151,7 +136,6 @@ def _venue_location_from(response):
                 city = addr.get("addressLocality") or None
                 region = addr.get("addressRegion") or None
 
-    # minimal HTML fallbacks
     if not name:
         name = _norm_spaces(response.css("[class*='venue'] ::text, .event__venue ::text").get())
     location = {
@@ -187,10 +171,8 @@ def _categories_from(response):
             cats.extend([_norm_spaces(x) for x in v if isinstance(x, str) and _norm_spaces(x)])
         elif isinstance(v, str) and _norm_spaces(v):
             cats.append(_norm_spaces(v))
-    # light HTML fallback
     if not cats:
         cats = [x.strip() for x in response.css(".tags a::text, .field--name-field-category a::text").getall() if x.strip()]
-    # de-dup while preserving order
     out, seen = [], set()
     for c in cats:
         if c not in seen:
@@ -199,10 +181,6 @@ def _categories_from(response):
     return out
 
 def _price_from(response):
-    """
-    Build price block: {"currency":"NZD","min":..,"max":..,"text":..,"free":bool}
-    Priority: JSON-LD offers -> visible 'price' blocks -> currency-prefixed amounts in body
-    """
     text_for_block = None
     free = False
     minv = maxv = None
@@ -219,7 +197,6 @@ def _price_from(response):
             candidates = [o for o in offers if isinstance(o, dict)]
         prices = []
         for o in candidates:
-            # pick price / lowPrice / highPrice only if present
             for key in ("price", "lowPrice", "highPrice"):
                 val = o.get(key)
                 try:
@@ -231,12 +208,9 @@ def _price_from(response):
         if prices:
             minv = min(prices)
             maxv = max(prices)
-            # try to keep a readable price text if available
-            text_for_block = _norm_spaces(
-                " ".join([
-                    ev.get("offers", {}).get("price", "") if isinstance(ev.get("offers"), dict) else "",
-                ])
-            ) or None
+            # keep readable text if present
+            if isinstance(offers, dict) and offers.get("price"):
+                text_for_block = _norm_spaces(str(offers.get("price")))
 
     # 2) Visible price blocks
     if minv is None:
@@ -250,7 +224,7 @@ def _price_from(response):
             if nums:
                 minv, maxv = min(nums), max(nums)
 
-    # 3) Last-resort: currency-prefixed anywhere in body
+    # 3) Body fallback
     if minv is None:
         body_txt = _norm_spaces(response.xpath("//body//text()").getall())
         nums = [float(m.group(1)) for m in _RE_PRICE.finditer(body_txt)]
@@ -259,7 +233,6 @@ def _price_from(response):
             if not text_for_block:
                 text_for_block = " ".join(sorted({f"NZ${n:g}" for n in nums}))
 
-    # detect free (never forces a numeric min)
     hay = text_for_block or _norm_spaces(response.text)
     if re.search(r"\bfree\b", hay, re.I):
         free = True
@@ -279,28 +252,18 @@ class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
     allowed_domains = ["aucklandnz.com"]
 
-    # You can extend this seed over time; includes a couple you said were missing
+    # Extend this seed list over time; includes a few known “missing” examples
     start_urls = [
         "https://www.aucklandnz.com/sitemap.xml",
         "https://www.aucklandnz.com/events-hub/events",
         "https://www.aucklandnz.com/pasifika",
-        # Known “missing” examples to ensure we crawl them too:
         "https://www.aucklandnz.com/events-hub/events/rufus-du-sol-inhale-exhale-word-tour",
         "https://www.aucklandnz.com/events-hub/events/laneway-festival-2026",
         "https://www.aucklandnz.com/events-hub/events/the-waterboys",
     ]
 
+    # No FEEDS here; output is controlled by the workflow via -O
     custom_settings = {
-        # Write into scraper/data/Events.jsonl when working-directory is `scraper`
-        # (The workflow also passes -O/-o, which will override/confirm this.)
-        "FEEDS": {
-            "data/Events.jsonl": {
-                "format": "jsonlines",
-                "encoding": "utf-8",
-                "overwrite": False,
-            }
-        },
-        # Be polite; project-level settings already enable Playwright
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_DELAY": 0.25,
         "AUTOTHROTTLE_ENABLED": True,
@@ -309,10 +272,9 @@ class AucklandEventsSpider(scrapy.Spider):
     def parse(self, response):
         url = response.url
 
-        # 1) Sitemap (index)
+        # 1) Sitemap index
         if url.endswith("sitemap.xml") or response.headers.get("content-type", b"").startswith(b"application/xml"):
             self.logger.info("Parsing sitemap index: %s", url)
-            # follow all <loc> that look relevant to events
             locs = response.xpath("//loc/text()").getall()
             for loc in locs:
                 if "/event" in loc or "/events" in loc:
@@ -336,12 +298,12 @@ class AucklandEventsSpider(scrapy.Spider):
             yield from self.parse_listing(response)
             return
 
-        # 3) Anything else: treat as potential event page
+        # 3) Event-like pages
         if "/events-hub/events/" in url or "/pasifika" in url:
             yield from self.parse_event(response)
             return
 
-        # Fallback: follow links that look like event pages
+        # Fallback: follow discovered links that look like event details
         for href in response.css("a::attr(href)").getall():
             if "/events-hub/events/" in href or href.rstrip("/").endswith("/pasifika"):
                 yield response.follow(
@@ -351,7 +313,6 @@ class AucklandEventsSpider(scrapy.Spider):
                 )
 
     def parse_sitemap_leaf(self, response):
-        # parse the leaf sitemap (urlset)
         for loc in response.xpath("//url/loc/text()").getall():
             if "/events-hub/events/" in loc or loc.rstrip("/").endswith("/pasifika"):
                 yield scrapy.Request(
@@ -361,7 +322,6 @@ class AucklandEventsSpider(scrapy.Spider):
                 )
 
     def parse_listing(self, response):
-        # collect event detail links from listing pages (and pagination, if present)
         hrefs = response.css("a::attr(href)").getall()
         for href in hrefs:
             if "/events-hub/events/" in href:
@@ -370,8 +330,7 @@ class AucklandEventsSpider(scrapy.Spider):
                     callback=self.parse_event,
                     meta={"playwright": True},
                 )
-
-        # try naive pagination
+        # naive pagination
         nexts = response.css("a[rel='next']::attr(href), a.pager__item--next::attr(href)").getall()
         for n in nexts:
             yield response.follow(
@@ -396,14 +355,13 @@ class AucklandEventsSpider(scrapy.Spider):
                 "title": title,
                 "description": desc,
                 "dates": {"start": st, "end": en, "text": dates_text},
-                "price": price,  # {"currency","min","max","text","free"}
-                "location": location,  # {"name","address","city","region","country"}
+                "price": price,
+                "location": location,
                 "categories": cats or None,
                 "image": image,
                 "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
             }
 
-            # Keep title always if possible; log if missing
             if not item["title"]:
                 self.logger.warning("No title extracted for %s", response.url)
 
