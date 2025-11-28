@@ -52,8 +52,8 @@ jobs:
           for s in "${SPIDERS[@]}"; do
             s_trimmed="$(echo "$s" | xargs)"
             case "$s_trimmed" in
-              christchurch_whats_on|auckland_events) EVENTS+=("$s_trimmed");;
-              christchurch_things|auckland_whats_on) THINGS+=("$s_trimmed");;
+              christchurch_events|auckland_events) EVENTS+=("$s_trimmed");;
+              christchurch_whats_on|auckland_whats_on) THINGS+=("$s_trimmed");;
               *) echo "Skipping unknown spider: $s_trimmed" ;;
             esac
           done
