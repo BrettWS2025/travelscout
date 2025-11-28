@@ -1,205 +1,341 @@
-import asyncio
+# tscraper/spiders/auckland_events.py
+
+import json
+import re
+import hashlib
 from datetime import datetime, timezone
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import scrapy
+from scrapy.http import Response
+from scrapy_playwright.page import PageMethod
 
-from items import make_id  # stable 16-char hex id from URL
-from utils import clean, parse_prices, nz_months  # lightweight helpers
+
+# ---------- in-spider helpers (no external imports required) ----------
+
+def _make_id(url: str) -> str:
+    return hashlib.sha1((url or "").encode("utf-8")).hexdigest()[:16]
+
+def _clean(s: str | None) -> str | None:
+    if not s:
+        return None
+    return re.sub(r"\s+", " ", s).strip()
+
+def _parse_jsonld(html: str) -> list[dict]:
+    """Return a list of JSON-LD dicts (robust to lists/graphs)."""
+    out: list[dict] = []
+    for raw in re.findall(
+        r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+        html or "",
+        flags=re.I | re.S,
+    ):
+        try:
+            data = json.loads(raw.strip())
+            if isinstance(data, list):
+                out.extend([x for x in data if isinstance(x, dict)])
+            elif isinstance(data, dict):
+                # Some pages use {"@graph":[...]}
+                if "@graph" in data and isinstance(data["@graph"], list):
+                    out.extend([x for x in data["@graph"] if isinstance(x, dict)])
+                else:
+                    out.append(data)
+        except Exception:
+            continue
+    return out
+
+def _first_event_obj(jsonld: list[dict]) -> dict | None:
+    for obj in jsonld or []:
+        t = obj.get("@type")
+        if t == "Event":
+            return obj
+        if isinstance(t, list) and any(x == "Event" for x in t):
+            return obj
+    return None
+
+def _extract_categories(resp: Response) -> list[str]:
+    cats: list[str] = []
+    cats += [_clean(t) for t in resp.css("nav.breadcrumb a::text").getall()]
+    cats += [_clean(t) for t in resp.css("[class*='category'] a::text,[class*='tags'] a::text").getall()]
+    cats = [c for c in cats if c]
+    bad = {"home", "events", "what's on", "what’s on", "auckland"}
+    dedup: list[str] = []
+    seen = set()
+    for c in cats:
+        if c.lower() in bad:
+            continue
+        if c not in seen:
+            dedup.append(c)
+            seen.add(c)
+    return dedup[:8]
+
+def _extract_location(resp: Response, jsonld: list[dict]) -> dict:
+    loc = {
+        "name": None,
+        "address": None,
+        "city": "Auckland",
+        "region": "Auckland",
+        "country": "New Zealand",
+        "latitude": None,
+        "longitude": None,
+    }
+    ev = _first_event_obj(jsonld)
+    if isinstance(ev, dict):
+        v = ev.get("location")
+        if isinstance(v, dict):
+            name = _clean(v.get("name"))
+            if name:
+                loc["name"] = name
+            addr = v.get("address")
+            if isinstance(addr, dict):
+                parts = [addr.get("streetAddress"), addr.get("addressLocality"), addr.get("postalCode")]
+                loc["address"] = _clean(", ".join([p for p in parts if p]))
+                loc["city"] = _clean(addr.get("addressLocality")) or loc["city"]
+                loc["region"] = _clean(addr.get("addressRegion")) or loc["region"]
+                loc["country"] = _clean(addr.get("addressCountry")) or loc["country"]
+            geo = v.get("geo")
+            if isinstance(geo, dict):
+                loc["latitude"] = geo.get("latitude")
+                loc["longitude"] = geo.get("longitude")
+
+    if not loc["name"]:
+        loc["name"] = _clean(resp.css("[class*='venue'] ::text,.event-venue::text").get())
+    if not loc["address"]:
+        loc["address"] = _clean(resp.css("[class*='address'] ::text").get())
+
+    return loc
+
+def _parse_prices(text: str | None) -> dict:
+    if not text:
+        return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
+    t = (text or "").replace(",", " ")
+    free = bool(re.search(r"\bfree\b", t, re.I))
+    nums = [float(m) for m in re.findall(r"\$?\s*([0-9]+(?:\.[0-9]{1,2})?)", t)]
+    return {
+        "currency": "NZD",
+        "min": (0.0 if free and not nums else (min(nums) if nums else None)),
+        "max": (max(nums) if nums else (0.0 if free else None)),
+        "text": _clean(text),
+        "free": free or (nums and min(nums) == 0.0),
+    }
+
+def _extract_price(resp: Response, jsonld: list[dict]) -> dict:
+    ev = _first_event_obj(jsonld)
+    if isinstance(ev, dict):
+        offers = ev.get("offers")
+        offers_list = offers if isinstance(offers, list) else ([offers] if isinstance(offers, dict) else [])
+        for off in offers_list:
+            try:
+                price = off.get("price") or off.get("lowPrice")
+                if price is None:
+                    continue
+                val = float(str(price))
+                ccy = off.get("priceCurrency") or "NZD"
+                return {"currency": ccy, "min": val, "max": val, "text": None, "free": (val == 0.0)}
+            except Exception:
+                continue
+
+    price_text = " ".join(resp.css("[class*='price'], .price, .ticket-price ::text").getall())
+    if price_text:
+        return _parse_prices(price_text)
+
+    tix_context = " ".join(
+        resp.xpath("//*[contains(translate(text(),'TICKETS','tickets'),'tickets')]/following::text()[position()<6]").getall()
+    )
+    if tix_context:
+        return _parse_prices(tix_context)
+
+    return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
+
+def _opening_hours_text(resp: Response) -> str | None:
+    bits = []
+    bits += [_clean(x) for x in resp.css("time::attr(datetime), time::text").getall()]
+    bits += [_clean(x) for x in resp.css("[class*='time'] ::text,.event-time::text").getall()]
+    bits += [_clean(x) for x in resp.xpath("//dl/dt[contains(.,'Time')]/following-sibling::dd[1]//text()").getall()]
+    bits = [b for b in bits if b]
+    return _clean(" | ".join(bits)) if bits else None
+
+def _operating_months(resp: Response) -> list[str] | None:
+    body = " ".join(resp.xpath("//body//text()").getall())
+    months = [
+        "January","February","March","April","May","June","July","August","September","October","November","December",
+        "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
+    ]
+    found: list[str] = []
+    for m in months:
+        if re.search(rf"\b{re.escape(m)}\b", body, re.I):
+            key = m[:3].title()
+            if key not in found:
+                found.append(key)
+    return found or None
 
 
-LISTING_URL = "https://www.aucklandnz.com/events-hub/events"
+# ---------- spider ----------
 
-# Category keywords we accept if we find them on the page
-KNOWN_CATEGORIES = {
-    "Music", "Live concert", "Festival", "Theatre", "Comedy", "Exhibition",
-    "Family", "Art", "Cultural", "Dance", "Film", "Sports", "Market",
-    "Markets", "Workshops", "Food & Drink", "Talks", "Community"
-}
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/127.0.0.0 Safari/537.36"
+)
+
+START_URL = "https://www.aucklandnz.com/events-hub"
 
 
 class AucklandEventsSpider(scrapy.Spider):
+    """
+    AucklandNZ — Events (events-hub only).
+    Emits ONLY the keys required by the Events.jsonl schema.
+    """
+
     name = "auckland_events"
     allowed_domains = ["aucklandnz.com", "www.aucklandnz.com"]
+    start_urls = [START_URL]
 
     custom_settings = {
-        # Keep your global settings intact; these are just safe per-spider nudges.
+        "USER_AGENT": BROWSER_UA,
+        "ROBOTSTXT_OBEY": True,          # keep polite
         "COOKIES_ENABLED": False,
         "TELNETCONSOLE_ENABLED": False,
-        "DOWNLOAD_DELAY": 0.25,
+        "DOWNLOAD_DELAY": 0.4,
         "CONCURRENT_REQUESTS": 8,
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 0.25,
         "AUTOTHROTTLE_MAX_DELAY": 4.0,
-        "DEFAULT_REQUEST_HEADERS": {
-            "Accept-Language": "en-NZ,en;q=0.9",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        # We rely on your project-level scrapy-playwright configuration (settings.py).
-        # This spider only uses Playwright for the listing page; detail pages are plain HTTP.
+        # We rely on project settings to enable scrapy-playwright download handler.
+        # (scraper/settings.py config is used at runtime)
     }
 
-    # ----------------- entry -----------------
-
+    # ---- entry: use Playwright to expand the listing ----
     def start_requests(self):
-        # Use Playwright for listing to load/scroll/click "See more"
         yield scrapy.Request(
-            LISTING_URL,
-            meta={"playwright": True, "playwright_include_page": True},
-            callback=self.parse_listing
+            START_URL,
+            callback=self.parse_listing,
+            meta={
+                "playwright": True,
+                "playwright_page_methods": [
+                    PageMethod("wait_for_load_state", "domcontentloaded"),
+                    PageMethod(
+                        "evaluate",
+                        """
+                        async () => {
+                          const labels = ["See more","Load more","Show more","More events","See More","Load More","Show More"];
+                          function findBtn() {
+                            const nodes = Array.from(document.querySelectorAll('a,button'));
+                            return nodes.find(n => {
+                              const t = (n.textContent || "").trim().toLowerCase();
+                              return labels.some(lbl => t.includes(lbl.toLowerCase()));
+                            });
+                          }
+                          for (let i=0; i<40; i++) {
+                            const b = findBtn();
+                            if (!b) break;
+                            b.click();
+                            await new Promise(r => setTimeout(r, 900));
+                          }
+                        }
+                        """,
+                    ),
+                    PageMethod("wait_for_load_state", "networkidle"),
+                ],
+                "handle_httpstatus_list": [403, 429, 503],
+            },
+            headers={"Referer": "https://www.aucklandnz.com/"},
+            dont_filter=True,
         )
 
-    # ----------------- listing (Playwright) -----------------
+    # ---- listing ----
+    def parse_listing(self, response: Response):
+        if response.status in (403, 429, 503):
+            self.logger.warning("Blocked (%s) at listing: %s", response.status, response.url)
+            try:
+                with open("akl_listing_blocked.html", "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception:
+                pass
+            return
 
-    async def parse_listing(self, response):
-        """
-        Use Playwright to reveal all event tiles, then collect detail URLs.
-        """
-        page = response.meta.get("playwright_page")
+        base = response.url
+        hrefs = response.css('a[href*="/events/"]::attr(href)').getall()
 
-        try:
-            # Wait for any card-ish element to appear
-            # (the site uses cards; we also guard with a generic anchor filter)
-            await page.wait_for_timeout(800)  # first paint
-            # Try to scroll & click "See more" until nothing new loads
-            seen_heights = set()
-            for _ in range(40):  # hard cap to avoid infinite loops
-                # 1) Click possible "See more" buttons/links
-                more = page.locator(
-                    "button:has-text('See more'), a:has-text('See more'), "
-                    "button:has-text('See More'), a:has-text('See More')"
-                )
-                try:
-                    if await more.count() > 0 and await more.first.is_enabled():
-                        await more.first.click()
-                        await page.wait_for_timeout(1200)
-                except Exception:
-                    pass
-
-                # 2) Infinite scroll fallback
-                h = await page.evaluate("document.body.scrollHeight")
-                if h in seen_heights:
-                    break
-                seen_heights.add(h)
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await page.wait_for_timeout(1200)
-
-            # Collect all detail links
-            hrefs = await page.eval_on_selector_all(
-                "a[href^='/events-hub/events/']",
-                "els => els.map(e => e.href)"
-            )
-        finally:
-            # Always close the Playwright page
-            if page:
-                await page.close()
-
-        # Deduplicate & follow
-        seen = set()
-        for href in hrefs or []:
-            if not href:
+        links = []
+        deny_snippets = ("/events-hub", "/events/search", "/events#", "/events?",)
+        for h in hrefs:
+            h = (h or "").split("#")[0].strip()
+            if not h:
                 continue
-            if href in seen:
+            full = urljoin(base, h)
+            u = urlparse(full)
+            path = u.path or ""
+            if any(s in path for s in deny_snippets):
                 continue
-            seen.add(href)
+            # Keep /events/<slug> or /events/<cat>/<slug>
+            if re.match(r"^/events/[^/]+(?:/[^/]+)?$", path):
+                link = f"{u.scheme}://{u.netloc}{path}"
+                if link not in links:
+                    links.append(link)
+
+        if not links:
+            self.logger.info("No event links found; writing listing HTML for debug.")
+            try:
+                with open("akl_listing_empty.html", "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception:
+                pass
+
+        for url in links:
             yield scrapy.Request(
-                href,
+                url,
                 callback=self.parse_event,
-                headers={"Referer": LISTING_URL},
-                dont_filter=True,
+                meta={"playwright": False, "handle_httpstatus_list": [403, 429, 503]},
+                headers={"Referer": base},
             )
 
-    # ----------------- detail -----------------
+    # ---- detail ----
+    def parse_event(self, response: Response):
+        if response.status in (403, 429, 503):
+            self.logger.warning("Blocked (%s) at detail: %s", response.status, response.url)
+            return
 
-    def parse_event(self, response):
+        jsonld = _parse_jsonld(response.text)
+        ev = _first_event_obj(jsonld) or {}
+
         # Title
-        title = clean(response.css("h1::text").get()) or clean(
-            response.css('meta[property="og:title"]::attr(content)').get()
+        name = (
+            _clean(response.css("h1::text").get())
+            or _clean(response.css('meta[property="og:title"]::attr(content)').get())
+            or _clean(ev.get("name"))
         )
-        if not title:
+        if not name:
             self.logger.debug("No title on %s", response.url)
             return
 
-        # ---- venue / location name (bilingual section headers appear on this site) ----
-        # Look for a heading that includes 'Location' (English) or 'Te wāhi' (Māori),
-        # then take the first bullet/paragraph afterwards.
-        venue = clean(
-            " ".join(
-                response.xpath(
-                    "(//*[self::h5 or self::h6][contains(translate(., 'LOCATION', 'location'),'location')]"
-                    "|//*[self::h5 or self::h6][contains(., 'Te wāhi')])"
-                    "/following::*[self::li or self::p][1]//text()"
-                ).getall()
-            )
-        ) or None
-
-        # ---- price ----
-        # Favor the top-of-page area near the title to avoid “nearby restaurants/hotels” noise.
-        top_blob = " ".join(
-            t.strip()
-            for t in response.xpath(
-                "(//h1)[1]/following::*[not(self::footer) and not(self::script) and not(self::style)][position()<=60]//text()"
-            ).getall()
-            if t and t.strip()
-        )
-        # If top area had no $, expand search a bit more:
-        price_blob = top_blob if "$" in (top_blob or "") else " ".join(
-            t.strip() for t in response.xpath("//text()[contains(., '$')]").getall()
-        )
-        price = parse_prices(price_blob)
-
-        # ---- categories (best-effort tags; we filter to known event-y labels) ----
-        # Grab small chips/links that often carry taxonomy labels.
-        raw_cats = [
-            clean(x) for x in response.css("a::text, .tag::text, .chip::text, .badge::text").getall()
-        ]
-        categories = []
-        for c in raw_cats:
-            if not c:
-                continue
-            # Keep exact matches from known catalog; normalize spacing/case
-            norm = c.strip()
-            if norm in KNOWN_CATEGORIES and norm not in categories:
-                categories.append(norm)
-
-        # ---- date text -> operating months (compact) ----
-        # Use visible “Dates and Times” area if present; otherwise scan top chunk.
-        dates_text = clean(
-            " ".join(
-                response.xpath(
-                    "(//*[contains(translate(., 'DATES AND TIMES', 'dates and times'),'dates and times')])[1]"
-                    "/following::*[self::li or self::p][1]//text()"
-                ).getall()
-            )
-        ) or top_blob
-        operating_months = nz_months(dates_text)
-
-        # ---- build final record (allowed keys only) ----
         record = {
-            "id": make_id(response.url),
+            "id": _make_id(response.url),
             "record_type": "event",
-            "name": title,
-            "categories": categories or [],
+            "name": name,
+            "categories": _extract_categories(response),
             "url": response.url,
             "source": "aucklandnz.com",
-            "location": {
-                "name": venue,
-                "address": None,
-                "city": "Auckland",
-                "region": "Auckland",
-                "country": "New Zealand",
-                "latitude": None,
-                "longitude": None,
-            },
-            "price": {
-                "currency": price.get("currency"),
-                "min": price.get("min"),
-                "max": price.get("max"),
-                "text": price.get("text"),
-                "free": bool(price.get("free")),
-            },
-            "opening_hours": None,           # events use dates/times; we keep this null
-            "operating_months": operating_months,
+            "location": _extract_location(response, jsonld),
+            "price": _extract_price(response, jsonld),
+            "opening_hours": _opening_hours_text(response),
+            "operating_months": _operating_months(response),
             "data_collected_at": datetime.now(timezone.utc).isoformat(),
         }
-        yield record
+
+        # Emit ONLY the requested keys (schema-safe)
+        yield {
+            k: record.get(k)
+            for k in [
+                "id",
+                "record_type",
+                "name",
+                "categories",
+                "url",
+                "source",
+                "location",
+                "price",
+                "opening_hours",
+                "operating_months",
+                "data_collected_at",
+            ]
+        }
