@@ -1,345 +1,294 @@
-import json
+
 import re
-from urllib.parse import urljoin, urlparse
-from datetime import datetime, timezone
-from email.utils import format_datetime
+from datetime import datetime
+from urllib.parse import urljoin
 
 import scrapy
-from w3lib.html import remove_tags
+from parsel import Selector
 
-# -------------------- config --------------------
+# Scrapy-Playwright is required by requirements.txt and settings.py
+# We will use it to click the "Load more" button until all events are visible.
+# (See settings.py for the download handlers and reactor configuration.)
 
-START_URLS = [
-    "https://heartofthecity.co.nz/auckland-events",
-    "https://heartofthecity.co.nz/auckland-events/this-month",
-    "https://heartofthecity.co.nz/auckland-events/this-week",
-    "https://heartofthecity.co.nz/auckland-events/this-weekend",
-    "https://heartofthecity.co.nz/auckland-events/today",
-    "https://heartofthecity.co.nz/auckland-events/tomorrow",
-    "https://heartofthecity.co.nz/auckland-events/next-7-days",
-    "https://heartofthecity.co.nz/auckland-events/next-30-days",
-    "https://heartofthecity.co.nz/auckland-events/music-events",
-    "https://heartofthecity.co.nz/auckland-events/theatre",
-    "https://heartofthecity.co.nz/auckland-events/exhibitions",
-    "https://heartofthecity.co.nz/auckland-events/festivals",
-    "https://heartofthecity.co.nz/auckland-events/food-drink-events",
-    "https://heartofthecity.co.nz/auckland-events/sports-events",
-]
-
-AGGREGATOR_TAILS = {
-    "today",
-    "tomorrow",
-    "this-week",
-    "this-weekend",
-    "this-month",
-    "next-7-days",
-    "next-30-days",
-    "music-events",
-    "theatre",
-    "exhibitions",
-    "festivals",
-    "food-drink-events",
-    "sports-events",
-    "events",
-    "event",
-    "search",
-}
-
-BROWSER_UA = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/127.0.0.0 Safari/537.36"
+from tscraper.utils import (
+    parse_jsonld, price_from_jsonld, parse_prices, nz_months, clean, filter_links
 )
+from tscraper.items import make_id
+
+NZ_TZ = "Pacific/Auckland"
 
 
 class AucklandEventsSpider(scrapy.Spider):
-    """
-    Heart of the City — Events spider (LEAN OUTPUT)
-
-    Emits ONLY:
-      id, record_type, name, url, source, location, price, event_dates,
-      opening_hours, operating_months, data_collected_at
-    """
-
     name = "auckland_events"
-    allowed_domains = ["heartofthecity.co.nz", "www.heartofthecity.co.nz"]
-    start_urls = START_URLS
+    allowed_domains = ["heartofthecity.co.nz"]
+    start_urls = ["https://heartofthecity.co.nz/auckland-events"]
 
     custom_settings = {
-        "USER_AGENT": BROWSER_UA,
-        "ROBOTSTXT_OBEY": False,
-        "COOKIES_ENABLED": False,
-        "TELNETCONSOLE_ENABLED": False,
-        "DOWNLOAD_DELAY": 0.5,
-        "CONCURRENT_REQUESTS": 6,
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 0.25,
-        "AUTOTHROTTLE_MAX_DELAY": 4.0,
-        "DEFAULT_REQUEST_HEADERS": {
-            "Accept-Language": "en-NZ,en;q=0.9",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        "DEPTH_LIMIT": 4,
-        "CLOSESPIDER_PAGECOUNT": 5000,
+        # Write ONLY the requested fields to Events.JSONL on each run.
+        # Use -o to append if you prefer (scrapy crawl auckland_events -o Events.JSONL).
         "FEEDS": {
-            "data/Events.jsonl": {
+            "Events.JSONL": {
                 "format": "jsonlines",
-                "encoding": "utf8",
-                "overwrite": False,
+                "encoding": "utf-8",
+                "overwrite": True,
             }
         },
-        "LOG_LEVEL": "INFO",
+        # Be polite; these play nicely with the base settings you already have.
+        "DOWNLOAD_DELAY": 0.25,
+        "AUTOTHROTTLE_ENABLED": True,
     }
 
-    # --------------- listing ---------------
-
-    def parse(self, response):
-        base = response.url
-
-        # detail pages look like /auckland-events/<slug>
-        for href in response.css('a[href^="/auckland-events/"]::attr(href)').getall():
-            url = urljoin(base, href.split("#")[0])
-            parts = [p for p in urlparse(url).path.split("/") if p]
-            if parts and parts[0] == "auckland-events":
-                if len(parts) == 2 and parts[1] not in AGGREGATOR_TAILS:
-                    yield response.follow(
-                        url, callback=self.parse_event, headers={"Referer": base}
-                    )
-
-        # keep exploring inside the events section only
-        for href in response.css('a[href*="/auckland-events/"]::attr(href)').getall():
-            url = urljoin(base, href.split("#")[0])
-            parts = [p for p in urlparse(url).path.split("/") if p]
-            if parts and parts[0] == "auckland-events":
-                if len(parts) == 1 or (len(parts) == 2 and parts[1] in AGGREGATOR_TAILS):
-                    yield response.follow(
-                        url, callback=self.parse, headers={"Referer": base}
-                    )
-
-        # simple pagination
-        for href in response.css('a[href*="?page="]::attr(href)').getall():
-            yield response.follow(
-                urljoin(base, href), callback=self.parse, headers={"Referer": base}
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url,
+                meta={
+                    "playwright": True,
+                    "playwright_include_page": True,  # we need the Page to click "Load more"
+                    "errback": self.errback,
+                },
+                callback=self.parse_listing,
             )
 
-    # --------------- helpers ---------------
+    async def parse_listing(self, response):
+        """
+        Render the full listing by clicking "Load more" repeatedly.
+        Then collect the event detail URLs for parsing.
+        """
+        page = response.meta["playwright_page"]
 
-    @staticmethod
-    def _clean(s: str) -> str:
-        if not s:
-            return ""
-        s = remove_tags(s)
-        s = re.sub(r"\s+", " ", s).strip()
-        return s
+        # Opportunistically accept cookie banners if present.
+        try:
+            for text in ["Accept", "I agree", "Got it"]:
+                loc = page.get_by_role("button", name=re.compile(text, re.I))
+                if await loc.is_visible():
+                    await loc.click()
+                    break
+        except Exception:
+            pass
 
-    def _event_article(self, response):
-        node = response.css("article.node--type-event")
-        if not node:
-            node = response.css("article")
-        return node if node else response
-
-    def _from_ldjson(self, response):
-        """Pull clean fields from JSON-LD Event blocks if present."""
-        out = {}
-        for raw in response.css('script[type="application/ld+json"]::text').getall():
+        # Keep clicking "Load more" until it disappears or no new cards are added.
+        last_count = 0
+        max_clicks = 60  # safety cap
+        for _ in range(max_clicks):
             try:
-                data = json.loads(raw)
+                # Scroll so the button is in view.
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                # Try common ways the site might label the control.
+                btn = None
+                for locator in [
+                    page.get_by_role("button", name=re.compile(r"load more", re.I)),
+                    page.locator("button:has-text('Load more')"),
+                    page.locator("a:has-text('Load more')"),
+                    page.locator("[class*='load'][class*='more']"),
+                ]:
+                    if await locator.count() > 0 and await locator.first.is_visible():
+                        btn = locator.first
+                        break
+
+                if not btn:
+                    break
+
+                await btn.click()
+                # Wait for new cards to appear (try common card containers)
+                await page.wait_for_timeout(800)  # small delay for the ajax render
+                # Count possible event tiles
+                card_count = await page.eval_on_selector_all(
+                    "css=.views-row, .card, article, li[class*='view']",
+                    "els => els.length"
+                )
+                if card_count <= last_count:
+                    # No increase -> assume we're done
+                    break
+                last_count = card_count
             except Exception:
-                continue
-            blocks = data if isinstance(data, list) else [data]
-            for b in blocks:
-                if not isinstance(b, dict):
-                    continue
-                t = b.get("@type")
-                if t == "Event" or (isinstance(t, list) and "Event" in t):
-                    out.setdefault("name", b.get("name"))
-                    out.setdefault("startDate", b.get("startDate"))
-                    out.setdefault("endDate", b.get("endDate"))
-                    # location
-                    loc = b.get("location") or {}
-                    if isinstance(loc, dict):
-                        out.setdefault("venue", loc.get("name"))
-                        addr = loc.get("address")
-                        if isinstance(addr, dict):
-                            out.setdefault(
-                                "address",
-                                " ".join(
-                                    filter(
-                                        None,
-                                        [
-                                            addr.get("streetAddress"),
-                                            addr.get("addressLocality"),
-                                            addr.get("postalCode"),
-                                        ],
-                                    )
-                                ).strip()
-                                or None,
-                            )
-                    # offers / price (first offer only)
-                    offers = b.get("offers")
-                    if isinstance(offers, dict):
-                        out.setdefault("priceCurrency", offers.get("priceCurrency"))
-                        out.setdefault("price", offers.get("price"))
-                    elif isinstance(offers, list) and offers:
-                        out.setdefault("priceCurrency", offers[0].get("priceCurrency"))
-                        out.setdefault("price", offers[0].get("price"))
-        return out
+                break
 
-    @staticmethod
-    def _split_sentences(text: str):
-        return [t.strip() for t in re.split(r"[\n\r•\u2022]+|(?<=\.)\s+", text) if t.strip()]
+        # Grab the fully rendered HTML
+        html = await page.content()
+        await page.close()  # tidy up
+        sel = Selector(text=html)
 
-    def _extract_price(self, scope, ld):
-        """Compact price object; filters common non-ticket promos."""
-        currency = "NZD"
+        # Collect candidate links from the rendered listing
+        hrefs = sel.css("a::attr(href)").getall()
 
-        # JSON-LD first
-        if ld.get("price") not in (None, ""):
+        # Keep only event detail pages under /auckland-events/<slug>
+        allow = [r"^/auckland-events/[^/?#]+$"]
+        deny = [
+            r"/auckland-events/(?:today|this-week|board\.php|search|page)",
+            r"/auckland-events/.+-events",  # category listings like music-events
+            r"\?$",
+        ]
+        links = filter_links(response.url, hrefs, allow, deny)
+
+        for link in links:
+            yield scrapy.Request(
+                link,
+                callback=self.parse_event,
+                meta={"playwright": True, "errback": self.errback},
+                dont_filter=True,
+            )
+
+    def errback(self, failure):
+        self.logger.warning("Request failed: %s", failure)
+
+    def _text(self, sel, *css):
+        for c in css:
+            v = sel.css(c).get()
+            if v:
+                return clean(v)
+        return None
+
+    def _all_texts(self, sel, *css):
+        out = []
+        for c in css:
+            out.extend([clean(x) for x in sel.css(c).getall() if clean(x)])
+        # de-dup while preserving order
+        seen = set(); uniq = []
+        for x in out:
+            if x not in seen:
+                uniq.append(x); seen.add(x)
+        return uniq
+
+    def _extract_categories(self, sel):
+        cats = self._all_texts(
+            sel,
+            "a[rel='tag']::text",
+            ".field--name-field-categories a::text",
+            ".term-list a::text",
+            "nav.breadcrumb a::text",
+        )
+        # prune generic crumbs
+        cats = [c for c in cats if c.lower() not in {"home", "events", "what's on", "what’s on"}]
+        return cats[:8]  # keep it compact
+
+    def _extract_location(self, sel, jsonld_objs):
+        loc = {"name": None, "address": None, "city": "Auckland", "region": "Auckland", "country": "New Zealand",
+               "latitude": None, "longitude": None}
+        # Prefer JSON-LD if available
+        try:
+            for obj in (jsonld_objs or []):
+                v = obj.get("location") or {}
+                if isinstance(v, dict):
+                    loc["name"] = loc["name"] or clean(v.get("name"))
+                    addr = v.get("address") or {}
+                    if isinstance(addr, dict):
+                        addr_text = ", ".join([addr.get(k) for k in ["streetAddress", "addressLocality", "postalCode"] if addr.get(k)])
+                        loc["address"] = loc["address"] or clean(addr_text)
+                        loc["city"] = clean(addr.get("addressLocality")) or loc["city"]
+                        loc["region"] = clean(addr.get("addressRegion")) or loc["region"]
+                        loc["country"] = clean(addr.get("addressCountry")) or loc["country"]
+                    geo = v.get("geo") or {}
+                    if isinstance(geo, dict):
+                        loc["latitude"] = geo.get("latitude") or loc["latitude"]
+                        loc["longitude"] = geo.get("longitude") or loc["longitude"]
+                    break
+        except Exception:
+            pass
+
+        # Fallbacks from visible page
+        if not loc.get("name"):
+            loc["name"] = self._text(sel,
+                                     ".field--name-field-venue .field__item::text",
+                                     ".event-venue::text",
+                                     "div[class*='location'] ::text")
+        if not loc.get("address"):
+            addr = self._text(sel,
+                              ".field--name-field-address .field__item::text",
+                              "div[class*='address'] ::text")
+            loc["address"] = addr
+
+        return loc
+
+    def _extract_price(self, sel, jsonld_objs):
+        # JSON-LD single price if present
+        p, ccy, _ = price_from_jsonld(jsonld_objs)
+        if isinstance(p, (int, float)):
+            return {"currency": (ccy or "NZD"), "min": float(p), "max": float(p), "text": None, "free": (float(p) == 0.0)}
+
+        # Otherwise, scan visible price text
+        price_text = " ".join(sel.css("[class*='price'], .price ::text").getall()) or \
+                     " ".join(sel.xpath("//*[contains(translate(text(),'PRICE','price'),'price')]/text()").getall())
+        if price_text:
+            return parse_prices(price_text)
+
+        # Or any "Tickets" block
+        tix_text = " ".join(sel.xpath("//*[contains(translate(text(),'TICKETS','tickets'),'tickets')]/following::text()[position()<5]").getall())
+        if tix_text:
+            return parse_prices(tix_text)
+
+        return {"currency": "NZD", "min": None, "max": None, "text": None, "free": False}
+
+    def _opening_hours_text(self, sel):
+        # A compact human string with times/dates that users expect under "opening_hours"
+        bits = self._all_texts(
+            sel,
+            "time::attr(datetime)",
+            "time::text",
+            ".field--name-field-date .field__item::text",
+            ".event-date::text",
+            ".event-time::text",
+            "dl dt:contains('Time') + dd ::text",
+            "dl dt:contains('Hours') + dd ::text",
+        )
+        if bits:
+            s = " | ".join(bits)
+            # squash excessive whitespace
+            s = re.sub(r"\s+", " ", s).strip()
+            return s[:400]  # keep tidy
+        return None
+
+    def _operating_months(self, sel):
+        blob = " ".join(sel.xpath("//body//text()").getall())
+        months = nz_months(blob)
+        return months
+
+    def parse_event(self, response):
+        sel = response.selector
+        jsonld_objs = parse_jsonld(response.text)
+
+        # Name/title
+        name = self._text(sel, "h1::text", "meta[property='og:title']::attr(content)")
+        if not name:
+            # Try JSON-LD
             try:
-                val = float(str(ld["price"]).replace(",", ""))
-                if 0 <= val < 2000:
-                    return {
-                        "currency": ld.get("priceCurrency") or currency,
-                        "min": val,
-                        "max": val,
-                        "text": f"${val:g}",
-                        "free": val == 0.0,
-                    }
+                for obj in (jsonld_objs or []):
+                    n = obj.get("name")
+                    if isinstance(n, str) and n.strip():
+                        name = n.strip()
+                        break
             except Exception:
                 pass
 
-        # Look for $amounts / 'free' in article content ONLY
-        raw = " ".join(
-            scope.xpath(
-                ".//*[contains(text(),'$') or contains(translate(text(),'FREE','free'),'free')]//text()"
-            ).getall()
-        )
-        raw = self._clean(raw)
-
-        # Filter out car-park / transport offers
-        banned = (
-            "parking",
-            "car park",
-            "carpark",
-            "public transport",
-            "transport",
-            "kids ride free",
-            "ride free",
-            "evening rate",
-            "weekend rate",
-        )
-        sentences = [s for s in self._split_sentences(raw) if s and not any(b in s.lower() for b in banned)]
-        filtered = " ".join(sentences)
-
-        amounts = [
-            float(m.replace(",", ""))
-            for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", filtered)
-        ]
-        amounts = [a for a in amounts if 0 <= a < 2000]
-
-        is_free = " free " in f" {filtered.lower()} "
-        if amounts:
-            return {
-                "currency": currency,
-                "min": min(amounts),
-                "max": max(amounts),
-                "text": (filtered[:140] or None),
-                "free": is_free and min(amounts) == 0.0,
-            }
-        if is_free:
-            return {"currency": currency, "min": 0.0, "max": 0.0, "text": "Free", "free": True}
-        return {"currency": currency, "min": None, "max": None, "text": None, "free": False}
-
-    def _extract_dates(self, scope, ld):
-        # JSON-LD if present
-        start = ld.get("startDate") or None
-        end = ld.get("endDate") or None
-
-        # Human text near a "Dates" label, or any “date-ish” line near the top
-        date_text = self._clean(
-            " ".join(scope.xpath(".//*[normalize-space()='Dates']/following::*[1]//text()").getall())
-        )
-        if not date_text:
-            date_text = self._clean(
-                " ".join(scope.css(".node__content .date *::text, .node__content time::text").getall())
-            )
-        if not date_text:
-            blob = self._clean(" ".join(scope.css(".node__content *::text").getall()[:40])) or None
-            if blob:
-                m = re.search(r"([0-9]{1,2}\s*[A-Z]{3,9}.*?[0-9]{4})", blob)
-                if m:
-                    date_text = m.group(1)
-
-        return {
-            "start": start,
-            "end": end,
-            "timezone": "Pacific/Auckland",
-            "text": date_text or None,
-        }
-
-    # --------------- detail ---------------
-
-    def parse_event(self, response):
-        article = self._event_article(response)
-        ld = self._from_ldjson(response)
-
-        # title
-        title = (
-            self._clean(article.css("h1::text").get())
-            or self._clean(response.css('meta[property="og:title"]::attr(content)').get())
-            or ld.get("name")
-            or ""
-        )
-        if not title:
-            self.logger.debug("No title on %s", response.url)
-            return
-
-        # venue: something sane near the title in the meta area
-        venue = None
-        for t in article.xpath(
-            ".//h1/following::*[self::a or self::span or self::strong][position()<=10]//text()"
-        ).getall():
-            t = self._clean(t)
-            if not t:
-                continue
-            low = t.lower()
-            if low in {"add to favourites", "show on map", "book tickets", "more info"}:
-                continue
-            if len(t) <= 80:
-                venue = t
-                break
-        if not venue:
-            venue = ld.get("venue") or None
-
-        # price + dates
-        price = self._extract_price(article, ld)
-        event_dates = self._extract_dates(article, ld)
-
-        # collection timestamp (RFC 2822 style for consistency with previous output)
-        collected = response.headers.get("Date", b"").decode().strip()
-        if not collected:
-            collected = format_datetime(datetime.now(timezone.utc))
-
-        # build LEAN record
-        record = {
-            "id": f"{abs(hash(response.url)) & 0xFFFFFFFFFFFFFFFF:016x}",
+        # Build fields
+        url = response.url
+        out = {
+            "id": make_id(url),
             "record_type": "event",
-            "name": title,
-            "url": response.url,
+            "name": name or url,
+            "categories": self._extract_categories(sel),
+            "url": url,
             "source": "heartofthecity.co.nz",
-            "location": {
-                "name": venue or None,
-                "address": ld.get("address") or None,
-                "city": "Auckland",
-                "region": "Auckland",
-                "country": "New Zealand",
-                "latitude": None,
-                "longitude": None,
-            },
-            "price": price,
-            "event_dates": event_dates,
-            "opening_hours": None,
-            "operating_months": None,
-            "data_collected_at": collected,
+            "location": self._extract_location(sel, jsonld_objs),
+            "price": self._extract_price(sel, jsonld_objs),
+            "opening_hours": self._opening_hours_text(sel),
+            "operating_months": self._operating_months(sel),
+            "data_collected_at": datetime.now().astimezone().isoformat(),
         }
-        yield record
+        # Only yield the requested keys (guard in case helpers return extras)
+        yield {
+            k: out.get(k)
+            for k in [
+                "id",
+                "record_type",
+                "name",
+                "categories",
+                "url",
+                "source",
+                "location",
+                "price",
+                "opening_hours",
+                "operating_months",
+                "data_collected_at",
+            ]
+        }
