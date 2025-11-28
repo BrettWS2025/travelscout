@@ -1,7 +1,6 @@
 # GitHub Actions workflow to run TravelScout scrapers with extra debugging
-# Settings live in: tscraper/settings.py
-# Helper utilities (parsers, date/price helpers): tscraper/utils.py
-name: Scrape (Auckland Events) — Debug
+# Settings module used below should match your project layout.
+name: "Scrape (WhatsOn Events) — Debug"
 
 on:
   workflow_dispatch:
@@ -33,18 +32,16 @@ concurrency:
 
 jobs:
   scrape:
-    name: Run spiders
+    name: "Run spiders"
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
-    # Baseline env; inputs are plumbed in step envs for safety
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONIOENCODING: "utf-8"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
-      # Default spider if no workflow_dispatch input provided
-      SPIDERS: "auckland_events"
-      # Let spiders opt into saving debug artifacts if they read these flags
+      # Default list of spiders; can be overridden in workflow_dispatch
+      SPIDERS: "${{ github.event.inputs.spiders || 'auckland_events' }}"
+      # Turn on simple, opt-in debug artifacts from spiders if they read these flags
       TS_DEBUG: "1"
       TS_SAVE_HTML: "1"
       # Ensure Scrapy project uses the repo settings module
@@ -80,7 +77,7 @@ jobs:
         with:
           path: |
             ~/.cache/ms-playwright
-          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}
+          key: "${{ runner.os }}-ms-playwright-${{ hashFiles('scraper/requirements.txt') }}"
           restore-keys: |
             ${{ runner.os }}-ms-playwright-
 
@@ -96,72 +93,61 @@ jobs:
       - name: Preflight: dump Scrapy config & discovered spiders
         run: |
           scrapy version -v | tee -a debug/preflight.txt
-          {
-            echo
-            echo "--- settings snapshot ---"
-            for k in BOT_NAME ROBOTSTXT_OBEY DOWNLOAD_DELAY AUTOTHROTTLE_ENABLED AUTOTHROTTLE_START_DELAY AUTOTHROTTLE_MAX_DELAY HTTPCACHE_ENABLED TWISTED_REACTOR PLAYWRIGHT_BROWSER_TYPE; do
-              printf "%s=%s\n" "$k" "$(scrapy settings --get $k)"
-            done
-            echo
-            echo "--- spider list ---"
-            scrapy list
-          } | tee -a debug/preflight.txt
+          echo -e "\n--- settings snapshot ---" | tee -a debug/preflight.txt
+          # print a few key settings to verify overrides
+          for k in BOT_NAME ROBOTSTXT_OBEY DOWNLOAD_DELAY AUTOTHROTTLE_ENABLED AUTOTHROTTLE_START_DELAY AUTOTHROTTLE_MAX_DELAY HTTPCACHE_ENABLED TWISTED_REACTOR PLAYWRIGHT_BROWSER_TYPE; do
+            echo "$k=$(scrapy settings --get $k)" | tee -a debug/preflight.txt
+          done
+          echo -e "\n--- spider list ---" | tee -a debug/preflight.txt
+          scrapy list | tee debug/spiders.txt
 
       - name: Preflight: fetch sample pages (raw HTML) for troubleshooting
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
           set -x
           curl -fsSL -A "$UA" -D debug/aucklandnz_events_headers.txt -o debug/aucklandnz_events.html https://www.aucklandnz.com/events-hub/events || true
-          # Example detail URLs for selector debugging
+          # A couple of example event/detail URLs the user provided, to help debug selectors server-side
           curl -fsSL -A "$UA" -D debug/the_nutcracker_headers.txt -o debug/the_nutcracker.html https://www.aucklandnz.com/events-hub/events/the-nutcracker-2025 || true
           curl -fsSL -A "$UA" -D debug/pasifika_headers.txt -o debug/pasifika.html https://www.aucklandnz.com/pasifika || true
           set +x
 
       - name: Optionally clear HTTP cache
-        # Limit the condition to workflow_dispatch to avoid undefined inputs on push/schedule
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clear_httpcache == 'true' }}
+        if: ${{ github.event.inputs.clear_httpcache == 'true' }}
         run: |
           rm -rf httpcache || true
           echo "Cleared httpcache/" | tee -a debug/preflight.txt
 
       - name: Run spiders (with optional ROBOTSTXT_OBEY override)
         id: runspiders
-        env:
-          # Pass inputs safely (empty on non-dispatch events)
-          INPUT_SPIDERS: ${{ github.event.inputs.spiders }}
-          INPUT_ROBOTS: ${{ github.event.inputs.robots_obey }}
         run: |
           set -euo pipefail
           set -x
 
-          # Start from default env SPIDERS, override if workflow_dispatch provided one
-          if [[ -n "${INPUT_SPIDERS:-}" ]]; then
-            export SPIDERS="${INPUT_SPIDERS}"
-          fi
-
-          # Prepare the ROBOTSTXT_OBEY override flag if provided
+          # Prepare the override flag if provided
           ROBOT_FLAG=""
-          if [[ -n "${INPUT_ROBOTS:-}" ]]; then
-            ROBOT_VAL="$(echo "${INPUT_ROBOTS}" | tr '[:upper:]' '[:lower:]')"
-            if [[ "${ROBOT_VAL}" == "true" || "${ROBOT_VAL}" == "false" ]]; then
-              ROBOT_FLAG="-s ROBOTSTXT_OBEY=${ROBOT_VAL}"
+          if [[ -n "${{ github.event.inputs.robots_obey }}" ]]; then
+            ROBOT_VAL="${{ github.event.inputs.robots_obey }}"
+            # Normalize to true/false lower-case
+            ROBOT_VAL="$(echo "$ROBOT_VAL" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$ROBOT_VAL" == "true" || "$ROBOT_VAL" == "false" ]]; then
+              ROBOT_FLAG="-s ROBOTSTXT_OBEY=$ROBOT_VAL"
             fi
           fi
 
           echo "Spiders to run: ${SPIDERS}" | tee -a debug/run.meta
           IFS=',' read -ra SARR <<< "${SPIDERS}"
 
-          # Summary file to accumulate item counts per spider
+          # A simple summary file to accumulate item counts per spider
           : > debug/summary.tsv
-          printf "spider\titems\tstatus\n" >> debug/summary.tsv
+          echo -e "spider\titems\tstatus" >> debug/summary.tsv
 
           for sp in "${SARR[@]}"; do
             s="$(echo "$sp" | xargs)"
             [[ -z "$s" ]] && continue
-            echo "::group::Running ${s}"
+            echo "::group::Running $s"
             # Each spider writes to shared feed path configured in settings (data/Events.jsonl)
             # We also tee logs to debug/scrapy-$s.log
-            (scrapy crawl "${s}" ${ROBOT_FLAG} 2>&1 | tee "debug/scrapy-${s}.log") || true
+            (scrapy crawl "$s" $ROBOT_FLAG 2>&1 | tee "debug/scrapy-${s}.log") || true
             echo "::endgroup::"
 
             # Count items appended by the spider (Scrapy feed appends by default if overwrite=False)
@@ -173,12 +159,15 @@ jobs:
             if ! grep -q "Spider closed (finished)" "debug/scrapy-${s}.log"; then
               STATUS="error"
             fi
-            printf "%s\t%s\t%s\n" "${s}" "${ITEMS}" "${STATUS}" >> debug/summary.tsv
+            echo -e "${s}\t${ITEMS}\t${STATUS}" >> debug/summary.tsv
           done
 
-          echo
-          echo "--- SUMMARY ---"
-          awk -F'\t' 'BEGIN{OFS="\t"}{print $1,$2,$3}' debug/summary.tsv | column -t -s$'\t' || cat debug/summary.tsv
+          echo -e "\n--- SUMMARY ---"
+          if command -v column >/dev/null 2>&1; then
+            column -t -s$'\t' debug/summary.tsv || cat debug/summary.tsv
+          else
+            cat debug/summary.tsv
+          fi
 
       - name: Print quick results summary
         run: |
@@ -192,7 +181,7 @@ jobs:
 
       - name: Upload scraped data
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() }}
         with:
           name: data-jsonl
           path: |
@@ -202,7 +191,7 @@ jobs:
 
       - name: Upload debug bundle (logs, preflight HTML, httpcache)
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() }}
         with:
           name: debug-artifacts
           path: |
@@ -213,7 +202,7 @@ jobs:
 
       - name: Upload Playwright traces/screens if produced by spiders
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() }}
         with:
           name: playwright-artifacts
           path: |
