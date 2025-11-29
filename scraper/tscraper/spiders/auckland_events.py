@@ -2,22 +2,42 @@
 """
 Auckland NZ Events spider
 
-- Seeds from sitemap.xml + listing hub + specific known-missing examples
-- Uses scrapy-playwright where needed (enabled in project settings)
-- Safer price parser (currency-required) and robust title extraction
-- Items match the clean JSONL schema used in your pipeline.
+- Seeds from sitemap.xml + listing hub (multiple paginated pages) + specific known-missing examples
+- Uses scrapy-playwright and waits for event tiles to render on listing pages
+- Keeps the JSONL schema identical to your current structure, only improves coverage
+
+Item shape (unchanged):
+{
+  "source": "aucklandnz",
+  "url": "...",
+  "title": "...",
+  "description": "...",
+  "dates": {"start": "...", "end": "...", "text": "..."},
+  "price": {"currency": "NZD", "min": 40.0, "max": 70.0, "text": "NZ$40.00 - NZ$70.00 + BF", "free": false},
+  "location": {"name": "...", "address": "...", "city": "...", "region": "...", "country": "NZ"},
+  "categories": [...],
+  "image": "...",
+  "updated_at": "ISO-8601"
+}
 """
+import json
 import logging
 import re
-import json
 from datetime import datetime
 
 import scrapy
 from parsel import Selector
+from scrapy import Request
+from scrapy.utils.response import get_base_url
 
-# ---------- Helpers ----------
+# Playwright helpers: wait for listing tiles to render
+try:
+    from scrapy_playwright.page import PageMethod
+except Exception:  # pragma: no cover
+    PageMethod = None  # allows import without playwright (local static checks)
+
 CURRENCY = "NZD"
-_CURRENCY_SIGNS = (r"NZD?\$", r"\$")  # NZ$, NZD$, $
+_CURRENCY_SIGNS = (r"NZD?\$", r"\$")
 _RE_PRICE = re.compile(rf"(?:{'|'.join(_CURRENCY_SIGNS)})\s*([0-9]{{1,5}}(?:\.[0-9]{{1,2}})?)")
 
 def _norm_spaces(x):
@@ -26,7 +46,7 @@ def _norm_spaces(x):
     x = x or ""
     return re.sub(r"[\u00A0\u202F\s]+", " ", x).strip()
 
-def _jsonld_objects(response_text):
+def _jsonld_objects(response_text: str):
     out = []
     sel = Selector(text=response_text or "")
     for node in sel.xpath("//script[@type='application/ld+json']/text()").getall():
@@ -98,14 +118,12 @@ def _dates_from(response):
         en = _first(ev, "endDate")
     st_iso = st if st and re.match(r"^\d{4}-\d{2}-\d{2}", st) else (st or None)
     en_iso = en if en and re.match(r"^\d{4}-\d{2}-\d{2}", en) else (en or None)
-
     dates_text = None
     candidates = response.css(
         "[class*='date'] ::text, [class*='Date'] ::text, .event__date ::text, .field--name-field-event-date *::text"
     ).getall()
     if candidates:
         dates_text = _norm_spaces(candidates)
-
     return st_iso, en_iso, dates_text
 
 def _venue_location_from(response):
@@ -193,9 +211,7 @@ def _price_from(response):
             minv = min(prices)
             maxv = max(prices)
             text_for_block = _norm_spaces(
-                " ".join([
-                    offers.get("price", "") if isinstance(offers, dict) else ""
-                ])
+                " ".join([offers.get("price", "") for offers in ([offers] if isinstance(offers, dict) else (offers or [])) if isinstance(offers, dict)])
             ) or None
 
     if minv is None:
@@ -231,96 +247,118 @@ def _price_from(response):
         "free": bool(free),
     }
 
-# ---------- Spider ----------
 class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
     allowed_domains = ["aucklandnz.com"]
 
-    start_urls = [
-        "https://www.aucklandnz.com/sitemap.xml",
-        "https://www.aucklandnz.com/events-hub/events",
-        "https://www.aucklandnz.com/pasifika",
-        "https://www.aucklandnz.com/events-hub/events/rufus-du-sol-inhale-exhale-word-tour",
-        "https://www.aucklandnz.com/events-hub/events/laneway-festival-2026",
-        "https://www.aucklandnz.com/events-hub/events/the-waterboys",
-    ]
+    # This value can be overridden at runtime: -s TS_LISTING_PAGES_MAX=40
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.listing_pages_max = int(self.settings.getint("TS_LISTING_PAGES_MAX", 25))
+        self.logger.info("Listing pages max: %s", self.listing_pages_max)
 
-    # NOTE: No FEEDS here; output is controlled by the workflow (-O / -o)
     custom_settings = {
+        # Ensure items land in scraper/data/Events.jsonl when cwd is scraper/
+        "FEEDS": {
+            "data/Events.jsonl": {
+                "format": "jsonlines",
+                "encoding": "utf-8",
+                "overwrite": False,
+            }
+        },
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_DELAY": 0.25,
         "AUTOTHROTTLE_ENABLED": True,
     }
 
-    def parse(self, response):
-        url = response.url
+    # seed detail URLs that were reported missing, to guarantee coverage
+    _manual_seeds = [
+        "https://www.aucklandnz.com/events-hub/events/the-others-way-festival",
+        "https://www.aucklandnz.com/events-hub/events/oceania-journey-to-the-centre",
+        "https://www.aucklandnz.com/events-hub/events/pop-to-present-american-art-from-the-virginia-museum-of-fine-arts",
+        # keep earlier examples too (still useful)
+        "https://www.aucklandnz.com/events-hub/events/rufus-du-sol-inhale-exhale-word-tour",
+        "https://www.aucklandnz.com/events-hub/events/laneway-festival-2026",
+        "https://www.aucklandnz.com/events-hub/events/the-waterboys",
+        "https://www.aucklandnz.com/pasifika",
+    ]
 
-        # 1) Sitemap (index)
-        if url.endswith("sitemap.xml") or response.headers.get("content-type", b"").startswith(b"application/xml"):
-            self.logger.info("Parsing sitemap index: %s", url)
-            locs = response.xpath("//loc/text()").getall()
-            for loc in locs:
-                if "/event" in loc or "/events" in loc:
-                    yield scrapy.Request(
-                        loc,
-                        callback=self.parse_sitemap_leaf,
-                        meta={"playwright": False},
-                        dont_filter=True,
-                    )
-            # Also follow the listing hub
-            yield scrapy.Request(
-                "https://www.aucklandnz.com/events-hub/events",
+    def start_requests(self):
+        # 1) Sitemap index (no need for JS)
+        yield Request(
+            "https://www.aucklandnz.com/sitemap.xml",
+            callback=self.parse_sitemap_index,
+            meta={"playwright": False},
+            dont_filter=True,
+        )
+
+        # 2) Listing pages (JS) – enumerate ?page=0..N and wait for tiles
+        # PageMethod only works if scrapy_playwright is present
+        pm = []
+        if PageMethod:
+            pm = [PageMethod("wait_for_selector", 'a[href*="/events-hub/events/"]', {"timeout": 15000})]
+
+        base = "https://www.aucklandnz.com/events-hub/events"
+        yield Request(
+            base,
+            callback=self.parse_listing,
+            meta={"playwright": True, "playwright_page_methods": pm},
+            dont_filter=True,
+        )
+        for i in range(1, self.listing_pages_max + 1):
+            yield Request(
+                f"{base}?page={i}",
                 callback=self.parse_listing,
+                meta={"playwright": True, "playwright_page_methods": pm},
+                dont_filter=True,
+            )
+
+        # 3) Manual seeds for guaranteed coverage
+        for u in self._manual_seeds:
+            yield Request(
+                u,
+                callback=self.parse_event,
                 meta={"playwright": True},
                 dont_filter=True,
             )
-            return
 
-        # 2) Listing hub
-        if "/events-hub" in url and url.rstrip("/").endswith("events"):
-            yield from self.parse_listing(response)
-            return
-
-        # 3) Event pages
-        if "/events-hub/events/" in url or "/pasifika" in url:
-            yield from self.parse_event(response)
-            return
-
-        # Fallback: follow event-like links
-        for href in response.css("a::attr(href)").getall():
-            if "/events-hub/events/" in href or href.rstrip("/").endswith("/pasifika"):
-                yield response.follow(
-                    href,
-                    callback=self.parse_event,
-                    meta={"playwright": True},
+    # ---- sitemap handling ----
+    def parse_sitemap_index(self, response):
+        # follow any child sitemap that looks related to events
+        locs = response.xpath("//loc/text()").getall()
+        for loc in locs:
+            if "/event" in loc or "/events" in loc:
+                yield Request(
+                    loc,
+                    callback=self.parse_sitemap_leaf,
+                    meta={"playwright": False},
+                    dont_filter=True,
                 )
 
     def parse_sitemap_leaf(self, response):
         for loc in response.xpath("//url/loc/text()").getall():
             if "/events-hub/events/" in loc or loc.rstrip("/").endswith("/pasifika"):
-                yield scrapy.Request(
+                yield Request(
                     loc,
                     callback=self.parse_event,
                     meta={"playwright": True},
+                    dont_filter=True,
                 )
 
+    # ---- listing pages ----
     def parse_listing(self, response):
-        for href in response.css("a::attr(href)").getall():
-            if "/events-hub/events/" in href:
-                yield response.follow(
-                    href,
-                    callback=self.parse_event,
-                    meta={"playwright": True},
-                )
-
-        # naive pagination
-        for n in response.css("a[rel='next']::attr(href), a.pager__item--next::attr(href)").getall():
+        hrefs = set()
+        for href in response.css('a[href*="/events-hub/events/"]::attr(href)').getall():
+            hrefs.add(href.strip())
+        for href in sorted(hrefs):
             yield response.follow(
-                n,
-                callback=self.parse_listing,
+                href,
+                callback=self.parse_event,
                 meta={"playwright": True},
+                dont_filter=True,
             )
 
+    # ---- detail pages ----
     def parse_event(self, response):
         try:
             title = _title_from(response)
@@ -343,10 +381,8 @@ class AucklandEventsSpider(scrapy.Spider):
                 "image": image,
                 "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
             }
-
             if not item["title"]:
                 self.logger.warning("No title extracted for %s", response.url)
-
             yield item
 
         except Exception as e:
