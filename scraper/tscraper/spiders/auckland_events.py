@@ -4,7 +4,7 @@ Auckland NZ Events spider
 
 - Seeds from sitemap.xml + listing hub (multiple paginated pages) + specific known-missing examples
 - Uses scrapy-playwright and waits for event tiles to render on listing pages
-- Keeps the JSONL schema identical to your current structure, only improves coverage
+- Keeps the JSONL schema identical to your current structure
 
 Item shape (unchanged):
 {
@@ -21,16 +21,14 @@ Item shape (unchanged):
 }
 """
 import json
-import logging
 import re
 from datetime import datetime
 
 import scrapy
 from parsel import Selector
 from scrapy import Request
-from scrapy.utils.response import get_base_url
 
-# Playwright helpers: wait for listing tiles to render
+# Playwright helpers: wait for listing tiles to render (only if scrapy_playwright is installed)
 try:
     from scrapy_playwright.page import PageMethod
 except Exception:  # pragma: no cover
@@ -40,11 +38,15 @@ CURRENCY = "NZD"
 _CURRENCY_SIGNS = (r"NZD?\$", r"\$")
 _RE_PRICE = re.compile(rf"(?:{'|'.join(_CURRENCY_SIGNS)})\s*([0-9]{{1,5}}(?:\.[0-9]{{1,2}})?)")
 
+
+# ------------------ helpers ------------------
+
 def _norm_spaces(x):
     if isinstance(x, list):
         x = " ".join(x)
     x = x or ""
     return re.sub(r"[\u00A0\u202F\s]+", " ", x).strip()
+
 
 def _jsonld_objects(response_text: str):
     out = []
@@ -57,6 +59,7 @@ def _jsonld_objects(response_text: str):
             continue
     return out
 
+
 def _first(obj, *paths):
     for p in paths:
         if isinstance(p, (list, tuple)) and len(p) == 2:
@@ -67,6 +70,7 @@ def _first(obj, *paths):
         if isinstance(v, str) and v.strip():
             return v.strip()
     return None
+
 
 def _find_event_jsonld(objs):
     for o in objs or []:
@@ -79,6 +83,7 @@ def _find_event_jsonld(objs):
         elif "Event" in str(t):
             return o
     return None
+
 
 def _title_from(response):
     objs = _jsonld_objects(response.text)
@@ -95,6 +100,7 @@ def _title_from(response):
         return og
     return _norm_spaces(response.css("title::text").get())
 
+
 def _desc_from(response):
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
@@ -104,10 +110,13 @@ def _desc_from(response):
     if not d:
         d = _norm_spaces(response.css("meta[name='description']::attr(content)").get())
     if not d:
-        ptxt = _norm_spaces(response.css("article p::text, .event__description *::text, .field--name-body *::text").getall())
+        ptxt = _norm_spaces(
+            response.css("article p::text, .event__description *::text, .field--name-body *::text").getall()
+        )
         if ptxt:
             d = ptxt
     return d or None
+
 
 def _dates_from(response):
     objs = _jsonld_objects(response.text)
@@ -125,6 +134,7 @@ def _dates_from(response):
     if candidates:
         dates_text = _norm_spaces(candidates)
     return st_iso, en_iso, dates_text
+
 
 def _venue_location_from(response):
     objs = _jsonld_objects(response.text)
@@ -150,6 +160,7 @@ def _venue_location_from(response):
     }
     return name or None, location
 
+
 def _image_from(response):
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
@@ -164,6 +175,7 @@ def _image_from(response):
     og = response.css("meta[property='og:image']::attr(content)").get()
     return og or None
 
+
 def _categories_from(response):
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
@@ -175,7 +187,11 @@ def _categories_from(response):
         elif isinstance(v, str) and _norm_spaces(v):
             cats.append(_norm_spaces(v))
     if not cats:
-        cats = [x.strip() for x in response.css(".tags a::text, .field--name-field-category a::text").getall() if x.strip()]
+        cats = [
+            x.strip()
+            for x in response.css(".tags a::text, .field--name-field-category a::text").getall()
+            if x.strip()
+        ]
     out, seen = [], set()
     for c in cats:
         if c not in seen:
@@ -183,11 +199,13 @@ def _categories_from(response):
             out.append(c)
     return out
 
+
 def _price_from(response):
     text_for_block = None
     free = False
     minv = maxv = None
 
+    # 1) JSON-LD offers
     objs = _jsonld_objects(response.text)
     ev = _find_event_jsonld(objs)
     if ev:
@@ -211,9 +229,16 @@ def _price_from(response):
             minv = min(prices)
             maxv = max(prices)
             text_for_block = _norm_spaces(
-                " ".join([offers.get("price", "") for offers in ([offers] if isinstance(offers, dict) else (offers or [])) if isinstance(offers, dict)])
+                " ".join(
+                    [
+                        off.get("price", "")
+                        for off in (candidates or [])
+                        if isinstance(off, dict)
+                    ]
+                )
             ) or None
 
+    # 2) Visible price blocks
     if minv is None:
         price_bits = response.css(
             "[class*='price'] ::text, [class*='Price'] ::text, [data-test*='price'] ::text, .ticket-price ::text, .pricing ::text"
@@ -225,6 +250,7 @@ def _price_from(response):
             if nums:
                 minv, maxv = min(nums), max(nums)
 
+    # 3) Last resort: scan entire body text
     if minv is None:
         body_txt = _norm_spaces(response.xpath("//body//text()").getall())
         nums = [float(m.group(1)) for m in _RE_PRICE.finditer(body_txt)]
@@ -233,6 +259,7 @@ def _price_from(response):
             if not text_for_block:
                 text_for_block = " ".join(sorted({f"NZ${n:g}" for n in nums}))
 
+    # free detection (does not force a numeric max)
     hay = text_for_block or _norm_spaces(response.text)
     if re.search(r"\bfree\b", hay, re.I):
         free = True
@@ -247,18 +274,15 @@ def _price_from(response):
         "free": bool(free),
     }
 
+
+# ------------------ spider ------------------
+
 class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
     allowed_domains = ["aucklandnz.com"]
 
-    # This value can be overridden at runtime: -s TS_LISTING_PAGES_MAX=40
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.listing_pages_max = int(self.settings.getint("TS_LISTING_PAGES_MAX", 25))
-        self.logger.info("Listing pages max: %s", self.listing_pages_max)
-
+    # Let the workflow override FEEDS on the CLI; this default is just for local runs.
     custom_settings = {
-        # Ensure items land in scraper/data/Events.jsonl when cwd is scraper/
         "FEEDS": {
             "data/Events.jsonl": {
                 "format": "jsonlines",
@@ -271,20 +295,46 @@ class AucklandEventsSpider(scrapy.Spider):
         "AUTOTHROTTLE_ENABLED": True,
     }
 
-    # seed detail URLs that were reported missing, to guarantee coverage
+    # Manual seeds to guarantee coverage for known-missing examples
     _manual_seeds = [
         "https://www.aucklandnz.com/events-hub/events/the-others-way-festival",
         "https://www.aucklandnz.com/events-hub/events/oceania-journey-to-the-centre",
         "https://www.aucklandnz.com/events-hub/events/pop-to-present-american-art-from-the-virginia-museum-of-fine-arts",
-        # keep earlier examples too (still useful)
         "https://www.aucklandnz.com/events-hub/events/rufus-du-sol-inhale-exhale-word-tour",
         "https://www.aucklandnz.com/events-hub/events/laneway-festival-2026",
         "https://www.aucklandnz.com/events-hub/events/the-waterboys",
         "https://www.aucklandnz.com/pasifika",
     ]
 
+    # Support CLI override: -a listing_pages_max=40
+    def __init__(self, listing_pages_max=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._cli_listing_pages_max = listing_pages_max  # str or None
+        self.listing_pages_max = 25  # default; resolved in from_crawler
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        """
+        Resolve settings here (not in __init__), because the crawler attaches
+        settings after the spider is instantiated.
+        """
+        spider = cls(*args, **kwargs)
+        spider._set_crawler(crawler)
+
+        # Prefer CLI arg if provided, else project setting TS_LISTING_PAGES_MAX, else 25
+        if getattr(spider, "_cli_listing_pages_max", None) is not None:
+            try:
+                spider.listing_pages_max = int(spider._cli_listing_pages_max)
+            except Exception:
+                spider.listing_pages_max = 25
+        else:
+            spider.listing_pages_max = int(crawler.settings.getint("TS_LISTING_PAGES_MAX", 25))
+
+        spider.logger.info("Listing pages max resolved to %s", spider.listing_pages_max)
+        return spider
+
     def start_requests(self):
-        # 1) Sitemap index (no need for JS)
+        # 1) Sitemap index (no JS)
         yield Request(
             "https://www.aucklandnz.com/sitemap.xml",
             callback=self.parse_sitemap_index,
@@ -292,8 +342,7 @@ class AucklandEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # 2) Listing pages (JS) – enumerate ?page=0..N and wait for tiles
-        # PageMethod only works if scrapy_playwright is present
+        # 2) Listing pages (JS): page=0..N, wait for tiles to render
         pm = []
         if PageMethod:
             pm = [PageMethod("wait_for_selector", 'a[href*="/events-hub/events/"]', {"timeout": 15000})]
@@ -313,7 +362,7 @@ class AucklandEventsSpider(scrapy.Spider):
                 dont_filter=True,
             )
 
-        # 3) Manual seeds for guaranteed coverage
+        # 3) Manual seeds to ensure coverage
         for u in self._manual_seeds:
             yield Request(
                 u,
@@ -324,9 +373,7 @@ class AucklandEventsSpider(scrapy.Spider):
 
     # ---- sitemap handling ----
     def parse_sitemap_index(self, response):
-        # follow any child sitemap that looks related to events
-        locs = response.xpath("//loc/text()").getall()
-        for loc in locs:
+        for loc in response.xpath("//loc/text()").getall():
             if "/event" in loc or "/events" in loc:
                 yield Request(
                     loc,
@@ -347,9 +394,9 @@ class AucklandEventsSpider(scrapy.Spider):
 
     # ---- listing pages ----
     def parse_listing(self, response):
-        hrefs = set()
-        for href in response.css('a[href*="/events-hub/events/"]::attr(href)').getall():
-            hrefs.add(href.strip())
+        hrefs = set(
+            h.strip() for h in response.css('a[href*="/events-hub/events/"]::attr(href)').getall() if h.strip()
+        )
         for href in sorted(hrefs):
             yield response.follow(
                 href,
