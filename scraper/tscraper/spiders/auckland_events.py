@@ -2,9 +2,12 @@
 """
 Auckland NZ Events spider
 
-- Seeds from sitemap.xml + listing hub (multiple paginated pages) + specific known-missing examples
-- Uses scrapy-playwright and waits for event tiles to render on listing pages
-- Keeps the JSONL schema identical to your current structure
+- No manual seeds.
+- Scalable discovery:
+  (1) follow *all* child sitemaps from /sitemap.xml and pick event detail URLs
+  (2) recursively crawl the entire /events-hub section (listing, categories, pagination)
+      using Playwright on hub/list pages to ensure tiles render.
+- Keeps the JSONL schema identical to your current structure.
 
 Item shape (unchanged):
 {
@@ -23,16 +26,17 @@ Item shape (unchanged):
 import json
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 import scrapy
 from parsel import Selector
 from scrapy import Request
 
-# Playwright helpers: wait for listing tiles to render (only if scrapy_playwright is installed)
+# Use Playwright only where needed (list/hub pages)
 try:
     from scrapy_playwright.page import PageMethod
 except Exception:  # pragma: no cover
-    PageMethod = None  # allows import without playwright (local static checks)
+    PageMethod = None  # allows import without playwright present
 
 CURRENCY = "NZD"
 _CURRENCY_SIGNS = (r"NZD?\$", r"\$")
@@ -259,7 +263,7 @@ def _price_from(response):
             if not text_for_block:
                 text_for_block = " ".join(sorted({f"NZ${n:g}" for n in nums}))
 
-    # free detection (does not force a numeric max)
+    # free detection
     hay = text_for_block or _norm_spaces(response.text)
     if re.search(r"\bfree\b", hay, re.I):
         free = True
@@ -281,7 +285,30 @@ class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
     allowed_domains = ["aucklandnz.com"]
 
-    # Let the workflow override FEEDS on the CLI; this default is just for local runs.
+    # CLI override example:
+    #   -s TS_LISTING_PAGES_MAX=80
+    # (your workflow supports extra args already)
+    def __init__(self, listing_pages_max=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._cli_listing_pages_max = listing_pages_max  # str or None
+        self.listing_pages_max = 25  # preliminary; finalized in from_crawler
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        """Read settings after crawler attaches them (avoid self.settings in __init__)."""
+        spider = cls(*args, **kwargs)
+        spider._set_crawler(crawler)
+        if getattr(spider, "_cli_listing_pages_max", None) is not None:
+            try:
+                spider.listing_pages_max = int(spider._cli_listing_pages_max)
+            except Exception:
+                spider.listing_pages_max = 25
+        else:
+            spider.listing_pages_max = int(crawler.settings.getint("TS_LISTING_PAGES_MAX", 25))
+        spider.logger.info("Listing pages max resolved to %s", spider.listing_pages_max)
+        return spider
+
+    # Default FEEDS only for local runs; workflow overrides via CLI -s FEEDS=...
     custom_settings = {
         "FEEDS": {
             "data/Events.jsonl": {
@@ -293,48 +320,19 @@ class AucklandEventsSpider(scrapy.Spider):
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_DELAY": 0.25,
         "AUTOTHROTTLE_ENABLED": True,
+        # Playwright is already enabled globally in your settings. :contentReference[oaicite:1]{index=1}
     }
 
-    # Manual seeds to guarantee coverage for known-missing examples
-    _manual_seeds = [
-        "https://www.aucklandnz.com/events-hub/events/the-others-way-festival",
-        "https://www.aucklandnz.com/events-hub/events/oceania-journey-to-the-centre",
-        "https://www.aucklandnz.com/events-hub/events/pop-to-present-american-art-from-the-virginia-museum-of-fine-arts",
-        "https://www.aucklandnz.com/events-hub/events/rufus-du-sol-inhale-exhale-word-tour",
-        "https://www.aucklandnz.com/events-hub/events/laneway-festival-2026",
-        "https://www.aucklandnz.com/events-hub/events/the-waterboys",
-        "https://www.aucklandnz.com/pasifika",
-    ]
+    # ---------- start & discovery ----------
 
-    # Support CLI override: -a listing_pages_max=40
-    def __init__(self, listing_pages_max=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._cli_listing_pages_max = listing_pages_max  # str or None
-        self.listing_pages_max = 25  # default; resolved in from_crawler
-
-    @classmethod
-    def from_crawler(cls, crawler, *args, **kwargs):
-        """
-        Resolve settings here (not in __init__), because the crawler attaches
-        settings after the spider is instantiated.
-        """
-        spider = cls(*args, **kwargs)
-        spider._set_crawler(crawler)
-
-        # Prefer CLI arg if provided, else project setting TS_LISTING_PAGES_MAX, else 25
-        if getattr(spider, "_cli_listing_pages_max", None) is not None:
-            try:
-                spider.listing_pages_max = int(spider._cli_listing_pages_max)
-            except Exception:
-                spider.listing_pages_max = 25
-        else:
-            spider.listing_pages_max = int(crawler.settings.getint("TS_LISTING_PAGES_MAX", 25))
-
-        spider.logger.info("Listing pages max resolved to %s", spider.listing_pages_max)
-        return spider
+    def _pm_wait_for_tiles(self):
+        """Playwright step to wait for event tiles to render on hub/list pages."""
+        if not PageMethod:
+            return []
+        return [PageMethod("wait_for_selector", 'a[href*="/events-hub/events/"]', {"timeout": 15000})]
 
     def start_requests(self):
-        # 1) Sitemap index (no JS)
+        # 1) sitemap index — follow *all* child sitemaps
         yield Request(
             "https://www.aucklandnz.com/sitemap.xml",
             callback=self.parse_sitemap_index,
@@ -342,67 +340,96 @@ class AucklandEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # 2) Listing pages (JS): page=0..N, wait for tiles to render
-        pm = []
-        if PageMethod:
-            pm = [PageMethod("wait_for_selector", 'a[href*="/events-hub/events/"]', {"timeout": 15000})]
-
-        base = "https://www.aucklandnz.com/events-hub/events"
+        # 2) /events-hub root (JS render), then explicit paginated listing pages ?page=N
+        base = "https://www.aucklandnz.com/events-hub"
         yield Request(
             base,
-            callback=self.parse_listing,
-            meta={"playwright": True, "playwright_page_methods": pm},
+            callback=self.parse_hub,
+            meta={"playwright": True, "playwright_page_methods": self._pm_wait_for_tiles()},
             dont_filter=True,
         )
+
+        list_base = "https://www.aucklandnz.com/events-hub/events"
+        # page 0 explicitly
+        yield Request(
+            list_base,
+            callback=self.parse_hub,
+            meta={"playwright": True, "playwright_page_methods": self._pm_wait_for_tiles()},
+            dont_filter=True,
+        )
+        # ?page=1..N
         for i in range(1, self.listing_pages_max + 1):
             yield Request(
-                f"{base}?page={i}",
-                callback=self.parse_listing,
-                meta={"playwright": True, "playwright_page_methods": pm},
-                dont_filter=True,
-            )
-
-        # 3) Manual seeds to ensure coverage
-        for u in self._manual_seeds:
-            yield Request(
-                u,
-                callback=self.parse_event,
-                meta={"playwright": True},
+                f"{list_base}?page={i}",
+                callback=self.parse_hub,
+                meta={"playwright": True, "playwright_page_methods": self._pm_wait_for_tiles()},
                 dont_filter=True,
             )
 
     # ---- sitemap handling ----
     def parse_sitemap_index(self, response):
-        for loc in response.xpath("//loc/text()").getall():
-            if "/event" in loc or "/events" in loc:
-                yield Request(
-                    loc,
-                    callback=self.parse_sitemap_leaf,
-                    meta={"playwright": False},
-                    dont_filter=True,
-                )
+        """Follow every child sitemap; filter at the URL level (urlset)."""
+        for loc in response.xpath("//sitemap/loc/text()").getall():
+            yield Request(
+                loc,
+                callback=self.parse_sitemap_leaf,
+                meta={"playwright": False},
+                dont_filter=True,
+            )
 
     def parse_sitemap_leaf(self, response):
+        """Pick event detail links from every urlset entry; /events-hub pages are sent to parse_hub."""
         for loc in response.xpath("//url/loc/text()").getall():
-            if "/events-hub/events/" in loc or loc.rstrip("/").endswith("/pasifika"):
+            if "/events-hub/events/" in loc:
+                # detail page — usually SSR, no JS needed
+                yield Request(loc, callback=self.parse_event, meta={"playwright": False})
+            elif "/events-hub" in loc:
+                # category/list/hub page — ensure tiles render
                 yield Request(
                     loc,
-                    callback=self.parse_event,
-                    meta={"playwright": True},
-                    dont_filter=True,
+                    callback=self.parse_hub,
+                    meta={"playwright": True, "playwright_page_methods": self._pm_wait_for_tiles()},
                 )
 
-    # ---- listing pages ----
-    def parse_listing(self, response):
-        hrefs = set(
-            h.strip() for h in response.css('a[href*="/events-hub/events/"]::attr(href)').getall() if h.strip()
+    # ---- recursive hub/list crawler ----
+    def parse_hub(self, response):
+        """
+        On *any* /events-hub page:
+          - collect event detail links
+          - recurse into other /events-hub pages (categories, pagination, etc.)
+        """
+        # 1) detail links
+        event_links = set(
+            h.strip()
+            for h in response.css('a[href*="/events-hub/events/"]::attr(href)').getall()
+            if h and "/events-hub/events/" in h
         )
-        for href in sorted(hrefs):
+        for href in sorted(event_links):
             yield response.follow(
                 href,
                 callback=self.parse_event,
-                meta={"playwright": True},
-                dont_filter=True,
+                meta={"playwright": False},  # detail pages typically SSR
+            )
+
+        # 2) more hub/list/category pages under /events-hub (avoid loops via dupefilter)
+        hub_links = set()
+        for h in response.css('a[href^="/events-hub"]::attr(href), a[href*="aucklandnz.com/events-hub"]::attr(href)').getall():
+            if not h:
+                continue
+            # keep only pages, not anchors
+            p = urlparse(h)
+            path = p.path or h
+            if "/events-hub/events/" in path:
+                # we'll already catch details via event_links; let list pages be revisited here as well
+                pass
+            if path.startswith("/events-hub"):
+                hub_links.add(h.strip())
+
+        for href in sorted(hub_links):
+            yield response.follow(
+                href,
+                callback=self.parse_hub,
+                meta={"playwright": True, "playwright_page_methods": self._pm_wait_for_tiles()},
             )
 
     # ---- detail pages ----
