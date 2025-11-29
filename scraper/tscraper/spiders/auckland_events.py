@@ -1,303 +1,272 @@
-# -*- coding: utf-8 -*-
-"""
-Auckland NZ Events – minimal spider
-
-- Discovery via sitemap index (https://www.aucklandnz.com/sitemap.xml)
-  → follow child sitemaps and collect only URLs under /events-hub/events/
-- Also (optional) scan listing pages /events-hub/events?page=N (no JS), in
-  case some items are not present in the sitemaps.
-- Extracts only the required fields and keeps your JSONL schema unchanged.
-
-Item:
-{
-  "source": "aucklandnz",
-  "url": "...",
-  "title": "...",
-  "description": "...",
-  "dates": {"start": "...", "end": "...", "text": "..."},
-  "price": {"currency": "NZD", "min": 40.0, "max": 70.0, "text": "NZ$40 - NZ$70 + BF", "free": false},
-  "location": {"name": "...", "address": "...", "city": "...", "region": "...", "country": "NZ"},
-  "categories": [...],
-  "image": "...",
-  "updated_at": "ISO-8601 Z"
-}
-"""
-
-import json
 import re
 from datetime import datetime
+from urllib.parse import urljoin
 
 import scrapy
 from parsel import Selector
 
+# If scrapy-playwright is installed & configured in settings (as in your workflow),
+# setting meta["playwright"]=True on a Request will render the page in Chromium.
+# We only need Playwright on the listing; event detail pages are server-rendered.
 
-EVENT_PATH_PREFIX = "/events-hub/events/"
-CURRENCY = "NZD"
-# Accept "NZ$", "$", or literal "NZD" preceding amounts like 40 or 70.00
-_RE_PRICE_NUM = re.compile(r"(?:NZD\s*)?(?:NZ\$|\$)\s*([0-9]{1,6}(?:\.[0-9]{1,2})?)")
-
-
-# ------------------ tiny helpers ------------------
-
-def _norm(s):
-    if isinstance(s, list):
-        s = " ".join(s)
-    return re.sub(r"[\u00A0\u202F\s]+", " ", (s or "")).strip()
-
-
-def _jsonld_blocks(html_text):
-    """Return a list of JSON-LD objects found on the page (best-effort)."""
-    objs = []
-    sel = Selector(text=html_text or "")
-    for raw in sel.xpath("//script[@type='application/ld+json']/text()").getall():
-        try:
-            data = json.loads(raw.strip())
-            if isinstance(data, list):
-                objs.extend(data)
-            else:
-                objs.append(data)
-        except Exception:
-            continue
-    return objs
-
-
-def _find_event_ld(objs):
-    """Pick the first JSON-LD object whose @type contains 'Event'."""
-    for o in objs or []:
-        t = o.get("@type")
-        if not t:
-            continue
-        if isinstance(t, list):
-            if any("Event" in str(x) for x in t):
-                return o
-        elif "Event" in str(t):
-            return o
-    return None
-
-
-def _title(response, ev):
-    return (
-        (ev or {}).get("name")
-        or _norm(response.css("h1::text").get())
-        or _norm(response.css('meta[property="og:title"]::attr(content)').get())
-        or _norm(response.css("title::text").get())
-        or None
-    )
-
-
-def _description(response, ev):
-    d = (ev or {}).get("description")
-    if isinstance(d, str) and d.strip():
-        return _norm(d)
-    d = response.css('meta[name="description"]::attr(content)').get()
-    if d:
-        return _norm(d)
-    # last resort: brief text from main content areas
-    txt = response.css(".field--name-body *::text, article p::text").getall()
-    return _norm(txt) or None
-
-
-def _dates(response, ev):
-    # Prefer JSON-LD ISO dates if present
-    st = (ev or {}).get("startDate")
-    en = (ev or {}).get("endDate")
-    st_iso = st if isinstance(st, str) else None
-    en_iso = en if isinstance(en, str) else None
-
-    # Human-readable date text from common containers
-    txt = response.css(
-        "[class*='date'] ::text, .event__date ::text, .field--name-field-event-date *::text"
-    ).getall()
-    dates_text = _norm(txt) or None
-    return st_iso, en_iso, dates_text
-
-
-def _location(response, ev):
-    name = address = city = region = None
-    loc = (ev or {}).get("location") or {}
-
-    if isinstance(loc, dict):
-        name = loc.get("name") or None
-        addr = loc.get("address") or {}
-        if isinstance(addr, dict):
-            address = addr.get("streetAddress") or None
-            city = addr.get("addressLocality") or None
-            region = addr.get("addressRegion") or None
-
-    if not name:
-        # light HTML fallback for venue name
-        name = _norm(response.css("[class*='venue'] ::text, .event__venue ::text").get())
-
-    return {
-        "name": name or None,
-        "address": address or None,
-        "city": city or None,
-        "region": region or None,
-        "country": "NZ",
-    }
-
-
-def _image(response, ev):
-    img = (ev or {}).get("image")
-    if isinstance(img, str) and img.strip():
-        return img
-    if isinstance(img, list) and img and isinstance(img[0], str):
-        return img[0]
-    if isinstance(img, dict) and img.get("url"):
-        return img["url"]
-    return response.css('meta[property="og:image"]::attr(content)').get() or None
-
-
-def _categories(response, ev):
-    out = []
-    for key in ("eventType", "category", "keywords"):
-        v = (ev or {}).get(key)
-        if isinstance(v, list):
-            out.extend([_norm(x) for x in v if isinstance(x, str) and _norm(x)])
-        elif isinstance(v, str) and _norm(v):
-            out.append(_norm(v))
-    if not out:
-        # lightweight HTML fallback
-        out = [x.strip() for x in response.css(".tags a::text, .field--name-field-category a::text").getall() if x.strip()]
-    # de-dup, keep order
-    seen, uniq = set(), []
-    for c in out:
-        if c not in seen:
-            seen.add(c)
-            uniq.append(c)
-    return uniq
-
-
-def _first_price_text(response):
-    """Return a short price-ish snippet from the page (for price.text)."""
-    # Look in obvious containers first …
-    bits = response.css(
-        "[class*='price'] ::text, .pricing ::text, .ticket-price ::text, [data-test*='price'] ::text"
-    ).getall()
-    joined = _norm(bits)
-    # If nothing with currency, try page body and pick the first ‘NZ$ …’ slice
-    hay = joined or _norm(response.xpath("//body//text()").getall())
-    m = re.search(r"(NZD?\$[^|]{1,80})", hay, flags=re.I)  # keep it concise
-    return _norm(m.group(1)) if m else (joined or None)
-
-
-def _price(response, ev):
-    # Numeric min/max from JSON‑LD offers (if present)
-    nums = []
-    currency = CURRENCY
-    offers = (ev or {}).get("offers")
-    candidates = []
-    if isinstance(offers, dict):
-        candidates = [offers]
-    elif isinstance(offers, list):
-        candidates = [o for o in offers if isinstance(o, dict)]
-
-    for o in candidates:
-        currency = o.get("priceCurrency") or currency
-        for k in ("price", "lowPrice", "highPrice"):
-            val = o.get(k)
-            try:
-                if val is None:
-                    continue
-                nums.append(float(str(val).replace(",", "")))
-            except Exception:
-                pass
-
-    price_text = _first_price_text(response)
-    # If still no nums, attempt regex over the snippet/body
-    if not nums and price_text:
-        nums = [float(m.group(1)) for m in _RE_PRICE_NUM.finditer(price_text)]
-    if not nums:
-        body = _norm(response.xpath("//body//text()").getall())
-        nums = [float(m.group(1)) for m in _RE_PRICE_NUM.finditer(body)]
-
-    free = False
-    hay = (price_text or "") + " " + _norm(response.text)
-    if re.search(r"\bfree\b", hay, re.I):
-        free = True
-        if not nums:
-            nums = [0.0]
-
-    return {
-        "currency": currency or CURRENCY,
-        "min": float(min(nums)) if nums else None,
-        "max": float(max(nums)) if nums else None,
-        "text": price_text,
-        "free": bool(free),
-    }
-
-
-# ------------------ spider ------------------
 
 class AucklandEventsSpider(scrapy.Spider):
     name = "auckland_events"
-    allowed_domains = ["aucklandnz.com"]
+    allowed_domains = ["www.aucklandnz.com", "aucklandnz.com"]
+    start_urls = ["https://www.aucklandnz.com/events-hub/events"]
 
-    # Optional: override max listing pages (0 disables listing scan)
-    #   scrapy crawl auckland_events -a pages_max=50
-    def __init__(self, pages_max=40, *args, **kwargs):
+    custom_settings = {
+        # Keep polite and stable; you can override in global settings if you like.
+        "ROBOTSTXT_OBEY": True,
+        "DOWNLOAD_TIMEOUT": 60,
+        # Ensure duplicate URLs with/without trailing slash don't both queue.
+        "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
+    }
+
+    # --- optional CLI args ---
+    # -a load_more=45      -> click the "See more" button up to 45 times on the listing
+    # -a listing_pages=0-5 -> also try visiting ?page=N for N in [0..5] (best-effort; site may not use paging)
+    def __init__(self, load_more: str = "0", listing_pages: str | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
-            self.pages_max = max(0, int(pages_max))
+            self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
-            self.pages_max = 40
+            self.load_more = 0
+
+        self.listing_range = None
+        if listing_pages:
+            m = re.match(r"^\s*(\d+)\s*-\s*(\d+)\s*$", str(listing_pages))
+            if m:
+                a, b = int(m.group(1)), int(m.group(2))
+                if b >= a:
+                    self.listing_range = list(range(a, b + 1))
+
+    # ---------- helpers ----------
+
+    @staticmethod
+    def _clean(s: str | None) -> str | None:
+        if not s:
+            return None
+        s = re.sub(r"\s+", " ", s).strip()
+        return s or None
+
+    @staticmethod
+    def _join_text(nodes) -> str | None:
+        parts = [re.sub(r"\s+", " ", x).strip() for x in nodes or []]
+        parts = [p for p in parts if p]
+        return " ".join(parts) if parts else None
+
+    def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
+        """Best-effort parser for short date strings like:
+        '29 Nov 2025', '07 Jul - 03 Aug 2025', '26 Feb - 03 Aug', 'Today', 'Now - 15 Mar'
+        Returns (start_iso, end_iso) in YYYY-MM-DD, or (None, None) on failure.
+        """
+        if not s:
+            return None, None
+
+        txt = s.replace("–", "-").strip()
+        # Quick outs
+        if re.search(r"\bToday\b|\bNow\b", txt, flags=re.I):
+            # Date text is relative; we'll leave structured dates empty.
+            return None, None
+
+        months = {
+            "jan": 1, "january": 1,
+            "feb": 2, "february": 2,
+            "mar": 3, "march": 3,
+            "apr": 4, "april": 4,
+            "may": 5,
+            "jun": 6, "june": 6,
+            "jul": 7, "july": 7,
+            "aug": 8, "august": 8,
+            "sep": 9, "sept": 9, "september": 9,
+            "oct": 10, "october": 10,
+            "nov": 11, "november": 11,
+            "dec": 12, "december": 12,
+        }
+
+        def to_iso(day: int, mon_name: str, year: int | None) -> str | None:
+            m = months.get(mon_name.lower())
+            if not (m and year):
+                return None
+            return f"{year:04d}-{m:02d}-{day:02d}"
+
+        # Capture 1–2 'DD Mon' tokens and up to two years
+        dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", txt)
+        yrs = [int(y) for y in re.findall(r"\b(20\d{2})\b", txt)]
+        if not dm:
+            return None, None
+
+        if len(dm) == 1:
+            d1, m1 = int(dm[0][0]), dm[0][1]
+            y1 = yrs[0] if yrs else None
+            return to_iso(d1, m1, y1), None
+
+        # len(dm) >= 2 -> range
+        d1, m1 = int(dm[0][0]), dm[0][1]
+        d2, m2 = int(dm[1][0]), dm[1][1]
+        # If only one year is present, assume same year for both ends
+        if len(yrs) == 1:
+            y1 = y2 = yrs[0]
+        elif len(yrs) >= 2:
+            y1, y2 = yrs[0], yrs[1]
+        else:
+            y1 = y2 = None
+        return to_iso(d1, m1, y1), to_iso(d2, m2, y2)
+
+    def _extract_top_meta(self, response: scrapy.http.Response) -> dict:
+        """
+        On event pages, the first UL following the H1 contains small 'meta' items like:
+        [date(s), price (optional), location (text or link), maybe 'View times'].
+        We'll grab that UL and heuristically assign fields.
+        """
+        meta_texts = [
+            self._clean(t)
+            for t in response.xpath("//h1/following::ul[1]/li//text()").getall()
+        ]
+        meta_texts = [t for t in meta_texts if t]
+
+        date_text = None
+        price = None
+        location = None
+
+        # Heuristic: first item is usually the date text
+        if meta_texts:
+            date_text = meta_texts[0]
+
+        # Price = first token that looks like money or 'FREE'
+        for t in meta_texts:
+            if "$" in t or re.search(r"\bFREE\b", t, flags=re.I):
+                price = t
+                break
+
+        # Location = first token that is not date/price/view times and not obviously a CTA
+        for t in meta_texts:
+            if t == date_text or t == price:
+                continue
+            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t, flags=re.I):
+                continue
+            location = t
+            break
+
+        return {"date_text": date_text, "price": price, "location": location}
+
+    # ---------- crawling ----------
 
     def start_requests(self):
-        # 1) Sitemap index (primary discovery)
+        # main dynamic listing (render with Playwright)
         yield scrapy.Request(
-            "https://www.aucklandnz.com/sitemap.xml",
-            callback=self.parse_sitemap_index,
-            dont_filter=True,
+            self.start_urls[0],
+            callback=self.parse_listing_with_playwright,
+            meta={"playwright": True, "playwright_include_page": True},
         )
 
-        # 2) Plain listing pages (no JS) as a safety net
-        if self.pages_max > 0:
-            base = "https://www.aucklandnz.com/events-hub/events"
-            yield scrapy.Request(base, callback=self.parse_listing, dont_filter=True)
-            for i in range(1, self.pages_max + 1):
-                yield scrapy.Request(f"{base}?page={i}", callback=self.parse_listing, dont_filter=True)
+        # optional best-effort query paging (site may or may not support this)
+        if self.listing_range:
+            for n in self.listing_range:
+                url = f"https://www.aucklandnz.com/events-hub/events?page={n}"
+                yield scrapy.Request(
+                    url,
+                    callback=self.parse_listing_with_playwright,
+                    meta={"playwright": True, "playwright_include_page": True},
+                    dont_filter=True,
+                )
 
-    # ---- sitemap ----
-    def parse_sitemap_index(self, response):
-        # Follow child sitemaps that look event-related; if unsure, follow all
-        for loc in response.xpath("//loc/text()").getall():
-            if "event" in loc or "events" in loc:
-                yield scrapy.Request(loc, callback=self.parse_sitemap_leaf, dont_filter=True)
-            else:
-                # Some sites keep events in generic child sitemaps—follow anyway
-                yield scrapy.Request(loc, callback=self.parse_sitemap_leaf, dont_filter=True)
+    async def parse_listing_with_playwright(self, response: scrapy.http.Response):
+        """
+        Use Playwright to (optionally) click 'See more' multiple times,
+        then extract all event hrefs under /events-hub/events/<slug>.
+        """
+        page = response.meta["playwright_page"]
 
-    def parse_sitemap_leaf(self, response):
-        # urlset → url → loc
-        for loc in response.xpath("//url/loc/text()").getall():
-            if EVENT_PATH_PREFIX in loc:
-                yield scrapy.Request(loc, callback=self.parse_event, dont_filter=True)
+        # Try to wait for at least one event card link to appear
+        try:
+            await page.wait_for_selector(
+                "a[href^='/events-hub/events/'], a[href^='https://www.aucklandnz.com/events-hub/events/']",
+                timeout=15000,
+            )
+        except Exception:
+            pass
 
-        # In case this was another sitemap index, recurse (harmless if not)
-        for child in response.xpath("//sitemap/loc/text()").getall():
-            yield scrapy.Request(child, callback=self.parse_sitemap_leaf, dont_filter=True)
+        # Robustly try to click a "See more" or "Show more" control up to self.load_more times
+        see_more_selectors = [
+            "button:has-text('See More')",
+            "button:has-text('See more')",
+            "button:has-text('Show more')",
+            "a:has-text('See More')",
+            "a:has-text('See more')",
+            "[data-drupal-views-infinite-scroll] button",
+        ]
+        for _ in range(self.load_more):
+            clicked = False
+            for sel in see_more_selectors:
+                try:
+                    loc = page.locator(sel).first
+                    if await loc.is_visible():
+                        await loc.click()
+                        clicked = True
+                        # Give time for network/render
+                        await page.wait_for_timeout(1200)
+                        break
+                except Exception:
+                    continue
+            if not clicked:
+                break
 
-    # ---- listing (no JS) ----
-    def parse_listing(self, response):
-        for href in response.css(f'a[href^="{EVENT_PATH_PREFIX}"]::attr(href)').getall():
-            yield response.follow(href, callback=self.parse_event, dont_filter=True)
+        # Get the fully rendered HTML and parse with parsel
+        html = await page.content()
+        await page.close()
 
-        # Follow obvious pagination if present
-        for nxt in response.css('a[rel="next"]::attr(href), a.pager__item--next::attr(href)').getall():
-            yield response.follow(nxt, callback=self.parse_listing, dont_filter=True)
+        sel = Selector(text=html)
+        hrefs = set()
+        for css in [
+            "a[href^='https://www.aucklandnz.com/events-hub/events/']::attr(href)",
+            "a[href^='/events-hub/events/']::attr(href)",
+        ]:
+            hrefs.update(sel.css(css).getall())
 
-    # ---- detail ----
-    def parse_event(self, response):
-        objs = _jsonld_blocks(response.text)
-        ev = _find_event_ld(objs)
+        for href in sorted(hrefs):
+            abs_url = urljoin("https://www.aucklandnz.com", href)
+            # Only accept detail pages under /events-hub/events/<slug> (no querystrings)
+            if re.match(r"^https://www\.aucklandnz\.com/events-hub/events/[^/?#]+$", abs_url):
+                yield scrapy.Request(abs_url, callback=self.parse_event)
 
-        title = _title(response, ev)
-        desc = _description(response, ev)
-        st, en, dates_text = _dates(response, ev)
-        location = _location(response, ev)
-        price = _price(response, ev)
-        image = _image(response, ev)
-        cats = _categories(response, ev)
+    def parse_event(self, response: scrapy.http.Response):
+        title = self._clean(response.css("h1::text").get())
+
+        # Long description: prefer the main article/body block; fallback to meta description
+        desc = self._join_text(
+            response.css(".field--name-body p::text, .field--name-body li::text").getall()
+        )
+        if not desc:
+            # generic fallback – first few paragraphs in main content
+            desc = self._join_text(response.css("main p::text").getall()) or \
+                   self._clean(response.css("meta[name='description']::attr(content)").get())
+
+        # Top meta block (date text, price, location)
+        top_meta = self._extract_top_meta(response)
+        dates_text = top_meta.get("date_text")
+        price = top_meta.get("price")
+        location = top_meta.get("location")
+
+        # Attempt to parse ISO dates from the date text (best effort; leave None if ambiguous)
+        st, en = self._parse_dates(dates_text)
+
+        # Categories are not consistently shown on detail pages;
+        # if tags exist near the header, capture them (else None).
+        cats = response.css("[class*='category'] a::text, .tags a::text").getall()
+        cats = [self._clean(c) for c in cats if self._clean(c)]
+        if not cats:
+            cats = None
+
+        # Image: prefer OpenGraph/Twitter image; fallback to the first content image
+        image = response.css("meta[property='og:image']::attr(content)").get()
+        if not image:
+            image = response.css("meta[name='twitter:image']::attr(content)").get()
+        if not image:
+            image = response.css("article img::attr(src), main img::attr(src)").get()
+            if image:
+                image = urljoin(response.url, image)
 
         item = {
             "source": "aucklandnz",
@@ -312,3 +281,9 @@ class AucklandEventsSpider(scrapy.Spider):
             "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
         yield item
+
+        # Bonus: follow more event links found on this page (e.g., "Similar events")
+        for href in response.css("a[href^='/events-hub/events/']::attr(href)").getall():
+            u = urljoin(response.url, href)
+            if re.match(r"^https://www\.aucklandnz\.com/events-hub/events/[^/?#]+$", u):
+                yield scrapy.Request(u, callback=self.parse_event)
