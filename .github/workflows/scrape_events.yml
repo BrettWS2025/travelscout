@@ -79,7 +79,7 @@ jobs:
           FEEDS_JSON="$(python - <<'PY'
           import json, os
           p = os.environ.get("FEED_PATH", "data/Events.jsonl")
-          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
+          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": True}}))
           PY
           )"
 
