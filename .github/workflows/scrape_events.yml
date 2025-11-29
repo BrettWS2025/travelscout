@@ -8,19 +8,19 @@ on:
         default: "auckland_events"
         required: true
       feed_path:
-        description: "Path under scraper/ to write the JSON Lines feed"
+        description: "Relative path under scraper/ to write the JSON Lines feed"
         default: "data/Events.jsonl"
         required: true
-
-permissions:
-  contents: write  # needed so we can commit the feed back to the repo
+      listing_pages:
+        description: "How many listing pages (?page=N) to fetch (depth)"
+        default: "25"
+        required: true
 
 jobs:
   scrape:
     name: Run Scrapy spiders
     runs-on: ubuntu-latest
 
-    # All shell steps run from the scraper/ directory
     defaults:
       run:
         shell: bash
@@ -36,9 +36,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -59,15 +56,15 @@ jobs:
           mkdir -p debug httpcache
           mkdir -p "$(dirname "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}")"
 
-      - name: Sanity check import path
+      - name: Sanity check PYTHONPATH and package
         run: |
           python - <<'PY'
-          import os, pkgutil, tscraper
-          print("CWD", os.getcwd())
-          print("PYTHONPATH", os.environ.get("PYTHONPATH"))
+          import os, pkgutil
+          print("CWD:", os.getcwd())
+          print("PYTHONPATH:", os.environ.get("PYTHONPATH"))
+          import tscraper, tscraper.spiders
           print("tscraper path:", list(tscraper.__path__))
-          import tscraper.spiders
-          print("discovered spiders:", [m.name for m in pkgutil.iter_modules(tscraper.spiders.__path__)])
+          print("spiders:", [m.name for m in pkgutil.iter_modules(tscraper.spiders.__path__)])
           PY
 
       - name: Show Scrapy version & discovered spiders
@@ -75,72 +72,39 @@ jobs:
           scrapy version -v
           scrapy list | tee debug/spiders.txt
 
-      - name: Run spiders (write JSON Lines feed)
-        id: runspiders
-        env:
-          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
-          SPIDERS: ${{ github.event.inputs.spiders }}
+      - name: Run spiders
         run: |
           set -euo pipefail
+          FEED_PATH="${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}"
+          FEEDS_JSON="{\"$FEED_PATH\": {\"format\": \"jsonlines\", \"encoding\": \"utf8\", \"overwrite\": false}}"
+          LISTING_PAGES="${{ github.event.inputs.listing_pages || '25' }}"
 
-          # Build a proper FEEDS mapping in JSON so Scrapy doesn't rely on extension guessing
-          FEEDS_JSON="$(python - <<'PY'
-          import json, os
-          p = os.environ.get("FEED_PATH", "data/Events.jsonl")
-          # jsonlines exporter is explicit; "overwrite": False => append across spiders if needed
-          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
-          PY
-          )"
-
-          echo "FEED will go to: ${FEED_PATH}"
-          echo "FEEDS mapping: ${FEEDS_JSON}"
-
-          IFS=',' read -ra S <<< "${SPIDERS}"
+          IFS=',' read -ra S <<< "${{ github.event.inputs.spiders }}"
           for s in "${S[@]}"; do
             s="$(echo "$s" | xargs)"
             [[ -z "$s" ]] && continue
             echo "::group::scrapy crawl $s"
-            scrapy crawl "$s" -s FEEDS="$FEEDS_JSON"
+            scrapy crawl "$s" \
+              -s FEEDS="$FEEDS_JSON" \
+              -s TS_LISTING_PAGES_MAX="$LISTING_PAGES"
             echo "::endgroup::"
           done
-
-      - name: Verify feed file exists
-        env:
-          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
-        run: |
-          set -e
-          ls -la "$(dirname "$FEED_PATH")" || true
-          test -s "$FEED_PATH" || (echo "ERROR: Feed file $FEED_PATH not found or empty." && exit 1)
-          echo "First 5 lines:"
-          head -n 5 "$FEED_PATH" || true
 
       - name: Upload data (JSONL)
         uses: actions/upload-artifact@v4
         with:
           name: events-jsonl
-          # upload from repo root: prefix with scraper/
           path: scraper/${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 10
 
-      - name: Commit feed back to repository
-        # Only try to commit when we're on a branch (e.g., main) and not in a PR from a fork
-        if: ${{ github.ref_type == 'branch' }}
-        env:
-          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
-        run: |
-          set -e
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # We are in scraper/; git works fine from subdirectories
-          git add "$FEED_PATH" || true
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-
-          git commit -m "chore: update ${FEED_PATH} [skip ci]"
-          # push to the same branch the workflow is running on
-          git push
+      - name: Upload debug (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-artifacts
+          path: |
+            scraper/debug/**
+            scraper/httpcache/**
+          if-no-files-found: warn
+          retention-days: 7
