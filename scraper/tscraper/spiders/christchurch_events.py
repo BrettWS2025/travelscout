@@ -183,7 +183,9 @@ class ChristchurchEventsSpider(scrapy.Spider):
         for _ in range(self.load_more):
             # Scroll to bottom to trigger lazy loads (and give it a beat)
             try:
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                await page.evaluate("""
+                document.querySelector('footer')?.scrollIntoView({behavior: 'instant', block: 'end'});
+                """)
                 await page.wait_for_timeout(800)
             except Exception:
                 pass
