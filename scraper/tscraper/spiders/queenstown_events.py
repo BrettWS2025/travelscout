@@ -43,10 +43,10 @@ class GenericEventsSpider(scrapy.Spider):
     # ---------- init & config ----------
     def __init__(
         self,
-        base: str = "https://www.queenstownnz.co.nz/things-to-do/events/event-calendar/",
+        base: str = "https://www.queenstownnz.co.nz/things-to-do/events/",
         domain: str = "queenstownnz.co.nz",
-        allow: str = '^https://(?:www\\.)?queenstownnz\\.co.nz/things-to-do/events/event-calendar/[^/?#]+$',
-        linksel: str = "a[href*='/things-to-do/events/event-calendar/']::attr(href)",
+        allow: str = '^https://(?:www\\.)?queenstownnz\\.co.nz/things-to-do/events/[^/?#]+$',
+        linksel: str = "a[href*='/things-to-do/events/']::attr(href)",
         more: str = "",
         load_more: str = "60",
         pages: str | None = None,
