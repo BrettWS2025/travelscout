@@ -1,4 +1,4 @@
-# scraper/tscraper/spiders/auckland_events.py
+# scraper/tscraper/spiders/christchurch_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -8,7 +8,7 @@ import scrapy
 from parsel import Selector
 
 try:
-    from scrapy_playwright.page import PageMethod  # available via your settings
+    from scrapy_playwright.page import PageMethod  # available via settings
 except Exception:  # pragma: no cover
     PageMethod = None
 
@@ -19,21 +19,20 @@ class ChristchurchEventsSpider(scrapy.Spider):
     start_urls = ["https://www.christchurchnz.com/visit/whats-on/"]
 
     custom_settings = {
-        # Politeness + stability; FEEDS is set from your workflow CLI
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_TIMEOUT": 60,
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    # Optional CLI args (still supported):
-    #  -a load_more=60       -> upper bound on auto-expand iterations
-    #  -a listing_pages=0-40 -> also try ?page=N
-    def __init__(self, load_more: str = "60", listing_pages: str | None = None, *args, **kwargs):
+    # Optional CLI args:
+    #   -a load_more=80
+    #   -a listing_pages=0-40  (best-effort; page param may or may not be used)
+    def __init__(self, load_more: str = "80", listing_pages: str | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
-            self.load_more = 60
+            self.load_more = 80
 
         self.listing_range = None
         if listing_pages:
@@ -43,10 +42,9 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 if b >= a:
                     self.listing_range = list(range(a, b + 1))
 
-        # de-dupe across all discovery paths
         self._seen_links: set[str] = set()
 
-    # -------- utilities --------
+    # ---------- helpers ----------
 
     @staticmethod
     def _clean(s: str | None) -> str | None:
@@ -63,7 +61,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
     @staticmethod
     def _normalize_event_url(href: str) -> str | None:
-        """Make absolute, strip query/fragment, keep only proper /events-hub/events/<slug>."""
+        """Accept only /visit/whats-on/listing/<slug> detail pages; strip query/fragment."""
         if not href:
             return None
         absu = urljoin("https://www.christchurchnz.com", href)
@@ -72,12 +70,11 @@ class ChristchurchEventsSpider(scrapy.Spider):
             return None
         path = path.rstrip("/")
         clean = urlunsplit((scheme, netloc, path, "", ""))
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on[^/]+$", clean):
+        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean):
             return clean
         return None
 
     def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
-        # same lightweight date parser you already use
         if not s:
             return None, None
         txt = s.replace("–", "-").strip()
@@ -95,7 +92,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 return None
             return f"{year:04d}-{m:02d}-{day:02d}"
         dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", txt)
-        yrs = [int(y) for y in re.findall(r"\b(20\d{2})\b", txt)]
+        yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", txt)]
         if not dm:
             return None, None
         if len(dm) == 1:
@@ -131,10 +128,10 @@ class ChristchurchEventsSpider(scrapy.Spider):
             break
         return {"date_text": date_text, "price": price, "location": location}
 
-    # -------- crawling --------
+    # ---------- crawling ----------
 
     def start_requests(self):
-        # 1) Listing page (JS): auto-scroll & auto-click until exhausted
+        # Listing (JS: infinite scroll / “load more”)
         yield scrapy.Request(
             self.start_urls[0],
             callback=self.parse_listing_with_playwright,
@@ -142,7 +139,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # 2) Best-effort “?page=” enumeration (some Drupal views support it)
+        # Optional page=N probing (if the site uses it)
         if self.listing_range:
             for n in self.listing_range:
                 url = f"https://www.christchurchnz.com/visit/whats-on?page={n}"
@@ -153,7 +150,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
                     dont_filter=True,
                 )
 
-        # 3) Sitemap index for completeness (server-rendered; no Playwright)
+        # Sitemap pass (may or may not include all listings, but it’s cheap to try)
         yield scrapy.Request(
             "https://www.christchurchnz.com/sitemap.xml",
             callback=self.parse_sitemap_index,
@@ -162,76 +159,86 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
-        try:
-            await page.wait_for_selector("a[href*='/visit/whats-on']", timeout=15000)
-        except Exception:
-            pass
 
-        # Iterate: scroll + click "more" until no new links (or we hit self.load_more cycles)
-        selectors = [
-            "button:has-text('Load more')",
-            "button:has-text('See more')",
-            "button:has-text('Show more')",
-            "a:has-text('Load more')",
-            "[data-drupal-views-infinite-scroll] button",
-        ]
-
-        last_count = 0
-        stagnant_rounds = 0
-        for _ in range(self.load_more):
-            # Scroll to bottom to trigger lazy loads
+        # Dismiss cookie banner if present (best-effort; won't fail the run)
+        for sel in ["button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"]:
             try:
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await page.wait_for_timeout(700)
+                loc = page.locator(sel).first
+                if await loc.is_visible():
+                    await loc.click()
+                    await page.wait_for_timeout(300)
+                    break
             except Exception:
                 pass
 
-            # Try a “more” button if present
+        # Wait specifically for tile anchors to exist
+        tile_selector = "a[href^='/visit/whats-on/listing/']"
+        try:
+            await page.wait_for_selector(tile_selector, timeout=15000)
+        except Exception:
+            pass
+
+        last_count = 0
+        stagnant = 0
+        for _ in range(self.load_more):
+            # Scroll to bottom to trigger lazy loads (and give it a beat)
+            try:
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                await page.wait_for_timeout(800)
+            except Exception:
+                pass
+
+            # Try common “load more” controls
             clicked = False
-            for sel in selectors:
+            for sel in [
+                "button:has-text('Load more')",
+                "button:has-text('Load more events')",
+                "button:has-text('See more')",
+                "button:has-text('Show more')",
+                "a:has-text('Load more')",
+            ]:
                 try:
                     loc = page.locator(sel).first
                     if await loc.is_visible():
                         await loc.click()
                         clicked = True
-                        await page.wait_for_timeout(1200)
+                        # let network settle
+                        try:
+                            await page.wait_for_load_state("networkidle", timeout=5000)
+                        except Exception:
+                            await page.wait_for_timeout(1200)
                         break
                 except Exception:
                     continue
 
+            # Count how many detail links are currently in the DOM
             html = await page.content()
-            sel = Selector(text=html)
-            hrefs = set(sel.css("a[href*='/visit/whats-on']::attr(href)").getall())
-            normalized = {self._normalize_event_url(h) for h in hrefs}
-            normalized.discard(None)
+            n = Selector(text=html).css(tile_selector).getall()
+            cur = len(n)
 
-            if len(normalized) > last_count:
-                last_count = len(normalized)
-                stagnant_rounds = 0
+            if cur > last_count:
+                last_count = cur
+                stagnant = 0
             else:
-                stagnant_rounds += 1
+                stagnant += 1
 
-            if not clicked and stagnant_rounds >= 3:
+            # if we neither clicked nor saw growth for a few rounds, bail
+            if not clicked and stagnant >= 3:
                 break
 
-        # Close page and schedule details
+        # Final harvest
         html = await page.content()
         await page.close()
-
         sel = Selector(text=html)
-        hrefs = set(sel.css("a[href*='/visit/whats-on']::attr(href)").getall())
-        for h in hrefs:
+        for h in sel.css(f"{tile_selector}::attr(href)").getall():
             u = self._normalize_event_url(h)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
     def parse_sitemap_index(self, response: scrapy.http.Response):
-        # Follow any children and collect direct event URLs
-        locs = response.xpath("//loc/text()").getall()
-        for loc in locs:
+        for loc in response.xpath("//loc/text()").getall():
             if loc.endswith(".xml"):
-                # follow all sub-sitemaps; they often contain events
                 yield scrapy.Request(loc, callback=self.parse_sitemap_leaf, dont_filter=True)
             else:
                 u = self._normalize_event_url(loc)
@@ -246,35 +253,34 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 self._seen_links.add(u)
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-    # -------- detail pages --------
+    # ---------- detail pages ----------
 
     def parse_event(self, response: scrapy.http.Response):
-        title = self._clean(response.css("h1::text").get())
+        title = self._clean(response.css("h1::text").get()) \
+            or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
+            or self._clean(response.css("title::text").get())
 
-        desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall())
-        if not desc:
-            desc = self._join_text(response.css("main p::text").getall()) or \
-                   self._clean(response.css("meta[name='description']::attr(content)").get())
+        desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall()) \
+            or self._join_text(response.css("article p::text, main p::text").getall()) \
+            or self._clean(response.css("meta[name='description']::attr(content)").get())
 
-        top_meta = self._extract_top_meta(response)
-        dates_text = top_meta.get("date_text")
-        price = top_meta.get("price")
-        location = top_meta.get("location")
-
+        meta = self._extract_top_meta(response)
+        dates_text = meta.get("date_text")
+        price = meta.get("price")
+        location = meta.get("location")
         st, en = self._parse_dates(dates_text)
 
         cats = response.css("[class*='category'] a::text, .tags a::text").getall()
         cats = [self._clean(c) for c in cats if self._clean(c)] or None
 
-        image = response.css("meta[property='og:image']::attr(content)").get()
-        if not image:
-            image = response.css("meta[name='twitter:image']::attr(content)").get()
+        image = response.css("meta[property='og:image']::attr(content)").get() \
+            or response.css("meta[name='twitter:image']::attr(content)").get()
         if not image:
             img = response.css("article img::attr(src), main img::attr(src)").get()
             if img:
                 image = urljoin(response.url, img)
 
-        item = {
+        yield {
             "source": "christchurchnz",
             "url": response.url,
             "title": title,
@@ -286,10 +292,9 @@ class ChristchurchEventsSpider(scrapy.Spider):
             "image": image,
             "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
-        yield item
 
-        # Opportunistically follow additional event links found on the page
-        for href in response.css("a[href^='/visit/whats-on']::attr(href)").getall():
+        # Also follow “similar events” on the page (same strict pattern)
+        for href in response.css("a[href^='/visit/whats-on/listing/']::attr(href)").getall():
             u = self._normalize_event_url(href)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
