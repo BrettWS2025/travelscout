@@ -21,18 +21,19 @@ class ChristchurchEventsSpider(scrapy.Spider):
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_TIMEOUT": 60,
+        # FEEDS is supplied from your workflow; no need to set here
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    # Optional CLI args:
-    #   -a load_more=80
-    #   -a listing_pages=0-40  (best-effort; page param may or may not be used)
-    def __init__(self, load_more: str = "80", listing_pages: str | None = None, *args, **kwargs):
+    # CLI args:
+    #   -a load_more=150        # max scroll/expand cycles
+    #   -a listing_pages=0-12   # also try ?page=N (server-side)
+    def __init__(self, load_more: str = "120", listing_pages: str | None = "0-12", *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
-            self.load_more = 80
+            self.load_more = 120
 
         self.listing_range = None
         if listing_pages:
@@ -44,14 +45,16 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
         self._seen_links: set[str] = set()
 
-    # ---------- helpers ----------
+        # Site-specific tile/link selector
+        self._tile_selector = "a[href^='/visit/whats-on/listing/']"
+
+    # ---------------- helpers ----------------
 
     @staticmethod
     def _clean(s: str | None) -> str | None:
         if not s:
             return None
-        s = re.sub(r"\s+", " ", s).strip()
-        return s or None
+        return re.sub(r"\s+", " ", s).strip() or None
 
     @staticmethod
     def _join_text(nodes) -> str | None:
@@ -61,18 +64,15 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
     @staticmethod
     def _normalize_event_url(href: str) -> str | None:
-        """Accept only /visit/whats-on/listing/<slug> detail pages; strip query/fragment."""
+        """Accept only /visit/whats-on/listing/<slug>; strip query/fragment."""
         if not href:
             return None
         absu = urljoin("https://www.christchurchnz.com", href)
         scheme, netloc, path, _, _ = urlsplit(absu)
-        if not scheme or not netloc or not path:
+        if not (scheme and netloc and path):
             return None
-        path = path.rstrip("/")
-        clean = urlunsplit((scheme, netloc, path, "", ""))
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean):
-            return clean
-        return None
+        clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
+        return clean if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean) else None
 
     def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
         if not s:
@@ -91,6 +91,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             if not (m and year):
                 return None
             return f"{year:04d}-{m:02d}-{day:02d}"
+
         dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", txt)
         yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", txt)]
         if not dm:
@@ -113,25 +114,21 @@ class ChristchurchEventsSpider(scrapy.Spider):
         meta_texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
         meta_texts = [t for t in meta_texts if t]
         date_text = meta_texts[0] if meta_texts else None
-        price = None
+        price = next((t for t in meta_texts if "$" in t or re.search(r"\bFREE\b", t or "", re.I)), None)
         location = None
         for t in meta_texts:
-            if "$" in t or re.search(r"\bFREE\b", t, flags=re.I):
-                price = t
-                break
-        for t in meta_texts:
-            if t == date_text or t == price:
+            if t in (date_text, price):
                 continue
-            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t, flags=re.I):
+            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t or "", re.I):
                 continue
             location = t
             break
         return {"date_text": date_text, "price": price, "location": location}
 
-    # ---------- crawling ----------
+    # ---------------- crawl ----------------
 
     def start_requests(self):
-        # Listing (JS: infinite scroll / “load more”)
+        # JS listing (infinite/virtualized)
         yield scrapy.Request(
             self.start_urls[0],
             callback=self.parse_listing_with_playwright,
@@ -139,7 +136,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # Optional page=N probing (if the site uses it)
+        # Server-side pagination fallback (?page=N)
         if self.listing_range:
             for n in self.listing_range:
                 url = f"https://www.christchurchnz.com/visit/whats-on?page={n}"
@@ -150,18 +147,30 @@ class ChristchurchEventsSpider(scrapy.Spider):
                     dont_filter=True,
                 )
 
-        # Sitemap pass (may or may not include all listings, but it’s cheap to try)
+        # Sitemap fallback
         yield scrapy.Request(
             "https://www.christchurchnz.com/sitemap.xml",
             callback=self.parse_sitemap_index,
             dont_filter=True,
         )
 
+    async def _harvest_links_now(self, page) -> list[str]:
+        """Parse current DOM and return *new* normalized detail URLs."""
+        html = await page.content()
+        sel = Selector(text=html)
+        found = []
+        for h in sel.css(f"{self._tile_selector}::attr(href)").getall():
+            u = self._normalize_event_url(h)
+            if u and u not in self._seen_links:
+                self._seen_links.add(u)
+                found.append(u)
+        return found
+
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
 
-        # Dismiss cookie banner if present (best-effort; won't fail the run)
-        for sel in ["button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"]:
+        # Best-effort cookie banner dismiss
+        for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
                 loc = page.locator(sel).first
                 if await loc.is_visible():
@@ -171,40 +180,48 @@ class ChristchurchEventsSpider(scrapy.Spider):
             except Exception:
                 pass
 
-        # Wait specifically for tile anchors to exist
-        tile_selector = "a[href^='/visit/whats-on/listing/']"
+        # Wait until at least one tile is in the DOM
         try:
-            await page.wait_for_selector(tile_selector, timeout=15000)
+            await page.wait_for_selector(self._tile_selector, timeout=15000)
         except Exception:
             pass
 
-        last_count = 0
-        stagnant = 0
+        # Immediately harvest whatever is visible
+        initial = await self._harvest_links_now(page)
+        for u in initial:
+            yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+        stagnant_rounds = 0
+        total_found = len(initial)
+
         for _ in range(self.load_more):
-            # Scroll to bottom to trigger lazy loads (and give it a beat)
+            # 1) Scroll the last tile into view (triggers IO-based loading on virtual lists)
             try:
-                await page.evaluate("""
-                document.querySelector('footer')?.scrollIntoView({behavior: 'instant', block: 'end'});
-                """)
-                await page.wait_for_timeout(800)
+                last = page.locator(self._tile_selector).last
+                await last.scroll_into_view_if_needed()
             except Exception:
                 pass
 
-            # Try common “load more” controls
+            # 2) Also wheel to the bottom to be safe
+            try:
+                await page.mouse.wheel(0, 8000)
+            except Exception:
+                pass
+
+            # 3) Try a few likely "load more" controls (if present)
             clicked = False
-            for sel in [
+            for sel in (
                 "button:has-text('Load more')",
                 "button:has-text('Load more events')",
                 "button:has-text('See more')",
                 "button:has-text('Show more')",
                 "a:has-text('Load more')",
-            ]:
+            ):
                 try:
                     loc = page.locator(sel).first
                     if await loc.is_visible():
                         await loc.click()
                         clicked = True
-                        # let network settle
                         try:
                             await page.wait_for_load_state("networkidle", timeout=5000)
                         except Exception:
@@ -213,31 +230,33 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 except Exception:
                     continue
 
-            # Count how many detail links are currently in the DOM
-            html = await page.content()
-            n = Selector(text=html).css(tile_selector).getall()
-            cur = len(n)
+            # 4) Give the page a small beat to render
+            await page.wait_for_timeout(700)
 
-            if cur > last_count:
-                last_count = cur
-                stagnant = 0
-            else:
-                stagnant += 1
-
-            # if we neither clicked nor saw growth for a few rounds, bail
-            if not clicked and stagnant >= 3:
-                break
-
-        # Final harvest
-        html = await page.content()
-        await page.close()
-        sel = Selector(text=html)
-        for h in sel.css(f"{tile_selector}::attr(href)").getall():
-            u = self._normalize_event_url(h)
-            if u and u not in self._seen_links:
-                self._seen_links.add(u)
+            # 5) HARVEST *NOW* (this is the key change for virtual lists)
+            new_links = await self._harvest_links_now(page)
+            for u in new_links:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
+            if new_links:
+                total_found += len(new_links)
+                stagnant_rounds = 0
+            else:
+                stagnant_rounds += 1
+
+            # If we neither clicked nor found new links a few rounds in a row, bail
+            if not clicked and stagnant_rounds >= 3:
+                break
+
+        # Final pass (in case the last render brought in a few more)
+        final_links = await self._harvest_links_now(page)
+        for u in final_links:
+            yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+        await page.close()
+        self.logger.info("Listing harvest complete. Total unique detail URLs discovered: %d", len(self._seen_links))
+
+    # ---- sitemap fallbacks ----
     def parse_sitemap_index(self, response: scrapy.http.Response):
         for loc in response.xpath("//loc/text()").getall():
             if loc.endswith(".xml"):
@@ -255,7 +274,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 self._seen_links.add(u)
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-    # ---------- detail pages ----------
+    # ---------------- detail pages ----------------
 
     def parse_event(self, response: scrapy.http.Response):
         title = self._clean(response.css("h1::text").get()) \
@@ -295,7 +314,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
 
-        # Also follow “similar events” on the page (same strict pattern)
+        # opportunistic: follow related tiles on the detail page too
         for href in response.css("a[href^='/visit/whats-on/listing/']::attr(href)").getall():
             u = self._normalize_event_url(href)
             if u and u not in self._seen_links:
