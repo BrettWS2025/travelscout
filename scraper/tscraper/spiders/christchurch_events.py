@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover
 class ChristchurchEventsSpider(scrapy.Spider):
     name = "christchurch_events"
     allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
-    start_urls = ["https://www.christchurchnz.com/visit/whats-on/listing/"]
+    start_urls = ["https://www.christchurchnz.com/visit/whats-on/"]
 
     custom_settings = {
         # Politeness + stability; FEEDS is set from your workflow CLI
@@ -72,7 +72,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             return None
         path = path.rstrip("/")
         clean = urlunsplit((scheme, netloc, path, "", ""))
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/]+$", clean):
+        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on[^/]+$", clean):
             return clean
         return None
 
@@ -163,7 +163,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
         try:
-            await page.wait_for_selector("a[href*='/visit/whats-on/listing/']", timeout=15000)
+            await page.wait_for_selector("a[href*='/visit/whats-on']", timeout=15000)
         except Exception:
             pass
 
@@ -201,7 +201,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
             html = await page.content()
             sel = Selector(text=html)
-            hrefs = set(sel.css("a[href*='/visit/whats-on/listing/']::attr(href)").getall())
+            hrefs = set(sel.css("a[href*='/visit/whats-on']::attr(href)").getall())
             normalized = {self._normalize_event_url(h) for h in hrefs}
             normalized.discard(None)
 
@@ -219,7 +219,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         await page.close()
 
         sel = Selector(text=html)
-        hrefs = set(sel.css("a[href*='/visit/whats-on/listing/']::attr(href)").getall())
+        hrefs = set(sel.css("a[href*='/visit/whats-on']::attr(href)").getall())
         for h in hrefs:
             u = self._normalize_event_url(h)
             if u and u not in self._seen_links:
@@ -289,7 +289,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         yield item
 
         # Opportunistically follow additional event links found on the page
-        for href in response.css("a[href^='/visit/whats-on/listing/']::attr(href)").getall():
+        for href in response.css("a[href^='/visit/whats-on']::attr(href)").getall():
             u = self._normalize_event_url(href)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
