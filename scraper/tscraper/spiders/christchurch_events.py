@@ -126,40 +126,94 @@ class GenericEventsSpider(scrapy.Spider):
         return clean if self.allow_re.match(clean) else None
 
     def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
-        if not s:
-            return None, None
-        txt = s.replace("–", "-").strip()
-        if re.search(r"\bToday\b|\bNow\b", txt, flags=re.I):
-            return None, None
+    if not s:
+        return None, None
+    t = re.sub(r"\s+", " ", s).strip()
+
+    # Case A: "15 Dec 2025 | 6:00 pm - 7:30 pm"
+    m = re.match(
+        r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*\|\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))\s*-\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))$",
+        t, re.I
+    )
+    if m:
+        d, mon, y, st_txt, en_txt = m.groups()
         months = {
-            "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
-            "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
-            "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10,
-            "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
+            "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+            "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+            "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
         }
-        def to_iso(day: int, mon_name: str, year: int | None) -> str | None:
-            m = months.get(mon_name.lower())
-            if not (m and year):
-                return None
-            return f"{year:04d}-{m:02d}-{day:02d}"
-        dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", txt)
-        yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", txt)]  # lenient
-        yrs = [int("".join(y)) if isinstance(y, tuple) else int(y) for y in yrs]
-        if not dm:
-            return None, None
-        if len(dm) == 1:
-            d1, m1 = int(dm[0][0]), dm[0][1]
-            y1 = yrs[0] if yrs else None
-            return to_iso(d1, m1, y1), None
+        M = months.get(mon.lower())
+        if M:
+            def _hm(s):
+                hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s, re.I).groups()
+                hh, mm = int(hh), int(mm)
+                if ap.lower() == "pm" and hh != 12: hh += 12
+                if ap.lower() == "am" and hh == 12: hh = 0
+                return f"{hh:02d}:{mm:02d}:00"
+            st_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(st_txt)}"
+            en_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(en_txt)}"
+            return st_iso, en_iso
+
+    # Case B: "3 - 8 March 2026"
+    m = re.match(r"(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})", t)
+    if m:
+        d1, d2, mon, y = m.groups()
+        months = {
+            "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+            "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+            "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+        }
+        M = months.get(mon.lower())
+        if M:
+            return (f"{int(y):04d}-{M:02d}-{int(d1):02d}", f"{int(y):04d}-{M:02d}-{int(d2):02d}")
+
+    # Case C: single explicit date like "15 Dec 2025"
+    m = re.match(r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+(19|20)\d{2}$", t)
+    if m:
+        d, mon, y = m.groups()
+        months = {
+            "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+            "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+            "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+        }
+        M = months.get(mon.lower())
+        if M:
+            iso = f"{int(y):04d}-{M:02d}-{int(d):02d}"
+            return iso, iso
+
+    # Keep your previous lightweight fallbacks:
+    if re.search(r"\bToday\b|\bNow\b", t, flags=re.I):
+        return None, None
+    dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", t)
+    yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", t)]
+    yrs = [int("".join(y)) if isinstance(y, tuple) else int(y) for y in yrs]
+    if not dm:
+        return None, None
+    if len(dm) == 1:
         d1, m1 = int(dm[0][0]), dm[0][1]
-        d2, m2 = int(dm[1][0]), dm[1][1]
-        if len(yrs) == 1:
-            y1 = y2 = yrs[0]
-        elif len(yrs) >= 2:
-            y1, y2 = yrs[0], yrs[1]
-        else:
-            y1 = y2 = None
-        return to_iso(d1, m1, y1), to_iso(d2, m2, y2)
+        y1 = yrs[0] if yrs else None
+        months = {"jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                  "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                  "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12}
+        M = months.get(m1.lower())
+        return (f"{y1:04d}-{M:02d}-{d1:02d}" if (M and y1) else None, None)
+    d1, m1 = int(dm[0][0]), dm[0][1]
+    d2, m2 = int(dm[1][0]), dm[1][1]
+    months = {"jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+              "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+              "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12}
+    if len(yrs) == 1:
+        y1 = y2 = yrs[0]
+    elif len(yrs) >= 2:
+        y1, y2 = yrs[0], yrs[1]
+    else:
+        y1 = y2 = None
+    M1, M2 = months.get(m1.lower()), months.get(m2.lower())
+    return (
+        f"{y1:04d}-{M1:02d}-{d1:02d}" if (M1 and y1) else None,
+        f"{y2:04d}-{M2:02d}-{d2:02d}" if (M2 and y2) else None,
+    )
+
 
     def _extract_top_meta(self, response: scrapy.http.Response) -> dict:
         # Generic, but you may tweak this per site
@@ -289,46 +343,70 @@ class GenericEventsSpider(scrapy.Spider):
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
     # ---------- detail pages ----------
-    def parse_event(self, response: scrapy.http.Response):
-        # Title
-        title = self._clean(response.css("h1::text").get()) \
-            or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
-            or self._clean(response.css("title::text").get())
+def parse_event(self, response: scrapy.http.Response):
+    # Title
+    title = self._clean(response.css("h1::text").get()) \
+        or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
+        or self._clean(response.css("title::text").get())
 
-        # Description
-        desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall()) \
-            or self._join_text(response.css("article p::text, main p::text").getall()) \
-            or self._clean(response.css("meta[name='description']::attr(content)").get())
+    # Description
+    desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall()) \
+        or self._join_text(response.css("article p::text, main p::text").getall()) \
+        or self._clean(response.css("meta[name='description']::attr(content)").get())
 
-        # Meta (dates/price/location) – heuristic, tweak if needed per site
+    # ------- DATES (from <time> …) -------
+    # e.g. "<time class='block'>15 Dec 2025 | 6:00 pm - 7:30 pm</time>"
+    time_text = self._clean(" ".join(response.css("time::text").getall()))
+    # fallback to your old heuristic if needed
+    if not time_text:
         meta = self._extract_top_meta(response)
-        dates_text = meta.get("date_text")
+        time_text = meta.get("date_text")
+    st, en = self._parse_dates(time_text)
+
+    # ------- PRICE (optional, try <dt>Cost/<dt>Price -> next <dd>) -------
+    price = None
+    price = price or self._clean(" ".join(
+        response.xpath("//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
+                       "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/"
+                       "following-sibling::dd[1]//text()").getall()
+    ))
+    # also keep your earlier fallback
+    if not price:
+        meta = meta if 'meta' in locals() else self._extract_top_meta(response)
         price = meta.get("price")
+
+    # ------- LOCATION (from the <dd class='space-y-0.5'> block) -------
+    # example given had two <p>: address line, then "Venue, City"
+    loc_parts = [self._clean(t) for t in response.css("dd.space-y-0.5 p::text").getall()]
+    loc_parts = [p for p in loc_parts if p]
+    location = " | ".join(loc_parts) if loc_parts else None
+    if not location:
+        # last resort: the previous UL heuristic
+        meta = meta if 'meta' in locals() else self._extract_top_meta(response)
         location = meta.get("location")
 
-        st, en = self._parse_dates(dates_text)
+    # ------- Categories (best-effort) -------
+    cats = response.css("[class*='category'] a::text, .tags a::text").getall()
+    cats = [self._clean(c) for c in cats if self._clean(c)] or None
 
-        # Categories
-        cats = response.css("[class*='category'] a::text, .tags a::text").getall()
-        cats = [self._clean(c) for c in cats if self._clean(c)] or None
+    # ------- Image -------
+    image = response.css("meta[property='og:image']::attr(content)").get() \
+        or response.css("meta[name='twitter:image']::attr(content)").get()
+    if not image:
+        img = response.css("article img::attr(src), main img::attr(src)").get()
+        if img:
+            image = urljoin(response.url, img)
 
-        # Image
-        image = response.css("meta[property='og:image']::attr(content)").get() \
-            or response.css("meta[name='twitter:image']::attr(content)").get()
-        if not image:
-            img = response.css("article img::attr(src), main img::attr(src)").get()
-            if img:
-                image = urljoin(response.url, img)
+    yield {
+        "source": self.domain.split(".")[0],
+        "url": response.url,
+        "title": title,
+        "description": desc,
+        "dates": {"start": st, "end": en, "text": time_text},
+        "price": price,
+        "location": location,      # <- now pulled from the correct <dd> block
+        "categories": cats or None,
+        "image": image,
+        "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+    }
 
-        yield {
-            "source": self.domain.split(".")[0],  # simple label; override if you prefer
-            "url": response.url,
-            "title": title,
-            "description": desc,
-            "dates": {"start": st, "end": en, "text": dates_text},
-            "price": price,
-            "location": location,
-            "categories": cats or None,
-            "image": image,
-            "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
-        }
