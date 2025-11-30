@@ -15,26 +15,17 @@ except Exception:  # pragma: no cover
 
 class GenericEventsSpider(scrapy.Spider):
     """
-    A configurable events spider you can reuse for different sites by
-    passing CLI args instead of changing code.
+    Generic, configurable events spider.
 
-    Required CLI args for a new site:
-      -a base=https://example.com/events               (listing hub)
-      -a domain=example.com                            (allowed domain)
-      -a allow='^https://(?:www\\.)?example\\.com/events/[^/?#]+$'  (detail URL regex)
+    Default args below target Christchurch NZ "What's On".
+    You can override them from the CLI if you reuse this spider.
 
-    Helpful optional args:
-      -a linksel="a[href*='/events/']::attr(href)"     (listing link selector)
-      -a more="button:has-text('See more')||..."       (custom 'load more' selectors, '||'-separated)
-      -a load_more=60                                  (max auto-expand cycles)
-      -a pages=0-40                                    (also try ?page=N for that range)
-      -a sitemap=https://example.com/sitemap.xml       (explicit sitemap)
-      -a js_listing=true|false                         (default true)
+    Examples:
+      scrapy crawl christchurch_events -a load_more=120 -a pages=0-12
     """
     name = "queenstown_events"
 
     custom_settings = {
-        # Keep polite; FEEDS is provided by your workflow at runtime
         "ROBOTSTXT_OBEY": True,
         "DOWNLOAD_TIMEOUT": 60,
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
@@ -43,14 +34,17 @@ class GenericEventsSpider(scrapy.Spider):
     # ---------- init & config ----------
     def __init__(
         self,
-        base: str = "https://www.queenstownnz.co.nz/event/",
+        base: str = "https://www.queenstownnz.co.nz/things-to-do/events/event-calendar/",
         domain: str = "queenstownnz.co.nz",
-        allow: str = '^https://(?:www\\.)?queenstownnz\\.co.nz/event/[^/?#]+$',
-        linksel: str = "a[href*='/event/']::attr(href)",
+        allow: str = r"^https?://(?:www\.)?queenstownnz\.co.nz/event/(?:listing/)?[^/?#]+$",
+        # Element selector for anchors on listings/tiles (no ::attr in Playwright waits!)
+        anchor_selector: str = "a[href^='/event/']",
+        # CSS used when parsing the page HTML to extract href values:
+        linksel: str = "a[href^='/event/']::attr(href), a[href*='/event/']::attr(href)",
         more: str = "",
-        load_more: str = "60",
-        pages: str | None = None,
-        sitemap: str = "https://www.queenstownnz.co.nz/sitemap.xml",
+        load_more: str = "120",
+        pages: str | None = "0-12",
+        sitemap: str = "https://www.queenstownnz.co.nz//sitemap.xml",
         js_listing: str = "true",
         *args, **kwargs,
     ):
@@ -62,12 +56,14 @@ class GenericEventsSpider(scrapy.Spider):
         self.base = base.rstrip("/")
         self.domain = domain
         self.allow_re = re.compile(allow)
+        self.anchor_selector = anchor_selector
         self.linksel = linksel
         self.js_listing = str(js_listing).strip().lower() != "false"
 
-        # see-more selectors (|| separated)
+        # See-more selectors (|| separated); we also just scroll/virtualize
         self.more_selectors = [s.strip() for s in (more or "").split("||") if s.strip()] or [
             "button:has-text('Load more')",
+            "button:has-text('Load more events')",
             "button:has-text('See more')",
             "button:has-text('Show more')",
             "a:has-text('Load more')",
@@ -77,7 +73,7 @@ class GenericEventsSpider(scrapy.Spider):
         try:
             self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
-            self.load_more = 60
+            self.load_more = 120
 
         # pages=a-b
         self.page_range = None
@@ -91,7 +87,7 @@ class GenericEventsSpider(scrapy.Spider):
         self.sitemap_url = sitemap or self._default_sitemap(self.base)
         self._seen: set[str] = set()
 
-        # start URLs
+        # start URLs / allowed domains
         self.start_urls = [self.base]
         self.allowed_domains = [self.domain, f"www.{self.domain}"]
 
@@ -115,67 +111,138 @@ class GenericEventsSpider(scrapy.Spider):
         return " ".join(parts) if parts else None
 
     def _normalize_detail_url(self, href: str) -> str | None:
+        """Accept only /visit/whats-on/<slug> or /visit/whats-on/listing/<slug>; strip query/fragment."""
         if not href:
             return None
         absu = urljoin(self.base, href)
         scheme, netloc, path, _, _ = urlsplit(absu)
         if not scheme or not netloc or not path:
             return None
-        # strip query/fragment
         clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
+
+        # exclude the hub itself and obvious non-detail paths
+        if re.search(r"/event/?$", clean):
+            return None
+        if re.search(r"/event/(category|categories|tags?|search|page/|filters|series|venues|authors?)(/|$)", clean):
+            return None
+
         return clean if self.allow_re.match(clean) else None
 
     def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
+        """
+        Handles:
+          - "15 Dec 2025 | 6:00 pm - 7:30 pm"  -> returns full ISO datetimes (local date, no tz suffix)
+          - "3 - 8 March 2026"                 -> returns YYYY-MM-DD start/end
+          - "15 Dec 2025"                      -> same start=end = that date
+        Falls back to None,None if ambiguous.
+        """
         if not s:
             return None, None
-        txt = s.replace("–", "-").strip()
-        if re.search(r"\bToday\b|\bNow\b", txt, flags=re.I):
+        t = re.sub(r"\s+", " ", s).strip()
+
+        # Case A: "15 Dec 2025 | 6:00 pm - 7:30 pm"
+        m = re.match(
+            r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*\|\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))\s*-\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))$",
+            t, re.I
+        )
+        if m:
+            d, mon, y, st_txt, en_txt = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                def _hm(s_txt: str) -> str:
+                    hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s_txt, re.I).groups()
+                    hh, mm = int(hh), int(mm)
+                    if ap.lower() == "pm" and hh != 12:
+                        hh += 12
+                    if ap.lower() == "am" and hh == 12:
+                        hh = 0
+                    return f"{hh:02d}:{mm:02d}:00"
+                st_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(st_txt)}"
+                en_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(en_txt)}"
+                return st_iso, en_iso
+
+        # Case B: "3 - 8 March 2026"
+        m = re.match(r"^\s*(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*$", t)
+        if m:
+            d1, d2, mon, y = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                return (f"{int(y):04d}-{M:02d}-{int(d1):02d}",
+                        f"{int(y):04d}-{M:02d}-{int(d2):02d}")
+
+        # Case C: "15 Dec 2025"
+        m = re.match(r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+((?:19|20)\d{2})$", t)
+        if m:
+            d, mon, y = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                iso = f"{int(y):04d}-{M:02d}-{int(d):02d}"
+                return iso, iso
+
+        # Light fallback (keep your previous heuristic)
+        if re.search(r"\bToday\b|\bNow\b", t, flags=re.I):
             return None, None
-        months = {
-            "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
-            "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
-            "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10,
-            "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
-        }
-        def to_iso(day: int, mon_name: str, year: int | None) -> str | None:
-            m = months.get(mon_name.lower())
-            if not (m and year):
-                return None
-            return f"{year:04d}-{m:02d}-{day:02d}"
-        dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", txt)
-        yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", txt)]  # lenient
-        yrs = [int("".join(y)) if isinstance(y, tuple) else int(y) for y in yrs]
+        dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", t)
+        yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", t)]
         if not dm:
             return None, None
         if len(dm) == 1:
             d1, m1 = int(dm[0][0]), dm[0][1]
             y1 = yrs[0] if yrs else None
-            return to_iso(d1, m1, y1), None
+            months = {"jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                      "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                      "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12}
+            M = months.get(m1.lower())
+            return (f"{y1:04d}-{M:02d}-{d1:02d}" if (M and y1) else None, None)
         d1, m1 = int(dm[0][0]), dm[0][1]
         d2, m2 = int(dm[1][0]), dm[1][1]
+        months = {"jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                  "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                  "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12}
         if len(yrs) == 1:
             y1 = y2 = yrs[0]
         elif len(yrs) >= 2:
             y1, y2 = yrs[0], yrs[1]
         else:
             y1 = y2 = None
-        return to_iso(d1, m1, y1), to_iso(d2, m2, y2)
+        M1, M2 = months.get(m1.lower()), months.get(m2.lower())
+        return (
+            f"{y1:04d}-{M1:02d}-{d1:02d}" if (M1 and y1) else None,
+            f"{y2:04d}-{M2:02d}-{d2:02d}" if (M2 and y2) else None,
+        )
 
     def _extract_top_meta(self, response: scrapy.http.Response) -> dict:
-        # Generic, but you may tweak this per site
+        """
+        Generic meta block just below <h1> (may contain date text, price, location text).
+        """
         meta_texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
         meta_texts = [t for t in meta_texts if t]
         date_text = meta_texts[0] if meta_texts else None
         price = None
         location = None
         for t in meta_texts:
-            if "$" in t or re.search(r"\bFREE\b", t, flags=re.I):
+            if "$" in t or re.search(r"\bFREE\b", t or "", re.I):
                 price = t
                 break
         for t in meta_texts:
-            if t == date_text or t == price:
+            if t in (date_text, price):
                 continue
-            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t, flags=re.I):
+            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t or "", re.I):
                 continue
             location = t
             break
@@ -183,7 +250,6 @@ class GenericEventsSpider(scrapy.Spider):
 
     # ---------- crawling ----------
     def start_requests(self):
-        # Listing (JS or not)
         if self.js_listing:
             yield scrapy.Request(
                 self.base,
@@ -211,22 +277,53 @@ class GenericEventsSpider(scrapy.Spider):
         if self.sitemap_url:
             yield scrapy.Request(self.sitemap_url, callback=self.parse_sitemap_index, dont_filter=True)
 
+    async def _harvest_links_now(self, page) -> list[str]:
+        """Parse current DOM and return new normalized detail URLs."""
+        html = await page.content()
+        sel = Selector(text=html)
+        found = []
+        for h in sel.css(self.linksel).getall():
+            u = self._normalize_detail_url(h)
+            if u and u not in self._seen:
+                self._seen.add(u)
+                found.append(u)
+        return found
+
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
-        try:
-            await page.wait_for_selector(self.linksel, timeout=15000)
-        except Exception:
-            pass
 
-        last_count = 0
-        stagnant_rounds = 0
-        for _ in range(self.load_more):
+        # Cookie banner (best effort)
+        for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await page.wait_for_timeout(700)
+                loc = page.locator(sel).first
+                if await loc.is_visible():
+                    await loc.click()
+                    await page.wait_for_timeout(300)
+                    break
             except Exception:
                 pass
 
+        # Wait for any listing anchor to exist (NOTE: element selector, not ::attr)
+        try:
+            await page.wait_for_selector(self.anchor_selector, timeout=15000)
+        except Exception:
+            pass
+
+        # Harvest immediately
+        initial = await self._harvest_links_now(page)
+        for u in initial:
+            yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+        stagnant_rounds = 0
+        for _ in range(self.load_more):
+            # Scroll to trigger virtualized loading
+            try:
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            except Exception:
+                pass
+            await page.wait_for_timeout(700)
+
+            # Try likely "load more" controls if present
             clicked = False
             for sel in self.more_selectors:
                 try:
@@ -234,19 +331,19 @@ class GenericEventsSpider(scrapy.Spider):
                     if await loc.is_visible():
                         await loc.click()
                         clicked = True
-                        await page.wait_for_timeout(1200)
+                        try:
+                            await page.wait_for_load_state("networkidle", timeout=5000)
+                        except Exception:
+                            await page.wait_for_timeout(1200)
                         break
                 except Exception:
                     continue
 
-            html = await page.content()
-            sel = Selector(text=html)
-            hrefs = set(sel.css(self.linksel).getall())
-            normalized = {self._normalize_detail_url(h) for h in hrefs}
-            normalized.discard(None)
+            new_links = await self._harvest_links_now(page)
+            for u in new_links:
+                yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-            if len(normalized) > last_count:
-                last_count = len(normalized)
+            if new_links:
                 stagnant_rounds = 0
             else:
                 stagnant_rounds += 1
@@ -254,16 +351,15 @@ class GenericEventsSpider(scrapy.Spider):
             if not clicked and stagnant_rounds >= 3:
                 break
 
-        html = await page.content()
+        # Final sweep
+        final_links = await self._harvest_links_now(page)
+        for u in final_links:
+            yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
         await page.close()
+        self.logger.info("Discovered %d unique detail URLs", len(self._seen))
 
-        sel = Selector(text=html)
-        for h in sel.css(self.linksel).getall():
-            u = self._normalize_detail_url(h)
-            if u and u not in self._seen:
-                self._seen.add(u)
-                yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
-
+    # Non-JS listing (not expected for this site, but kept for completeness)
     def parse_listing(self, response: scrapy.http.Response):
         for h in response.css(self.linksel).getall():
             u = self._normalize_detail_url(h)
@@ -271,6 +367,7 @@ class GenericEventsSpider(scrapy.Spider):
                 self._seen.add(u)
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
+    # ---------- sitemap fallbacks ----------
     def parse_sitemap_index(self, response: scrapy.http.Response):
         for loc in response.xpath("//loc/text()").getall():
             if loc.endswith(".xml"):
@@ -300,19 +397,49 @@ class GenericEventsSpider(scrapy.Spider):
             or self._join_text(response.css("article p::text, main p::text").getall()) \
             or self._clean(response.css("meta[name='description']::attr(content)").get())
 
-        # Meta (dates/price/location) – heuristic, tweak if needed per site
-        meta = self._extract_top_meta(response)
-        dates_text = meta.get("date_text")
-        price = meta.get("price")
-        location = meta.get("location")
+        # ------- DATES (from <time> …) -------
+        # e.g. "<time class='block'>15 Dec 2025 | 6:00 pm - 7:30 pm</time>"
+        time_text = self._clean(" ".join(response.css("time::text").getall()))
+        if not time_text:
+            meta_top = self._extract_top_meta(response)
+            time_text = meta_top.get("date_text")
+        st, en = self._parse_dates(time_text)
 
-        st, en = self._parse_dates(dates_text)
+        # ------- PRICE (optional; try dt=Price/Cost -> next dd) -------
+        price = self._clean(" ".join(
+            response.xpath(
+                "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
+                "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/"
+                "following-sibling::dd[1]//text()"
+            ).getall()
+        ))
+        if not price:
+            meta_top = meta_top if 'meta_top' in locals() else self._extract_top_meta(response)
+            price = meta_top.get("price")
 
-        # Categories
+        # ------- LOCATION -------
+        # Prefer the two-line dd with Tailwind class 'space-y-0.5' (escape dot)
+        loc_bits = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
+        loc_bits = [b for b in loc_bits if b]
+        location = " | ".join(loc_bits) if loc_bits else None
+        if not location:
+            # Fallback to dt=Location/Venue -> dd
+            location = self._clean(" ".join(
+                response.xpath(
+                    "//dt[contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'location') or "
+                    "contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'venue')]/"
+                    "following-sibling::dd[1]//text()"
+                ).getall()
+            ))
+        if not location:
+            meta_top = meta_top if 'meta_top' in locals() else self._extract_top_meta(response)
+            location = meta_top.get("location")
+
+        # ------- Categories -------
         cats = response.css("[class*='category'] a::text, .tags a::text").getall()
         cats = [self._clean(c) for c in cats if self._clean(c)] or None
 
-        # Image
+        # ------- Image -------
         image = response.css("meta[property='og:image']::attr(content)").get() \
             or response.css("meta[name='twitter:image']::attr(content)").get()
         if not image:
@@ -321,11 +448,11 @@ class GenericEventsSpider(scrapy.Spider):
                 image = urljoin(response.url, img)
 
         yield {
-            "source": self.domain.split(".")[0],  # simple label; override if you prefer
+            "source": self.domain.split(".")[0],
             "url": response.url,
             "title": title,
             "description": desc,
-            "dates": {"start": st, "end": en, "text": dates_text},
+            "dates": {"start": st, "end": en, "text": time_text},
             "price": price,
             "location": location,
             "categories": cats or None,
