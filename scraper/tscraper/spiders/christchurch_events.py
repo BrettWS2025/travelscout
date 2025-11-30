@@ -1,4 +1,3 @@
-# scraper/tscraper/spiders/christchurch_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -28,12 +27,12 @@ class ChristchurchEventsSpider(scrapy.Spider):
     # CLI args:
     #   -a load_more=150        # max scroll/expand cycles
     #   -a listing_pages=0-12   # also try ?page=N (server-side)
-    def __init__(self, load_more: str = "120", listing_pages: str | None = "0-12", *args, **kwargs):
+    def __init__(self, load_more: str = "150", listing_pages: str | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
-            self.load_more = 120
+            self.load_more = 150
 
         self.listing_range = None
         if listing_pages:
@@ -45,8 +44,25 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
         self._seen_links: set[str] = set()
 
-        # Site-specific tile/link selector
-        self._tile_selector = "a[href^='/visit/whats-on/listing/']"
+        # Accept both /visit/whats-on/<slug> and /visit/whats-on/listing/<slug>
+        # Avoid hub, queries and fragments.
+        self._detail_href_css = (
+            "a[href^='/visit/whats-on/']"
+            ":not([href='/visit/whats-on/'])"
+            ":not([href*='?'])"
+            ":not([href*='#'])"
+        )
+        # Quick “next buttons” we’ll try inside carousels (Swiper etc.)
+        self._carousel_next_css = (
+            "button[aria-label='Next slide'], "
+            "button[aria-label*='Next'], "
+            ".swiper-button-next, "
+            "button.swiper-button-next, "
+            "button:has-text('Next'), "
+            "button:has-text('More'), "
+            "button:has-text('See more'), "
+            "button:has-text('Load more')"
+        )
 
     # ---------------- helpers ----------------
 
@@ -64,7 +80,13 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
     @staticmethod
     def _normalize_event_url(href: str) -> str | None:
-        """Accept only /visit/whats-on/listing/<slug>; strip query/fragment."""
+        """
+        Accept:
+          https://www.christchurchnz.com/visit/whats-on/<slug>
+          https://www.christchurchnz.com/visit/whats-on/listing/<slug>
+        Reject:
+          hub (/visit/whats-on/), querystrings and fragments.
+        """
         if not href:
             return None
         absu = urljoin("https://www.christchurchnz.com", href)
@@ -72,7 +94,13 @@ class ChristchurchEventsSpider(scrapy.Spider):
         if not (scheme and netloc and path):
             return None
         clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
-        return clean if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean) else None
+
+        # One segment after whats-on, or listing/<slug>
+        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/[A-Za-z0-9-]+$", clean):
+            return clean
+        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean):
+            return clean
+        return None
 
     def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
         if not s:
@@ -87,7 +115,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
         }
         def to_iso(day: int, mon_name: str, year: int | None) -> str | None:
-            m = months.get(mon_name.lower())
+            m = months.get(mon_name.lower());  # type: ignore
             if not (m and year):
                 return None
             return f"{year:04d}-{m:02d}-{day:02d}"
@@ -114,7 +142,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         meta_texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
         meta_texts = [t for t in meta_texts if t]
         date_text = meta_texts[0] if meta_texts else None
-        price = next((t for t in meta_texts if "$" in t or re.search(r"\bFREE\b", t or "", re.I)), None)
+        price = next((t for t in meta_texts if t and ("$" in t or re.search(r"\bFREE\b", t, re.I))), None)
         location = None
         for t in meta_texts:
             if t in (date_text, price):
@@ -128,7 +156,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
     # ---------------- crawl ----------------
 
     def start_requests(self):
-        # JS listing (infinite/virtualized)
+        # JS listing (virtualized carousels + tiles)
         yield scrapy.Request(
             self.start_urls[0],
             callback=self.parse_listing_with_playwright,
@@ -136,7 +164,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # Server-side pagination fallback (?page=N)
+        # Optional server-side pagination (?page=N) just in case
         if self.listing_range:
             for n in self.listing_range:
                 url = f"https://www.christchurchnz.com/visit/whats-on?page={n}"
@@ -159,102 +187,107 @@ class ChristchurchEventsSpider(scrapy.Spider):
         html = await page.content()
         sel = Selector(text=html)
         found = []
-        for h in sel.css(f"{self._tile_selector}::attr(href)").getall():
+        for h in sel.css(f"{self._detail_href_css}::attr(href)").getall():
             u = self._normalize_event_url(h)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
                 found.append(u)
         return found
 
+    async def _expand_all_carousels(self, page) -> int:
+        """
+        Walk through each visible carousel and click a likely 'next' button until
+        no new links appear or we hit a per-carousel ceiling.
+        """
+        total_new = 0
+        # Try to find next buttons per carousel group
+        nxt_loc = page.locator(self._carousel_next_css)
+        count = await nxt_loc.count()
+        # Cap the per-carousel steps to avoid long loops
+        per_carousel_ceiling = max(10, self.load_more // (count or 1))
+
+        for i in range(count):
+            btn = nxt_loc.nth(i)
+            stagnant = 0
+            for _ in range(per_carousel_ceiling):
+                try:
+                    if not await btn.is_visible():
+                        break
+                    await btn.click()
+                    try:
+                        await page.wait_for_load_state("networkidle", timeout=4000)
+                    except Exception:
+                        await page.wait_for_timeout(800)
+                except Exception:
+                    break
+
+                new_links = await self._harvest_links_now(page)
+                total_new += len(new_links)
+                if new_links:
+                    stagnant = 0
+                else:
+                    stagnant += 1
+                    if stagnant >= 3:
+                        break
+        return total_new
+
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
 
-        # Best-effort cookie banner dismiss
+        # Best-effort cookie dismiss
         for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
                 loc = page.locator(sel).first
                 if await loc.is_visible():
                     await loc.click()
-                    await page.wait_for_timeout(300)
+                    await page.wait_for_timeout(250)
                     break
             except Exception:
                 pass
 
-        # Wait until at least one tile is in the DOM
+        # Wait until some detail links are in the DOM
         try:
-            await page.wait_for_selector(self._tile_selector, timeout=15000)
+            await page.wait_for_selector(self._detail_href_css, timeout=15000)
         except Exception:
             pass
 
-        # Immediately harvest whatever is visible
-        initial = await self._harvest_links_now(page)
-        for u in initial:
+        # First harvest whatever is visible
+        first = await self._harvest_links_now(page)
+        for u in first:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
         stagnant_rounds = 0
-        total_found = len(initial)
-
+        # Main loop: vertical scroll + carousel expansion + harvest
         for _ in range(self.load_more):
-            # 1) Scroll the last tile into view (triggers IO-based loading on virtual lists)
+            # Scroll to bottom & give it a tick
             try:
-                last = page.locator(self._tile_selector).last
-                await last.scroll_into_view_if_needed()
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             except Exception:
                 pass
+            await page.wait_for_timeout(600)
 
-            # 2) Also wheel to the bottom to be safe
-            try:
-                await page.mouse.wheel(0, 8000)
-            except Exception:
-                pass
+            # Try to expand carousels
+            added = await self._expand_all_carousels(page)
 
-            # 3) Try a few likely "load more" controls (if present)
-            clicked = False
-            for sel in (
-                "button:has-text('Load more')",
-                "button:has-text('Load more events')",
-                "button:has-text('See more')",
-                "button:has-text('Show more')",
-                "a:has-text('Load more')",
-            ):
-                try:
-                    loc = page.locator(sel).first
-                    if await loc.is_visible():
-                        await loc.click()
-                        clicked = True
-                        try:
-                            await page.wait_for_load_state("networkidle", timeout=5000)
-                        except Exception:
-                            await page.wait_for_timeout(1200)
-                        break
-                except Exception:
-                    continue
-
-            # 4) Give the page a small beat to render
-            await page.wait_for_timeout(700)
-
-            # 5) HARVEST *NOW* (this is the key change for virtual lists)
-            new_links = await self._harvest_links_now(page)
-            for u in new_links:
+            # Harvest again
+            newly = await self._harvest_links_now(page)
+            for u in newly:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-            if new_links:
-                total_found += len(new_links)
+            if added or newly:
                 stagnant_rounds = 0
             else:
                 stagnant_rounds += 1
+                if stagnant_rounds >= 3:
+                    break
 
-            # If we neither clicked nor found new links a few rounds in a row, bail
-            if not clicked and stagnant_rounds >= 3:
-                break
-
-        # Final pass (in case the last render brought in a few more)
+        # Final pass
         final_links = await self._harvest_links_now(page)
         for u in final_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
         await page.close()
-        self.logger.info("Listing harvest complete. Total unique detail URLs discovered: %d", len(self._seen_links))
+        self.logger.info("Total unique detail URLs discovered: %d", len(self._seen_links))
 
     # ---- sitemap fallbacks ----
     def parse_sitemap_index(self, response: scrapy.http.Response):
@@ -314,8 +347,8 @@ class ChristchurchEventsSpider(scrapy.Spider):
             "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
 
-        # opportunistic: follow related tiles on the detail page too
-        for href in response.css("a[href^='/visit/whats-on/listing/']::attr(href)").getall():
+        # Follow related tiles on detail page too
+        for href in response.css(f"{self._detail_href_css}::attr(href)").getall():
             u = self._normalize_event_url(href)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
