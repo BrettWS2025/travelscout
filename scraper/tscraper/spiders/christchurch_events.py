@@ -15,8 +15,8 @@ except Exception:  # pragma: no cover
 
 class ChristchurchEventsSpider(scrapy.Spider):
     name = "christchurch_events"
-    allowed_domains = ["christchurchnz.com.com", "www.christchurchnz.com.com"]
-    start_urls = ["https://www.christchurchnz.com/visit/whats-on"]
+    allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
+    start_urls = ["https://www.christchurchnz.com/visit/whats-on/listing/"]
 
     custom_settings = {
         # Politeness + stability; FEEDS is set from your workflow CLI
@@ -72,7 +72,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             return None
         path = path.rstrip("/")
         clean = urlunsplit((scheme, netloc, path, "", ""))
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on[^/]+$", clean):
+        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/]+$", clean):
             return clean
         return None
 
