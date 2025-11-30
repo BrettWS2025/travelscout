@@ -43,14 +43,14 @@ class GenericEventsSpider(scrapy.Spider):
     # ---------- init & config ----------
     def __init__(
         self,
-        base: str = "https://www.christchurchnz.com/visit/whats-on/listing",
+        base: str = "https://www.christchurchnz.com/visit/whats-on",
         domain: str = "christchurchnz.com",
-        allow: str = '^https://(?:www\\.)?christchurch\\.com/visit/whats-on/listing[^/?#]+$',
-        linksel: str = "a[href*='/visit/whats-on//listing']::attr(href)",
+        allow: str = '^https://(?:www\\.)?christchurch\\.com/visit/whats-on[^/?#]+$',
+        linksel: str = "a[href*='/visit/whats-on/']::attr(href)",
         more: str = "",
         load_more: str = "60",
         pages: str | None = None,
-        sitemap: str | None = None,
+        sitemap: str = "https://www.christchurchnz.com/sitemap.xml",
         js_listing: str = "true",
         *args, **kwargs,
     ):
