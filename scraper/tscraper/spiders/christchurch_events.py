@@ -14,8 +14,8 @@ except Exception:  # pragma: no cover
 
 class ChristchurchEventsSpider(scrapy.Spider):
     name = "christchurch_events"
-    allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
-    start_urls = ["https://www.christchurchnz.com/visit/whats-on/"]
+    allowed_domains = ["venuesotautahi.co.nz", "www.venuesotautahi.co.nz"]
+    start_urls = ["https://www.venuesotautahi.co.nz/whats-on"]
 
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
@@ -47,8 +47,8 @@ class ChristchurchEventsSpider(scrapy.Spider):
         # Accept both /visit/whats-on/<slug> and /visit/whats-on/listing/<slug>
         # Avoid hub, queries and fragments.
         self._detail_href_css = (
-            "a[href^='/visit/whats-on/']"
-            ":not([href='/visit/whats-on/'])"
+            "a[href^='/whats-on/']"
+            ":not([href='/whats-on/'])"
             ":not([href*='?'])"
             ":not([href*='#'])"
         )
@@ -82,23 +82,20 @@ class ChristchurchEventsSpider(scrapy.Spider):
     def _normalize_event_url(href: str) -> str | None:
         """
         Accept:
-          https://www.christchurchnz.com/visit/whats-on/<slug>
-          https://www.christchurchnz.com/visit/whats-on/listing/<slug>
+          https://www.venuesotautahi.co.nz/whats-on<slug>
         Reject:
           hub (/visit/whats-on/), querystrings and fragments.
         """
         if not href:
             return None
-        absu = urljoin("https://www.christchurchnz.com", href)
+        absu = urljoin("https://www.venuesotautahi.co.nz", href)
         scheme, netloc, path, _, _ = urlsplit(absu)
         if not (scheme and netloc and path):
             return None
         clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
 
         # One segment after whats-on, or listing/<slug>
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/[A-Za-z0-9-]+$", clean):
-            return clean
-        if re.match(r"^https://(www\.)?christchurchnz\.com/visit/whats-on/listing/[^/?#]+$", clean):
+        if re.match(r"^https://(www\.)?venuesotautahi\.co.nz/whats-on[A-Za-z0-9-]+$", clean):
             return clean
         return None
 
@@ -167,7 +164,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         # Optional server-side pagination (?page=N) just in case
         if self.listing_range:
             for n in self.listing_range:
-                url = f"https://www.christchurchnz.com/visit/whats-on?page={n}"
+                url = f"https://www.venuesotautahi.co.nz/whats-on?page={n}"
                 yield scrapy.Request(
                     url,
                     callback=self.parse_listing_with_playwright,
@@ -177,7 +174,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
         # Sitemap fallback
         yield scrapy.Request(
-            "https://www.christchurchnz.com/sitemap.xml",
+            "https://www.venuesotautahi.com/sitemap.xml",
             callback=self.parse_sitemap_index,
             dont_filter=True,
         )
