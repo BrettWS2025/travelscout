@@ -1,3 +1,4 @@
+# scraper/tscraper/spiders/queenstown_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -7,7 +8,7 @@ import scrapy
 from parsel import Selector
 
 try:
-    from scrapy_playwright.page import PageMethod  # available via settings
+    from scrapy_playwright.page import PageMethod  # enabled via settings
 except Exception:  # pragma: no cover
     PageMethod = None
 
@@ -23,38 +24,45 @@ class QueenstownEventsSpider(scrapy.Spider):
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    # CLI args (optional):
-    #   -a load_more=120
-    #   -a pages=0-12      (best-effort; site may not use ?page=N server-side)
-    def __init__(self, load_more: str = "120", pages: str | None = None, *args, **kwargs):
+    # Optional CLI: -a load_more=120
+    def __init__(self, load_more: str = "120", *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.load_more = max(0, int(str(load_more).strip()))
         except Exception:
             self.load_more = 120
 
-        self.page_range = None
-        if pages:
-            m = re.match(r"^\s*(\d+)\s*-\s*(\d+)\s*$", str(pages))
-            if m:
-                a, b = int(m.group(1)), int(m.group(2))
-                if b >= a:
-                    self.page_range = list(range(a, b + 1))
-
         self._seen: set[str] = set()
 
         # Listing selectors
-        self.anchor_selector = "a[href^='/event/']"  # for Playwright waits
+        # Use an element selector for Playwright waits; ::attr(...) is only for parsing HTML.
+        self.anchor_selector = "a[href^='/event/']"
         self.linksel = "a[href^='/event/']::attr(href), a[href*='/event/']::attr(href)"
 
-        # Allow: /event/<slug>/   OR  /event/<slug>/<id>/
-        # (exclude obvious non-detail endpoints)
+        # Accept /event/<slug>/ or /event/<slug>/<id>/
+        # Exclude non-detail endpoints under /event/
         self.allow_re = re.compile(
             r"^https?://(?:www\.)?queenstownnz\.co\.nz/event/(?!"
             r"(?:category|categories|tags?|search|event-calendar|venues|series|filters|page)(?:/|$)"
             r")[^?#]+(?:/\d{1,7})?/?$",
             re.I,
         )
+
+        # Pagination “Next” (page-level) and Swiper carousel “→” buttons.
+        # We try these in order on each round.
+        self.page_next_selectors = [
+            "a[rel='next']",
+            "nav[aria-label*='pagination' i] a[rel='next']",
+            "button[aria-label='Next']",
+            "button[aria-label*='Next' i]",
+            "a:has-text('Next')",
+            ".pagination a.next, .pagination__next, .pager-next a",
+        ]
+        self.swiper_next_selectors = [
+            ".swiper-button-next:not(.swiper-button-disabled)",
+            "button.swiper-button-next:not([disabled])",
+            "[class*='swiper'] .swiper-button-next:not(.swiper-button-disabled)",
+        ]
 
     # ---------------- helpers ----------------
 
@@ -80,7 +88,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
         return clean if self.allow_re.match(clean) else None
 
-    # --- JSON-LD helpers (more reliable for dates/location) ---
+    # ---- JSON-LD helpers (for reliable dates/location) ----
     @staticmethod
     def _jsonld_objects(response_text: str):
         sel = Selector(text=response_text or "")
@@ -119,13 +127,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         return None
 
     def _parse_dates_text(self, text: str | None):
-        """
-        Handles:
-          - "15 Dec 2025 | 6:00 pm - 7:30 pm"
-          - "3 - 8 March 2026"
-          - "15 Dec 2025"
-        Returns (start_iso, end_iso)
-        """
+        """Parse human date strings like '15 Dec 2025 | 6:00 pm - 7:30 pm'."""
         if not text:
             return None, None
         t = re.sub(r"\s+", " ", text).strip()
@@ -147,10 +149,8 @@ class QueenstownEventsSpider(scrapy.Spider):
                 def _hm(s_txt: str) -> str:
                     hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s_txt, re.I).groups()
                     hh, mm = int(hh), int(mm)
-                    if ap.lower() == "pm" and hh != 12:
-                        hh += 12
-                    if ap.lower() == "am" and hh == 12:
-                        hh = 0
+                    if ap.lower() == "pm" and hh != 12: hh += 12
+                    if ap.lower() == "am" and hh == 12: hh = 0
                     return f"{hh:02d}:{mm:02d}:00"
                 st_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(st_txt)}"
                 en_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(en_txt)}"
@@ -186,10 +186,9 @@ class QueenstownEventsSpider(scrapy.Spider):
 
         return None, None
 
-    # ---------------- crawl ----------------
+    # ---------------- crawling ----------------
 
     def start_requests(self):
-        # JS listing page
         yield scrapy.Request(
             self.start_urls[0],
             callback=self.parse_listing_with_playwright,
@@ -197,25 +196,15 @@ class QueenstownEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
-        # Best-effort “?page=N” probe (site may or may not honor it)
-        if self.page_range:
-            for n in self.page_range:
-                url = f"{self.start_urls[0]}?page={n}"
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_listing_with_playwright,
-                    meta={"playwright": True, "playwright_include_page": True},
-                    dont_filter=True,
-                )
-
-        # Sitemap pass (cheap, sometimes includes events)
+        # Sitemap (cheap completeness pass)
         yield scrapy.Request(
             "https://www.queenstownnz.co.nz/sitemap.xml",
             callback=self.parse_sitemap_index,
             dont_filter=True,
         )
 
-    async def _harvest_links_now(self, page):
+    async def _harvest_links_now(self, page) -> list[str]:
+        """Parse the *current* DOM and return fresh, normalized event URLs."""
         html = await page.content()
         sel = Selector(text=html)
         out = []
@@ -226,71 +215,81 @@ class QueenstownEventsSpider(scrapy.Spider):
                 out.append(u)
         return out
 
+    async def _click_any(self, page, selectors: list[str]) -> bool:
+        """Click the first visible/usable element from selectors; return True if clicked."""
+        for sel in selectors:
+            try:
+                loc = page.locator(sel).first
+                if await loc.is_visible():
+                    # avoid disabled Swiper buttons
+                    klass = await loc.get_attribute("class") or ""
+                    if "disabled" in klass or "swiper-button-disabled" in klass:
+                        continue
+                    before = page.url
+                    await loc.click()
+                    # wait for either navigation or DOM/network to settle
+                    try:
+                        await page.wait_for_load_state("networkidle", timeout=4000)
+                    except Exception:
+                        await page.wait_for_timeout(800)
+                    # If the page URL changed, it's definitely a new page
+                    if page.url != before:
+                        return True
+                    # If not, we still clicked a carousel next; treat as success
+                    return True
+            except Exception:
+                continue
+        return False
+
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
 
-        # Cookie banner (best effort)
+        # Cookie banner (best-effort)
         for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
                 loc = page.locator(sel).first
                 if await loc.is_visible():
                     await loc.click()
-                    await page.wait_for_timeout(300)
+                    await page.wait_for_timeout(250)
                     break
             except Exception:
                 pass
 
-        # Wait for any event tile anchor
+        # Wait for at least one event tile link to be present
         try:
             await page.wait_for_selector(self.anchor_selector, timeout=15000)
         except Exception:
             pass
 
-        # Immediate harvest
-        links = await self._harvest_links_now(page)
-        for u in links:
+        # Harvest immediately
+        new_links = await self._harvest_links_now(page)
+        for u in new_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-        stagnant = 0
+        stagnant_rounds = 0
         for _ in range(self.load_more):
-            # Scroll to bottom to trigger lazy loading
-            try:
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            except Exception:
-                pass
-            await page.wait_for_timeout(700)
+            # Try the page-level "Next" control first (if any)
+            clicked = await self._click_any(page, self.page_next_selectors)
 
-            # Try common “load more” controls if visible
-            clicked = False
-            for sel in (
-                "button:has-text('Load more')",
-                "button:has-text('Load more events')",
-                "button:has-text('See more')",
-                "button:has-text('Show more')",
-                "a:has-text('Load more')",
-            ):
-                try:
-                    loc = page.locator(sel).first
-                    if await loc.is_visible():
-                        await loc.click()
-                        clicked = True
-                        try:
-                            await page.wait_for_load_state("networkidle", timeout=5000)
-                        except Exception:
-                            await page.wait_for_timeout(1200)
-                        break
-                except Exception:
-                    continue
+            # Also try to advance any Swiper carousels on the page
+            # (there may be multiple; we just attempt a generic ".swiper-button-next")
+            clicked = await self._click_any(page, self.swiper_next_selectors) or clicked
 
-            new_links = await self._harvest_links_now(page)
-            for u in new_links:
+            # Give the DOM a moment to render new tiles
+            await page.wait_for_timeout(500)
+
+            # Harvest after this round of clicks
+            round_links = await self._harvest_links_now(page)
+            for u in round_links:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-            if new_links:
-                stagnant = 0
+            if round_links:
+                stagnant_rounds = 0
             else:
-                stagnant += 1
-            if not clicked and stagnant >= 3:
+                stagnant_rounds += 1
+
+            # If we didn’t click anything and found no new links for a few rounds, stop
+            if not clicked and stagnant_rounds >= 3:
                 break
 
         # Final sweep
@@ -298,8 +297,8 @@ class QueenstownEventsSpider(scrapy.Spider):
         for u in final_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
+        self.logger.info("Discovered %d unique /event/ URLs", len(self._seen))
         await page.close()
-        self.logger.info("Discovered %d unique /event/ detail URLs", len(self._seen))
 
     # ---- sitemap fallbacks ----
     def parse_sitemap_index(self, response):
@@ -320,9 +319,8 @@ class QueenstownEventsSpider(scrapy.Spider):
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
     # ---------------- detail pages ----------------
-
     def parse_event(self, response: scrapy.http.Response):
-        # Prefer JSON-LD when available
+        # Prefer JSON-LD
         objs = self._jsonld_objects(response.text)
         ev = self._find_event_jsonld(objs)
 
@@ -355,26 +353,24 @@ class QueenstownEventsSpider(scrapy.Spider):
             dates_text = self._clean(" ".join(response.css("time::text").getall()))
             st, en = self._parse_dates_text(dates_text)
         else:
-            # keep the human text for your schema if we can find it too
             dates_text = dates_text or self._clean(" ".join(response.css("time::text").getall()))
 
-        # Location
+        # Location (JSON-LD first, else visible blocks)
         location_text = None
         if ev:
             loc = ev.get("location") or {}
             if isinstance(loc, dict):
                 addr = loc.get("address") or {}
                 if isinstance(addr, dict):
-                    parts = [addr.get("streetAddress"), addr.get("addressLocality"), addr.get("addressRegion"), addr.get("postalCode"), addr.get("addressCountry")]
+                    parts = [addr.get("streetAddress"), addr.get("addressLocality"),
+                             addr.get("addressRegion"), addr.get("postalCode"), addr.get("addressCountry")]
                     location_text = " | ".join([self._clean(p) for p in parts if self._clean(p)])
         if not location_text:
-            # preferred <dd class="space-y-0.5"> p + p pattern
             bits = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
             bits = [b for b in bits if b]
             if bits:
                 location_text = " | ".join(bits)
         if not location_text:
-            # fallback: dt Location/Venue → next dd
             location_text = self._clean(" ".join(
                 response.xpath(
                     "//dt[contains(translate(., 'LOCATIONWHERE', 'locationwhere'), 'location') or "
@@ -392,7 +388,7 @@ class QueenstownEventsSpider(scrapy.Spider):
             ).getall()
         ))
 
-        # Categories (best-effort)
+        # Categories
         cats = response.css("[class*='category'] a::text, .tags a::text").getall()
         cats = [self._clean(c) for c in cats if self._clean(c)] or None
 
