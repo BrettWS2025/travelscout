@@ -5,6 +5,7 @@ on:
     inputs:
       spiders:
         description: "Comma-separated spider names to run"
+        # e.g. "auckland_events,christchurch_events"
         default: "auckland_events"
         required: true
       feed_path:
@@ -17,7 +18,7 @@ on:
         required: false
 
 permissions:
-  contents: write  # needed so we can commit the feed back to the repo
+  contents: write
 
 jobs:
   scrape:
@@ -58,16 +59,25 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Prepare folders
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
         run: |
           mkdir -p debug httpcache
-          mkdir -p "$(dirname "${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}")"
+          mkdir -p "$(dirname "$FEED_PATH")"
+
+      - name: Reset feed (start fresh each run)
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+        run: |
+          # Truncate or create the target JSONL file
+          : > "$FEED_PATH"
 
       - name: Show Scrapy version & discovered spiders
         run: |
           scrapy version -v
           scrapy list | tee debug/spiders.txt
 
-      - name: Run spiders (write JSON Lines feed)
+      - name: Run spiders (append to the same JSONL)
         id: runspiders
         env:
           FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
@@ -76,10 +86,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Always append, because we already truncated the file once above
           FEEDS_JSON="$(python - <<'PY'
           import json, os
           p = os.environ.get("FEED_PATH", "data/Events.jsonl")
-          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": True}}))
+          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
           PY
           )"
 
