@@ -31,7 +31,7 @@ class GenericEventsSpider(scrapy.Spider):
       -a sitemap=https://example.com/sitemap.xml       (explicit sitemap)
       -a js_listing=true|false                         (default true)
     """
-    name = "christchurch_events"
+    name = "queenstown_events"
 
     custom_settings = {
         # Keep polite; FEEDS is provided by your workflow at runtime
