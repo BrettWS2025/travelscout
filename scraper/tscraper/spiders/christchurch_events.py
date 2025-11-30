@@ -163,7 +163,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
         try:
-            await page.wait_for_selector("a[href*='/events-hub/events/']", timeout=15000)
+            await page.wait_for_selector("a[href*='/visit/whats-on/listing/']", timeout=15000)
         except Exception:
             pass
 
@@ -201,7 +201,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
             html = await page.content()
             sel = Selector(text=html)
-            hrefs = set(sel.css("a[href*='/events-hub/events/']::attr(href)").getall())
+            hrefs = set(sel.css("a[href*='/visit/whats-on/listing/']::attr(href)").getall())
             normalized = {self._normalize_event_url(h) for h in hrefs}
             normalized.discard(None)
 
@@ -219,7 +219,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         await page.close()
 
         sel = Selector(text=html)
-        hrefs = set(sel.css("a[href*='/events-hub/events/']::attr(href)").getall())
+        hrefs = set(sel.css("a[href*='/visit/whats-on/listing/']::attr(href)").getall())
         for h in hrefs:
             u = self._normalize_event_url(h)
             if u and u not in self._seen_links:
@@ -289,7 +289,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         yield item
 
         # Opportunistically follow additional event links found on the page
-        for href in response.css("a[href^='/events-hub/events/']::attr(href)").getall():
+        for href in response.css("a[href^='/visit/whats-on/listing/']::attr(href)").getall():
             u = self._normalize_event_url(href)
             if u and u not in self._seen_links:
                 self._seen_links.add(u)
