@@ -18,7 +18,7 @@ EVENT_PATH_RE = re.compile(
 
 
 class ChristchurchWhatsOnSpider(scrapy.Spider):
-    name = "christchurch_events"
+    name = "christchurcheventsold"
     allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
 
     # Cap pagination to a sane bound; bump if you find later pages
