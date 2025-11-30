@@ -24,23 +24,22 @@ class QueenstownEventsSpider(scrapy.Spider):
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    # Optional CLI: -a load_more=120
-    def __init__(self, load_more: str = "120", *args, **kwargs):
+    # CLI: scrapy crawl queenstown_events -a max_pages=80
+    def __init__(self, max_pages: str = "60", *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
-            self.load_more = max(0, int(str(load_more).strip()))
+            self.max_pages = max(1, int(str(max_pages).strip()))
         except Exception:
-            self.load_more = 120
+            self.max_pages = 60
 
         self._seen: set[str] = set()
 
-        # Listing selectors
-        # Use an element selector for Playwright waits; ::attr(...) is only for parsing HTML.
+        # Element selector to "wait for tiles":
         self.anchor_selector = "a[href^='/event/']"
+        # Selector to extract hrefs out of the HTML:
         self.linksel = "a[href^='/event/']::attr(href), a[href*='/event/']::attr(href)"
 
-        # Accept /event/<slug>/ or /event/<slug>/<id>/
-        # Exclude non-detail endpoints under /event/
+        # Accept /event/<slug>/ or /event/<slug>/<id>/, and allow encoded chars (%2B, %26, etc.)
         self.allow_re = re.compile(
             r"^https?://(?:www\.)?queenstownnz\.co\.nz/event/(?!"
             r"(?:category|categories|tags?|search|event-calendar|venues|series|filters|page)(?:/|$)"
@@ -48,20 +47,12 @@ class QueenstownEventsSpider(scrapy.Spider):
             re.I,
         )
 
-        # Pagination “Next” (page-level) and Swiper carousel “→” buttons.
-        # We try these in order on each round.
+        # **Key fix**: add the site’s pager arrow
         self.page_next_selectors = [
-            "a[rel='next']",
+            "a.nxt",                          # <- site’s “next” arrow
             "nav[aria-label*='pagination' i] a[rel='next']",
-            "button[aria-label='Next']",
-            "button[aria-label*='Next' i]",
-            "a:has-text('Next')",
-            ".pagination a.next, .pagination__next, .pager-next a",
-        ]
-        self.swiper_next_selectors = [
-            ".swiper-button-next:not(.swiper-button-disabled)",
-            "button.swiper-button-next:not([disabled])",
-            "[class*='swiper'] .swiper-button-next:not(.swiper-button-disabled)",
+            "a[rel='next']",
+            "a:has(i.fa-angle-right)",
         ]
 
     # ---------------- helpers ----------------
@@ -127,7 +118,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         return None
 
     def _parse_dates_text(self, text: str | None):
-        """Parse human date strings like '15 Dec 2025 | 6:00 pm - 7:30 pm'."""
+        """Parse human date strings like '15 Dec 2025 | 6:00 pm - 7:30 pm' or '3 - 8 March 2026'."""
         if not text:
             return None, None
         t = re.sub(r"\s+", " ", text).strip()
@@ -216,26 +207,21 @@ class QueenstownEventsSpider(scrapy.Spider):
         return out
 
     async def _click_any(self, page, selectors: list[str]) -> bool:
-        """Click the first visible/usable element from selectors; return True if clicked."""
+        """Click the first visible element from selectors; return True if something was clicked."""
         for sel in selectors:
             try:
                 loc = page.locator(sel).first
                 if await loc.is_visible():
-                    # avoid disabled Swiper buttons
-                    klass = await loc.get_attribute("class") or ""
+                    # avoid disabled states if present
+                    klass = (await loc.get_attribute("class")) or ""
                     if "disabled" in klass or "swiper-button-disabled" in klass:
                         continue
-                    before = page.url
                     await loc.click()
-                    # wait for either navigation or DOM/network to settle
+                    # give time for either navigation or ajax DOM replacement
                     try:
                         await page.wait_for_load_state("networkidle", timeout=4000)
                     except Exception:
                         await page.wait_for_timeout(800)
-                    # If the page URL changed, it's definitely a new page
-                    if page.url != before:
-                        return True
-                    # If not, we still clicked a carousel next; treat as success
                     return True
             except Exception:
                 continue
@@ -244,7 +230,7 @@ class QueenstownEventsSpider(scrapy.Spider):
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
 
-        # Cookie banner (best-effort)
+        # Best-effort cookie dismiss
         for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
                 loc = page.locator(sel).first
@@ -255,30 +241,29 @@ class QueenstownEventsSpider(scrapy.Spider):
             except Exception:
                 pass
 
-        # Wait for at least one event tile link to be present
+        # Wait until at least one tile link exists
         try:
             await page.wait_for_selector(self.anchor_selector, timeout=15000)
         except Exception:
             pass
 
-        # Harvest immediately
+        # Page 1 harvest
         new_links = await self._harvest_links_now(page)
         for u in new_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
         stagnant_rounds = 0
-        for _ in range(self.load_more):
-            # Try the page-level "Next" control first (if any)
+        pages_clicked = 0
+
+        # Keep clicking "next" until no new links or max_pages reached
+        while pages_clicked < self.max_pages:
             clicked = await self._click_any(page, self.page_next_selectors)
+            if not clicked:
+                break  # no next button we can press
 
-            # Also try to advance any Swiper carousels on the page
-            # (there may be multiple; we just attempt a generic ".swiper-button-next")
-            clicked = await self._click_any(page, self.swiper_next_selectors) or clicked
+            pages_clicked += 1
 
-            # Give the DOM a moment to render new tiles
-            await page.wait_for_timeout(500)
-
-            # Harvest after this round of clicks
+            # After click, harvest whatever is visible now
             round_links = await self._harvest_links_now(page)
             for u in round_links:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
@@ -287,17 +272,15 @@ class QueenstownEventsSpider(scrapy.Spider):
                 stagnant_rounds = 0
             else:
                 stagnant_rounds += 1
+                if stagnant_rounds >= 3:
+                    break
 
-            # If we didn’t click anything and found no new links for a few rounds, stop
-            if not clicked and stagnant_rounds >= 3:
-                break
-
-        # Final sweep
+        # Final sweep (last repaint might have brought a few more)
         final_links = await self._harvest_links_now(page)
         for u in final_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-        self.logger.info("Discovered %d unique /event/ URLs", len(self._seen))
+        self.logger.info("Discovered %d unique /event/ URLs across %d page(s)", len(self._seen), pages_clicked + 1)
         await page.close()
 
     # ---- sitemap fallbacks ----
@@ -320,7 +303,6 @@ class QueenstownEventsSpider(scrapy.Spider):
 
     # ---------------- detail pages ----------------
     def parse_event(self, response: scrapy.http.Response):
-        # Prefer JSON-LD
         objs = self._jsonld_objects(response.text)
         ev = self._find_event_jsonld(objs)
 
@@ -355,7 +337,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         else:
             dates_text = dates_text or self._clean(" ".join(response.css("time::text").getall()))
 
-        # Location (JSON-LD first, else visible blocks)
+        # Location (JSON-LD first; fallbacks if needed)
         location_text = None
         if ev:
             loc = ev.get("location") or {}
@@ -364,7 +346,9 @@ class QueenstownEventsSpider(scrapy.Spider):
                 if isinstance(addr, dict):
                     parts = [addr.get("streetAddress"), addr.get("addressLocality"),
                              addr.get("addressRegion"), addr.get("postalCode"), addr.get("addressCountry")]
-                    location_text = " | ".join([self._clean(p) for p in parts if self._clean(p)])
+                    parts = [self._clean(p) for p in parts if self._clean(p)]
+                    if parts:
+                        location_text = " | ".join(parts)
         if not location_text:
             bits = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
             bits = [b for b in bits if b]
@@ -374,8 +358,7 @@ class QueenstownEventsSpider(scrapy.Spider):
             location_text = self._clean(" ".join(
                 response.xpath(
                     "//dt[contains(translate(., 'LOCATIONWHERE', 'locationwhere'), 'location') or "
-                    "contains(translate(., 'LOCATIONWHERE', 'locationwhere'), 'where')]/"
-                    "following-sibling::dd[1]//text()"
+                    "contains(translate(., 'LOCATIONWHERE', 'locationwhere'), 'where')]/following-sibling::dd[1]//text()"
                 ).getall()
             ))
 
@@ -383,8 +366,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         price_text = self._clean(" ".join(
             response.xpath(
                 "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
-                "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/"
-                "following-sibling::dd[1]//text()"
+                "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/following-sibling::dd[1]//text()"
             ).getall()
         ))
 
