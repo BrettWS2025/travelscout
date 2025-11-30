@@ -45,7 +45,7 @@ class GenericEventsSpider(scrapy.Spider):
         self,
         base: str = "https://www.christchurchnz.com/visit/whats-on",
         domain: str = "christchurchnz.com",
-        allow: str = '^https://(?:www\\.)?example\\.com/events/[^/?#]+$',
+        allow: str = '^https://(?:www\\.)?christchurch\\.com/visit/whats-on[^/?#]+$',
         linksel: str = "a[href*='/events/']::attr(href)",
         more: str = "",
         load_more: str = "60",
