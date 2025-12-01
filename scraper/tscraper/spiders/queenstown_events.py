@@ -24,12 +24,12 @@ class QueenstownEventsSpider(scrapy.Spider):
     }
 
     # CLI: scrapy crawl queenstown_events -a max_pages=80
-    def __init__(self, max_pages: str = "60", *args, **kwargs):
+    def __init__(self, max_pages: str = "200", *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.max_pages = max(1, int(str(max_pages).strip()))
         except Exception:
-            self.max_pages = 500
+            self.max_pages = 200
 
         self._seen: set[str] = set()
 
