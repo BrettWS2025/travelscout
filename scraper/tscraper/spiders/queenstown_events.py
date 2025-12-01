@@ -1,3 +1,4 @@
+# scraper/tscraper/spiders/queenstown_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -23,39 +24,34 @@ class QueenstownEventsSpider(scrapy.Spider):
         "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    # CLI: scrapy crawl queenstown_events -a max_pages=80
-    def __init__(self, max_pages: str = "200", *args, **kwargs):
+    # CLI:
+    #   scrapy crawl queenstown_events -a max_pages=0   # click until the end (no cap)
+    #   scrapy crawl queenstown_events -a max_pages=80  # safety cap
+    def __init__(self, max_pages: str = "60", *args, **kwargs):
         super().__init__(*args, **kwargs)
-        try:
-            self.max_pages = max(1, int(str(max_pages).strip()))
-        except Exception:
-            self.max_pages = 200
+        s = str(max_pages).strip().lower()
+        if s in ("0", "all", "inf", "infinite"):
+            self.max_pages = 0  # unlimited; stop only when no next / no change
+        else:
+            try:
+                self.max_pages = max(1, int(s))
+            except Exception:
+                self.max_pages = 60
 
         self._seen: set[str] = set()
 
-        # Element selector to "wait for tiles" (Playwright waits use element selectors, not ::attr):
+        # Element selector to “wait for tiles” (Playwright waits need element selectors)
         self.anchor_selector = "a[href^='/event/']"
         # HTML parsing selector to extract hrefs:
         self.linksel = "a[href^='/event/']::attr(href), a[href*='/event/']::attr(href)"
 
-        # Accept /event/<slug>/ or /event/<slug>/<id>/ and allow encoded chars
-        # Exclude non-detail endpoints under /event/
+        # Accept /event/<slug>/ or /event/<slug>/<id>/ (allow encoded chars), but exclude non-detail endpoints
         self.allow_re = re.compile(
             r"^https?://(?:www\.)?queenstownnz\.co\.nz/event/(?!"
             r"(?:category|categories|tags?|search|event-calendar|venues|series|filters|page)(?:/|$)"
             r")[^?#]+(?:/\d{1,7})?/?$",
             re.I,
         )
-
-        # Candidate "next page" controls (we’ll try them and keep only the one
-        # that actually changes the tile signature).
-        self.page_next_selectors = [
-            "a.nxt[data-gtm-vars*='layoutjs_pager_nxt']",  # most specific to the Simpleview pager
-            "nav[aria-label*='pagination' i] a[rel='next']",
-            "a[rel='next']",
-            "a.nxt",
-            "a:has(i.fa-angle-right)"
-        ]
 
     # ---------------- helpers ----------------
 
@@ -84,6 +80,7 @@ class QueenstownEventsSpider(scrapy.Spider):
     # ---- JSON-LD helpers (for reliable dates/location) ----
     @staticmethod
     def _jsonld_objects(response_text: str):
+        import json
         sel = Selector(text=response_text or "")
         out = []
         for node in sel.xpath("//script[@type='application/ld+json']/text()").getall():
@@ -91,7 +88,7 @@ class QueenstownEventsSpider(scrapy.Spider):
                 data = node.strip()
                 if not data:
                     continue
-                parsed = __import__("json").loads(data)
+                parsed = json.loads(data)
                 out.extend(parsed if isinstance(parsed, list) else [parsed])
             except Exception:
                 continue
@@ -120,7 +117,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         return None
 
     def _parse_dates_text(self, text: str | None):
-        """Parse human date strings like '15 Dec 2025 | 6:00 pm - 7:30 pm' or '3 - 8 March 2026'."""
+        """Parse common human date strings like '15 Dec 2025 | 6:00 pm - 7:30 pm' or '3 - 8 March 2026'."""
         if not text:
             return None, None
         t = re.sub(r"\s+", " ", text).strip()
@@ -196,86 +193,149 @@ class QueenstownEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
+    async def _mark_listing_container(self, page) -> bool:
+        """
+        Find the ancestor that contains the MOST /event/ anchors and tag it with
+        data-ts-target="events-main". Return True on success.
+        """
+        js = """
+        () => {
+          const tiles = Array.from(document.querySelectorAll('a[href^="/event/"]'));
+          if (!tiles.length) return false;
+
+          function findContainer(el) {
+            let n = el;
+            while (n && n !== document.body) {
+              const count = n.querySelectorAll('a[href^="/event/"]').length;
+              if (count >= 6) return n; // likely grid/section
+              n = n.parentElement;
+            }
+            return null;
+          }
+
+          let best = null, bestCount = 0;
+          for (const t of tiles) {
+            const c = findContainer(t);
+            if (c) {
+              const count = c.querySelectorAll('a[href^="/event/"]').length;
+              if (count > bestCount) { best = c; bestCount = count; }
+            }
+          }
+          if (!best) return false;
+          best.setAttribute('data-ts-target', 'events-main');
+          return true;
+        }
+        """
+        try:
+            return bool(await page.evaluate(js))
+        except Exception:
+            return False
+
     async def _tiles_signature(self, page) -> str:
-        # A compact fingerprint of currently visible event links.
-        return await page.evaluate("""
-            () => Array.from(document.querySelectorAll('a[href^="/event/"]'))
-                .map(a => a.getAttribute('href') || '')
-                .slice(0, 100)
-                .join('|')
-        """)
+        # Fingerprint ONLY inside the listing container
+        js = """
+        () => Array.from(
+              document.querySelectorAll('[data-ts-target="events-main"] a[href^="/event/"]')
+            ).map(a => a.getAttribute('href') || '')
+             .slice(0, 200)
+             .join('|')
+        """
+        try:
+            return await page.evaluate(js)
+        except Exception:
+            return ""
 
     async def _harvest_links_now(self, page) -> list[str]:
-        """Parse the current DOM and return fresh, normalized event URLs."""
+        """Parse current DOM inside the container and return fresh, normalized event URLs."""
         html = await page.content()
         sel = Selector(text=html)
+        scope = '[data-ts-target="events-main"] '
         out = []
-        for h in sel.css(self.linksel).getall():
+        for h in sel.css(scope + self.linksel).getall():
             u = self._normalize_detail_url(h)
             if u and u not in self._seen:
                 self._seen.add(u)
                 out.append(u)
         return out
 
-    async def _click_next_that_changes_tiles(self, page) -> bool:
+    async def _click_container_next(self, page) -> bool:
         """
-        Try candidate 'next' selectors. Only consider the click successful if the
-        tile signature actually changes. This avoids clicking unrelated carousels.
+        Click the 'next' for the tagged container. Consider success only if the
+        container's tile signature changes after the click.
         """
         prev_sig = await self._tiles_signature(page)
 
-        for sel in self.page_next_selectors:
-            locs = page.locator(sel)
-            try:
-                count = await locs.count()
-            except Exception:
-                count = 0
-            if count == 0:
-                continue
+        js_click = """
+        () => {
+          const cont = document.querySelector('[data-ts-target="events-main"]');
+          if (!cont) return false;
 
-            for i in range(count):
-                btn = locs.nth(i)
-                try:
-                    if not await btn.is_visible():
-                        continue
-                    klass = (await btn.get_attribute("class")) or ""
-                    if "disabled" in klass or "swiper-button-disabled" in klass:
-                        continue
-                    await btn.scroll_into_view_if_needed()
-                    before_url = page.url
-                    await btn.click()
+          // try common next buttons within or near the container
+          let next =
+              cont.querySelector('a.nxt') ||
+              cont.querySelector('a[rel="next"]') ||
+              (function() {
+                const i = cont.querySelector('i.fa-angle-right');
+                return i ? i.closest('a') : null;
+              })();
 
-                    # Wait for URL change OR tile signature change
-                    changed = False
-                    try:
-                        await page.wait_for_function(
-                            """
-                            (prev) => {
-                              const hrefs = Array.from(document.querySelectorAll('a[href^="/event/"]'))
-                                  .map(a => a.getAttribute('href') || '')
-                                  .slice(0, 100)
-                                  .join('|');
-                              return hrefs && hrefs !== prev;
-                            }
-                            """,
-                            prev_sig,
-                            timeout=6000,
-                        )
-                        changed = True
-                    except Exception:
-                        # As a fallback, if URL changed, also accept
-                        changed = (page.url != before_url)
+          // if not found inside, try a nearby pager sibling
+          if (!next) {
+            // look for an adjacent pagination block
+            const candidates = Array.from(document.querySelectorAll('a.nxt, a[rel="next"]'));
+            for (const c of candidates) {
+              // pick the one closest to our container in the DOM tree
+              let n = c;
+              let hops = 0, ok = false;
+              while (n && hops < 6) {
+                if (n === cont) { ok = true; break; }
+                n = n.parentElement; hops += 1;
+              }
+              if (ok) { next = c; break; }
+            }
+          }
 
-                    if changed:
-                        return True
-                except Exception:
-                    continue
-        return False
+          if (!next) return false;
+          const cls = (next.getAttribute('class') || '').toLowerCase();
+          if (cls.includes('disabled')) return false;
+
+          next.scrollIntoView({behavior: 'instant', block: 'center'});
+          next.click();
+          return true;
+        }
+        """
+        clicked = False
+        try:
+            clicked = bool(await page.evaluate(js_click))
+        except Exception:
+            clicked = False
+        if not clicked:
+            return False
+
+        # Wait for the container signature to change (or time out)
+        try:
+            await page.wait_for_function(
+                """
+                (prev) => {
+                  const now = Array.from(
+                    document.querySelectorAll('[data-ts-target="events-main"] a[href^="/event/"]')
+                  ).map(a => a.getAttribute('href') || '').slice(0,200).join('|');
+                  return now && now !== prev;
+                }
+                """,
+                prev_sig,
+                timeout=7000,
+            )
+            return True
+        except Exception:
+            # fallback: small grace period + re-check
+            await page.wait_for_timeout(600)
+            return (await self._tiles_signature(page)) != prev_sig
 
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
         page = response.meta["playwright_page"]
 
-        # Best-effort cookie dismiss
+        # Best-effort cookies/consent dismiss
         for sel in ("button:has-text('Accept')", "button:has-text('I agree')", "[aria-label*='Accept']"):
             try:
                 loc = page.locator(sel).first
@@ -292,21 +352,24 @@ class QueenstownEventsSpider(scrapy.Spider):
         except Exception:
             pass
 
+        # Tag the main container once
+        await self._mark_listing_container(page)
+
         # Page 1 harvest
         new_links = await self._harvest_links_now(page)
         for u in new_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
         pages_clicked = 0
-        while pages_clicked < self.max_pages:
-            changed = await self._click_next_that_changes_tiles(page)
+        while True:
+            if self.max_pages and pages_clicked >= self.max_pages:
+                break
+            changed = await self._click_container_next(page)
             if not changed:
                 break
-
             pages_clicked += 1
-            # after a successful page advance, give it a moment to settle
-            await page.wait_for_timeout(400)
 
+            # harvest after each successful advance
             round_links = await self._harvest_links_now(page)
             for u in round_links:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
