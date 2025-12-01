@@ -1,4 +1,3 @@
-# scraper/tscraper/spiders/queenstown_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -34,12 +33,13 @@ class QueenstownEventsSpider(scrapy.Spider):
 
         self._seen: set[str] = set()
 
-        # Element selector to "wait for tiles":
+        # Element selector to "wait for tiles" (Playwright waits use element selectors, not ::attr):
         self.anchor_selector = "a[href^='/event/']"
-        # Selector to extract hrefs out of the HTML:
+        # HTML parsing selector to extract hrefs:
         self.linksel = "a[href^='/event/']::attr(href), a[href*='/event/']::attr(href)"
 
-        # Accept /event/<slug>/ or /event/<slug>/<id>/, and allow encoded chars (%2B, %26, etc.)
+        # Accept /event/<slug>/ or /event/<slug>/<id>/ and allow encoded chars
+        # Exclude non-detail endpoints under /event/
         self.allow_re = re.compile(
             r"^https?://(?:www\.)?queenstownnz\.co\.nz/event/(?!"
             r"(?:category|categories|tags?|search|event-calendar|venues|series|filters|page)(?:/|$)"
@@ -47,12 +47,14 @@ class QueenstownEventsSpider(scrapy.Spider):
             re.I,
         )
 
-        # **Key fix**: add the site’s pager arrow
+        # Candidate "next page" controls (we’ll try them and keep only the one
+        # that actually changes the tile signature).
         self.page_next_selectors = [
-            "a.nxt",                          # <- site’s “next” arrow
+            "a.nxt[data-gtm-vars*='layoutjs_pager_nxt']",  # most specific to the Simpleview pager
             "nav[aria-label*='pagination' i] a[rel='next']",
             "a[rel='next']",
-            "a:has(i.fa-angle-right)",
+            "a.nxt",
+            "a:has(i.fa-angle-right)"
         ]
 
     # ---------------- helpers ----------------
@@ -194,8 +196,17 @@ class QueenstownEventsSpider(scrapy.Spider):
             dont_filter=True,
         )
 
+    async def _tiles_signature(self, page) -> str:
+        # A compact fingerprint of currently visible event links.
+        return await page.evaluate("""
+            () => Array.from(document.querySelectorAll('a[href^="/event/"]'))
+                .map(a => a.getAttribute('href') || '')
+                .slice(0, 100)
+                .join('|')
+        """)
+
     async def _harvest_links_now(self, page) -> list[str]:
-        """Parse the *current* DOM and return fresh, normalized event URLs."""
+        """Parse the current DOM and return fresh, normalized event URLs."""
         html = await page.content()
         sel = Selector(text=html)
         out = []
@@ -206,25 +217,59 @@ class QueenstownEventsSpider(scrapy.Spider):
                 out.append(u)
         return out
 
-    async def _click_any(self, page, selectors: list[str]) -> bool:
-        """Click the first visible element from selectors; return True if something was clicked."""
-        for sel in selectors:
+    async def _click_next_that_changes_tiles(self, page) -> bool:
+        """
+        Try candidate 'next' selectors. Only consider the click successful if the
+        tile signature actually changes. This avoids clicking unrelated carousels.
+        """
+        prev_sig = await self._tiles_signature(page)
+
+        for sel in self.page_next_selectors:
+            locs = page.locator(sel)
             try:
-                loc = page.locator(sel).first
-                if await loc.is_visible():
-                    # avoid disabled states if present
-                    klass = (await loc.get_attribute("class")) or ""
+                count = await locs.count()
+            except Exception:
+                count = 0
+            if count == 0:
+                continue
+
+            for i in range(count):
+                btn = locs.nth(i)
+                try:
+                    if not await btn.is_visible():
+                        continue
+                    klass = (await btn.get_attribute("class")) or ""
                     if "disabled" in klass or "swiper-button-disabled" in klass:
                         continue
-                    await loc.click()
-                    # give time for either navigation or ajax DOM replacement
+                    await btn.scroll_into_view_if_needed()
+                    before_url = page.url
+                    await btn.click()
+
+                    # Wait for URL change OR tile signature change
+                    changed = False
                     try:
-                        await page.wait_for_load_state("networkidle", timeout=4000)
+                        await page.wait_for_function(
+                            """
+                            (prev) => {
+                              const hrefs = Array.from(document.querySelectorAll('a[href^="/event/"]'))
+                                  .map(a => a.getAttribute('href') || '')
+                                  .slice(0, 100)
+                                  .join('|');
+                              return hrefs && hrefs !== prev;
+                            }
+                            """,
+                            prev_sig,
+                            timeout=6000,
+                        )
+                        changed = True
                     except Exception:
-                        await page.wait_for_timeout(800)
-                    return True
-            except Exception:
-                continue
+                        # As a fallback, if URL changed, also accept
+                        changed = (page.url != before_url)
+
+                    if changed:
+                        return True
+                except Exception:
+                    continue
         return False
 
     async def parse_listing_with_playwright(self, response: scrapy.http.Response):
@@ -252,35 +297,29 @@ class QueenstownEventsSpider(scrapy.Spider):
         for u in new_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-        stagnant_rounds = 0
         pages_clicked = 0
-
-        # Keep clicking "next" until no new links or max_pages reached
         while pages_clicked < self.max_pages:
-            clicked = await self._click_any(page, self.page_next_selectors)
-            if not clicked:
-                break  # no next button we can press
+            changed = await self._click_next_that_changes_tiles(page)
+            if not changed:
+                break
 
             pages_clicked += 1
+            # after a successful page advance, give it a moment to settle
+            await page.wait_for_timeout(400)
 
-            # After click, harvest whatever is visible now
             round_links = await self._harvest_links_now(page)
             for u in round_links:
                 yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-            if round_links:
-                stagnant_rounds = 0
-            else:
-                stagnant_rounds += 1
-                if stagnant_rounds >= 3:
-                    break
-
-        # Final sweep (last repaint might have brought a few more)
+        # Final sweep (last repaint may have added a few)
         final_links = await self._harvest_links_now(page)
         for u in final_links:
             yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
 
-        self.logger.info("Discovered %d unique /event/ URLs across %d page(s)", len(self._seen), pages_clicked + 1)
+        self.logger.info(
+            "Discovered %d unique /event/ URLs across ~%d page(s)",
+            len(self._seen), pages_clicked + 1
+        )
         await page.close()
 
     # ---- sitemap fallbacks ----
