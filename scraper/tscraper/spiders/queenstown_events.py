@@ -29,7 +29,7 @@ class QueenstownEventsSpider(scrapy.Spider):
         try:
             self.max_pages = max(1, int(str(max_pages).strip()))
         except Exception:
-            self.max_pages = 60
+            self.max_pages = 150
 
         self._seen: set[str] = set()
 
