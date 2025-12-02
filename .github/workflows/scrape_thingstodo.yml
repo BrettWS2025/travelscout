@@ -1,4 +1,4 @@
-name: Scrape events
+name: Scrape Things to do
 
 on:
   workflow_dispatch:
