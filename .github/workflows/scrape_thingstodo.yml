@@ -5,7 +5,6 @@ on:
     inputs:
       spiders:
         description: "Comma-separated spider names to run"
-        # e.g. "auckland_events,christchurch_events"
         default: "auckland_events,christchurch_events,queenstown_events"
         required: true
       feed_path:
@@ -22,14 +21,11 @@ permissions:
 
 jobs:
   scrape:
-    name: Run Scrapy spiders
     runs-on: ubuntu-latest
-
     defaults:
       run:
         shell: bash
         working-directory: scraper
-
     env:
       SCRAPY_SETTINGS_MODULE: tscraper.settings
       PYTHONPATH: ${{ github.workspace }}/scraper
@@ -60,16 +56,15 @@ jobs:
 
       - name: Prepare folders
         env:
-          FEED_PATH: ${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
         run: |
           mkdir -p debug httpcache
           mkdir -p "$(dirname "$FEED_PATH")"
 
       - name: Reset feed (start fresh each run)
         env:
-          FEED_PATH: ${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
         run: |
-          # Truncate or create the target JSONL file
           : > "$FEED_PATH"
 
       - name: Show Scrapy version & discovered spiders
@@ -78,18 +73,17 @@ jobs:
           scrapy list | tee debug/spiders.txt
 
       - name: Run spiders (append to the same JSONL)
-        id: runspiders
         env:
-          FEED_PATH: ${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
-          SPIDERS: ${{ github.things_to_do.inputs.spiders }}
-          EXTRA_ARGS: ${{ github.things_to_do.inputs.spider_args }}
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          SPIDERS: ${{ github.event.inputs.spiders }}
+          EXTRA_ARGS: ${{ github.event.inputs.spider_args }}
         run: |
           set -euo pipefail
 
-          # Always append, because we already truncated the file once above
           FEEDS_JSON="$(python - <<'PY'
           import json, os
-          p = os.environ.get("FEED_PATH", "data/Events.jsonl")
+          p = os.environ.get("FEED_PATH", "data/Things_to_do.jsonl")
+          # 'overwrite': False -> append to existing file
           print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
           PY
           )"
@@ -110,7 +104,7 @@ jobs:
 
       - name: Verify feed file exists
         env:
-          FEED_PATH: ${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
         run: |
           set -e
           ls -la "$(dirname "$FEED_PATH")" || true
@@ -121,25 +115,23 @@ jobs:
       - name: Upload data (JSONL)
         uses: actions/upload-artifact@v4
         with:
-          name: Things_to_do-jsonl
-          path: scraper/${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          name: things-to-do-jsonl
+          path: scraper/${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
           if-no-files-found: error
           retention-days: 10
 
       - name: Commit feed back to repository
         if: ${{ github.ref_type == 'branch' }}
         env:
-          FEED_PATH: ${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Things_to_do.jsonl' }}
         run: |
           set -e
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "$FEED_PATH" || true
-
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-
           git commit -m "chore: update ${FEED_PATH} [skip ci]"
           git push
