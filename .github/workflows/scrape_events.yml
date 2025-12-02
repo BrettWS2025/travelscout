@@ -6,7 +6,7 @@ on:
       spiders:
         description: "Comma-separated spider names to run"
         # e.g. "auckland_events,christchurch_events"
-        default: "auckland_events"
+        default: "auckland_events,christchurch_events,queenstown_events"
         required: true
       feed_path:
         description: "Path under scraper/ to write the JSON Lines feed"
