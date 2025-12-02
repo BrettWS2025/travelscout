@@ -1,7 +1,6 @@
 # scraper/tscraper/spiders/generic_events.py
 # -*- coding: utf-8 -*-
 import re
-import json
 from datetime import datetime
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
@@ -196,7 +195,7 @@ class GenericEventsSpider(scrapy.Spider):
                 iso = f"{int(y):04d}-{M:02d}-{int(d):02d}"
                 return iso, iso
 
-        # Light fallback
+        # Light fallback (keep your previous heuristic)
         if re.search(r"\bToday\b|\bNow\b", t, flags=re.I):
             return None, None
         dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", t)
@@ -228,150 +227,27 @@ class GenericEventsSpider(scrapy.Spider):
             f"{y2:04d}-{M2:02d}-{d2:02d}" if (M2 and y2) else None,
         )
 
-    # ---- price helpers -------------------------------------------------
-    @staticmethod
-    def _lower(s: str) -> str:
-        return (s or "").lower()
-
-    def _jsonld_objects(self, response: scrapy.http.Response):
-        out = []
-        for raw in response.xpath("//script[@type='application/ld+json']/text()").getall():
-            try:
-                data = json.loads(raw.strip())
-                out.extend(data if isinstance(data, list) else [data])
-            except Exception:
+    def _extract_top_meta(self, response: scrapy.http.Response) -> dict:
+        """
+        Generic meta block just below <h1> (may contain date text, price, location text).
+        """
+        meta_texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
+        meta_texts = [t for t in meta_texts if t]
+        date_text = meta_texts[0] if meta_texts else None
+        price = None
+        location = None
+        for t in meta_texts:
+            if "$" in t or re.search(r"\bFREE\b", t or "", re.I):
+                price = t
+                break
+        for t in meta_texts:
+            if t in (date_text, price):
                 continue
-        return out
-
-    def _price_from_jsonld(self, objs) -> str | None:
-        """
-        Look for Event.offers.price / lowPrice-highPrice and render a human string.
-        """
-        if not isinstance(objs, list):
-            return None
-        prices = []
-        currency = "NZD"
-        for o in objs:
-            offers = o.get("offers") if isinstance(o, dict) else None
-            if not offers:
+            if re.search(r"View times|Plan your route|Plan your transport|Purchase tickets", t or "", re.I):
                 continue
-            offer_list = offers if isinstance(offers, list) else [offers]
-            for off in offer_list:
-                try:
-                    cur = off.get("priceCurrency") or currency
-                    currency = cur or currency
-                    if "lowPrice" in off and "highPrice" in off:
-                        lp = float(off["lowPrice"])
-                        hp = float(off["highPrice"])
-                        prices.append((lp, hp))
-                    elif "price" in off:
-                        p = float(off["price"])
-                        prices.append((p, p))
-                except Exception:
-                    continue
-        if not prices:
-            return None
-        lo = min(p[0] for p in prices)
-        hi = max(p[1] for p in prices)
-        if lo and hi and lo != hi:
-            return f"${int(lo) if lo.is_integer() else lo:g} - ${int(hi) if hi.is_integer() else hi:g}"
-        return f"${int(lo) if lo.is_integer() else lo:g}"
-
-    def _pricing_block_text(self, response: scrapy.http.Response) -> str | None:
-        """
-        Grab text from a 'Pricing' / 'Price' / 'Admission' heading's first following block.
-        """
-        # Case-insensitive translate helper
-        LOWER = "abcdefghijklmnopqrstuvwxyz"
-        UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-        for key in ("pricing", "price", "admission", "tickets", "ticket prices", "cost", "entry", "koha"):
-            txts = response.xpath(
-                f"//*[self::h2 or self::h3 or self::h4]"
-                f"[contains(translate(normalize-space(.), '{UPPER}', '{LOWER}'), '{key}')]"
-                f"/following-sibling::*[1]//text()"
-            ).getall()
-            if txts:
-                t = self._clean(" ".join(txts))
-                if t:
-                    return t
-        return None
-
-    def _any_currency_text(self, response: scrapy.http.Response) -> str | None:
-        # Last-gasp currency scan in common blocks
-        txts = response.css("[class*='price'] ::text, .price ::text, p:contains('$')::text").getall()
-        if not txts:
-            txts = response.xpath("//*[self::p or self::dd or self::li][contains(., '$')]//text()").getall()
-        t = self._clean(" ".join(txts))
-        return t or None
-
-    def _normalize_price_text(self, text: str | None) -> str | None:
-        """
-        Normalize things like '$25  - $30' -> '$25 - $30'; keep 'Donation/koha', 'Free event', etc.
-        """
-        if not text:
-            return None
-        t = re.sub(r"\s+", " ", text).strip()
-        # Prefer a concise $min - $max if multiple numbers exist
-        nums = [x.replace(",", "") for x in re.findall(r"\$?\s*([0-9]+(?:\.[0-9]{1,2})?)", t)]
-        nums = [n for n in nums if n]
-        if nums:
-            # if there were explicit $ in source, render with $
-            has_dollar = "$" in t
-            vals = [float(n) for n in nums]
-            lo, hi = min(vals), max(vals)
-            if lo == hi:
-                return f"${int(lo) if lo.is_integer() else lo:g}" if has_dollar else f"{lo:g}"
-            return f"${int(lo) if lo.is_integer() else lo:g} - ${int(hi) if hi.is_integer() else hi:g}" if has_dollar \
-                   else f"{lo:g} - {hi:g}"
-        # keep meaningful keywords
-        if re.search(r"\bfree\b", t, re.I):
-            return "Free event"
-        if re.search(r"koha|donation", t, re.I):
-            return "Donation/koha"
-        if re.search(r"\bpaid\b", t, re.I):
-            return "Paid event (see site)"
-        return t or None
-
-    def _extract_price(self, response: scrapy.http.Response, meta_top: dict | None) -> str | None:
-        """
-        Composite pricing extractor with multiple fallbacks.
-        """
-        # 1) JSON-LD offers (if present)
-        jld = self._jsonld_objects(response)
-        price = self._normalize_price_text(self._price_from_jsonld(jld))
-        if price:
-            return price
-
-        # 2) 'Pricing' heading block
-        price = self._normalize_price_text(self._pricing_block_text(response))
-        if price:
-            return price
-
-        # 3) dt=Price/Cost -> next dd (your original rule)
-        dd_price = self._clean(" ".join(
-            response.xpath(
-                "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
-                "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/following-sibling::dd[1]//text()"
-            ).getall()
-        ))
-        price = self._normalize_price_text(dd_price)
-        if price:
-            return price
-
-        # 4) Top meta heuristics (often says 'Free event', 'Paid event', 'Donation/koha')
-        if meta_top:
-            mt = self._clean(" ".join([meta_top.get("price") or "", meta_top.get("location") or "", meta_top.get("date_text") or ""]))
-            price = self._normalize_price_text(mt)
-            if price:
-                return price
-
-        # 5) Any other currency-looking text on the page
-        price = self._normalize_price_text(self._any_currency_text(response))
-        if price:
-            return price
-
-        return None
+            location = t
+            break
+        return {"date_text": date_text, "price": price, "location": location}
 
     # ---------- crawling ----------
     def start_requests(self):
@@ -522,35 +398,49 @@ class GenericEventsSpider(scrapy.Spider):
             or self._join_text(response.css("article p::text, main p::text").getall()) \
             or self._clean(response.css("meta[name='description']::attr(content)").get())
 
-        # Meta (dates/price/location) – heuristic block near the top
-        meta_top = self._extract_top_meta(response)
-        dates_text = meta_top.get("date_text") if meta_top else None
+        # ------- DATES (from <time> …) -------
+        # e.g. "<time class='block'>15 Dec 2025 | 6:00 pm - 7:30 pm</time>"
+        time_text = self._clean(" ".join(response.css("time::text").getall()))
+        if not time_text:
+            meta_top = self._extract_top_meta(response)
+            time_text = meta_top.get("date_text")
+        st, en = self._parse_dates(time_text)
 
-        # Dates
-        st, en = self._parse_dates(dates_text or self._clean(" ".join(response.css("time::text").getall())))
+        # ------- PRICE (optional; try dt=Price/Cost -> next dd) -------
+        price = self._clean(" ".join(
+            response.xpath(
+                "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
+                "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/"
+                "following-sibling::dd[1]//text()"
+            ).getall()
+        ))
+        if not price:
+            meta_top = meta_top if 'meta_top' in locals() else self._extract_top_meta(response)
+            price = meta_top.get("price")
 
-        # LOCATION (existing logic)
+        # ------- LOCATION -------
+        # Prefer the two-line dd with Tailwind class 'space-y-0.5' (escape dot)
         loc_bits = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
         loc_bits = [b for b in loc_bits if b]
         location = " | ".join(loc_bits) if loc_bits else None
         if not location:
+            # Fallback to dt=Location/Venue -> dd
             location = self._clean(" ".join(
                 response.xpath(
                     "//dt[contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'location') or "
-                    "contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'venue')]/following-sibling::dd[1]//text()"
+                    "contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'venue')]/"
+                    "following-sibling::dd[1]//text()"
                 ).getall()
             ))
-        if not location and meta_top:
+        if not location:
+            meta_top = meta_top if 'meta_top' in locals() else self._extract_top_meta(response)
             location = meta_top.get("location")
 
-        # PRICE (new composite extractor)
-        price = self._extract_price(response, meta_top)
-
-        # Categories
+        # ------- Categories -------
         cats = response.css("[class*='category'] a::text, .tags a::text").getall()
         cats = [self._clean(c) for c in cats if self._clean(c)] or None
 
-        # Image
+        # ------- Image -------
         image = response.css("meta[property='og:image']::attr(content)").get() \
             or response.css("meta[name='twitter:image']::attr(content)").get()
         if not image:
@@ -563,8 +453,8 @@ class GenericEventsSpider(scrapy.Spider):
             "url": response.url,
             "title": title,
             "description": desc,
-            "dates": {"start": st, "end": en, "text": dates_text},
-            "price": price,                       # <- now properly populated
+            "dates": {"start": st, "end": en, "text": time_text},
+            "price": price,
             "location": location,
             "categories": cats or None,
             "image": image,
