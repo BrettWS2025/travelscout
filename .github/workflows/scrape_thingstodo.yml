@@ -121,7 +121,7 @@ jobs:
       - name: Upload data (JSONL)
         uses: actions/upload-artifact@v4
         with:
-          name: events-jsonl
+          name: Things_to_do-jsonl
           path: scraper/${{ github.things_to_do.inputs.feed_path || 'data/Things_to_do.jsonl' }}
           if-no-files-found: error
           retention-days: 10
