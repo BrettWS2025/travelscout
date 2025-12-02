@@ -5,7 +5,6 @@ on:
     inputs:
       spiders:
         description: "Comma-separated spider names to run"
-        # e.g. "auckland_events,christchurch_events"
         default: "auckland_events,christchurch_events,queenstown_events"
         required: true
       feed_path:
@@ -65,19 +64,12 @@ jobs:
           mkdir -p debug httpcache
           mkdir -p "$(dirname "$FEED_PATH")"
 
-      - name: Reset feed (start fresh each run)
-        env:
-          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
-        run: |
-          # Truncate or create the target JSONL file
-          : > "$FEED_PATH"
-
       - name: Show Scrapy version & discovered spiders
         run: |
           scrapy version -v
           scrapy list | tee debug/spiders.txt
 
-      - name: Run spiders (append to the same JSONL)
+      - name: Run spiders into a temp file, then atomically replace the feed if non-empty
         id: runspiders
         env:
           FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
@@ -86,17 +78,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Always append, because we already truncated the file once above
+          # Write to a temp file first
+          TMP_FEED="${FEED_PATH%.jsonl}.tmp.${GITHUB_RUN_ID:-$$}.jsonl"
+          rm -f "$TMP_FEED"
+
+          export TMP_FEED
           FEEDS_JSON="$(python - <<'PY'
           import json, os
-          p = os.environ.get("FEED_PATH", "data/Events.jsonl")
+          p = os.environ["TMP_FEED"]
+          # overwrite: false -> append across multiple "scrapy crawl" invocations
           print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
           PY
           )"
 
-          echo "FEED will go to: ${FEED_PATH}"
-          echo "FEEDS mapping: ${FEEDS_JSON}"
-          echo "EXTRA_ARGS: ${EXTRA_ARGS}"
+          echo "Final feed path: ${FEED_PATH}"
+          echo "Temp feed path : ${TMP_FEED}"
+          echo "FEEDS mapping  : ${FEEDS_JSON}"
+          echo "EXTRA_ARGS     : ${EXTRA_ARGS}"
 
           IFS=',' read -ra S <<< "${SPIDERS}"
           for s in "${S[@]}"; do
@@ -108,13 +106,23 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Verify feed file exists
+          echo "Temp feed size (bytes): $(wc -c < "$TMP_FEED" 2>/dev/null || echo 0)"
+
+          # If we scraped at least one item, replace the final feed atomically.
+          if test -s "$TMP_FEED"; then
+            mv -f "$TMP_FEED" "$FEED_PATH"
+          else
+            echo "WARNING: No items scraped; leaving existing $FEED_PATH untouched (if any)."
+            rm -f "$TMP_FEED"
+          fi
+
+      - name: Verify feed file exists & is non-empty
         env:
           FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
         run: |
           set -e
           ls -la "$(dirname "$FEED_PATH")" || true
-          test -s "$FEED_PATH" || (echo "ERROR: Feed file $FEED_PATH not found or empty." && exit 1)
+          test -s "$FEED_PATH" || (echo "ERROR: $FEED_PATH not found or empty (no items scraped)." && exit 1)
           echo "First 5 lines:"
           head -n 5 "$FEED_PATH" || true
 
@@ -135,11 +143,9 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "$FEED_PATH" || true
-
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-
           git commit -m "chore: update ${FEED_PATH} [skip ci]"
           git push
