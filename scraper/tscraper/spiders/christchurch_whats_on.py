@@ -17,7 +17,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
     """
     ChristchurchNZ 'What's On' events.
     """
-    name = "christchurch_events"
+    name = "christchurch_things_to_do"
 
     custom_settings = {
         "ROBOTSTXT_OBEY": True,
