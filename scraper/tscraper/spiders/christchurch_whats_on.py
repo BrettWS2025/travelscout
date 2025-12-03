@@ -1,192 +1,444 @@
-# scraper/tscraper/spiders/christchurch_whats_on.py
-import hashlib
+# scraper/tscraper/spiders/christchurch_events.py
+# -*- coding: utf-8 -*-
 import re
-from datetime import datetime, timezone
-from urllib.parse import urljoin, urlparse
+from datetime import datetime
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import scrapy
+from parsel import Selector
+
+try:
+    from scrapy_playwright.page import PageMethod  # enabled by settings if installed
+except Exception:  # pragma: no cover
+    PageMethod = None
 
 
-class ChristchurchWhatsOnSpider(scrapy.Spider):
+class ChristchurchEventsSpider(scrapy.Spider):
     """
-    ChristchurchNZ — Things to do (detail pages)
-
-    Emits ONLY:
-      id, record_type, name, categories, url, source,
-      location, price, opening_hours, operating_months, data_collected_at
+    ChristchurchNZ 'What's On' events.
     """
-
-    name = "christchurch_whats_on"
-    allowed_domains = ["christchurchnz.com", "www.christchurchnz.com"]
-    start_urls = ["https://www.christchurchnz.com/visit/things-to-do/"]
+    name = "christchurch_events"
 
     custom_settings = {
-        "USER_AGENT": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit(537.36) (KHTML, like Gecko) "
-            "Chrome/127.0.0.0 Safari/537.36"
-        ),
         "ROBOTSTXT_OBEY": True,
-        "DOWNLOAD_DELAY": 0.4,
-        "CONCURRENT_REQUESTS": 12,
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 0.5,
-        "AUTOTHROTTLE_MAX_DELAY": 6.0,
-        "DEPTH_LIMIT": 6,
-        "FEEDS": {
-            "data/Things_to_do.jsonl": {
-                "format": "jsonlines",
-                "encoding": "utf8",
-                "overwrite": False,
-            }
-        },
+        "DOWNLOAD_TIMEOUT": 60,
+        "DUPEFILTER_CLASS": "scrapy.dupefilters.RFPDupeFilter",
     }
 
-    PATH_PREFIX = "/visit/things-to-do/"
+    # ---------- init & config ----------
+    def __init__(
+        self,
+        base: str = "https://www.christchurchnz.com/visit/whats-on",
+        domain: str = "christchurchnz.com",
+        # Accept both /visit/whats-on/<slug> and /visit/whats-on/listing/<slug>
+        allow: str = r"^https?://(?:www\.)?christchurchnz\.com/visit/whats-on/(?:listing/)?[^/?#]+$",
+        anchor_selector: str = "a[href^='/visit/whats-on/']",
+        linksel: str = "a[href^='/visit/whats-on/']::attr(href), a[href*='/visit/whats-on/']::attr(href)",
+        more: str = "",
+        load_more: str = "120",
+        pages: str | None = None,
+        sitemap: str = "https://www.christchurchnz.com/sitemap.xml",
+        js_listing: str = "true",
+        *args, **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        if not base or not domain or not allow:
+            raise ValueError("Please provide -a base=..., -a domain=..., -a allow=...")
+
+        self.base = base.rstrip("/")
+        self.domain = domain
+        self.allow_re = re.compile(allow)
+        self.anchor_selector = anchor_selector
+        self.linksel = linksel
+        self.js_listing = str(js_listing).strip().lower() != "false"
+
+        self.more_selectors = [s.strip() for s in (more or "").split("||") if s.strip()] or [
+            "button:has-text('Load more')",
+            "button:has-text('Load more events')",
+            "button:has-text('See more')",
+            "button:has-text('Show more')",
+            "a:has-text('Load more')",
+            "[data-drupal-views-infinite-scroll] button",
+        ]
+
+        try:
+            self.load_more = max(0, int(str(load_more).strip()))
+        except Exception:
+            self.load_more = 120
+
+        self.page_range = None
+        if pages:
+            m = re.match(r"^\s*(\d+)\s*-\s*(\d+)\s*$", str(pages))
+            if m:
+                a, b = int(m.group(1)), int(m.group(2))
+                if b >= a:
+                    self.page_range = list(range(a, b + 1))
+
+        self.sitemap_url = sitemap or self._default_sitemap(self.base)
+        self._seen: set[str] = set()
+
+        self.start_urls = [self.base]
+        self.allowed_domains = [self.domain, f"www.{self.domain}"]
+
+    @staticmethod
+    def _default_sitemap(base_url: str) -> str:
+        parts = urlsplit(base_url)
+        return urlunsplit((parts.scheme, parts.netloc, "/sitemap.xml", "", ""))
 
     # ---------- helpers ----------
     @staticmethod
-    def _clean(s: str | None) -> str:
+    def _clean(s: str | None) -> str | None:
         if not s:
-            return ""
-        s = re.sub(r"\s+", " ", s)
-        return s.replace("\xa0", " ").strip()
+            return None
+        s = re.sub(r"\s+", " ", s).strip()
+        return s or None
 
     @staticmethod
-    def _hash_id(url: str) -> str:
-        return hashlib.md5(url.encode("utf-8")).hexdigest()[:16]
+    def _join_text(nodes) -> str | None:
+        parts = [re.sub(r"\s+", " ", (x or "")).strip() for x in (nodes or [])]
+        parts = [p for p in parts if p]
+        return " ".join(parts) if parts else None
 
-    def _primary_category(self, url: str) -> list[str]:
+    def _normalize_detail_url(self, href: str) -> str | None:
+        if not href:
+            return None
+        absu = urljoin(self.base, href)
+        scheme, netloc, path, _, _ = urlsplit(absu)
+        if not scheme or not netloc or not path:
+            return None
+        clean = urlunsplit((scheme, netloc, path.rstrip("/"), "", ""))
+        # exclude the hub itself and obvious non-detail paths
+        if re.search(r"/visit/whats-on/?$", clean):
+            return None
+        if re.search(r"/visit/whats-on/(category|categories|tags?|search|page/|filters|series|venues|authors?)(/|$)", clean):
+            return None
+        return clean if self.allow_re.match(clean) else None
+
+    def _parse_dates(self, text: str | None) -> tuple[str | None, str | None]:
         """
-        Christchurch version: default to 'Activities & Attractions'.
-        If we can infer a subcategory from breadcrumbs, include it second.
+        Parse either "15 Dec 2025 | 6:00 pm - 7:30 pm",
+        or "3 - 8 March 2026", or "15 Dec 2025".
         """
-        # This returns a list of categories, already including primary
-        # We fill subcategory later in parse_place if available.
-        return ["Activities & Attractions"]
+        if not text:
+            return None, None
+        t = re.sub(r"\s+", " ", text.replace("–", "-")).strip()
 
-    # ---------- crawl ----------
-    def parse(self, response: scrapy.http.Response):
-        # Follow only internal links within /visit/things-to-do/
-        for href in response.css("a[href^='/visit/things-to-do/']::attr(href)").getall():
-            url = urljoin(response.url, href.split("#")[0])
-            parts = [p for p in urlparse(url).path.split("/") if p]
-
-            # detail pages look like /visit/things-to-do/listing/<slug> or sometimes /visit/things-to-do/<slug>
-            is_detail = (
-                (len(parts) >= 4 and parts[0] == "visit" and parts[1] == "things-to-do" and parts[2] == "listing")
-                or (len(parts) >= 3 and parts[0] == "visit" and parts[1] == "things-to-do" and parts[2] not in {"listing", "search", "categories", "category", "tag"})
-            )
-
-            if is_detail:
-                yield response.follow(url, callback=self.parse_place, headers={"Referer": response.url})
-            else:
-                yield response.follow(url, callback=self.parse, headers={"Referer": response.url})
-
-        # simple pagination
-        for href in response.css("a[href*='?page=']::attr(href)").getall():
-            yield response.follow(urljoin(response.url, href.split("#")[0]), callback=self.parse)
-
-    def parse_place(self, response: scrapy.http.Response):
-        url = response.url.split("#")[0]
-
-        # Name
-        name = self._clean(response.xpath("//h1/text()").get())
-        if not name:
-            return
-
-        # Categories: try breadcrumb or page tags; normalize to primary first
-        cats = []
-        # breadcrumb example selectors (be defensive)
-        crumb_bits = response.css("nav.breadcrumb a::text, .breadcrumb a::text").getall()
-        crumb_bits = [self._clean(c) for c in crumb_bits if self._clean(c)]
-        # harvest any page-tag-like elements that mention 'things-to-do'
-        tag_bits = response.xpath("//a[contains(@href,'things-to-do')]/text()").getall()
-        tag_bits = [self._clean(c) for c in tag_bits if self._clean(c)]
-
-        subcat = None
-        # pick a plausible subcategory (skip the site root crumbs)
-        for c in crumb_bits + tag_bits:
-            if c and c.lower() not in ("home", "visit", "things to do"):
-                subcat = c
-                break
-
-        categories = self._primary_category(url)
-        if subcat and subcat not in categories:
-            categories.append(subcat)
-
-        # Address
-        address = self._clean(
-            " ".join(response.xpath("//*[normalize-space()='Address']/following::*[1]//text()").getall())
-        ) or None
-
-        # Opening hours (free-text)
-        hours_text = self._clean(
-            " ".join(response.xpath("//*[contains(., 'Opening hours')]/following::*[1]//text()").getall())
-        ) or None
-
-        # Operating months (best-effort)
-        months_text = self._clean(
-            " ".join(response.xpath("//*[contains(., 'Months of operation')]/following::*[1]//text()").getall())
-        ) or None
-
-        # Price (coarse: look for typical pricing blocks or $/Free mentions)
-        price_block = self._clean(
-            " ".join(
-                response.xpath(
-                    "//*[contains(., 'Pricing and Conditions') or contains(., 'Ticket pricing') or contains(., 'Pricing')]/following::*[1]//text()"
-                ).getall()
-            )
-        ) or self._clean(
-            " ".join(response.xpath("//p[contains(.,'$') or contains(.,'Free') or contains(.,'free')]//text()").getall())
+        # Full day with start-end time
+        m = re.match(
+            r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+((?:19|20)\d{2})\s*\|\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))\s*-\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))$",
+            t, re.I
         )
+        if m:
+            d, mon, y, st_txt, en_txt = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                def _hm(s_txt: str) -> str:
+                    hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s_txt, re.I).groups()
+                    hh, mm = int(hh), int(mm)
+                    if ap.lower() == "pm" and hh != 12: hh += 12
+                    if ap.lower() == "am" and hh == 12: hh = 0
+                    return f"{hh:02d}:{mm:02d}:00"
+                y = int(y); d = int(d)
+                return (f"{y:04d}-{M:02d}-{d:02d}T{_hm(st_txt)}",
+                        f"{y:04d}-{M:02d}-{d:02d}T{_hm(en_txt)}")
 
-        # parse into compact price object (NZD default)
-        currency = "NZD"
-        min_price = max_price = None
-        free = False
-        if price_block:
-            # collect $ amounts (ignore absurd values)
-            nums = [m.replace(",", "") for m in re.findall(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", price_block)]
+        # Date range (no times)
+        m = re.match(r"^\s*(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+((?:19|20)\d{2})\s*$", t)
+        if m:
+            d1, d2, mon, y = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                y = int(y); d1 = int(d1); d2 = int(d2)
+                return (f"{y:04d}-{M:02d}-{d1:02d}",
+                        f"{y:04d}-{M:02d}-{d2:02d}")
+
+        # Single date
+        m = re.match(r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+((?:19|20)\d{2})$", t)
+        if m:
+            d, mon, y = m.groups()
+            months = {
+                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+            }
+            M = months.get(mon.lower())
+            if M:
+                y = int(y); d = int(d)
+                iso = f"{y:04d}-{M:02d}-{d:02d}"
+                return iso, iso
+
+        return None, None
+
+    def _event_info_text(self, response: scrapy.http.Response) -> str | None:
+        """Text that follows the 'Event info' label, when <time> is missing."""
+        txt = self._clean(" ".join(
+            response.xpath("//*[normalize-space()='Event info']/following-sibling::*[1]//text()").getall()
+        ))
+        if txt and re.search(r"\d{1,2}\s+[A-Za-z]{3,9}\s+(?:19|20)\d{2}", txt):
+            return txt
+        return None
+
+    def _eyebrow_categories(self, response: scrapy.http.Response) -> list[str] | None:
+        """
+        The small 'eyebrow' just above <h1>, e.g. 'Central City | Festival'.
+        Split on '|' or ',' and return a clean list.
+        """
+        # Last non-empty text node immediately preceding the H1
+        t = response.xpath("(//h1/preceding::text()[normalize-space()][1])").get()
+        t = self._clean(t)
+        if t and ("|" in t or "," in t):
+            parts = [self._clean(p) for p in re.split(r"[|,]", t)]
+            parts = [p for p in parts if p and p.lower() not in ("home", "visit", "whats on", "what's on")]
+            return parts or None
+
+        # Fallback: pill/label classes
+        pills = [self._clean(x) for x in response.css("[class*='category'] a::text, .tags a::text").getall()]
+        return [p for p in pills if p] or None
+
+    def _pricing_text(self, response: scrapy.http.Response) -> str | None:
+        """
+        Prefer the explicit 'Pricing' section, e.g. '$59.90 - $299.00'.
+        Fallback to 'Ticket pricing' (Free event / Paid event) if no numbers found.
+        """
+        # 1) Heading 'Pricing' or 'Ticket pricing' -> next block
+        def block_after(*headings: str) -> str | None:
+            up = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            low = "abcdefghijklmnopqrstuvwxyz"
+            for h in headings:
+                sel = (f"//*[self::h2 or self::h3 or self::h4]"
+                       f"[contains(translate(normalize-space(.), '{up}', '{low}'), '{h.lower()}')]/"
+                       f"following-sibling::*[1]//text()")
+                t = self._clean(" ".join(response.xpath(sel).getall()))
+                if t:
+                    return t
+            return None
+
+        txt = block_after("Pricing")
+        if txt and re.search(r"\$\s*\d", txt):
+            return txt
+
+        # 2) Ticket pricing (Paid/Free)
+        txt2 = block_after("Ticket pricing", "Ticket price", "Admission")
+        return txt2 or None
+
+    @staticmethod
+    def _normalize_price_text(text: str | None) -> str | None:
+        if not text:
+            return None
+        t = re.sub(r"\s+", " ", text).strip()
+
+        # Look for explicit $, capture decimals if present so we can format nicely
+        raw_nums = re.findall(r"\$?\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", t)
+        has_dollar = "$" in t
+        if raw_nums:
             vals = []
-            for n in nums:
+            saw_decimal = any("." in n for n in raw_nums)
+            for n in raw_nums:
                 try:
-                    v = float(n)
-                    if 0 <= v < 2000:
-                        vals.append(v)
+                    vals.append(float(n))
                 except Exception:
                     pass
             if vals:
-                min_price = min(vals)
-                max_price = max(vals)
-            free = bool(re.search(r"\bfree\b", price_block, re.I)) and (min_price is None or min_price == 0.0)
+                lo, hi = min(vals), max(vals)
 
-        item = {
-            "id": self._hash_id(url),
-            "record_type": "place",
-            "name": name,
-            "categories": categories or ["Activities & Attractions"],
-            "url": url,
-            "source": "christchurchnz.com",
-            "location": {
-                "name": None,
-                "address": address,
-                "city": "Christchurch" if address and "Christchurch" in address else None,
-                "region": "Canterbury",
-                "country": "New Zealand",
-                "latitude": None,
-                "longitude": None,
-            },
-            "price": {
-                "currency": currency,
-                "min": min_price,
-                "max": max_price,
-                "text": None,
-                "free": bool(free),
-            },
-            "opening_hours": {"text": hours_text} if hours_text else None,
-            "operating_months": months_text or None,
-            "data_collected_at": datetime.now(timezone.utc).isoformat(),
+                def fmt(v: float) -> str:
+                    if saw_decimal and not float(v).is_integer():
+                        return f"{v:.2f}"
+                    return f"{int(v)}"
+
+                if lo != hi:
+                    return (f"${fmt(lo)} - ${fmt(hi)}") if has_dollar else f"{fmt(lo)} - {fmt(hi)}"
+                return (f"${fmt(lo)}") if has_dollar else f"{fmt(lo)}"
+
+        # Otherwise keep meaningful tokens
+        if re.search(r"\bfree\b", t, re.I):
+            return "Free event"
+        if re.search(r"\bpaid\b", t, re.I):
+            return "Paid event"
+        if re.search(r"koha|donation", t, re.I):
+            return "Donation/koha"
+        return t or None
+
+    # ---------- crawling ----------
+    def start_requests(self):
+        if self.js_listing:
+            yield scrapy.Request(
+                self.base,
+                callback=self.parse_listing_with_playwright,
+                meta={"playwright": True, "playwright_include_page": True},
+                dont_filter=True,
+            )
+            if self.page_range:
+                for n in self.page_range:
+                    url = f"{self.base}?page={n}"
+                    yield scrapy.Request(
+                        url,
+                        callback=self.parse_listing_with_playwright,
+                        meta={"playwright": True, "playwright_include_page": True},
+                        dont_filter=True,
+                    )
+        else:
+            yield scrapy.Request(self.base, callback=self.parse_listing, dont_filter=True)
+            if self.page_range:
+                for n in self.page_range:
+                    url = f"{self.base}?page={n}"
+                    yield scrapy.Request(url, callback=self.parse_listing, dont_filter=True)
+
+        if self.sitemap_url:
+            yield scrapy.Request(self.sitemap_url, callback=self.parse_sitemap_index, dont_filter=True)
+
+    async def parse_listing_with_playwright(self, response: scrapy.http.Response):
+        page = response.meta["playwright_page"]
+        try:
+            await page.wait_for_selector(self.anchor_selector, timeout=15000)
+        except Exception:
+            pass
+
+        # 1st harvest
+        html = await page.content()
+        sel = Selector(text=html)
+        for h in sel.css(self.linksel).getall():
+            u = self._normalize_detail_url(h)
+            if u and u not in self._seen:
+                self._seen.add(u)
+                yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+        # Try virtual/infinite loading politely
+        stagnant = 0
+        for _ in range(self.load_more):
+            try:
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            except Exception:
+                pass
+            await page.wait_for_timeout(700)
+
+            clicked = False
+            for s in self.more_selectors:
+                try:
+                    loc = page.locator(s).first
+                    if await loc.is_visible():
+                        await loc.click()
+                        clicked = True
+                        try:
+                            await page.wait_for_load_state("networkidle", timeout=5000)
+                        except Exception:
+                            await page.wait_for_timeout(1200)
+                        break
+                except Exception:
+                    continue
+
+            html = await page.content()
+            sel = Selector(text=html)
+            new = 0
+            for h in sel.css(self.linksel).getall():
+                u = self._normalize_detail_url(h)
+                if u and u not in self._seen:
+                    self._seen.add(u)
+                    new += 1
+                    yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+            stagnant = 0 if new else (stagnant + 1)
+            if not clicked and stagnant >= 3:
+                break
+
+        await page.close()
+
+    def parse_listing(self, response: scrapy.http.Response):
+        for h in response.css(self.linksel).getall():
+            u = self._normalize_detail_url(h)
+            if u and u not in self._seen:
+                self._seen.add(u)
+                yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+    def parse_sitemap_index(self, response: scrapy.http.Response):
+        for loc in response.xpath("//loc/text()").getall():
+            if loc.endswith(".xml"):
+                yield scrapy.Request(loc, callback=self.parse_sitemap_leaf, dont_filter=True)
+            else:
+                u = self._normalize_detail_url(loc)
+                if u and u not in self._seen:
+                    self._seen.add(u)
+                    yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+    def parse_sitemap_leaf(self, response: scrapy.http.Response):
+        for loc in response.xpath("//url/loc/text()").getall():
+            u = self._normalize_detail_url(loc)
+            if u and u not in self._seen:
+                self._seen.add(u)
+                yield scrapy.Request(u, callback=self.parse_event, dont_filter=True)
+
+    # ---------- detail pages ----------
+    def parse_event(self, response: scrapy.http.Response):
+        # Title
+        title = self._clean(response.css("h1::text").get()) \
+            or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
+            or self._clean(response.css("title::text").get())
+
+        # Description (best-effort)
+        desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall()) \
+            or self._join_text(response.css("article p::text, main p::text, section p::text").getall()) \
+            or self._clean(response.css("meta[name='description']::attr(content)").get())
+
+        # --- Categories (eyebrow above H1) ---
+        categories = self._eyebrow_categories(response)
+
+        # --- Date/time ---
+        time_text = self._clean(" ".join(response.css("time::text").getall()))
+        if not (time_text and re.search(r"\d", time_text)):
+            time_text = self._event_info_text(response)
+        st, en = self._parse_dates(time_text)
+
+        # --- Pricing ---
+        raw_price = self._pricing_text(response)
+        price = self._normalize_price_text(raw_price)
+
+        # --- Location ---
+        # Prefer explicit address-style blocks, never “Free/Paid event”
+        loc_bits = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
+        loc_bits = [b for b in loc_bits if b]
+        location = " | ".join(loc_bits) if loc_bits else None
+        if not location:
+            # dt=Location/Venue -> dd
+            location = self._clean(" ".join(
+                response.xpath(
+                    "//dt[contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'location') or "
+                    "contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'venue')]/following-sibling::dd[1]//text()"
+                ).getall()
+            ))
+        # filter out tokens that are actually pricing labels
+        if location and re.search(r"\bfree\b|\bpaid\b|donation|koha", location, re.I):
+            location = None
+        if not location:
+            location = "See website for details"
+
+        # --- Image ---
+        image = response.css("meta[property='og:image']::attr(content)").get() \
+            or response.css("meta[name='twitter:image']::attr(content)").get()
+        if not image:
+            img = response.css("article img::attr(src), main img::attr(src)").get()
+            if img:
+                image = urljoin(response.url, img)
+
+        yield {
+            "source": self.domain.split(".")[0],
+            "url": response.url,
+            "title": title,
+            "description": desc,
+            "dates": {"start": st, "end": en, "text": time_text},
+            "price": price,
+            "location": location,
+            "categories": categories or None,
+            "image": image,
+            "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
-
-        yield item
