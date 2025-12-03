@@ -1,8 +1,7 @@
+# scraper/tscraper/spiders/christchurch_events.py
 # -*- coding: utf-8 -*-
 import re
-import json
 from datetime import datetime
-from html import unescape
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import scrapy
@@ -16,20 +15,25 @@ except Exception:  # pragma: no cover
 
 class ChristchurchEventsSpider(scrapy.Spider):
     """
-    ChristchurchNZ "What's On" spider with robust date/price/location extraction,
-    plus improved DESCRIPTION and IMAGE extraction.
+    ChristchurchNZ "What's On" spider with robust date/price/location extraction.
 
-    DESCRIPTION priority:
-      1) JSON-LD Event.description (if present)
-      2) Body paragraphs from the main content block (.field--name-body, article),
-         filtered to avoid newsletter/labels and other non-narrative noise
-      3) <meta name="description">
+    - LOCATION
+      * Prefer explicit address/venue blocks (e.g., “Address” → next block).
+      * Accept only address-like content (street names, numbers, Christchurch/Canterbury, etc).
+      * If nothing suitable is found, set: "See website for details".
 
-    IMAGE priority:
-      1) <meta property="og:image"> or <meta name="twitter:image"> or <link rel="image_src">
-      2) <picture><source srcset> and <img srcset> (pick largest width)
-      3) <img> with src / lazy attrs in hero/article
-      4) CSS background-image URLs in obvious hero containers
+    - PRICE
+      * Prefer the page's "Pricing" section (e.g., "$15" or "$25 - $30").
+      * Else use ticket label (Free / Donation/koha / Paid) only if no explicit numbers exist.
+      * Else try a dt=Price/Cost → dd fallback.
+
+    - DATES
+      * Pull from <time>, or from "Event info" block, or the top meta <ul>.
+      * Supports:
+          "15 Dec 2025 | 6:00 pm - 7:30 pm"
+          "3 - 8 March 2026"
+          "15 Dec 2025"
+          "3 Dec 2025 - 10 Dec 2025 | 1:10 pm - 2:00 pm"
     """
     name = "christchurch_events"
 
@@ -110,12 +114,12 @@ class ChristchurchEventsSpider(scrapy.Spider):
     def _clean(s: str | None) -> str | None:
         if not s:
             return None
-        s = re.sub(r"[\u00A0\u202F\s]+", " ", s).strip()
+        s = re.sub(r"\s+", " ", s).strip()
         return s or None
 
     @staticmethod
     def _join_text(nodes) -> str | None:
-        parts = [re.sub(r"\s+", " ", (x or "")).strip() for x in (nodes or [])]
+        parts = [re.sub(r"\s+", " ", (x or "")).strip() for x in nodes or []]
         parts = [p for p in parts if p]
         return " ".join(parts) if parts else None
 
@@ -212,7 +216,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
                 iso = f"{int(y):04d}-{M:02d}-{int(d):02d}"
                 return iso, iso
 
-        # Lite fallback
+        # Lite fallback: try to grab just a first date we can interpret
         dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", t)
         yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", t)]
         if dm and yrs:
@@ -223,6 +227,12 @@ class ChristchurchEventsSpider(scrapy.Spider):
         return None, None
 
     def _extract_date_text(self, response: scrapy.http.Response) -> str | None:
+        """
+        Try (in order):
+          1) <time> text
+          2) "Event info" heading → first following block
+          3) Legacy top meta list under <h1>
+        """
         # 1) <time>
         time_text = self._clean(" ".join(response.css("time::text").getall()))
         if time_text:
@@ -246,8 +256,11 @@ class ChristchurchEventsSpider(scrapy.Spider):
         meta_texts = [t for t in meta_texts if t]
         return meta_texts[0] if meta_texts else None
 
-    # ---------- PRICE (unchanged from your last working version) ----------
+    # ---------- price helpers ----------
     def _normalize_price_text(self, text: str | None) -> str | None:
+        """
+        Normalize '$25  - $30' -> '$25 - $30'; keep 'Free event', 'Donation/koha', 'Paid event (see site)'.
+        """
         if not text:
             return None
         t = re.sub(r"\s+", " ", text).strip()
@@ -271,6 +284,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         return t or None
 
     def _pricing_block_text(self, response: scrapy.http.Response) -> str | None:
+        # h2/h3/h4 "Pricing" → the first following block's text
         LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
         txts = response.xpath(
             "//*[self::h2 or self::h3 or self::h4]"
@@ -281,6 +295,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         return self._clean(" ".join(txts)) if txts else None
 
     def _dd_price_text(self, response: scrapy.http.Response) -> str | None:
+        # dt=Price/Cost → next dd
         txts = response.xpath(
             "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
             "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]"
@@ -289,6 +304,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         return self._clean(" ".join(txts)) if txts else None
 
     def _ticket_label(self, response: scrapy.http.Response) -> str | None:
+        # "Ticket pricing" heading → next block (often 'Free event' or 'Paid event')
         LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
         txt = self._clean(" ".join(
             response.xpath(
@@ -301,25 +317,30 @@ class ChristchurchEventsSpider(scrapy.Spider):
         return txt or None
 
     def _extract_price(self, response: scrapy.http.Response) -> str | None:
+        # 1) Pricing section with numbers is best
         pb = self._normalize_price_text(self._pricing_block_text(response))
         if pb:
             return pb
 
+        # 2) Ticket label (Free/Donation/Koha/Paid) if present
         ticket = self._normalize_price_text(self._ticket_label(response))
         if ticket:
+            # If ticket says "Paid event (see site)", try to upgrade with dt/dd first
             if ticket.startswith("Paid event"):
                 dd = self._normalize_price_text(self._dd_price_text(response))
                 return dd or ticket
             return ticket
 
+        # 3) Fallback to dt/dd
         dd = self._normalize_price_text(self._dd_price_text(response))
         if dd:
             return dd
 
         return None
 
-    # ---------- LOCATION (unchanged from your last working version) ----------
+    # ---------- location helpers ----------
     def _looks_like_address(self, text: str | None) -> bool:
+        """Heuristics to accept only address/venue-like strings as 'location'."""
         if not text:
             return False
         t = text.lower()
@@ -327,13 +348,23 @@ class ChristchurchEventsSpider(scrapy.Spider):
             return True
         if re.search(r"\b(st(?:\.|reet)?|rd|road|ave|avenue|lane|ln|drive|dr|place|pl|terrace|highway|hwy|mall|park|centre|center|square)\b", t):
             return True
-        if re.search(r"\b\d{1,5}\b", t):
+        if re.search(r"\b\d{1,5}\b", t):  # house numbers
             return True
+        # venue-ish words
         if re.search(r"\b(centre|center|hall|stadium|arena|theatre|theater|cathedral|church|gallery|museum)\b", t):
             return True
         return False
 
     def _extract_location(self, response: scrapy.http.Response) -> str | None:
+        """
+        Only accept real venue/address blocks. Never use ticket labels.
+        Order:
+          1) dd.space-y-0.5 (two-line venue/address blocks common on the site)
+          2) dt=Address/Location/Venue → next dd
+          3) h2/h3/h4 = Address / Location / Venue / Where → first following block
+          4) If still nothing address-like: "See website for details"
+        """
+        # 1) Tailwind dd with stacked <p> lines
         parts = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
         parts = [p for p in parts if p]
         if parts:
@@ -341,6 +372,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             if self._looks_like_address(candidate):
                 return candidate
 
+        # 2) dt=Address/Location/Venue → dd
         dd_loc = self._clean(" ".join(
             response.xpath(
                 "//dt[contains(translate(., 'ADDRESSLOCATIONVENUE', 'addresslocationvenue'), 'address') or "
@@ -352,6 +384,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
         if dd_loc and self._looks_like_address(dd_loc):
             return dd_loc
 
+        # 3) Heading 'Address'/'Location'/'Venue'/'Where' → first following block
         LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
         head_loc = self._clean(" ".join(
             response.xpath(
@@ -371,6 +404,11 @@ class ChristchurchEventsSpider(scrapy.Spider):
 
     # ---------- categories ----------
     def _extract_categories(self, response: scrapy.http.Response) -> list[str] | None:
+        """
+        Try the short pipe-separated line immediately above <h1>, e.g., "Music | Performance".
+        Fallback to common tag areas.
+        """
+        # Immediate block above <h1>
         catline = self._clean(" ".join(
             response.xpath("(//h1)[1]/preceding-sibling::*[1]//text()").getall()
         ))
@@ -380,190 +418,10 @@ class ChristchurchEventsSpider(scrapy.Spider):
             if 0 < len(cats) <= 6:
                 return cats
 
+        # Fallbacks
         cats = response.css("[class*='category'] a::text, .tags a::text").getall()
         cats = [self._clean(c) for c in cats if self._clean(c)]
         return cats or None
-
-    # ---------- NEW: description helpers ----------
-    def _jsonld_objects(self, response: scrapy.http.Response):
-        out = []
-        for raw in response.xpath("//script[@type='application/ld+json']/text()").getall():
-            try:
-                data = json.loads(raw.strip())
-                out.extend(data if isinstance(data, list) else [data])
-            except Exception:
-                continue
-        return out
-
-    def _jsonld_description(self, response: scrapy.http.Response) -> str | None:
-        objs = self._jsonld_objects(response)
-        for o in objs or []:
-            t = o.get("@type")
-            if not t:
-                continue
-            is_event = False
-            if isinstance(t, list):
-                is_event = any("Event" in str(x) for x in t)
-            else:
-                is_event = "Event" in str(t)
-            if is_event:
-                desc = o.get("description")
-                if isinstance(desc, str) and desc.strip():
-                    return self._clean(unescape(desc))
-        return None
-
-    def _extract_body_description(self, response: scrapy.http.Response) -> str | None:
-        """
-        Pull narrative paragraphs from the main body, while avoiding
-        newsletter blocks, ticket labels, dates, addresses and boilerplate.
-        """
-        # Preferred body block
-        paras = response.css(".field--name-body p::text, .field--name-body li::text").getall()
-        if not paras:
-            # Article-wide fallback
-            paras = response.css("article p::text, article li::text, main article p::text").getall()
-
-        text = [self._clean(t) for t in paras]
-        text = [t for t in text if t]
-
-        # Drop obvious non-narrative fragments
-        BAD_PATTERNS = [
-            r"^paid event$", r"^free event$", r"don.?t miss a thing", r"sign up to our newsletter",
-            r"listing #\d+", r"plan your (route|transport)", r"purchase tickets", r"view times",
-        ]
-        def _bad(s: str) -> bool:
-            s_l = s.lower()
-            if any(re.search(p, s_l, re.I) for p in BAD_PATTERNS):
-                return True
-            # lines that are *just* addresses or price stubs
-            if re.search(r"\b\d{1,5}\b.*\b(st(?:\.|reet)?|road|rd|dr|drive|ave|avenue|place|pl|lane|ln|terrace)\b", s_l):
-                return True
-            if re.fullmatch(r"\$?\s*\d+(?:\.\d{1,2})?", s_l):
-                return True
-            return False
-
-        text = [t for t in text if not _bad(t)]
-
-        if not text:
-            return None
-
-        # Build a concise paragraph (first 2–3 sentences or ~400 chars)
-        joined = " ".join(text)
-        joined = re.sub(r"\s+", " ", joined).strip()
-        # Trim at the first boilerplate sentinel if present
-        joined = re.split(r"(Don.?t miss a thing|Listing #\d+)", joined, maxsplit=1)[0].strip()
-        # Soft cap
-        if len(joined) > 600:
-            # try sentence boundary
-            m = re.match(r"(.{180,600}?[.!?])\s", joined)
-            if m:
-                joined = m.group(1)
-            else:
-                joined = joined[:600].rsplit(" ", 1)[0]
-        return joined or None
-
-    def _extract_description(self, response: scrapy.http.Response) -> str | None:
-        return (
-            self._jsonld_description(response)
-            or self._extract_body_description(response)
-            or self._clean(response.css("meta[name='description']::attr(content)").get())
-        )
-
-    # ---------- NEW: image helpers ----------
-    def _best_from_srcset(self, srcset: str, base_url: str) -> str | None:
-        """
-        Choose the largest candidate from a srcset string.
-        """
-        if not srcset:
-            return None
-        best_url, best_w = None, -1
-        for part in srcset.split(","):
-            part = part.strip()
-            if not part:
-                continue
-            bits = part.split()
-            url = bits[0]
-            w = -1
-            if len(bits) > 1 and bits[1].endswith("w"):
-                try:
-                    w = int(re.sub(r"\D", "", bits[1]))
-                except Exception:
-                    w = -1
-            if w > best_w:
-                best_w = w
-                best_url = urljoin(base_url, url)
-        return best_url
-
-    def _extract_image_url(self, response: scrapy.http.Response) -> str | None:
-        # 1) Meta tags
-        for sel in [
-            "meta[property='og:image']::attr(content)",
-            "meta[property='og:image:url']::attr(content)",
-            "meta[name='twitter:image']::attr(content)",
-            "meta[name='twitter:image:src']::attr(content)",
-            "link[rel='image_src']::attr(href)",
-        ]:
-            val = response.css(sel).get()
-            if val and self._clean(val):
-                return urljoin(response.url, val)
-
-        # 2) <picture>/<source> srcset (hero first)
-        for sel in [
-            "main picture source::attr(srcset)",
-            "article picture source::attr(srcset)",
-            "header picture source::attr(srcset)",
-            ".hero picture source::attr(srcset)",
-            "picture source::attr(srcset)",
-        ]:
-            for srcset in response.css(sel).getall():
-                best = self._best_from_srcset(srcset, response.url)
-                if best:
-                    return best
-
-        # 3) <img> srcset (pick largest)
-        for sel in [
-            "main img::attr(srcset)",
-            "article img::attr(srcset)",
-            "header img::attr(srcset)",
-            ".hero img::attr(srcset)",
-            "img::attr(srcset)",
-        ]:
-            for srcset in response.css(sel).getall():
-                best = self._best_from_srcset(srcset, response.url)
-                if best:
-                    return best
-
-        # 4) <img> src / lazy attrs
-        for attr in ["src", "data-src", "data-original", "data-lazy", "data-srcset"]:
-            for sel in [
-                f"main img::{attr}",
-                f"article img::{attr}",
-                f"header img::{attr}",
-                f".hero img::{attr}",
-                f"img::{attr}",
-            ]:
-                for v in response.css(sel).getall():
-                    v = self._clean(v)
-                    if not v:
-                        continue
-                    # If this is a data-* srcset, try parsing it
-                    if attr.endswith("srcset") and "," in v:
-                        best = self._best_from_srcset(v, response.url)
-                        if best:
-                            return best
-                    else:
-                        return urljoin(response.url, v)
-
-        # 5) Background-image in hero/container
-        style_vals = response.css(
-            ".hero, header, .header, .page-hero, .banner, .feature, .image, .media"
-        ).xpath("@style").getall()
-        for st in style_vals:
-            m = re.search(r"url\(['\"]?([^'\")]+)['\"]?\)", st or "", re.I)
-            if m:
-                return urljoin(response.url, m.group(1))
-
-        return None
 
     # ---------- crawling ----------
     def start_requests(self):
@@ -571,12 +429,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
             yield scrapy.Request(
                 self.base,
                 callback=self.parse_listing_with_playwright,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    # Optional: make initial nav less brittle than the project default 20s
-                    "playwright_page_goto_kwargs": {"wait_until": "domcontentloaded", "timeout": 30000},
-                },
+                meta={"playwright": True, "playwright_include_page": True},
                 dont_filter=True,
             )
             if self.page_range:
@@ -585,11 +438,7 @@ class ChristchurchEventsSpider(scrapy.Spider):
                     yield scrapy.Request(
                         url,
                         callback=self.parse_listing_with_playwright,
-                        meta={
-                            "playwright": True,
-                            "playwright_include_page": True,
-                            "playwright_page_goto_kwargs": {"wait_until": "domcontentloaded", "timeout": 30000},
-                        },
+                        meta={"playwright": True, "playwright_include_page": True},
                         dont_filter=True,
                     )
         else:
@@ -717,8 +566,10 @@ class ChristchurchEventsSpider(scrapy.Spider):
             or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
             or self._clean(response.css("title::text").get())
 
-        # DESCRIPTION (new robust logic)
-        desc = self._extract_description(response)
+        # Description (body paragraphs only; avoid meta/labels)
+        desc = self._join_text(response.css("article p::text, main article p::text").getall()) \
+            or self._join_text(response.css("main p::text").getall()) \
+            or self._clean(response.css("meta[name='description']::attr(content)").get())
 
         # Dates
         dates_text = self._extract_date_text(response)
@@ -733,8 +584,13 @@ class ChristchurchEventsSpider(scrapy.Spider):
         # Categories
         cats = self._extract_categories(response)
 
-        # IMAGE (new robust logic)
-        image = self._extract_image_url(response)
+        # Image
+        image = response.css("meta[property='og:image']::attr(content)").get() \
+            or response.css("meta[name='twitter:image']::attr(content)").get()
+        if not image:
+            img = response.css("article img::attr(src), main img::attr(src)").get()
+            if img:
+                image = urljoin(response.url, img)
 
         yield {
             "source": self.domain.split(".")[0],
