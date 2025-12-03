@@ -1,3 +1,4 @@
+# scraper/tscraper/spiders/christchurch_events.py
 # -*- coding: utf-8 -*-
 import re
 from datetime import datetime
@@ -12,18 +13,27 @@ except Exception:  # pragma: no cover
     PageMethod = None
 
 
-class GenericEventsSpider(scrapy.Spider):
+class ChristchurchEventsSpider(scrapy.Spider):
     """
-    Christchurch NZ "What's On" spider with robust price & location extraction.
+    ChristchurchNZ "What's On" spider with robust date/price/location extraction.
 
-    - PRICE:
-        * Prefer <h3>Pricing</h3> block (e.g. "$25 - $30").
-        * Else, use ticket label ("Free event" / "Donation/koha" / "Paid event (see site)").
-        * Else, try dt=Price/Cost -> dd.
-    - LOCATION:
-        * Accept only address/venue blocks (dd.space-y-0.5 or dt=Location/Venue -> dd).
-        * If not found, set "See website for details".
-        * Never use the ticket label as location.
+    - LOCATION
+      * Prefer explicit address/venue blocks (e.g., “Address” → next block).
+      * Accept only address-like content (street names, numbers, Christchurch/Canterbury, etc).
+      * If nothing suitable is found, set: "See website for details".
+
+    - PRICE
+      * Prefer the page's "Pricing" section (e.g., "$15" or "$25 - $30").
+      * Else use ticket label (Free / Donation/koha / Paid) only if no explicit numbers exist.
+      * Else try a dt=Price/Cost → dd fallback.
+
+    - DATES
+      * Pull from <time>, or from "Event info" block, or the top meta <ul>.
+      * Supports:
+          "15 Dec 2025 | 6:00 pm - 7:30 pm"
+          "3 - 8 March 2026"
+          "15 Dec 2025"
+          "3 Dec 2025 - 10 Dec 2025 | 1:10 pm - 2:00 pm"
     """
     name = "christchurch_events"
 
@@ -109,7 +119,7 @@ class GenericEventsSpider(scrapy.Spider):
 
     @staticmethod
     def _join_text(nodes) -> str | None:
-        parts = [re.sub(r"\s+", " ", x or "").strip() for x in (nodes or [])]
+        parts = [re.sub(r"\s+", " ", (x or "")).strip() for x in nodes or []]
         parts = [p for p in parts if p]
         return " ".join(parts) if parts else None
 
@@ -131,129 +141,151 @@ class GenericEventsSpider(scrapy.Spider):
 
         return clean if self.allow_re.match(clean) else None
 
-    def _parse_dates(self, s: str | None) -> tuple[str | None, str | None]:
-        """
-        Handles:
-          - "15 Dec 2025 | 6:00 pm - 7:30 pm"  -> returns full ISO datetimes (local date, no tz suffix)
-          - "3 - 8 March 2026"                 -> returns YYYY-MM-DD start/end
-          - "15 Dec 2025"                      -> same start=end = that date
-        """
-        if not s:
-            return None, None
-        t = re.sub(r"\s+", " ", s).strip()
+    # ---------- dates ----------
+    def _month_num(self, mon: str) -> int | None:
+        months = {
+            "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
+            "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
+            "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
+        }
+        return months.get((mon or "").lower())
 
-        # Case A: "15 Dec 2025 | 6:00 pm - 7:30 pm"
+    def _hm24(self, s_txt: str) -> str:
+        hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s_txt, re.I).groups()
+        hh, mm = int(hh), int(mm)
+        if ap.lower() == "pm" and hh != 12:
+            hh += 12
+        if ap.lower() == "am" and hh == 12:
+            hh = 0
+        return f"{hh:02d}:{mm:02d}:00"
+
+    def _parse_dates(self, t: str | None) -> tuple[str | None, str | None]:
+        """
+        Supported:
+          A) "15 Dec 2025 | 6:00 pm - 7:30 pm"
+          B) "3 - 8 March 2026"
+          C) "15 Dec 2025"
+          D) "3 Dec 2025 - 10 Dec 2025 | 1:10 pm - 2:00 pm"
+        """
+        if not t:
+            return None, None
+        t = re.sub(r"\s+", " ", t).strip()
+
+        # D) Cross-day range with times
+        m = re.match(
+            r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*\|\s*"
+            r"([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))\s*-\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))$",
+            t, re.I
+        )
+        if m:
+            d1, mon1, y1, d2, mon2, y2, st_txt, en_txt = m.groups()
+            M1, M2 = self._month_num(mon1), self._month_num(mon2)
+            if M1 and M2:
+                st_iso = f"{int(y1):04d}-{M1:02d}-{int(d1):02d}T{self._hm24(st_txt)}"
+                en_iso = f"{int(y2):04d}-{M2:02d}-{int(d2):02d}T{self._hm24(en_txt)}"
+                return st_iso, en_iso
+
+        # A) Single day with times
         m = re.match(
             r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*\|\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))\s*-\s*([0-9]{1,2}:[0-9]{2}\s*(?:am|pm))$",
             t, re.I
         )
         if m:
             d, mon, y, st_txt, en_txt = m.groups()
-            months = {
-                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
-                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
-                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
-            }
-            M = months.get(mon.lower())
+            M = self._month_num(mon)
             if M:
-                def _hm(s_txt: str) -> str:
-                    hh, mm, ap = re.match(r"^\s*(\d{1,2}):(\d{2})\s*(am|pm)\s*$", s_txt, re.I).groups()
-                    hh, mm = int(hh), int(mm)
-                    if ap.lower() == "pm" and hh != 12:
-                        hh += 12
-                    if ap.lower() == "am" and hh == 12:
-                        hh = 0
-                    return f"{hh:02d}:{mm:02d}:00"
-                st_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(st_txt)}"
-                en_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{_hm(en_txt)}"
+                st_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{self._hm24(st_txt)}"
+                en_iso = f"{int(y):04d}-{M:02d}-{int(d):02d}T{self._hm24(en_txt)}"
                 return st_iso, en_iso
 
-        # Case B: "3 - 8 March 2026"
+        # B) Date range without times
         m = re.match(r"^\s*(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*$", t)
         if m:
             d1, d2, mon, y = m.groups()
-            months = {
-                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
-                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
-                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
-            }
-            M = months.get(mon.lower())
+            M = self._month_num(mon)
             if M:
                 return (f"{int(y):04d}-{M:02d}-{int(d1):02d}",
                         f"{int(y):04d}-{M:02d}-{int(d2):02d}")
 
-        # Case C: "15 Dec 2025"
+        # C) Single date, no times
         m = re.match(r"^(\d{1,2})\s+([A-Za-z]{3,9})\s+((?:19|20)\d{2})$", t)
         if m:
             d, mon, y = m.groups()
-            months = {
-                "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,
-                "may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,
-                "september":9,"oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12,
-            }
-            M = months.get(mon.lower())
+            M = self._month_num(mon)
             if M:
                 iso = f"{int(y):04d}-{M:02d}-{int(d):02d}"
                 return iso, iso
 
+        # Lite fallback: try to grab just a first date we can interpret
+        dm = re.findall(r"(\d{1,2})\s+([A-Za-z]{3,9})", t)
+        yrs = [int(y) for y in re.findall(r"\b(19|20)\d{2}\b", t)]
+        if dm and yrs:
+            d1, m1 = int(dm[0][0]), dm[0][1]
+            y1 = yrs[0]
+            M1 = self._month_num(m1)
+            return (f"{y1:04d}-{M1:02d}-{d1:02d}" if M1 else None, None)
         return None, None
 
-    # ---- top meta: only date + ticket label (no location here) ----
-    def _extract_top_meta(self, response: scrapy.http.Response) -> dict:
-        """Top <ul> under <h1>; return date and ticket label only."""
-        texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
-        texts = [t for t in texts if t]
-        date_text = texts[0] if texts else None
+    def _extract_date_text(self, response: scrapy.http.Response) -> str | None:
+        """
+        Try (in order):
+          1) <time> text
+          2) "Event info" heading → first following block
+          3) Legacy top meta list under <h1>
+        """
+        # 1) <time>
+        time_text = self._clean(" ".join(response.css("time::text").getall()))
+        if time_text:
+            return time_text
 
-        # Find a concise ticket label in the same list
-        ticket_label = None
-        for t in texts[1:]:
-            if re.search(r"\bfree\b", t, re.I):
-                ticket_label = "Free event"
-                break
-            if re.search(r"\bkoha|donation\b", t, re.I):
-                ticket_label = "Donation/koha"
-                break
-            if re.search(r"\bpaid\b", t, re.I):
-                ticket_label = "Paid event"
-                break
+        # 2) Event info (h2/h3/h4) → next block
+        LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
+        ev_txt = self._clean(" ".join(
+            response.xpath(
+                "//*[self::h2 or self::h3 or self::h4]"
+                "[contains(translate(normalize-space(.), $LOWER, $UPPER), 'event info')]"
+                "/following-sibling::*[1]//text()",
+                LOWER=LOWER, UPPER=UPPER
+            ).getall()
+        ))
+        if ev_txt:
+            return ev_txt
 
-        return {"date_text": date_text, "ticket_label": ticket_label}
+        # 3) legacy top list
+        meta_texts = [self._clean(t) for t in response.xpath("//h1/following::ul[1]/li//text()").getall()]
+        meta_texts = [t for t in meta_texts if t]
+        return meta_texts[0] if meta_texts else None
 
-    # ---- pricing helpers -------------------------------------------------
+    # ---------- price helpers ----------
     def _normalize_price_text(self, text: str | None) -> str | None:
-        """Normalize '$25  - $30' -> '$25 - $30'; retain Free/Koha/Paid markers."""
+        """
+        Normalize '$25  - $30' -> '$25 - $30'; keep 'Free event', 'Donation/koha', 'Paid event (see site)'.
+        """
         if not text:
             return None
         t = re.sub(r"\s+", " ", text).strip()
 
-        # Prefer concise ranges if dollar figures exist
         nums = [x.replace(",", "") for x in re.findall(r"\$?\s*([0-9]+(?:\.[0-9]{1,2})?)", t)]
         if nums:
             has_dollar = "$" in t
             vals = [float(n) for n in nums]
             lo, hi = min(vals), max(vals)
             if lo == hi:
-                return f"${int(lo) if lo.is_integer() else lo:g}" if has_dollar else f"{lo:g}"
-            return f"${int(lo) if lo.is_integer() else lo:g} - ${int(hi) if hi.is_integer() else hi:g}" if has_dollar \
-                   else f"{lo:g} - {hi:g}"
+                return f"${int(lo) if float(lo).is_integer() else lo:g}" if has_dollar else f"{lo:g}"
+            return (f"${int(lo) if float(lo).is_integer() else lo:g} - ${int(hi) if float(hi).is_integer() else hi:g}"
+                    if has_dollar else f"{lo:g} - {hi:g}")
 
         if re.search(r"\bfree\b", t, re.I):
             return "Free event"
-        if re.search(r"koha|donation", t, re.I):
+        if re.search(r"\b(koha|donation)\b", t, re.I):
             return "Donation/koha"
         if re.search(r"\bpaid\b", t, re.I):
             return "Paid event (see site)"
         return t or None
 
     def _pricing_block_text(self, response: scrapy.http.Response) -> str | None:
-        """
-        Capture text directly under a 'Pricing' heading (the site often has
-        <h3>Pricing</h3><p>$25 - $30</p>).
-        """
-        LOWER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        UPPER = "abcdefghijklmnopqrstuvwxyz"
-        # h3/h2/h4 with 'Pricing' then the *first* following block's text
+        # h2/h3/h4 "Pricing" → the first following block's text
+        LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
         txts = response.xpath(
             "//*[self::h2 or self::h3 or self::h4]"
             "[contains(translate(normalize-space(.), $LOWER, $UPPER), 'pricing')]"
@@ -263,63 +295,76 @@ class GenericEventsSpider(scrapy.Spider):
         return self._clean(" ".join(txts)) if txts else None
 
     def _dd_price_text(self, response: scrapy.http.Response) -> str | None:
-        """Fallback: dt=Price/Cost -> next dd."""
+        # dt=Price/Cost → next dd
         txts = response.xpath(
             "//dt[contains(translate(., 'PRICECOST', 'pricecost'), 'price') or "
-            "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]/following-sibling::dd[1]//text()"
+            "contains(translate(., 'PRICECOST', 'pricecost'), 'cost')]"
+            "/following-sibling::dd[1]//text()"
         ).getall()
         return self._clean(" ".join(txts)) if txts else None
 
-    def _extract_price(self, response: scrapy.http.Response, ticket_label: str | None) -> str | None:
-        """
-        Priority:
-          1) 'Pricing' section (dollar amounts)
-          2) Ticket label if Free / Donation (Paid only if nothing else)
-          3) dt=Price/Cost -> dd
-        """
-        # 1) Pricing heading block
+    def _ticket_label(self, response: scrapy.http.Response) -> str | None:
+        # "Ticket pricing" heading → next block (often 'Free event' or 'Paid event')
+        LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
+        txt = self._clean(" ".join(
+            response.xpath(
+                "//*[self::h2 or self::h3 or self::h4]"
+                "[contains(translate(normalize-space(.), $LOWER, $UPPER), 'ticket pricing')]"
+                "/following-sibling::*[1]//text()",
+                LOWER=LOWER, UPPER=UPPER
+            ).getall()
+        ))
+        return txt or None
+
+    def _extract_price(self, response: scrapy.http.Response) -> str | None:
+        # 1) Pricing section with numbers is best
         pb = self._normalize_price_text(self._pricing_block_text(response))
         if pb:
             return pb
 
-        # 2) Ticket label if meaningful
-        if ticket_label:
-            if "Free" in ticket_label:
-                return "Free event"
-            if "Donation" in ticket_label or "koha" in (ticket_label or "").lower():
-                return "Donation/koha"
-            # If 'Paid event' and no explicit numbers anywhere else:
-            # leave a useful marker
-            if "Paid" in ticket_label:
-                paid_dd = self._normalize_price_text(self._dd_price_text(response))
-                return paid_dd or "Paid event (see site)"
+        # 2) Ticket label (Free/Donation/Koha/Paid) if present
+        ticket = self._normalize_price_text(self._ticket_label(response))
+        if ticket:
+            # If ticket says "Paid event (see site)", try to upgrade with dt/dd first
+            if ticket.startswith("Paid event"):
+                dd = self._normalize_price_text(self._dd_price_text(response))
+                return dd or ticket
+            return ticket
 
-        # 3) dt/dd fallback
+        # 3) Fallback to dt/dd
         dd = self._normalize_price_text(self._dd_price_text(response))
         if dd:
             return dd
 
         return None
 
-    # ---- location helpers -----------------------------------------------
+    # ---------- location helpers ----------
     def _looks_like_address(self, text: str | None) -> bool:
         """Heuristics to accept only address/venue-like strings as 'location'."""
         if not text:
             return False
         t = text.lower()
-        if re.search(r"\b(christchurch|lincoln|rangiora|kaiapoi|lindis|canterbury)\b", t):
+        if re.search(r"\b(christchurch|lincoln|rangiora|kaiapoi|canterbury|central city)\b", t):
             return True
-        if re.search(r"\b(st(?:reet)?|rd|road|ave|avenue|lane|ln|drive|dr|place|pl|highway|hwy|mall|park|centre|center|square)\b", t):
+        if re.search(r"\b(st(?:\.|reet)?|rd|road|ave|avenue|lane|ln|drive|dr|place|pl|terrace|highway|hwy|mall|park|centre|center|square)\b", t):
             return True
-        if re.search(r"\b\d{1,5}\b", t):
+        if re.search(r"\b\d{1,5}\b", t):  # house numbers
+            return True
+        # venue-ish words
+        if re.search(r"\b(centre|center|hall|stadium|arena|theatre|theater|cathedral|church|gallery|museum)\b", t):
             return True
         return False
 
     def _extract_location(self, response: scrapy.http.Response) -> str | None:
         """
-        Only accept real venue/address blocks. If absent, return "See website for details".
+        Only accept real venue/address blocks. Never use ticket labels.
+        Order:
+          1) dd.space-y-0.5 (two-line venue/address blocks common on the site)
+          2) dt=Address/Location/Venue → next dd
+          3) h2/h3/h4 = Address / Location / Venue / Where → first following block
+          4) If still nothing address-like: "See website for details"
         """
-        # Preferred: dd.space-y-0.5 with two <p> lines (address + venue)
+        # 1) Tailwind dd with stacked <p> lines
         parts = [self._clean(t) for t in response.css('dd.space-y-0\\.5 p::text, dd[class*="space-y-0.5"] p::text').getall()]
         parts = [p for p in parts if p]
         if parts:
@@ -327,18 +372,56 @@ class GenericEventsSpider(scrapy.Spider):
             if self._looks_like_address(candidate):
                 return candidate
 
-        # Fallback: dt=Location/Venue -> dd
+        # 2) dt=Address/Location/Venue → dd
         dd_loc = self._clean(" ".join(
             response.xpath(
-                "//dt[contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'location') or "
-                "contains(translate(., 'LOCATIONVENUE', 'locationvenue'), 'venue')]/following-sibling::dd[1]//text()"
+                "//dt[contains(translate(., 'ADDRESSLOCATIONVENUE', 'addresslocationvenue'), 'address') or "
+                "contains(translate(., 'ADDRESSLOCATIONVENUE', 'addresslocationvenue'), 'location') or "
+                "contains(translate(., 'ADDRESSLOCATIONVENUE', 'addresslocationvenue'), 'venue')]"
+                "/following-sibling::dd[1]//text()"
             ).getall()
         ))
         if dd_loc and self._looks_like_address(dd_loc):
             return dd_loc
 
-        # If nothing address-like found, give a neutral message
+        # 3) Heading 'Address'/'Location'/'Venue'/'Where' → first following block
+        LOWER, UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
+        head_loc = self._clean(" ".join(
+            response.xpath(
+                "//*[self::h2 or self::h3 or self::h4]"
+                "[contains(translate(normalize-space(.), $LOWER, $UPPER), 'address') or "
+                " contains(translate(normalize-space(.), $LOWER, $UPPER), 'location') or "
+                " contains(translate(normalize-space(.), $LOWER, $UPPER), 'venue') or "
+                " contains(translate(normalize-space(.), $LOWER, $UPPER), 'where')]"
+                "/following-sibling::*[1]//text()",
+                LOWER=LOWER, UPPER=UPPER
+            ).getall()
+        ))
+        if head_loc and self._looks_like_address(head_loc):
+            return head_loc
+
         return "See website for details"
+
+    # ---------- categories ----------
+    def _extract_categories(self, response: scrapy.http.Response) -> list[str] | None:
+        """
+        Try the short pipe-separated line immediately above <h1>, e.g., "Music | Performance".
+        Fallback to common tag areas.
+        """
+        # Immediate block above <h1>
+        catline = self._clean(" ".join(
+            response.xpath("(//h1)[1]/preceding-sibling::*[1]//text()").getall()
+        ))
+        if catline and "|" in catline and not re.search(r"\d", catline):
+            cats = [self._clean(c) for c in catline.split("|")]
+            cats = [c for c in cats if c]
+            if 0 < len(cats) <= 6:
+                return cats
+
+        # Fallbacks
+        cats = response.css("[class*='category'] a::text, .tags a::text").getall()
+        cats = [self._clean(c) for c in cats if self._clean(c)]
+        return cats or None
 
     # ---------- crawling ----------
     def start_requests(self):
@@ -483,27 +566,23 @@ class GenericEventsSpider(scrapy.Spider):
             or self._clean(response.css("meta[property='og:title']::attr(content)").get()) \
             or self._clean(response.css("title::text").get())
 
-        # Description
-        desc = self._join_text(response.css(".field--name-body p::text, .field--name-body li::text").getall()) \
-            or self._join_text(response.css("article p::text, main p::text").getall()) \
+        # Description (body paragraphs only; avoid meta/labels)
+        desc = self._join_text(response.css("article p::text, main article p::text").getall()) \
+            or self._join_text(response.css("main p::text").getall()) \
             or self._clean(response.css("meta[name='description']::attr(content)").get())
 
-        # Top meta (date + ticket label only)
-        meta_top = self._extract_top_meta(response)
-        dates_text = meta_top.get("date_text") if meta_top else None
-
         # Dates
-        st, en = self._parse_dates(dates_text or self._clean(" ".join(response.css("time::text").getall())))
+        dates_text = self._extract_date_text(response)
+        st, en = self._parse_dates(dates_text)
 
-        # LOCATION (strict; never use ticket label)
+        # Location (strict, address-like only)
         location = self._extract_location(response)
 
-        # PRICE (Pricing section > ticket label > dt/dd)
-        price = self._extract_price(response, meta_top.get("ticket_label") if meta_top else None)
+        # Price
+        price = self._extract_price(response)
 
-        # Categories (best-effort)
-        cats = response.css("[class*='category'] a::text, .tags a::text").getall()
-        cats = [self._clean(c) for c in cats if self._clean(c)] or None
+        # Categories
+        cats = self._extract_categories(response)
 
         # Image
         image = response.css("meta[property='og:image']::attr(content)").get() \
@@ -519,8 +598,8 @@ class GenericEventsSpider(scrapy.Spider):
             "title": title,
             "description": desc,
             "dates": {"start": st, "end": en, "text": dates_text},
-            "price": price,                       # now filled from "Pricing" (or a sensible label)
-            "location": location,                 # never polluted by ticket labels
+            "price": price,
+            "location": location,
             "categories": cats or None,
             "image": image,
             "updated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
