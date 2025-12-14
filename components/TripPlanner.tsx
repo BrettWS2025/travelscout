@@ -1,7 +1,7 @@
 // components/TripPlanner.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import {
   buildSimpleTripPlan,
   type TripPlan,
@@ -34,7 +34,7 @@ export default function TripPlanner() {
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
     setError(null);
@@ -84,11 +84,7 @@ export default function TripPlanner() {
             <select
               value={startCityId}
               onChange={(e) => setStartCityId(e.target.value)}
-              className="w-full rounded border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-              style={{
-              color: "var(--text)",
-              backgroundColor: "rgba(15,23,42,0.9)", // dark blue-ish (tweak if you like)
-            }}
+              className="input-dark w-full text-sm"
             >
               {NZ_CITIES.map((city) => (
                 <option key={city.id} value={city.id}>
@@ -106,13 +102,9 @@ export default function TripPlanner() {
           <div className="space-y-1">
             <label className="text-sm font-medium">End city</label>
             <select
-            value={endCityId}
-            onChange={(e) => setEndCityId(e.target.value)}
-            className="w-full rounded border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-            style={{
-            color: "var(--text)",
-            backgroundColor: "rgba(15,23,42,0.9)",
-            }}
+              value={endCityId}
+              onChange={(e) => setEndCityId(e.target.value)}
+              className="input-dark w-full text-sm"
             >
               {NZ_CITIES.map((city) => (
                 <option key={city.id} value={city.id}>
@@ -129,7 +121,7 @@ export default function TripPlanner() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+              className="input-dark w-full text-sm"
             />
           </div>
 
@@ -139,7 +131,7 @@ export default function TripPlanner() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+              className="input-dark w-full text-sm"
             />
           </div>
         </div>
@@ -156,7 +148,7 @@ export default function TripPlanner() {
           <textarea
             value={waypointsInput}
             onChange={(e) => setWaypointsInput(e.target.value)}
-            className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+            className="input-dark mt-1 w-full text-sm"
             rows={2}
             placeholder="eg. Lake Tekapo, Dunedin, Milford Sound, Lake Wakatipu"
           />
