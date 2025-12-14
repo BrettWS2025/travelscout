@@ -13,6 +13,7 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
 } from "@/lib/nzCities";
+import { matchStopsFromInputs } from "@/lib/nzStops";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
@@ -41,12 +42,12 @@ export default function TripPlanner() {
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [waypointsInput, setWaypointsInput] = useState("Lake Tekapo, Dunedin");
+  const [waypointsInput, setWaypointsInput] = useState("Lake Tekapo, Wanaka");
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Points passed down to the map (start + end for now)
+  // Points passed down to the map: start → (matched waypoints) → end
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -65,26 +66,40 @@ export default function TripPlanner() {
     }
 
     try {
-      const waypoints = waypointsInput
+      // Split free-text waypoints (comma-separated) into an array of names
+      const waypointNames = waypointsInput
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
+      // 1) Build the day-by-day itinerary using names only
       const nextPlan = buildSimpleTripPlan({
         startCity,
         endCity,
         startDate,
         endDate,
-        waypoints,
+        waypoints: waypointNames,
       });
-
       setPlan(nextPlan);
 
-      // For the map: road route between start and end (waypoints later)
-      setMapPoints([
+      // 2) Map those waypoint names to known scenic stops with coordinates
+      const matchedStops = matchStopsFromInputs(waypointNames);
+
+      const waypointPoints: MapPoint[] = matchedStops.map((stop) => ({
+        lat: stop.lat,
+        lng: stop.lng,
+        name: stop.name,
+      }));
+
+      // 3) Build the ordered list of map points for the routing:
+      //    start city → matched waypoints → end city
+      const points: MapPoint[] = [
         { lat: startCity.lat, lng: startCity.lng, name: startCity.name },
+        ...waypointPoints,
         { lat: endCity.lat, lng: endCity.lng, name: endCity.name },
-      ]);
+      ];
+
+      setMapPoints(points);
     } catch (err) {
       setPlan(null);
       setMapPoints([]);
@@ -167,14 +182,15 @@ export default function TripPlanner() {
           </label>
           <p className="text-xs text-gray-400">
             Separate with commas. We&apos;ll distribute your days across these
-            stops between your start and end cities.
+            stops between your start and end cities and add mapped waypoints to
+            your route where we recognise them.
           </p>
           <textarea
             value={waypointsInput}
             onChange={(e) => setWaypointsInput(e.target.value)}
             className="input-dark mt-1 w-full text-sm"
             rows={2}
-            placeholder="eg. Lake Tekapo, Dunedin, Milford Sound, Lake Wakatipu"
+            placeholder="eg. Lake Tekapo, Wanaka, Milford Sound"
           />
         </div>
 
@@ -237,8 +253,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Route overview</h2>
           <p className="text-sm text-gray-400">
-            Road route between your start and end cities. Waypoints will be
-            added here once they&apos;re mapped to coordinates.
+            Road route between your start and end cities, passing through any
+            recognised waypoints (e.g. Lake Tekapo, Wānaka, Milford Sound).
           </p>
 
           <div className="h-72 w-full rounded-lg overflow-hidden">
