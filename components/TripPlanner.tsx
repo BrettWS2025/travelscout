@@ -2,7 +2,16 @@
 "use client";
 
 import { useState } from "react";
-import { buildSimpleTripPlan, type TripPlan } from "@/lib/itinerary";
+import {
+  buildSimpleTripPlan,
+  type TripPlan,
+} from "@/lib/itinerary";
+import {
+  NZ_CITIES,
+  DEFAULT_START_CITY_ID,
+  DEFAULT_END_CITY_ID,
+  getCityById,
+} from "@/lib/nzCities";
 
 function formatDisplayDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -16,8 +25,8 @@ function formatDisplayDate(dateStr: string): string {
 }
 
 export default function TripPlanner() {
-  const [startCity, setStartCity] = useState("Christchurch");
-  const [endCity, setEndCity] = useState("Queenstown");
+  const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
+  const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [waypointsInput, setWaypointsInput] = useState("Lake Tekapo, Dunedin");
@@ -29,6 +38,15 @@ export default function TripPlanner() {
     e.preventDefault();
     setHasSubmitted(true);
     setError(null);
+
+    const startCity = getCityById(startCityId);
+    const endCity = getCityById(endCityId);
+
+    if (!startCity || !endCity) {
+      setPlan(null);
+      setError("Please select both a start city and an end city.");
+      return;
+    }
 
     try {
       const waypoints = waypointsInput
@@ -60,28 +78,43 @@ export default function TripPlanner() {
         style={{ color: "var(--text)" }}
       >
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Start city */}
           <div className="space-y-1">
             <label className="text-sm font-medium">Start city</label>
-            <input
-              type="text"
-              value={startCity}
-              onChange={(e) => setStartCity(e.target.value)}
+            <select
+              value={startCityId}
+              onChange={(e) => setStartCityId(e.target.value)}
               className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-              placeholder="eg. Christchurch"
-            />
+            >
+              {NZ_CITIES.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400">
+              Cities are mapped with latitude &amp; longitude, so we can factor
+              in realistic driving legs later.
+            </p>
           </div>
 
+          {/* End city */}
           <div className="space-y-1">
             <label className="text-sm font-medium">End city</label>
-            <input
-              type="text"
-              value={endCity}
-              onChange={(e) => setEndCity(e.target.value)}
+            <select
+              value={endCityId}
+              onChange={(e) => setEndCityId(e.target.value)}
               className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-              placeholder="eg. Queenstown"
-            />
+            >
+              {NZ_CITIES.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
           </div>
 
+          {/* Dates */}
           <div className="space-y-1">
             <label className="text-sm font-medium">Start date</label>
             <input
@@ -103,6 +136,7 @@ export default function TripPlanner() {
           </div>
         </div>
 
+        {/* Waypoints */}
         <div className="space-y-1">
           <label className="text-sm font-medium">
             Places you&apos;d like to visit
