@@ -114,7 +114,7 @@ export default function TripPlanner() {
             </select>
           </div>
 
-          {/* Dates */}
+          {/* Start date */}
           <div className="space-y-1">
             <label className="text-sm font-medium">Start date</label>
             <input
@@ -125,6 +125,7 @@ export default function TripPlanner() {
             />
           </div>
 
+          {/* End date */}
           <div className="space-y-1">
             <label className="text-sm font-medium">End date</label>
             <input
