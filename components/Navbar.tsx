@@ -75,7 +75,7 @@ const MENU: MenuSection[] = [
     href: "/trip-planner",
     icon: Lightbulb,
     items: [
-      { label: "Packing", href: "/(marketing)/tips#packing" },
+      { label: "Plan Your Trip", href: "/trip-planner/tripplanner" },
       { label: "Family Travel", href: "/(marketing)/tips#family" },
       { label: "Beat Jet Lag", href: "/(marketing)/tips#jetlag" },
       { label: "Save on FX", href: "/(marketing)/tips#fx" },
