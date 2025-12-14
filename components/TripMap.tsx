@@ -22,19 +22,19 @@ export type TripMapPoint = {
 
 // --- Custom marker icons ---
 const startIcon = new Icon({
-  iconUrl: "/markers/start.png",
+  iconUrl: "/markers/start.svg",
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
 
 const waypointIcon = new Icon({
-  iconUrl: "/markers/waypoint.png",
+  iconUrl: "/markers/waypoint.svg",
   iconSize: [22, 22],
   iconAnchor: [11, 22],
 });
 
 const endIcon = new Icon({
-  iconUrl: "/markers/end.png",
+  iconUrl: "/markers/end.svg",
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
