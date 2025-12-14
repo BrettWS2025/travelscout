@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import L from "leaflet";
+import L, { LatLngExpression } from "leaflet";
 import "leaflet-routing-machine";
 
 export type TripMapPoint = {
@@ -20,9 +20,14 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
   useEffect(() => {
     if (!map || points.length < 2) return;
 
-    const waypoints = points.map((p) => L.latLng(p.lat, p.lng));
+    const waypoints: LatLngExpression[] = points.map((p) => [
+      p.lat,
+      p.lng,
+    ]);
 
-    const control = L.Routing.control({
+    // leaflet-routing-machine attaches `Routing` onto the Leaflet namespace at runtime.
+    // TypeScript doesn't know about it, so we cast `L` to `any` here.
+    const routingControl = (L as any).Routing.control({
       waypoints,
       routeWhileDragging: false,
       addWaypoints: false,
@@ -41,12 +46,12 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
           },
         ],
       },
-      // Hide markers so we don't need to deal with icon assets yet
+      // Hide markers for now so we don't need to ship custom icon assets
       createMarker: () => null,
     }).addTo(map);
 
     return () => {
-      map.removeControl(control);
+      map.removeControl(routingControl);
     };
   }, [map, points]);
 
