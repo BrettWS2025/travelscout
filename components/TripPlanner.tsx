@@ -12,6 +12,7 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
 } from "@/lib/nzCities";
+import TripMap from "@/components/TripMap";
 
 function formatDisplayDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -24,6 +25,12 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
+type MapPoint = {
+  lat: number;
+  lng: number;
+  name?: string;
+};
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -33,6 +40,9 @@ export default function TripPlanner() {
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Points passed down to the map (start + end for now)
+  const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,6 +54,7 @@ export default function TripPlanner() {
 
     if (!startCity || !endCity) {
       setPlan(null);
+      setMapPoints([]);
       setError("Please select both a start city and an end city.");
       return;
     }
@@ -63,8 +74,15 @@ export default function TripPlanner() {
       });
 
       setPlan(nextPlan);
+
+      // For the map: road route between start and end (waypoints later)
+      setMapPoints([
+        { lat: startCity.lat, lng: startCity.lng, name: startCity.name },
+        { lat: endCity.lat, lng: endCity.lng, name: endCity.name },
+      ]);
     } catch (err) {
       setPlan(null);
+      setMapPoints([]);
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
@@ -169,7 +187,7 @@ export default function TripPlanner() {
         </button>
       </form>
 
-      {/* Results */}
+      {/* Results: itinerary table */}
       {hasSubmitted && !plan && !error && (
         <p className="text-sm text-gray-400">
           Fill in your trip details and click &quot;Generate itinerary&quot;.
@@ -205,6 +223,21 @@ export default function TripPlanner() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Results: route map */}
+      {plan && mapPoints.length >= 2 && (
+        <div className="card p-4 md:p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Route overview</h2>
+          <p className="text-sm text-gray-400">
+            Road route between your start and end cities. Waypoints will be
+            added here once they&apos;re mapped to coordinates.
+          </p>
+
+          <div className="h-72 w-full rounded-lg overflow-hidden">
+            <TripMap points={mapPoints} />
           </div>
         </div>
       )}
