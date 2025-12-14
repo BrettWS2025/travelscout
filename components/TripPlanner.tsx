@@ -57,6 +57,40 @@ type MapPoint = {
   name?: string;
 };
 
+/**
+ * Fetch road-based distances & times between points using OSRM.
+ * This calls the public demo server for now – fine for prototyping.
+ * For production, host your own OSRM or use a commercial routing API.
+ */
+async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
+  if (!points || points.length < 2) return [];
+
+  const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
+  const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false&geometries=polyline&steps=false`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`OSRM request failed with status ${res.status}`);
+  }
+
+  const data = await res.json();
+  const route = data.routes?.[0];
+  const legsData = route?.legs as { distance: number; duration: number }[] | undefined;
+
+  if (!route || !legsData || !Array.isArray(legsData)) {
+    throw new Error("OSRM response did not contain route legs");
+  }
+
+  // OSRM legs line up with successive coordinates:
+  // points[0]->points[1], points[1]->points[2], ...
+  return legsData.map((leg, idx) => ({
+    from: points[idx].name ?? `Stop ${idx + 1}`,
+    to: points[idx + 1].name ?? `Stop ${idx + 2}`,
+    distanceKm: leg.distance / 1000, // metres -> km
+    driveHours: leg.duration / 3600, // seconds -> hours
+  }));
+}
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -71,8 +105,9 @@ export default function TripPlanner() {
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
   // Driving legs between those points
   const [legs, setLegs] = useState<TripLeg[]>([]);
+  const [legsLoading, setLegsLoading] = useState(false);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
     setError(null);
@@ -89,16 +124,16 @@ export default function TripPlanner() {
     }
 
     try {
-      // Split free-text waypoints (comma-separated) into an array of names
+      // 1) Waypoints come directly from chips
       const rawWaypointNames = waypoints;
 
-      // 1) Use coordinates to order waypoint names in logical route order
+      // 2) Use coordinates to order waypoint names in a logical route order
       const {
         orderedNames,
         matchedStopsInOrder,
       } = orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
 
-      // 2) Build the day-by-day itinerary using the ordered names
+      // 3) Build the day-by-day itinerary using the ordered names
       const nextPlan = buildSimpleTripPlan({
         startCity,
         endCity,
@@ -108,10 +143,10 @@ export default function TripPlanner() {
       });
       setPlan(nextPlan);
 
-      // 3) Build map points: start city → ordered mapped waypoints → end city
+      // 4) Build map points: start city → ordered mapped waypoints → end city
       const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
         lat: stop.lat,
-       lng: stop.lng,
+        lng: stop.lng,
         name: stop.name,
       }));
 
@@ -123,13 +158,24 @@ export default function TripPlanner() {
 
       setMapPoints(points);
 
-      // 4) Compute driving legs (distance + estimated drive time)
-      const newLegs = buildLegsFromPoints(points);
-      setLegs(newLegs);
+      // 5) Compute driving legs using road distances
+      setLegsLoading(true);
+      try {
+        const roadLegs = await fetchRoadLegs(points);
+        setLegs(roadLegs);
+      } catch (routingErr) {
+        console.error("Road routing failed, falling back to straight-line:", routingErr);
+        // Fallback to straight-line estimate so we still show *something*
+        const fallbackLegs = buildLegsFromPoints(points);
+        setLegs(fallbackLegs);
+      } finally {
+        setLegsLoading(false);
+      }
     } catch (err) {
       setPlan(null);
       setMapPoints([]);
       setLegs([]);
+      setLegsLoading(false);
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
@@ -202,19 +248,23 @@ export default function TripPlanner() {
           </div>
         </div>
 
-          {/* Waypoints */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Places you'd like to visit</label>
-               <p className="text-xs text-gray-400">
-                  Add stops between your start and end cities. Press Enter after each one.
-                </p>
+        {/* Waypoints */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">
+            Places you&apos;d like to visit
+          </label>
+          <p className="text-xs text-gray-400">
+            Start typing a town or scenic stop. We&apos;ll reorder these into a logical
+            route between your start and end cities where we recognise the stops,
+            and estimate **road** driving times between each leg.
+          </p>
 
-              <WaypointInput
-                value={waypoints}
-               onChange={setWaypoints}
-                placeholder="Add a stop, e.g. Lake Tekapo"
-            />
-            </div>
+          <WaypointInput
+            value={waypoints}
+            onChange={setWaypoints}
+            placeholder="Add a stop, e.g. Lake Tekapo"
+          />
+        </div>
 
         {error && (
           <p className="text-sm text-red-400">
@@ -289,6 +339,13 @@ export default function TripPlanner() {
           {legs.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">Driving legs</h3>
+
+              {legsLoading && (
+                <p className="text-xs text-gray-400 mb-1">
+                  Fetching road distances…
+                </p>
+              )}
+
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="text-left text-gray-400">
@@ -316,8 +373,8 @@ export default function TripPlanner() {
                 </table>
               </div>
               <p className="text-xs text-gray-500">
-                Distances are approximate great-circle distances; actual drive
-                times may vary with road conditions and stops.
+                Distances shown are road distances from a routing engine; actual
+                drive times may vary with traffic, weather, and stops.
               </p>
             </div>
           )}
