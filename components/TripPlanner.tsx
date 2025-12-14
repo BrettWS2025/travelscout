@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import dynamic from "next/dynamic";
 import {
   buildSimpleTripPlan,
   type TripPlan,
@@ -12,7 +13,11 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
 } from "@/lib/nzCities";
-import TripMap from "@/components/TripMap";
+
+// Dynamically import TripMap only on the client to avoid `window` errors on the server
+const TripMap = dynamic(() => import("@/components/TripMap"), {
+  ssr: false,
+});
 
 function formatDisplayDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -237,6 +242,7 @@ export default function TripPlanner() {
           </p>
 
           <div className="h-72 w-full rounded-lg overflow-hidden">
+            {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
           </div>
         </div>
