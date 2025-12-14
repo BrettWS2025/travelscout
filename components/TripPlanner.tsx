@@ -16,6 +16,7 @@ import {
   getCityById,
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute } from "@/lib/nzStops";
+import WaypointInput from "@/components/WaypointInput";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
@@ -61,7 +62,7 @@ export default function TripPlanner() {
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [waypointsInput, setWaypointsInput] = useState("Lake Tekapo, Cromwell");
+  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -89,10 +90,7 @@ export default function TripPlanner() {
 
     try {
       // Split free-text waypoints (comma-separated) into an array of names
-      const rawWaypointNames = waypointsInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const rawWaypointNames = waypoints;
 
       // 1) Use coordinates to order waypoint names in logical route order
       const {
@@ -204,25 +202,19 @@ export default function TripPlanner() {
           </div>
         </div>
 
-        {/* Waypoints */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Places you&apos;d like to visit
-          </label>
-          <p className="text-xs text-gray-400">
-            Separate with commas. We&apos;ll reorder these into a logical route
-            between your start and end cities where we recognise the stops
-            (e.g. Lake Tekapo, Wānaka, Cromwell) and estimate drive times
-            between them.
-          </p>
-          <textarea
-            value={waypointsInput}
-            onChange={(e) => setWaypointsInput(e.target.value)}
-            className="input-dark mt-1 w-full text-sm"
-            rows={2}
-            placeholder="eg. Cromwell, Lake Tekapo, Wanaka"
-          />
-        </div>
+          {/* Waypoints */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Places you'd like to visit</label>
+               <p className="text-xs text-gray-400">
+                  Add stops between your start and end cities. Press Enter after each one.
+                </p>
+
+              <WaypointInput
+                value={waypoints}
+               onChange={setWaypoints}
+                placeholder="Add a stop, e.g. Lake Tekapo"
+            />
+            </div>
 
         {error && (
           <p className="text-sm text-red-400">
