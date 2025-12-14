@@ -70,9 +70,9 @@ const MENU: MenuSection[] = [
     ],
   },
   {
-    key: "tips",
-    label: "Tips",
-    href: "/tips",
+    key: "trip-planner",
+    label: "Trip Planner",
+    href: "/trip-planner",
     icon: Lightbulb,
     items: [
       { label: "Packing", href: "/(marketing)/tips#packing" },
@@ -88,7 +88,7 @@ const MENU: MenuSection[] = [
  * Add keys here to hide sections from the navbar
  * without deleting their configuration.
  */
-const HIDE_KEYS = new Set<string>(["guides", "tips"]);
+const HIDE_KEYS = new Set<string>(["guides",]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
