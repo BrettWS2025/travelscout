@@ -16,7 +16,11 @@
     "classnames": "2.5.1",
     "recharts": "^2",
     "@vercel/analytics": "latest",
-    "@vercel/speed-insights": "latest"
+    "@vercel/speed-insights": "latest",
+
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "leaflet-routing-machine": "^3.2.0"
   },
   "devDependencies": {
     "autoprefixer": "10.4.20",
