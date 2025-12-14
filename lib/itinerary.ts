@@ -1,7 +1,9 @@
 // lib/itinerary.ts
+import type { NzCity } from "./nzCities";
+
 export type TripInput = {
-  startCity: string;
-  endCity: string;
+  startCity: NzCity;
+  endCity: NzCity;
   startDate: string; // ISO YYYY-MM-DD
   endDate: string;   // ISO YYYY-MM-DD
   waypoints: string[]; // e.g. ["Lake Tekapo", "Dunedin", "Milford Sound"]
@@ -20,7 +22,6 @@ export type TripPlan = {
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 function parseDate(dateStr: string): Date {
-  // Treat as local midnight (good enough for planning)
   const d = new Date(dateStr + "T00:00:00");
   if (Number.isNaN(d.getTime())) {
     throw new Error(`Invalid date: ${dateStr}`);
@@ -29,7 +30,6 @@ function parseDate(dateStr: string): Date {
 }
 
 function formatIsoDate(d: Date): string {
-  // YYYY-MM-DD from local date
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -46,7 +46,7 @@ export function buildSimpleTripPlan(input: TripInput): TripPlan {
   const { startCity, endCity, startDate, endDate, waypoints } = input;
 
   if (!startCity || !endCity) {
-    throw new Error("Please enter both a start city and an end city.");
+    throw new Error("Please select both a start city and an end city.");
   }
 
   const start = parseDate(startDate);
@@ -58,15 +58,19 @@ export function buildSimpleTripPlan(input: TripInput): TripPlan {
   }
 
   const totalDays = Math.floor(diffMs / MS_PER_DAY) + 1; // inclusive
-
   if (totalDays <= 0) {
     throw new Error("Trip must be at least 1 day long.");
   }
 
-  // Build stops list: start → waypoints → end
-  const rawStops = [startCity, ...waypoints, endCity].map((s) => s.trim()).filter(Boolean);
+  // Build stops: start → waypoints → end (for now, waypoints are just free-text names)
+  const rawStops = [
+    startCity.name,
+    ...waypoints,
+    endCity.name,
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-  // De-dupe while preserving order
   const stops: string[] = [];
   for (const s of rawStops) {
     if (!stops.includes(s)) {
@@ -78,11 +82,9 @@ export function buildSimpleTripPlan(input: TripInput): TripPlan {
     throw new Error("Please provide at least one location.");
   }
 
-  // If there are more stops than days, only the first `totalDays` stops will fit
   const effectiveStops = stops.slice(0, totalDays);
   const numStops = effectiveStops.length;
 
-  // Distribute days across stops as evenly as possible
   const baseDaysPerStop = Math.floor(totalDays / numStops);
   let remainder = totalDays % numStops;
 
