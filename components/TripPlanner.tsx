@@ -256,7 +256,7 @@ export default function TripPlanner() {
           <p className="text-xs text-gray-400">
             Start typing a town or scenic stop. We&apos;ll reorder these into a logical
             route between your start and end cities where we recognise the stops,
-            and estimate **road** driving times between each leg.
+            and estimate <strong>road</strong> driving times between each leg.
           </p>
 
           <WaypointInput
@@ -330,8 +330,8 @@ export default function TripPlanner() {
             Tekapo → Cromwell → Queenstown).
           </p>
 
-          {/* Responsive map: 4:3 on mobile, square from md+ */}
-          <div className="w-full aspect-[4/3] md:aspect-square rounded-lg overflow-hidden">
+          {/* Responsive map: 4:3 on all sizes (smaller than square on desktop) */}
+          <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
             {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
           </div>
