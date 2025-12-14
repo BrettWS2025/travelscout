@@ -69,18 +69,18 @@ const MENU: MenuSection[] = [
       /*{ label: "Error Fares", href: "/(marketing)/top-deals#error-fares" },*/
     ],
   },
-  {
-    key: "trip-planner",
-    label: "Trip Planner",
-    href: "/trip-planner",
-    icon: Lightbulb,
-    items: [
-      { label: "Plan Your Trip", href: "/trip-planner/tripplanner" },
-      { label: "Family Travel", href: "/(marketing)/tips#family" },
-      { label: "Beat Jet Lag", href: "/(marketing)/tips#jetlag" },
-      { label: "Save on FX", href: "/(marketing)/tips#fx" },
-    ],
-  },
+{
+  key: "trip-planner",
+  label: "Trip Planner",
+  href: "/trip-planner",
+  icon: Lightbulb,
+  items: [
+    // { label: "Plan Your Trip", href: "/trip-planner/tripplanner" },
+    // { label: "Family Travel", href: "/(marketing)/tips#family" },
+    // { label: "Beat Jet Lag", href: "/(marketing)/tips#jetlag" },
+    // { label: "Save on FX", href: "/(marketing)/tips#fx" },
+  ],
+},
 ];
 
 /**
