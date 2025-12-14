@@ -113,7 +113,7 @@ export default function TripPlanner() {
       // 3) Build map points: start city → ordered mapped waypoints → end city
       const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
         lat: stop.lat,
-        lng: stop.lng,
+       lng: stop.lng,
         name: stop.name,
       }));
 
@@ -288,8 +288,8 @@ export default function TripPlanner() {
             Tekapo → Cromwell → Queenstown).
           </p>
 
-          {/* 🔹 Square map: width = height */}
-          <div className="w-full aspect-square rounded-lg overflow-hidden">
+          {/* Responsive map: 4:3 on mobile, square from md+ */}
+          <div className="w-full aspect-[4/3] md:aspect-square rounded-lg overflow-hidden">
             {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
           </div>
