@@ -4,10 +4,11 @@
 import { useState, FormEvent } from "react";
 import dynamic from "next/dynamic";
 import {
-  buildSimpleTripPlan,
+  buildTripPlanFromStopsAndNights,
   type TripPlan,
   buildLegsFromPoints,
   type TripLeg,
+  countDaysInclusive,
 } from "@/lib/itinerary";
 import {
   NZ_CITIES,
@@ -91,15 +92,43 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   }));
 }
 
+/**
+ * Allocate an initial "nights per stop" array that:
+ * - has length = stopCount
+ * - sums up to totalDays (inclusive day count)
+ * - starts with 1 per stop, then distributes the rest round-robin
+ */
+function allocateNightsForStops(stopCount: number, totalDays: number): number[] {
+  if (stopCount <= 0 || totalDays <= 0) return [];
+
+  const nights = new Array(stopCount).fill(1);
+  let remaining = totalDays - stopCount;
+
+  let idx = 0;
+  while (remaining > 0) {
+    nights[idx % stopCount]++;
+    idx++;
+    remaining--;
+  }
+
+  return nights;
+}
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
+
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Ordered stops for the route (names, including start + end)
+  const [routeStops, setRouteStops] = useState<string[]>([]);
+  // Nights per stop (editable)
+  const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
 
   // Points passed down to the map: start → (ordered matched waypoints) → end
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
@@ -123,6 +152,14 @@ export default function TripPlanner() {
       return;
     }
 
+    if (!startDate || !endDate) {
+      setPlan(null);
+      setMapPoints([]);
+      setLegs([]);
+      setError("Please enter both a start date and an end date.");
+      return;
+    }
+
     try {
       // 1) Waypoints come directly from chips
       const rawWaypointNames = waypoints;
@@ -133,17 +170,30 @@ export default function TripPlanner() {
         matchedStopsInOrder,
       } = orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
 
-      // 3) Build the day-by-day itinerary using the ordered names
-      const nextPlan = buildSimpleTripPlan({
-        startCity,
-        endCity,
-        startDate,
-        endDate,
-        waypoints: orderedNames,
-      });
+      // 3) Build routeStops = start + ordered waypoints + end
+      const stops: string[] = [
+        startCity.name,
+        ...orderedNames,
+        endCity.name,
+      ];
+      setRouteStops(stops);
+
+      // 4) Compute total days and initial nights per stop
+      const totalDays = countDaysInclusive(startDate, endDate);
+      const initialNights = allocateNightsForStops(stops.length, totalDays);
+      setNightsPerStop(initialNights);
+
+      // 5) Build the day-by-day itinerary from stops + nights
+      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
 
-      // 4) Build map points: start city → ordered mapped waypoints → end city
+      // Keep endDate in sync with the last day of the plan (in case distribution changes)
+      if (nextPlan.days.length > 0) {
+        const last = nextPlan.days[nextPlan.days.length - 1];
+        setEndDate(last.date);
+      }
+
+      // 6) Build map points: start city → ordered mapped waypoints → end city
       const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
         lat: stop.lat,
         lng: stop.lng,
@@ -158,7 +208,7 @@ export default function TripPlanner() {
 
       setMapPoints(points);
 
-      // 5) Compute driving legs using road distances
+      // 7) Compute driving legs using road distances
       setLegsLoading(true);
       try {
         const roadLegs = await fetchRoadLegs(points);
@@ -179,6 +229,31 @@ export default function TripPlanner() {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
+
+  function handleChangeNights(idx: number, newValue: number) {
+    if (!routeStops.length) return;
+    if (!startDate) return;
+
+    const safe = Math.max(0, Math.floor(Number.isNaN(newValue) ? 0 : newValue));
+    const next = [...nightsPerStop];
+    next[idx] = safe;
+
+    setNightsPerStop(next);
+
+    // Rebuild itinerary from updated nights
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
+    setPlan(nextPlan);
+
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  const totalTripDays =
+    nightsPerStop.length > 0
+      ? nightsPerStop.reduce((sum, n) => sum + Math.max(0, Math.floor(n)), 0)
+      : 0;
 
   return (
     <div className="space-y-8">
@@ -245,6 +320,12 @@ export default function TripPlanner() {
               onChange={(e) => setEndDate(e.target.value)}
               className="input-dark w-full text-sm"
             />
+            {totalTripDays > 0 && (
+              <p className="text-xs text-gray-400">
+                Itinerary currently spans <strong>{totalTripDays}</strong>{" "}
+                day{totalTripDays === 1 ? "" : "s"} from the start date.
+              </p>
+            )}
           </div>
         </div>
 
@@ -280,6 +361,64 @@ export default function TripPlanner() {
         </button>
       </form>
 
+      {/* Nights per stop editor */}
+      {routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
+        <div className="card p-4 md:p-6 space-y-3">
+          <h2 className="text-lg font-semibold">Adjust nights per stop</h2>
+          <p className="text-xs text-gray-400">
+            Fine-tune how long you spend in each place. We&apos;ll rebuild the
+            day-by-day plan starting from your chosen start date.
+          </p>
+
+          <div className="space-y-2">
+            {routeStops.map((stopName, idx) => (
+              <div
+                key={`${stopName}-${idx}`}
+                className="flex items-center justify-between gap-3 text-sm"
+              >
+                <span>{stopName}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) - 1)
+                    }
+                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={0}
+                    value={nightsPerStop[idx] ?? 0}
+                    onChange={(e) =>
+                      handleChangeNights(idx, Number(e.target.value))
+                    }
+                    className="w-14 text-center input-dark text-xs py-1 px-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) + 1)
+                    }
+                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {totalTripDays > 0 && (
+            <p className="text-xs text-gray-400">
+              Total days in itinerary: <strong>{totalTripDays}</strong>. The end
+              date field updates to match the last day.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Results: itinerary table */}
       {hasSubmitted && !plan && !error && (
         <p className="text-sm text-gray-400">
@@ -291,8 +430,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            This is a starting point. Later you&apos;ll be able to tweak nights per
-            stop, add activities, and book campgrounds.
+            This is a starting point. You can adjust nights per stop above, then
+            later we can add activities, campgrounds, and events per day.
           </p>
 
           <div className="overflow-x-auto">
@@ -330,7 +469,7 @@ export default function TripPlanner() {
             Tekapo → Cromwell → Queenstown).
           </p>
 
-          {/* Responsive map: 4:3 on all sizes (smaller than square on desktop) */}
+          {/* Responsive map: 4:3 on all sizes */}
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
             {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
