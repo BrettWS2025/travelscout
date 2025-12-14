@@ -288,7 +288,8 @@ export default function TripPlanner() {
             Tekapo → Cromwell → Queenstown).
           </p>
 
-          <div className="h-72 w-full rounded-lg overflow-hidden">
+          {/* 🔹 Square map: width = height */}
+          <div className="w-full aspect-square rounded-lg overflow-hidden">
             {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
           </div>
