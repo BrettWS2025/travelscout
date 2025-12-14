@@ -2,10 +2,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import L, { LatLngExpression } from "leaflet";
+import L, { LatLngExpression, Icon } from "leaflet";
 import "leaflet-routing-machine";
 
 export type TripMapPoint = {
@@ -14,6 +20,26 @@ export type TripMapPoint = {
   name?: string;
 };
 
+// --- Custom marker icons ---
+const startIcon = new Icon({
+  iconUrl: "/markers/start.png",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
+const waypointIcon = new Icon({
+  iconUrl: "/markers/waypoint.png",
+  iconSize: [22, 22],
+  iconAnchor: [11, 22],
+});
+
+const endIcon = new Icon({
+  iconUrl: "/markers/end.png",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
+// --- Routing Layer ---
 function RoutingLayer({ points }: { points: TripMapPoint[] }) {
   const map = useMap();
 
@@ -25,14 +51,12 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
       p.lng,
     ]);
 
-    // leaflet-routing-machine attaches `Routing` onto the Leaflet namespace at runtime.
-    // TypeScript doesn't know about it, so we cast `L` to `any` here.
     const routingControl = (L as any).Routing.control({
       waypoints,
       routeWhileDragging: false,
       addWaypoints: false,
       draggableWaypoints: false,
-      show: false, // hide the default directions panel
+      show: false,
       fitSelectedRoutes: true,
       lineOptions: {
         addWaypoints: false,
@@ -46,8 +70,7 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
           },
         ],
       },
-      // Hide markers for now so we don't need to ship custom icon assets
-      createMarker: () => null,
+      // We now WANT markers, so remove the override
     }).addTo(map);
 
     return () => {
@@ -74,7 +97,29 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      {/* Road Route */}
       <RoutingLayer points={points} />
+
+      {/* Markers for start → waypoint(s) → end */}
+      {points.map((p, i) => {
+        const icon =
+          i === 0
+            ? startIcon
+            : i === points.length - 1
+            ? endIcon
+            : waypointIcon;
+
+        return (
+          <Marker
+            key={`${p.lat}-${p.lng}-${i}`}
+            position={[p.lat, p.lng]}
+            icon={icon}
+          >
+            <Popup>{p.name ?? "Stop"}</Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }
