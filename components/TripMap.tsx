@@ -20,26 +20,26 @@ export type TripMapPoint = {
   name?: string;
 };
 
-// --- Custom marker icons ---
+// --- Custom marker icons (using your SVGs in /public/markers) ---
 const startIcon = new Icon({
   iconUrl: "/markers/start.svg",
   iconSize: [28, 28],
-  iconAnchor: [14, 28],
+  iconAnchor: [14, 14], // center the icon
 });
 
 const waypointIcon = new Icon({
   iconUrl: "/markers/waypoint.svg",
-  iconSize: [22, 22],
-  iconAnchor: [11, 22],
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 const endIcon = new Icon({
   iconUrl: "/markers/end.svg",
   iconSize: [28, 28],
-  iconAnchor: [14, 28],
+  iconAnchor: [14, 14],
 });
 
-// --- Routing Layer ---
+// --- Routing Layer (draws the road-following route) ---
 function RoutingLayer({ points }: { points: TripMapPoint[] }) {
   const map = useMap();
 
@@ -56,7 +56,7 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
       routeWhileDragging: false,
       addWaypoints: false,
       draggableWaypoints: false,
-      show: false,
+      show: false, // hide directions panel
       fitSelectedRoutes: true,
       lineOptions: {
         addWaypoints: false,
@@ -70,7 +70,8 @@ function RoutingLayer({ points }: { points: TripMapPoint[] }) {
           },
         ],
       },
-      // We now WANT markers, so remove the override
+      // IMPORTANT: don't let routing-machine create its own default markers
+      createMarker: () => null,
     }).addTo(map);
 
     return () => {
@@ -98,10 +99,10 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* Road Route */}
+      {/* Road route */}
       <RoutingLayer points={points} />
 
-      {/* Markers for start → waypoint(s) → end */}
+      {/* Our own markers: start → waypoints → end */}
       {points.map((p, i) => {
         const icon =
           i === 0
