@@ -438,9 +438,7 @@ export default function TripPlanner() {
               selected={dateRange}
               onSelect={handleDateRangeChange}
               numberOfMonths={1}
-              // You can tweak these as you like:
               weekStartsOn={1} // Monday
-              captionLayout="buttons"
             />
           </div>
 
