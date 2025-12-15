@@ -59,15 +59,20 @@ type MapPoint = {
 };
 
 /**
- * Per-day UI metadata (NOT part of core TripPlan yet).
- * Kept separate so the core itinerary model stays clean and reusable
- * for a future mobile app or other front-ends.
+ * Per-day UI metadata (NOT part of core TripPlan).
+ * Now keyed by (date, location) instead of dayNumber
+ * so it stays aligned with the actual day if day numbers change.
  */
 type DayDetail = {
   notes: string;
   accommodation: string;
   isOpen: boolean;
 };
+
+/** Build a stable key for a given day in the itinerary. */
+function makeDayKey(date: string, location: string): string {
+  return `${date}__${location}`;
+}
 
 /**
  * Fetch road-based distances & times between points using OSRM.
@@ -147,16 +152,17 @@ export default function TripPlanner() {
   const [legs, setLegs] = useState<TripLeg[]>([]);
   const [legsLoading, setLegsLoading] = useState(false);
 
-  // Per-day UI details: keyed by dayNumber
-  const [dayDetails, setDayDetails] = useState<Record<number, DayDetail>>({});
+  // Per-day UI details: keyed by dayKey = `${date}__${location}`
+  const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
-      const next: Record<number, DayDetail> = {};
+      const next: Record<string, DayDetail> = {};
       for (const d of nextPlan.days) {
-        const existing = prev[d.dayNumber];
-        next[d.dayNumber] =
+        const key = makeDayKey(d.date, d.location);
+        const existing = prev[key];
+        next[key] =
           existing ?? {
             notes: "",
             accommodation: "",
@@ -283,13 +289,14 @@ export default function TripPlanner() {
     }
   }
 
-  function toggleDayOpen(dayNumber: number) {
+  function toggleDayOpen(date: string, location: string) {
+    const key = makeDayKey(date, location);
     setDayDetails((prev) => {
-      const current = prev[dayNumber];
-      if (!current) {
+      const existing = prev[key];
+      if (!existing) {
         return {
           ...prev,
-          [dayNumber]: {
+          [key]: {
             notes: "",
             accommodation: "",
             isOpen: true,
@@ -298,32 +305,38 @@ export default function TripPlanner() {
       }
       return {
         ...prev,
-        [dayNumber]: {
-          ...current,
-          isOpen: !current.isOpen,
+        [key]: {
+          ...existing,
+          isOpen: !existing.isOpen,
         },
       };
     });
   }
 
-  function updateDayNotes(dayNumber: number, notes: string) {
+  function updateDayNotes(date: string, location: string, notes: string) {
+    const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
-      [dayNumber]: {
+      [key]: {
         notes,
-        accommodation: prev[dayNumber]?.accommodation ?? "",
-        isOpen: prev[dayNumber]?.isOpen ?? true,
+        accommodation: prev[key]?.accommodation ?? "",
+        isOpen: prev[key]?.isOpen ?? true,
       },
     }));
   }
 
-  function updateDayAccommodation(dayNumber: number, accommodation: string) {
+  function updateDayAccommodation(
+    date: string,
+    location: string,
+    accommodation: string
+  ) {
+    const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
-      [dayNumber]: {
-        notes: prev[dayNumber]?.notes ?? "",
+      [key]: {
+        notes: prev[key]?.notes ?? "",
         accommodation,
-        isOpen: prev[dayNumber]?.isOpen ?? true,
+        isOpen: prev[key]?.isOpen ?? true,
       },
     }));
   }
@@ -524,13 +537,14 @@ export default function TripPlanner() {
               </thead>
               <tbody>
                 {plan.days.map((d) => {
-                  const detail = dayDetails[d.dayNumber];
+                  const key = makeDayKey(d.date, d.location);
+                  const detail = dayDetails[key];
                   const isOpen = detail?.isOpen ?? false;
 
                   return (
                     <>
                       <tr
-                        key={`row-${d.dayNumber}`}
+                        key={`row-${d.dayNumber}-${key}`}
                         className="border-t border-white/5 align-top"
                       >
                         <td className="py-2 pr-4 whitespace-nowrap">
@@ -543,7 +557,7 @@ export default function TripPlanner() {
                         <td className="py-2 pr-4">
                           <button
                             type="button"
-                            onClick={() => toggleDayOpen(d.dayNumber)}
+                            onClick={() => toggleDayOpen(d.date, d.location)}
                             className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bg-white/10"
                           >
                             {isOpen ? "− Hide" : "+ Add details"}
@@ -552,7 +566,7 @@ export default function TripPlanner() {
                       </tr>
 
                       {isOpen && (
-                        <tr key={`details-${d.dayNumber}`}>
+                        <tr key={`details-${d.dayNumber}-${key}`}>
                           <td
                             colSpan={4}
                             className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
@@ -569,7 +583,11 @@ export default function TripPlanner() {
                                     placeholder="e.g. Morning in the city, afternoon gondola, dinner at ..."
                                     value={detail?.notes ?? ""}
                                     onChange={(e) =>
-                                      updateDayNotes(d.dayNumber, e.target.value)
+                                      updateDayNotes(
+                                        d.date,
+                                        d.location,
+                                        e.target.value
+                                      )
                                     }
                                   />
                                 </div>
@@ -584,7 +602,8 @@ export default function TripPlanner() {
                                     value={detail?.accommodation ?? ""}
                                     onChange={(e) =>
                                       updateDayAccommodation(
-                                        d.dayNumber,
+                                        d.date,
+                                        d.location,
                                         e.target.value
                                       )
                                     }
@@ -599,7 +618,8 @@ export default function TripPlanner() {
                                     </button>
                                     <p className="text-[10px] text-gray-500">
                                       Soon this will surface tours, attractions and
-                                      events for {d.location} on {formatDisplayDate(d.date)}, with
+                                      events for {d.location} on{" "}
+                                      {formatDisplayDate(d.date)}, with
                                       bookable links.
                                     </p>
                                   </div>
