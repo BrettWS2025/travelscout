@@ -19,7 +19,7 @@
     "@vercel/speed-insights": "latest",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "leaflet-routing-machine": "^3.2.0"
+    "leaflet-routing-machine": "^3.2.0",
     "react-day-picker": "^9.0.5"
   },
   "devDependencies": {
