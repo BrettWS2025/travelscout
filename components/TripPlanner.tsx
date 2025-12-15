@@ -83,6 +83,14 @@ function toIsoDate(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+// Helper to convert "YYYY-MM-DD" -> Date | undefined
+function fromIsoDate(s: string): Date | undefined {
+  if (!s) return undefined;
+  const d = new Date(s + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d;
+}
+
 /**
  * Fetch road-based distances & times between points using OSRM.
  * This calls the public demo server for now – fine for prototyping.
@@ -143,11 +151,11 @@ export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
 
-  // These are still simple ISO date strings used by the rest of the logic
+  // ISO date strings used by the rest of the logic and shown in the inputs
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // For the calendar UI
+  // Shared calendar range selection
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
@@ -205,6 +213,52 @@ export default function TripPlanner() {
     }
   }
 
+  /** When the user types into the Start date field or uses the native picker. */
+  function handleStartDateChange(value: string) {
+    setStartDate(value);
+
+    const from = fromIsoDate(value);
+    const to = fromIsoDate(endDate);
+
+    if (from && to) {
+      // Ensure from <= to
+      if (from.getTime() <= to.getTime()) {
+        setDateRange({ from, to });
+      } else {
+        // If user typed a start after end, just set from for now
+        setDateRange({ from, to: from });
+        setEndDate(toIsoDate(from));
+      }
+    } else if (from) {
+      setDateRange({ from, to: undefined });
+    } else {
+      setDateRange(undefined);
+    }
+  }
+
+  /** When the user types into the End date field or uses the native picker. */
+  function handleEndDateChange(value: string) {
+    setEndDate(value);
+
+    const from = fromIsoDate(startDate);
+    const to = fromIsoDate(value);
+
+    if (from && to) {
+      // Ensure from <= to
+      if (from.getTime() <= to.getTime()) {
+        setDateRange({ from, to });
+      } else {
+        // If user typed an end before start, swap
+        setDateRange({ from: to, to: from });
+        setStartDate(toIsoDate(to));
+      }
+    } else if (to) {
+      setDateRange({ from: undefined, to });
+    } else {
+      setDateRange(undefined);
+    }
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
@@ -225,7 +279,7 @@ export default function TripPlanner() {
       setPlan(null);
       setMapPoints([]);
       setLegs([]);
-      setError("Please select a start and end date on the calendar.");
+      setError("Please select a start and end date.");
       return;
     }
 
@@ -424,12 +478,42 @@ export default function TripPlanner() {
           </div>
         </div>
 
-        {/* Trip dates - single calendar with range selection */}
-        <div className="space-y-2">
+        {/* Trip dates: two fields + shared calendar */}
+        <div className="space-y-3">
           <label className="text-sm font-medium">Trip dates</label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Start date input */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400">Start date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="input-dark w-full text-sm"
+              />
+            </div>
+
+            {/* End date input */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400">End date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="input-dark w-full text-sm"
+              />
+              {totalTripDays > 0 && (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+                </p>
+              )}
+            </div>
+          </div>
+
           <p className="text-xs text-gray-400">
-            Click your arrival date, then your departure date in the same calendar.
-            We&apos;ll highlight the whole range and use it to build your itinerary.
+            You can type dates directly into the fields, or pick both in one go
+            on the calendar below (click your arrival date, then your departure date).
           </p>
 
           <div className="inline-block rounded-xl bg-[#1E2C4B] p-3 border border-white/10">
@@ -440,23 +524,6 @@ export default function TripPlanner() {
               numberOfMonths={1}
               weekStartsOn={1} // Monday
             />
-          </div>
-
-          <div className="text-xs text-gray-300 flex flex-wrap gap-3 mt-1">
-            <span>
-              <span className="text-gray-400">Start:</span>{" "}
-              {startDate ? formatDisplayDate(startDate) : "—"}
-            </span>
-            <span>
-              <span className="text-gray-400">End:</span>{" "}
-              {endDate ? formatDisplayDate(endDate) : "—"}
-            </span>
-            {totalTripDays > 0 && (
-              <span>
-                <span className="text-gray-400">Total days:</span>{" "}
-                {totalTripDays}
-              </span>
-            )}
           </div>
         </div>
 
