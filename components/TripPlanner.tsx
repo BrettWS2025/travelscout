@@ -394,7 +394,7 @@ export default function TripPlanner() {
                     onChange={(e) =>
                       handleChangeNights(idx, Number(e.target.value))
                     }
-                    className="w-14 text-center input-dark text-xs py-1 px-1"
+                    className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
                   />
                   <button
                     type="button"
