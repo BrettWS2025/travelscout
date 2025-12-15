@@ -20,6 +20,7 @@ import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
+import { Calendar } from "lucide-react";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
@@ -157,6 +158,8 @@ export default function TripPlanner() {
 
   // Shared calendar range selection
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // Whether the big calendar popover is visible
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
 
@@ -210,6 +213,11 @@ export default function TripPlanner() {
       setEndDate(toIsoDate(range.to));
     } else {
       setEndDate("");
+    }
+
+    // Once both dates are selected, hide the calendar
+    if (range?.from && range.to) {
+      setShowCalendar(false);
     }
   }
 
@@ -478,31 +486,51 @@ export default function TripPlanner() {
           </div>
         </div>
 
-        {/* Trip dates: two fields + shared calendar */}
-        <div className="space-y-3">
+        {/* Trip dates: two fields + popover calendar */}
+        <div className="space-y-3 relative">
           <label className="text-sm font-medium">Trip dates</label>
 
           <div className="grid gap-4 md:grid-cols-2">
             {/* Start date input */}
             <div className="space-y-1">
               <label className="text-xs text-gray-400">Start date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                className="input-dark w-full text-sm"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  className="input-dark w-full text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCalendar((v) => !v)}
+                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
+                  aria-label="Open calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* End date input */}
             <div className="space-y-1">
               <label className="text-xs text-gray-400">End date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => handleEndDateChange(e.target.value)}
-                className="input-dark w-full text-sm"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  className="input-dark w-full text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCalendar((v) => !v)}
+                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
+                  aria-label="Open calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
               {totalTripDays > 0 && (
                 <p className="text-[11px] text-gray-400 mt-1">
                   Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
@@ -512,19 +540,30 @@ export default function TripPlanner() {
           </div>
 
           <p className="text-xs text-gray-400">
-            You can type dates directly into the fields, or pick both in one go
-            on the calendar below (click your arrival date, then your departure date).
+            You can type dates directly into the fields, or click the calendar
+            icon to pick both dates in one go.
           </p>
 
-          <div className="inline-block rounded-xl bg-[#1E2C4B] p-3 border border-white/10">
-            <DayPicker
-              mode="range"
-              selected={dateRange}
-              onSelect={handleDateRangeChange}
-              numberOfMonths={1}
-              weekStartsOn={1} // Monday
-            />
-          </div>
+          {showCalendar && (
+            <div className="absolute left-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg">
+              <DayPicker
+                mode="range"
+                selected={dateRange}
+                onSelect={handleDateRangeChange}
+                numberOfMonths={1}
+                weekStartsOn={1} // Monday
+              />
+              <div className="flex justify-end mt-1">
+                <button
+                  type="button"
+                  className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                  onClick={() => setShowCalendar(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Waypoints */}
