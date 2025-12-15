@@ -59,6 +59,17 @@ type MapPoint = {
 };
 
 /**
+ * Per-day UI metadata (NOT part of core TripPlan yet).
+ * Kept separate so the core itinerary model stays clean and reusable
+ * for a future mobile app or other front-ends.
+ */
+type DayDetail = {
+  notes: string;
+  accommodation: string;
+  isOpen: boolean;
+};
+
+/**
  * Fetch road-based distances & times between points using OSRM.
  * This calls the public demo server for now – fine for prototyping.
  * For production, host your own OSRM or use a commercial routing API.
@@ -136,6 +147,26 @@ export default function TripPlanner() {
   const [legs, setLegs] = useState<TripLeg[]>([]);
   const [legsLoading, setLegsLoading] = useState(false);
 
+  // Per-day UI details: keyed by dayNumber
+  const [dayDetails, setDayDetails] = useState<Record<number, DayDetail>>({});
+
+  /** Sync the dayDetails map any time the plan changes. */
+  function syncDayDetailsFromPlan(nextPlan: TripPlan) {
+    setDayDetails((prev) => {
+      const next: Record<number, DayDetail> = {};
+      for (const d of nextPlan.days) {
+        const existing = prev[d.dayNumber];
+        next[d.dayNumber] =
+          existing ?? {
+            notes: "",
+            accommodation: "",
+            isOpen: false,
+          };
+      }
+      return next;
+    });
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
@@ -186,6 +217,7 @@ export default function TripPlanner() {
       // 5) Build the day-by-day itinerary from stops + nights
       const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
+      syncDayDetailsFromPlan(nextPlan);
 
       // Keep endDate in sync with the last day of the plan (in case distribution changes)
       if (nextPlan.days.length > 0) {
@@ -243,11 +275,57 @@ export default function TripPlanner() {
     // Rebuild itinerary from updated nights
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
     setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
 
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
       setEndDate(last.date);
     }
+  }
+
+  function toggleDayOpen(dayNumber: number) {
+    setDayDetails((prev) => {
+      const current = prev[dayNumber];
+      if (!current) {
+        return {
+          ...prev,
+          [dayNumber]: {
+            notes: "",
+            accommodation: "",
+            isOpen: true,
+          },
+        };
+      }
+      return {
+        ...prev,
+        [dayNumber]: {
+          ...current,
+          isOpen: !current.isOpen,
+        },
+      };
+    });
+  }
+
+  function updateDayNotes(dayNumber: number, notes: string) {
+    setDayDetails((prev) => ({
+      ...prev,
+      [dayNumber]: {
+        notes,
+        accommodation: prev[dayNumber]?.accommodation ?? "",
+        isOpen: prev[dayNumber]?.isOpen ?? true,
+      },
+    }));
+  }
+
+  function updateDayAccommodation(dayNumber: number, accommodation: string) {
+    setDayDetails((prev) => ({
+      ...prev,
+      [dayNumber]: {
+        notes: prev[dayNumber]?.notes ?? "",
+        accommodation,
+        isOpen: prev[dayNumber]?.isOpen ?? true,
+      },
+    }));
   }
 
   const totalTripDays =
@@ -430,8 +508,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            This is a starting point. You can adjust nights per stop above, then
-            later we can add activities, campgrounds, and events per day.
+            Expand a day to add what you&apos;re doing, where you&apos;re staying,
+            and (soon) pick activities and events for that date.
           </p>
 
           <div className="overflow-x-auto">
@@ -440,19 +518,100 @@ export default function TripPlanner() {
                 <tr>
                   <th className="py-2 pr-4">Day</th>
                   <th className="py-2 pr-4">Date</th>
-                  <th className="py-2">Location</th>
+                  <th className="py-2 pr-4">Location</th>
+                  <th className="py-2 pr-4">Details</th>
                 </tr>
               </thead>
               <tbody>
-                {plan.days.map((d) => (
-                  <tr key={d.dayNumber} className="border-t border-white/5">
-                    <td className="py-2 pr-4">Day {d.dayNumber}</td>
-                    <td className="py-2 pr-4">
-                      {formatDisplayDate(d.date)}
-                    </td>
-                    <td className="py-2">{d.location}</td>
-                  </tr>
-                ))}
+                {plan.days.map((d) => {
+                  const detail = dayDetails[d.dayNumber];
+                  const isOpen = detail?.isOpen ?? false;
+
+                  return (
+                    <>
+                      <tr
+                        key={`row-${d.dayNumber}`}
+                        className="border-t border-white/5 align-top"
+                      >
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          Day {d.dayNumber}
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          {formatDisplayDate(d.date)}
+                        </td>
+                        <td className="py-2 pr-4">{d.location}</td>
+                        <td className="py-2 pr-4">
+                          <button
+                            type="button"
+                            onClick={() => toggleDayOpen(d.dayNumber)}
+                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bg-white/10"
+                          >
+                            {isOpen ? "− Hide" : "+ Add details"}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {isOpen && (
+                        <tr key={`details-${d.dayNumber}`}>
+                          <td
+                            colSpan={4}
+                            className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
+                          >
+                            <div className="space-y-3">
+                              <div className="grid gap-3 md:grid-cols-2">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium">
+                                    What I&apos;m doing on this day
+                                  </label>
+                                  <textarea
+                                    rows={3}
+                                    className="input-dark w-full text-xs"
+                                    placeholder="e.g. Morning in the city, afternoon gondola, dinner at ..."
+                                    value={detail?.notes ?? ""}
+                                    onChange={(e) =>
+                                      updateDayNotes(d.dayNumber, e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium">
+                                    Where I&apos;m staying
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="input-dark w-full text-xs"
+                                    placeholder="e.g. Holiday park, hotel name, friend’s place"
+                                    value={detail?.accommodation ?? ""}
+                                    onChange={(e) =>
+                                      updateDayAccommodation(
+                                        d.dayNumber,
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <div className="mt-2 space-y-1">
+                                    <button
+                                      type="button"
+                                      disabled
+                                      className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
+                                    >
+                                      Search things to do in {d.location} (coming soon)
+                                    </button>
+                                    <p className="text-[10px] text-gray-500">
+                                      Soon this will surface tours, attractions and
+                                      events for {d.location} on {formatDisplayDate(d.date)}, with
+                                      bookable links.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
