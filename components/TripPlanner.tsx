@@ -18,6 +18,7 @@ import {
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
+import { createTripDraft, buildTripDaysFromPlan, type TripWithDetails } from "@/lib/domain";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
