@@ -38,6 +38,15 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
+function formatShortRangeDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
 function formatDistance(km: number): string {
   if (km < 1) {
     return `${Math.round(km * 1000)} m`;
@@ -152,13 +161,12 @@ export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
 
-  // ISO date strings used by the rest of the logic and shown in the inputs
+  // ISO date strings used by the rest of the logic
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Shared calendar range selection
+  // Shared calendar range selection + popover state
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  // Whether the big calendar popover is visible
   const [showCalendar, setShowCalendar] = useState(false);
 
   const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
@@ -203,68 +211,29 @@ export default function TripPlanner() {
   function handleDateRangeChange(range: DateRange | undefined) {
     setDateRange(range);
 
-    if (range?.from) {
-      setStartDate(toIsoDate(range.from));
-    } else {
+    if (!range?.from) {
       setStartDate("");
-    }
-
-    if (range?.to) {
-      setEndDate(toIsoDate(range.to));
-    } else {
       setEndDate("");
+      return;
     }
 
-    // Once both dates are selected, hide the calendar
-    if (range?.from && range.to) {
-      setShowCalendar(false);
+    // If only one date picked so far
+    if (!range.to) {
+      setStartDate(toIsoDate(range.from));
+      setEndDate("");
+      return;
     }
-  }
 
-  /** When the user types into the Start date field or uses the native picker. */
-  function handleStartDateChange(value: string) {
-    setStartDate(value);
-
-    const from = fromIsoDate(value);
-    const to = fromIsoDate(endDate);
-
-    if (from && to) {
-      // Ensure from <= to
-      if (from.getTime() <= to.getTime()) {
-        setDateRange({ from, to });
-      } else {
-        // If user typed a start after end, just set from for now
-        setDateRange({ from, to: from });
-        setEndDate(toIsoDate(from));
-      }
-    } else if (from) {
-      setDateRange({ from, to: undefined });
-    } else {
-      setDateRange(undefined);
+    // Ensure from <= to
+    let from = range.from;
+    let to = range.to;
+    if (to < from) {
+      [from, to] = [to, from];
     }
-  }
 
-  /** When the user types into the End date field or uses the native picker. */
-  function handleEndDateChange(value: string) {
-    setEndDate(value);
-
-    const from = fromIsoDate(startDate);
-    const to = fromIsoDate(value);
-
-    if (from && to) {
-      // Ensure from <= to
-      if (from.getTime() <= to.getTime()) {
-        setDateRange({ from, to });
-      } else {
-        // If user typed an end before start, swap
-        setDateRange({ from: to, to: from });
-        setStartDate(toIsoDate(to));
-      }
-    } else if (to) {
-      setDateRange({ from: undefined, to });
-    } else {
-      setDateRange(undefined);
-    }
+    setStartDate(toIsoDate(from));
+    setEndDate(toIsoDate(to));
+    // Note: we do NOT close the calendar here; user closes with the button
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -287,7 +256,7 @@ export default function TripPlanner() {
       setPlan(null);
       setMapPoints([]);
       setLegs([]);
-      setError("Please select a start and end date.");
+      setError("Please select your trip dates.");
       return;
     }
 
@@ -440,6 +409,11 @@ export default function TripPlanner() {
       ? countDaysInclusive(startDate, endDate)
       : 0;
 
+  const whenLabel =
+    startDate && endDate
+      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
+      : "Add dates";
+
   return (
     <div className="space-y-8">
       {/* Form */}
@@ -486,84 +460,58 @@ export default function TripPlanner() {
           </div>
         </div>
 
-        {/* Trip dates: two fields + popover calendar */}
-        <div className="space-y-3 relative">
+        {/* Trip dates: single "When" control + calendar */}
+        <div className="space-y-2 relative">
           <label className="text-sm font-medium">Trip dates</label>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Start date input */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Start date</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  className="input-dark w-full text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCalendar(true)}
-                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
-                  aria-label="Open calendar"
-                >
-                  <Calendar className="w-4 h-4" />
-                </button>
+          <div className="relative inline-block">
+            <button
+              type="button"
+              onClick={() => setShowCalendar((v) => !v)}
+              className="flex items-center justify-between w-full md:w-80 px-4 py-3 rounded-full bg-[var(--card)] border border-white/15 hover:border-white/35 text-left"
+            >
+              <div className="flex flex-col">
+                <span className="text-[11px] text-gray-400 uppercase tracking-wide">
+                  When
+                </span>
+                <span className="text-sm">{whenLabel}</span>
               </div>
-            </div>
+              <Calendar className="w-4 h-4 opacity-80" />
+            </button>
 
-            {/* End date input */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">End date</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => handleEndDateChange(e.target.value)}
-                  className="input-dark w-full text-sm"
+            {showCalendar && (
+              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg">
+                <DayPicker
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={handleDateRangeChange}
+                  numberOfMonths={2}
+                  weekStartsOn={1} // Monday
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowCalendar(true)}
-                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
-                  aria-label="Open calendar"
-                >
-                  <Calendar className="w-4 h-4" />
-                </button>
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="button"
+                    className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                    onClick={() => setShowCalendar(false)}
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
-              {totalTripDays > 0 && (
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
-                </p>
-              )}
-            </div>
+            )}
           </div>
 
-          <p className="text-xs text-gray-400">
-            You can type dates directly into the fields, or click the calendar
-            icon to pick both dates in one go.
-          </p>
-
-          {showCalendar && (
-            <div className="absolute left-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg">
-              <DayPicker
-                mode="range"
-                selected={dateRange}
-                onSelect={handleDateRangeChange}
-                numberOfMonths={1}
-                weekStartsOn={1} // Monday
-              />
-              <div className="flex justify-end mt-1">
-                <button
-                  type="button"
-                  className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-                  onClick={() => setShowCalendar(false)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+          {totalTripDays > 0 && (
+            <p className="text-[11px] text-gray-400 mt-1">
+              Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+            </p>
           )}
+
+          <p className="text-xs text-gray-400">
+            Click once to open the calendar, then choose your arrival and
+            departure dates in one go. We&apos;ll use these to spread nights
+            across your stops.
+          </p>
         </div>
 
         {/* Waypoints */}
@@ -650,7 +598,7 @@ export default function TripPlanner() {
           {totalTripDays > 0 && (
             <p className="text-xs text-gray-400">
               Total days in itinerary: <strong>{totalTripDays}</strong>. The end
-              date field updates to match the last day.
+              date updates to match the last day.
             </p>
           )}
         </div>
@@ -796,7 +744,6 @@ export default function TripPlanner() {
 
           {/* Responsive map: 4:3 on all sizes */}
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
-            {/* TripMap is dynamically loaded only in the browser */}
             <TripMap points={mapPoints} />
           </div>
 
