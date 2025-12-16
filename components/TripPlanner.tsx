@@ -160,6 +160,8 @@ export default function TripPlanner() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   // Whether the big calendar popover is visible
   const [showCalendar, setShowCalendar] = useState(false);
+  // Track whether the user has already picked the start in this calendar session
+  const [hasPickedStart, setHasPickedStart] = useState(false);
 
   const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
 
@@ -192,6 +194,7 @@ export default function TripPlanner() {
         !calendarRef.current.contains(event.target as Node)
       ) {
         setShowCalendar(false);
+        setHasPickedStart(false);
       }
     }
 
@@ -205,13 +208,6 @@ export default function TripPlanner() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCalendar]);
-
-  /** Auto-close calendar when both from & to are selected. */
-  useEffect(() => {
-    if (dateRange?.from && dateRange.to) {
-      setShowCalendar(false);
-    }
-  }, [dateRange]);
 
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
@@ -231,20 +227,58 @@ export default function TripPlanner() {
     });
   }
 
-  /** When the user selects a date range in the calendar. */
+  /**
+   * When the user selects in the calendar:
+   * - first click: sets start only, keeps calendar open
+   * - second click: sets end, closes calendar
+   */
   function handleDateRangeChange(range: DateRange | undefined) {
-    setDateRange(range);
-
-    if (range?.from) {
-      setStartDate(toIsoDate(range.from));
+    // If they cleared selection somehow
+    if (!range?.from) {
+      setDateRange(undefined);
+      setStartDate("");
+      setEndDate("");
+      setHasPickedStart(false);
+      return;
     }
 
-    if (range?.to) {
-      setEndDate(toIsoDate(range.to));
+    // First click: choose start, do NOT close calendar, do NOT set end yet
+    if (!hasPickedStart) {
+      const from = range.from;
+      setHasPickedStart(true);
+      setDateRange({ from, to: undefined });
+      setStartDate(toIsoDate(from));
+      // End date unchanged until second click
+      return;
     }
+
+    // Second click: choose end
+    if (!range.to) {
+      // some odd case; treat as resetting
+      const from = range.from;
+      setDateRange({ from, to: undefined });
+      setStartDate(toIsoDate(from));
+      setEndDate("");
+      setHasPickedStart(true);
+      return;
+    }
+
+    let from = range.from;
+    let to = range.to;
+
+    // ensure from <= to
+    if (to < from) {
+      [from, to] = [to, from];
+    }
+
+    setDateRange({ from, to });
+    setStartDate(toIsoDate(from));
+    setEndDate(toIsoDate(to));
+    setHasPickedStart(false);
+    setShowCalendar(false); // now we close, because range is complete
   }
 
-  /** When the user types into the Start date field. */
+  /** When the user types into the Start date field or uses native picker. */
   function handleStartDateChange(value: string) {
     setStartDate(value);
 
@@ -265,7 +299,7 @@ export default function TripPlanner() {
     }
   }
 
-  /** When the user types into the End date field. */
+  /** When the user types into the End date field or uses native picker. */
   function handleEndDateChange(value: string) {
     setEndDate(value);
 
@@ -284,6 +318,13 @@ export default function TripPlanner() {
     } else {
       setDateRange(undefined);
     }
+  }
+
+  function openCalendar() {
+    // When opening the calendar, show existing range if we have one,
+    // but always start in "picking start" mode so the next click resets.
+    setShowCalendar(true);
+    setHasPickedStart(false);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -521,15 +562,14 @@ export default function TripPlanner() {
               <label className="text-xs text-gray-400">Start date</label>
               <div className="flex items-center gap-2">
                 <input
-                  type="text"
+                  type="date"
                   value={startDate}
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   className="input-dark w-full text-sm"
-                  placeholder="YYYY-MM-DD"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)} // always open
+                  onClick={openCalendar}
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -543,15 +583,14 @@ export default function TripPlanner() {
               <label className="text-xs text-gray-400">End date</label>
               <div className="flex items-center gap-2">
                 <input
-                  type="text"
+                  type="date"
                   value={endDate}
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   className="input-dark w-full text-sm"
-                  placeholder="YYYY-MM-DD"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)} // same shared calendar
+                  onClick={openCalendar}
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -568,9 +607,9 @@ export default function TripPlanner() {
           </div>
 
           <p className="text-xs text-gray-400">
-            Click the calendar icon once to pick both dates in one go (click your
-            arrival date, then your departure date). You can also type dates as{" "}
-            <code className="font-mono text-[11px]">YYYY-MM-DD</code>.
+            Click the calendar icon once to pick both dates in one go (click
+            your arrival date, then your departure date). You can also use the
+            built-in date pickers on each field if you prefer.
           </p>
 
           {showCalendar && (
