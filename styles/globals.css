@@ -51,17 +51,18 @@ header.sticky.top-0 .container { padding-top: 2rem; padding-bottom: 2rem; }
 main, section, .overflow-x-auto { position: relative; z-index: 0; }
 
 /* ----------------------------- */
-/* Inputs                        */
+/* Inputs used in FilterBar, etc */
 /* ----------------------------- */
 
-.input-dark {
+/* Base input for text, select, number, date… (light theme) */
+.input {
   padding: 0.5rem 0.75rem;
-  border-radius: 0.75rem;
-  background: #1E2C4B;
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0.5rem;
+  background: #ffffff;       /* white field */
+  color: #000000;            /* black text */
+  border: 1px solid #d1d5db; /* gray-300 border */
+  caret-color: #000000;      /* black caret */
   outline: none;
-  font-size: 0.875rem;
   transition:
     border-color 120ms,
     box-shadow 120ms,
@@ -69,45 +70,109 @@ main, section, .overflow-x-auto { position: relative; z-index: 0; }
     color 120ms;
 }
 
+.input::placeholder { color: #6b7280; } /* gray-500 */
+
+/* Hover: keep neutral (white border) */
+.input:hover { border-color: #ffffff; }
+
+/* Focus: white border + subtle white glow */
+.input:focus,
+.input:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
+}
+
+/* Dark themed input for Trip Planner etc. */
+.input-dark,
+select.input-dark,
+textarea.input-dark,
+input[type="date"].input-dark {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--card) !important;   /* lighter dark blue */
+  color: var(--text) !important;              /* light text */
+  border: 1px solid rgba(255,255,255,0.12);
+  caret-color: var(--text);
+  outline: none;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms,
+    background-color 120ms,
+    color 120ms;
+}
+
+/* Placeholder on dark inputs */
 .input-dark::placeholder {
-  color: #9ca3af;
+  color: var(--muted);
 }
 
-.input-dark:hover {
-  border-color: rgba(255,255,255,0.30);
+/* Hover state for dark inputs */
+.input-dark:hover,
+select.input-dark:hover,
+textarea.input-dark:hover,
+input[type="date"].input-dark:hover {
+  border-color: rgba(255,255,255,0.25);
 }
 
+/* Focus state for dark inputs */
 .input-dark:focus,
-.input-dark:focus-visible {
+.input-dark:focus-visible,
+select.input-dark:focus,
+select.input-dark:focus-visible,
+textarea.input-dark:focus,
+textarea.input-dark:focus-visible,
+input[type="date"].input-dark:focus,
+input[type="date"].input-dark:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(110,231,255,0.45);
+  box-shadow: 0 0 0 3px rgba(110,231,255,0.28);
 }
 
-.input-dark:disabled {
-  background: #1b263f;
-  color: #6b7280;
-  border-color: rgba(255,255,255,0.08);
-  cursor: not-allowed;
-}
-
-/* number inputs without spinners (for nights) */
-.input-no-spinner::-webkit-outer-spin-button,
-.input-no-spinner::-webkit-inner-spin-button {
+/* Remove default up/down arrows from number inputs (for nights control) */
+.input-no-spinner[type="number"]::-webkit-outer-spin-button,
+.input-no-spinner[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.input-no-spinner {
+
+.input-no-spinner[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* base checkbox / radio */
+/* Multi-select comfortable height */
+select.input[multiple] { height: 7rem; }
+
+/* Checkbox/Radio accent */
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--brand);
 }
 
+/* Disabled state (light inputs only) */
+.input:disabled,
+select.input:disabled {
+  background: #f3f4f6; /* gray-100 */
+  color: #9ca3af;      /* gray-400 */
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* Remove Safari yellow autofill and unify colors (light inputs) */
+input.input:-webkit-autofill,
+input.input:-webkit-autofill:hover,
+input.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
+}
+
+/* Optional: compact labels */
+.filter-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 /* ----------------------------- */
-/* Buttons                       */
+/* Buttons (Clear button, etc.)  */
 /* ----------------------------- */
 
 .btn {
@@ -127,15 +192,27 @@ input[type="radio"] {
 
 .btn:active { transform: translateY(1px); }
 
+/* Solid brand-green button (matches front page) */
 .btn-brand {
   background: var(--brand);
-  color: #0b1b2f;
+  color: #0b1b2f; /* dark text for contrast */
   box-shadow: 0 6px 18px rgba(68, 255, 154, 0.22);
 }
 
 .btn-brand:hover {
   box-shadow: 0 8px 22px rgba(68, 255, 154, 0.32);
   filter: saturate(110%);
+}
+
+/* Hide native date picker icon; we use our own calendar button */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+input[type="date"]::-ms-clear,
+input[type="date"]::-ms-expand {
+  display: none;
 }
 
 .btn-brand:focus-visible {
@@ -146,72 +223,3 @@ input[type="radio"] {
 /* Muted list text & bullets for dark sections */
 .list-muted { color: var(--muted); }
 .list-muted li::marker { color: var(--muted); }
-
-/* ========================================= */
-/* DayPicker (calendar) styling              */
-/* ========================================= */
-
-/* overall calendar */
-.rdp {
-  --rdp-accent-color: var(--brand);
-  --rdp-background-color: transparent;
-  color: var(--text);
-  font-size: 0.875rem;
-}
-
-/* month container */
-.rdp-month {
-  padding: 0.5rem 0.75rem;
-}
-
-/* weekday headers */
-.rdp-head_cell {
-  color: #9ca3af;
-  font-weight: 500;
-}
-
-/* day cell base */
-.rdp-day {
-  width: 2.25rem;
-  height: 2.25rem;
-  margin: 0.125rem;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid transparent;
-}
-
-/* today (when not selected or in range) */
-.rdp-day_today:not(.rdp-day_selected):not(.rdp-day_range_middle) {
-  font-weight: 700;
-  color: #ffffff;
-  transform: scale(1.07);
-}
-
-/* selected start / end */
-.rdp-day_selected,
-.rdp-day_selected:focus-visible {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-}
-
-/* days between start & end: green outline only, no solid fill */
-.rdp-day_range_middle {
-  background: transparent !important;
-  border-color: var(--brand);
-  color: var(--text);
-}
-
-/* hover state */
-.rdp-day:not(.rdp-day_selected):not(.rdp-day_range_middle):hover {
-  background: rgba(255,255,255,0.06);
-}
-
-/* grey-out disabled / outside days (if shown) */
-.rdp-day_disabled,
-.rdp-day_outside {
-  color: #4b5563;
-  border-color: transparent;
-}
