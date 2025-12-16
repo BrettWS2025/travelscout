@@ -503,7 +503,7 @@ export default function TripPlanner() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar((v) => !v)}
+                  onClick={() => setShowCalendar(true)}
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -524,7 +524,7 @@ export default function TripPlanner() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar((v) => !v)}
+                  onClick={() => setShowCalendar(true)}
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
