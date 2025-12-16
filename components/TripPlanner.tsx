@@ -21,6 +21,7 @@ import WaypointInput from "@/components/WaypointInput";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "lucide-react";
+import "react-day-picker/dist/style.css";
 
 // ⬅️ NOTE: we intentionally DO NOT import
 // "react-day-picker/dist/style.css" here any more.
