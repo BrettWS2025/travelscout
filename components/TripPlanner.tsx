@@ -1,7 +1,7 @@
 // components/TripPlanner.tsx
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useRef, useEffect, FormEvent } from "react";
 import dynamic from "next/dynamic";
 import {
   buildTripPlanFromStopsAndNights,
@@ -181,6 +181,31 @@ export default function TripPlanner() {
   // Per-day UI details: keyed by dayKey = `${date}__${location}`
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
+  // Ref for click-outside behaviour on calendar
+  const calendarRef = useRef<HTMLDivElement | null>(null);
+
+  /** Close calendar when clicking outside of it. */
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
+        setShowCalendar(false);
+      }
+    }
+
+    if (showCalendar) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCalendar]);
+
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -205,18 +230,11 @@ export default function TripPlanner() {
 
     if (range?.from) {
       setStartDate(toIsoDate(range.from));
-    } else {
-      setStartDate("");
     }
 
     if (range?.to) {
       setEndDate(toIsoDate(range.to));
-    } else {
-      setEndDate("");
-    }
-
-    // Once both dates are selected, hide the calendar
-    if (range?.from && range.to) {
+      // Only close AFTER both dates are selected
       setShowCalendar(false);
     }
   }
@@ -229,11 +247,9 @@ export default function TripPlanner() {
     const to = fromIsoDate(endDate);
 
     if (from && to) {
-      // Ensure from <= to
       if (from.getTime() <= to.getTime()) {
         setDateRange({ from, to });
       } else {
-        // If user typed a start after end, just set from for now
         setDateRange({ from, to: from });
         setEndDate(toIsoDate(from));
       }
@@ -252,11 +268,9 @@ export default function TripPlanner() {
     const to = fromIsoDate(value);
 
     if (from && to) {
-      // Ensure from <= to
       if (from.getTime() <= to.getTime()) {
         setDateRange({ from, to });
       } else {
-        // If user typed an end before start, swap
         setDateRange({ from: to, to: from });
         setStartDate(toIsoDate(to));
       }
@@ -296,17 +310,14 @@ export default function TripPlanner() {
       const rawWaypointNames = waypoints;
 
       // 2) Use coordinates to order waypoint names in a logical route order
-      const {
-        orderedNames,
-        matchedStopsInOrder,
-      } = orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
+      const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
+        startCity,
+        endCity,
+        rawWaypointNames
+      );
 
       // 3) Build routeStops = start + ordered waypoints + end
-      const stops: string[] = [
-        startCity.name,
-        ...orderedNames,
-        endCity.name,
-      ];
+      const stops: string[] = [startCity.name, ...orderedNames, endCity.name];
       setRouteStops(stops);
 
       // 4) Compute total days and initial nights per stop
@@ -315,7 +326,11 @@ export default function TripPlanner() {
       setNightsPerStop(initialNights);
 
       // 5) Build the day-by-day itinerary from stops + nights
-      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
+      const nextPlan = buildTripPlanFromStopsAndNights(
+        stops,
+        initialNights,
+        startDate
+      );
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
 
@@ -346,7 +361,10 @@ export default function TripPlanner() {
         const roadLegs = await fetchRoadLegs(points);
         setLegs(roadLegs);
       } catch (routingErr) {
-        console.error("Road routing failed, falling back to straight-line:", routingErr);
+        console.error(
+          "Road routing failed, falling back to straight-line:",
+          routingErr
+        );
         // Fallback to straight-line estimate so we still show *something*
         const fallbackLegs = buildLegsFromPoints(points);
         setLegs(fallbackLegs);
@@ -373,7 +391,11 @@ export default function TripPlanner() {
     setNightsPerStop(next);
 
     // Rebuild itinerary from updated nights
-    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      routeStops,
+      next,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
 
@@ -436,9 +458,7 @@ export default function TripPlanner() {
   }
 
   const totalTripDays =
-    startDate && endDate
-      ? countDaysInclusive(startDate, endDate)
-      : 0;
+    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
   return (
     <div className="space-y-8">
@@ -503,7 +523,7 @@ export default function TripPlanner() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)}
+                  onClick={() => setShowCalendar(true)} // always open, never toggle off
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -524,7 +544,7 @@ export default function TripPlanner() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)}
+                  onClick={() => setShowCalendar(true)} // same calendar
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -533,7 +553,8 @@ export default function TripPlanner() {
               </div>
               {totalTripDays > 0 && (
                 <p className="text-[11px] text-gray-400 mt-1">
-                  Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+                  Total days in itinerary (inclusive):{" "}
+                  <strong>{totalTripDays}</strong>
                 </p>
               )}
             </div>
@@ -541,11 +562,15 @@ export default function TripPlanner() {
 
           <p className="text-xs text-gray-400">
             You can type dates directly into the fields, or click the calendar
-            icon to pick both dates in one go.
+            icon to pick both dates in one go (click your arrival date, then
+            your departure date).
           </p>
 
           {showCalendar && (
-            <div className="absolute left-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg">
+            <div
+              ref={calendarRef}
+              className="absolute left-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg"
+            >
               <DayPicker
                 mode="range"
                 selected={dateRange}
@@ -553,15 +578,6 @@ export default function TripPlanner() {
                 numberOfMonths={1}
                 weekStartsOn={1} // Monday
               />
-              <div className="flex justify-end mt-1">
-                <button
-                  type="button"
-                  className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-                  onClick={() => setShowCalendar(false)}
-                >
-                  Close
-                </button>
-              </div>
             </div>
           )}
         </div>
@@ -572,9 +588,10 @@ export default function TripPlanner() {
             Places you&apos;d like to visit
           </label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a logical
-            route between your start and end cities where we recognise the stops,
-            and estimate <strong>road</strong> driving times between each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a
+            logical route between your start and end cities where we recognise
+            the stops, and estimate <strong>road</strong> driving times between
+            each leg.
           </p>
 
           <WaypointInput
@@ -584,11 +601,7 @@ export default function TripPlanner() {
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-red-400">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button
           type="submit"
@@ -667,8 +680,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Expand a day to add what you&apos;re doing, where you&apos;re staying,
-            and (soon) pick activities and events for that date.
+            Expand a day to add what you&apos;re doing, where you&apos;re
+            staying, and (soon) pick activities and events for that date.
           </p>
 
           <div className="overflow-x-auto">
@@ -760,11 +773,12 @@ export default function TripPlanner() {
                                       disabled
                                       className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
                                     >
-                                      Search things to do in {d.location} (coming soon)
+                                      Search things to do in {d.location} (coming
+                                      soon)
                                     </button>
                                     <p className="text-[10px] text-gray-500">
-                                      Soon this will surface tours, attractions and
-                                      events for {d.location} on{" "}
+                                      Soon this will surface tours, attractions
+                                      and events for {d.location} on{" "}
                                       {formatDisplayDate(d.date)}, with
                                       bookable links.
                                     </p>
