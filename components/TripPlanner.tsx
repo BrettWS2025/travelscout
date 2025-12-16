@@ -439,31 +439,395 @@ export default function TripPlanner() {
 
   return (
     <div className="space-y-8">
-      {/* form, nights editor, itinerary, map – unchanged from previous version */}
-      {/* ... only the calendar container is worth highlighting ... */}
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="card p-4 md:p-6 space-y-6"
+        style={{ color: "var(--text)" }}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Start city</label>
+            <select
+              value={startCityId}
+              onChange={(e) => setStartCityId(e.target.value)}
+              className="input-dark w-full text-sm"
+            >
+              {NZ_CITIES.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400">
+              Cities are mapped with latitude &amp; longitude, so we can factor
+              in realistic driving legs later.
+            </p>
+          </div>
 
-      {/* Trip dates block inside the form */}
-      {/* ...snip... (same as above) */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">End city</label>
+            <select
+              value={endCityId}
+              onChange={(e) => setEndCityId(e.target.value)}
+              className="input-dark w-full text-sm"
+            >
+              {NZ_CITIES.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      {/* In the Trip dates block, make sure your calendar container looks like this: */}
-      {/* (this is already in the big file above, included here just for clarity) */}
+        {/* Trip dates */}
+        <div className="space-y-3 relative">
+          <label className="text-sm font-medium">Trip dates</label>
 
-      {showCalendar && (
-        <div
-          ref={calendarRef}
-          className="absolute right-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg"
-        >
-          <DayPicker
-            mode="range"
-            selected={dateRange}
-            onSelect={handleDateRangeChange}
-            numberOfMonths={1}
-            weekStartsOn={1}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400">Start date</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  className="input-dark w-full text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={openCalendar}
+                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
+                  aria-label="Open calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400">End date</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  className="input-dark w-full text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={openCalendar}
+                  className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
+                  aria-label="Open calendar"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
+              {totalTripDays > 0 && (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Total days in itinerary (inclusive):{" "}
+                  <strong>{totalTripDays}</strong>
+                </p>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            Click the calendar icon once to pick both dates in one go (click
+            your arrival date, then your departure date). You can also use the
+            built-in date pickers on each field if you prefer.
+          </p>
+
+          {showCalendar && (
+            <div
+              ref={calendarRef}
+              className="absolute right-0 mt-2 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg"
+            >
+              <DayPicker
+                mode="range"
+                selected={dateRange}
+                onSelect={handleDateRangeChange}
+                numberOfMonths={1}
+                weekStartsOn={1}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Waypoints */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">
+            Places you&apos;d like to visit
+          </label>
+          <p className="text-xs text-gray-400">
+            Start typing a town or scenic stop. We&apos;ll reorder these into a
+            logical route between your start and end cities where we recognise
+            the stops, and estimate <strong>road</strong> driving times between
+            each leg.
+          </p>
+
+          <WaypointInput
+            value={waypoints}
+            onChange={setWaypoints}
+            placeholder="Add a stop, e.g. Lake Tekapo"
           />
+        </div>
+
+        {error && <p className="text-sm text-red-400">{error}</p>}
+
+        <button
+          type="submit"
+          className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition"
+        >
+          Generate itinerary
+        </button>
+      </form>
+
+      {/* Nights per stop editor */}
+      {routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
+        <div className="card p-4 md:p-6 space-y-3">
+          <h2 className="text-lg font-semibold">Adjust nights per stop</h2>
+          <p className="text-xs text-gray-400">
+            Fine-tune how long you spend in each place. We&apos;ll rebuild the
+            day-by-day plan starting from your chosen start date.
+          </p>
+
+          <div className="space-y-2">
+            {routeStops.map((stopName, idx) => (
+              <div
+                key={`${stopName}-${idx}`}
+                className="flex items-center justify-between gap-3 text-sm"
+              >
+                <span>{stopName}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) - 1)
+                    }
+                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={0}
+                    value={nightsPerStop[idx] ?? 0}
+                    onChange={(e) =>
+                      handleChangeNights(idx, Number(e.target.value))
+                    }
+                    className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) + 1)
+                    }
+                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {totalTripDays > 0 && (
+            <p className="text-xs text-gray-400">
+              Total days in itinerary: <strong>{totalTripDays}</strong>. The end
+              date field updates to match the last day.
+            </p>
+          )}
         </div>
       )}
 
-      {/* ...rest of component as in the big file above... */}
+      {/* Itinerary + map (unchanged from your last version) */}
+      {hasSubmitted && !plan && !error && (
+        <p className="text-sm text-gray-400">
+          Fill in your trip details and click &quot;Generate itinerary&quot;.
+        </p>
+      )}
+
+      {plan && plan.days.length > 0 && (
+        <div className="card p-4 md:p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Your draft itinerary</h2>
+          <p className="text-sm text-gray-400">
+            Expand a day to add what you&apos;re doing, where you&apos;re
+            staying, and (soon) pick activities and events for that date.
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-gray-400">
+                <tr>
+                  <th className="py-2 pr-4">Day</th>
+                  <th className="py-2 pr-4">Date</th>
+                  <th className="py-2 pr-4">Location</th>
+                  <th className="py-2 pr-4">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {plan.days.map((d) => {
+                  const key = makeDayKey(d.date, d.location);
+                  const detail = dayDetails[key];
+                  const isOpen = detail?.isOpen ?? false;
+
+                  return (
+                    <>
+                      <tr
+                        key={`row-${d.dayNumber}-${key}`}
+                        className="border-t border-white/5 align-top"
+                      >
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          Day {d.dayNumber}
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          {formatDisplayDate(d.date)}
+                        </td>
+                        <td className="py-2 pr-4">{d.location}</td>
+                        <td className="py-2 pr-4">
+                          <button
+                            type="button"
+                            onClick={() => toggleDayOpen(d.date, d.location)}
+                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bg-white/10"
+                          >
+                            {isOpen ? "− Hide" : "+ Add details"}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {isOpen && (
+                        <tr key={`details-${d.dayNumber}-${key}`}>
+                          <td
+                            colSpan={4}
+                            className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
+                          >
+                            <div className="space-y-3">
+                              <div className="grid gap-3 md:grid-cols-2">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium">
+                                    What I&apos;m doing on this day
+                                  </label>
+                                  <textarea
+                                    rows={3}
+                                    className="input-dark w-full text-xs"
+                                    placeholder="e.g. Morning in the city, afternoon gondola, dinner at ..."
+                                    value={detail?.notes ?? ""}
+                                    onChange={(e) =>
+                                      updateDayNotes(
+                                        d.date,
+                                        d.location,
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium">
+                                    Where I&apos;m staying
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="input-dark w-full text-xs"
+                                    placeholder="e.g. Holiday park, hotel name, friend’s place"
+                                    value={detail?.accommodation ?? ""}
+                                    onChange={(e) =>
+                                      updateDayAccommodation(
+                                        d.date,
+                                        d.location,
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <div className="mt-2 space-y-1">
+                                    <button
+                                      type="button"
+                                      disabled
+                                      className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
+                                    >
+                                      Search things to do in {d.location} (coming
+                                      soon)
+                                    </button>
+                                    <p className="text-[10px] text-gray-500">
+                                      Soon this will surface tours, attractions
+                                      and events for {d.location} on{" "}
+                                      {formatDisplayDate(d.date)}, with
+                                      bookable links.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {plan && mapPoints.length >= 2 && (
+        <div className="card p-4 md:p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Route overview</h2>
+          <p className="text-sm text-gray-400">
+            Road route between your start and end cities, passing through any
+            recognised waypoints in logical order (e.g. Christchurch → Lake
+            Tekapo → Cromwell → Queenstown).
+          </p>
+
+          <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
+            <TripMap points={mapPoints} />
+          </div>
+
+          {legs.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h3 className="text-sm font-semibold">Driving legs</h3>
+
+              {legsLoading && (
+                <p className="text-xs text-gray-400 mb-1">
+                  Fetching road distances…
+                </p>
+              )}
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="text-left text-gray-400">
+                    <tr>
+                      <th className="py-2 pr-4">From</th>
+                      <th className="py-2 pr-4">To</th>
+                      <th className="py-2 pr-4">Distance</th>
+                      <th className="py-2">Estimated drive</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {legs.map((leg, idx) => (
+                      <tr key={idx} className="border-t border-white/5">
+                        <td className="py-2 pr-4">{leg.from}</td>
+                        <td className="py-2 pr-4">{leg.to}</td>
+                        <td className="py-2 pr-4">
+                          {formatDistance(leg.distanceKm)}
+                        </td>
+                        <td className="py-2">
+                          {formatDriveHours(leg.driveHours)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-gray-500">
+                Distances shown are road distances from a routing engine; actual
+                drive times may vary with traffic, weather, and stops.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
