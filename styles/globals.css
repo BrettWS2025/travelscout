@@ -232,9 +232,10 @@ input[type="date"]::-ms-expand {
   height: 2.25rem;
   margin: 0.125rem;
   border-radius: 9999px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   border: 1px solid transparent;
 }
 
