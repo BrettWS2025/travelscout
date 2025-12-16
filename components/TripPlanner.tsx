@@ -244,7 +244,7 @@ export default function TripPlanner() {
     }
   }
 
-  /** When the user types into the Start date field or uses the native picker. */
+  /** When the user types into the Start date field. */
   function handleStartDateChange(value: string) {
     setStartDate(value);
 
@@ -265,7 +265,7 @@ export default function TripPlanner() {
     }
   }
 
-  /** When the user types into the End date field or uses the native picker. */
+  /** When the user types into the End date field. */
   function handleEndDateChange(value: string) {
     setEndDate(value);
 
@@ -521,10 +521,11 @@ export default function TripPlanner() {
               <label className="text-xs text-gray-400">Start date</label>
               <div className="flex items-center gap-2">
                 <input
-                  type="date"
+                  type="text"
                   value={startDate}
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   className="input-dark w-full text-sm"
+                  placeholder="YYYY-MM-DD"
                 />
                 <button
                   type="button"
@@ -542,14 +543,15 @@ export default function TripPlanner() {
               <label className="text-xs text-gray-400">End date</label>
               <div className="flex items-center gap-2">
                 <input
-                  type="date"
+                  type="text"
                   value={endDate}
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   className="input-dark w-full text-sm"
+                  placeholder="YYYY-MM-DD"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)} // same calendar
+                  onClick={() => setShowCalendar(true)} // same shared calendar
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
@@ -566,9 +568,9 @@ export default function TripPlanner() {
           </div>
 
           <p className="text-xs text-gray-400">
-            You can type dates directly into the fields, or click the calendar
-            icon to pick both dates in one go (click your arrival date, then
-            your departure date).
+            Click the calendar icon once to pick both dates in one go (click your
+            arrival date, then your departure date). You can also type dates as{" "}
+            <code className="font-mono text-[11px]">YYYY-MM-DD</code>.
           </p>
 
           {showCalendar && (
