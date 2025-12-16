@@ -204,6 +204,17 @@ input.input:-webkit-autofill:focus {
   filter: saturate(110%);
 }
 
+/* Hide native date picker icon; we use our own calendar button */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+input[type="date"]::-ms-clear,
+input[type="date"]::-ms-expand {
+  display: none;
+}
+
 .btn-brand:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
