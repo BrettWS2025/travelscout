@@ -58,10 +58,10 @@ main, section, .overflow-x-auto { position: relative; z-index: 0; }
 .input {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background: #ffffff;       /* white field */
-  color: #000000;            /* black text */
-  border: 1px solid #d1d5db; /* gray-300 border */
-  caret-color: #000000;      /* black caret */
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #d1d5db;
+  caret-color: #000000;
   outline: none;
   transition:
     border-color 120ms,
@@ -70,12 +70,10 @@ main, section, .overflow-x-auto { position: relative; z-index: 0; }
     color 120ms;
 }
 
-.input::placeholder { color: #6b7280; } /* gray-500 */
+.input::placeholder { color: #6b7280; }
 
-/* Hover: keep neutral (white border) */
 .input:hover { border-color: #ffffff; }
 
-/* Focus: white border + subtle white glow */
 .input:focus,
 .input:focus-visible {
   border-color: #ffffff;
@@ -89,8 +87,8 @@ textarea.input-dark,
 input[type="date"].input-dark {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background-color: var(--card) !important;   /* lighter dark blue */
-  color: var(--text) !important;              /* light text */
+  background-color: var(--card) !important;
+  color: var(--text) !important;
   border: 1px solid rgba(255,255,255,0.12);
   caret-color: var(--text);
   outline: none;
@@ -101,12 +99,10 @@ input[type="date"].input-dark {
     color 120ms;
 }
 
-/* Placeholder on dark inputs */
 .input-dark::placeholder {
   color: var(--muted);
 }
 
-/* Hover state for dark inputs */
 .input-dark:hover,
 select.input-dark:hover,
 textarea.input-dark:hover,
@@ -114,7 +110,6 @@ input[type="date"].input-dark:hover {
   border-color: rgba(255,255,255,0.25);
 }
 
-/* Focus state for dark inputs */
 .input-dark:focus,
 .input-dark:focus-visible,
 select.input-dark:focus,
@@ -133,7 +128,6 @@ input[type="date"].input-dark:focus-visible {
   -webkit-appearance: none;
   margin: 0;
 }
-
 .input-no-spinner[type="number"] {
   -moz-appearance: textfield;
 }
@@ -150,8 +144,8 @@ input[type="radio"] {
 /* Disabled state (light inputs only) */
 .input:disabled,
 select.input:disabled {
-  background: #f3f4f6; /* gray-100 */
-  color: #9ca3af;      /* gray-400 */
+  background: #f3f4f6;
+  color: #9ca3af;
   border-color: #e5e7eb;
   cursor: not-allowed;
 }
@@ -195,7 +189,7 @@ input.input:-webkit-autofill:focus {
 /* Solid brand-green button (matches front page) */
 .btn-brand {
   background: var(--brand);
-  color: #0b1b2f; /* dark text for contrast */
+  color: #0b1b2f;
   box-shadow: 0 6px 18px rgba(68, 255, 154, 0.22);
 }
 
@@ -204,22 +198,76 @@ input.input:-webkit-autofill:focus {
   filter: saturate(110%);
 }
 
-/* Hide native date picker icon; we use our own calendar button */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  display: none;
-}
-
-input[type="date"]::-ms-clear,
-input[type="date"]::-ms-expand {
-  display: none;
-}
-
 .btn-brand:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
 }
 
+/* Hide native date picker icon; we use our own calendar button */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+input[type="date"]::-ms-clear,
+input[type="date"]::-ms-expand {
+  display: none;
+}
+
 /* Muted list text & bullets for dark sections */
 .list-muted { color: var(--muted); }
 .list-muted li::marker { color: var(--muted); }
+
+/* ====================================== */
+/* react-day-picker calendar styling      */
+/* ====================================== */
+
+.rdp {
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+/* individual day cells */
+.rdp-day {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0.125rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+/* today (when not selected or in range) */
+.rdp-day_today:not(.rdp-day_selected):not(.rdp-day_range_middle) {
+  font-weight: 700;
+  color: #ffffff;
+  transform: scale(1.07);
+}
+
+/* selected start/end dates */
+.rdp-day_selected,
+.rdp-day_selected:focus-visible {
+  background: var(--brand) !important;
+  color: #ffffff !important;
+  border-color: var(--brand) !important;
+}
+
+/* days between start & end: green outline only */
+.rdp-day_range_middle {
+  background: transparent !important;
+  border-color: var(--brand) !important;
+  color: var(--text) !important;
+}
+
+/* hover effect on normal days */
+.rdp-day:not(.rdp-day_selected):not(.rdp-day_range_middle):hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* subtle grey for disabled/outside days if they show up */
+.rdp-day_disabled,
+.rdp-day_outside {
+  color: #4b5563;
+  border-color: transparent;
+}
