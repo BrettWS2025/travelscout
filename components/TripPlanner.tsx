@@ -206,6 +206,13 @@ export default function TripPlanner() {
     };
   }, [showCalendar]);
 
+  /** Auto-close calendar when both from & to are selected. */
+  useEffect(() => {
+    if (dateRange?.from && dateRange.to) {
+      setShowCalendar(false);
+    }
+  }, [dateRange]);
+
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -234,8 +241,6 @@ export default function TripPlanner() {
 
     if (range?.to) {
       setEndDate(toIsoDate(range.to));
-      // Only close AFTER both dates are selected
-      setShowCalendar(false);
     }
   }
 
@@ -523,7 +528,7 @@ export default function TripPlanner() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowCalendar(true)} // always open, never toggle off
+                  onClick={() => setShowCalendar(true)} // always open
                   className="inline-flex items-center justify-center rounded-full border border-white/25 p-2 hover:bg-white/10"
                   aria-label="Open calendar"
                 >
