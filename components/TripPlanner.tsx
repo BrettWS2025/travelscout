@@ -104,7 +104,6 @@ function fromIsoDate(s: string): Date | undefined {
 /**
  * Fetch road-based distances & times between points using OSRM.
  * This calls the public demo server for now – fine for prototyping.
- * For production, host your own OSRM or use a commercial routing API.
  */
 async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   if (!points || points.length < 2) return [];
@@ -233,7 +232,7 @@ export default function TripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    // we keep the calendar open; user closes with "Done"
+    // We keep the calendar open; user closes with "Done"
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -288,7 +287,7 @@ export default function TripPlanner() {
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
 
-      // Keep endDate in sync with the last day of the plan (in case distribution changes)
+      // Keep endDate in sync with the last day of the plan
       if (nextPlan.days.length > 0) {
         const last = nextPlan.days[nextPlan.days.length - 1];
         setEndDate(last.date);
@@ -316,7 +315,6 @@ export default function TripPlanner() {
         setLegs(roadLegs);
       } catch (routingErr) {
         console.error("Road routing failed, falling back to straight-line:", routingErr);
-        // Fallback to straight-line estimate so we still show *something*
         const fallbackLegs = buildLegsFromPoints(points);
         setLegs(fallbackLegs);
       } finally {
@@ -341,7 +339,6 @@ export default function TripPlanner() {
 
     setNightsPerStop(next);
 
-    // Rebuild itinerary from updated nights
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
@@ -480,13 +477,24 @@ export default function TripPlanner() {
             </button>
 
             {showCalendar && (
-              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[580px]">
+              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
                 <DayPicker
                   mode="range"
                   selected={dateRange}
                   onSelect={handleDateRangeChange}
                   numberOfMonths={2}
-                  weekStartsOn={1} // Monday
+                  weekStartsOn={1}
+                  /* Force months to sit horizontally */
+                  styles={{
+                    months: {
+                      display: "flex",
+                      flexWrap: "nowrap",
+                      gap: "2rem",
+                    },
+                    month: {
+                      width: "auto",
+                    },
+                  }}
                 />
                 <div className="flex justify-end mt-2">
                   <button
@@ -742,7 +750,6 @@ export default function TripPlanner() {
             Tekapo → Cromwell → Queenstown).
           </p>
 
-          {/* Responsive map: 4:3 on all sizes */}
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
             <TripMap points={mapPoints} />
           </div>
