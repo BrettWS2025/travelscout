@@ -223,3 +223,31 @@ input[type="date"]::-ms-expand {
 /* Muted list text & bullets for dark sections */
 .list-muted { color: var(--muted); }
 .list-muted li::marker { color: var(--muted); }
+
+/* ----------------------------- */
+/* DayPicker (react-day-picker)  */
+/* ----------------------------- */
+
+/* Dark theme + horizontal months */
+.rdp {
+  color: var(--text);
+  background: transparent;
+  font-size: 0.875rem;
+}
+
+.rdp-months {
+  display: flex;
+  flex-wrap: nowrap;  /* keep months in a row on desktop */
+  gap: 1.5rem;
+}
+
+.rdp-month {
+  background: transparent;
+}
+
+/* On narrow screens let months stack if needed */
+@media (max-width: 640px) {
+  .rdp-months {
+    flex-wrap: wrap;
+  }
+}
