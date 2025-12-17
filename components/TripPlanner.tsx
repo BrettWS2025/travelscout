@@ -233,7 +233,7 @@ export default function TripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    // Note: we do NOT close the calendar here; user closes with the button
+    // we keep the calendar open; user closes with "Done"
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -480,7 +480,7 @@ export default function TripPlanner() {
             </button>
 
             {showCalendar && (
-              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg">
+              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[580px]">
                 <DayPicker
                   mode="range"
                   selected={dateRange}
