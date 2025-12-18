@@ -54,40 +54,100 @@ main, section, .overflow-x-auto { position: relative; z-index: 0; }
 /* Inputs used in FilterBar, etc */
 /* ----------------------------- */
 
-/* Base input for text, select, number, date… */
+/* Base input for text, select, number, date… (light theme) */
 .input {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   background: #ffffff;       /* white field */
   color: #000000;            /* black text */
   border: 1px solid #d1d5db; /* gray-300 border */
-  caret-color: #000000;      /* black caret (no green) */
+  caret-color: #000000;      /* black caret */
   outline: none;
-  transition: border-color 120ms, box-shadow 120ms, background-color 120ms, color 120ms;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms,
+    background-color 120ms,
+    color 120ms;
 }
 
 .input::placeholder { color: #6b7280; } /* gray-500 */
 
-/* Hover: keep neutral (white border), no green */
+/* Hover: keep neutral (white border) */
 .input:hover { border-color: #ffffff; }
 
-/* Focus: keep neutral (white border), subtle white glow, no green */
+/* Focus: white border + subtle white glow */
 .input:focus,
 .input:focus-visible {
   border-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
 }
 
+/* Dark themed input for Trip Planner etc. */
+.input-dark,
+select.input-dark,
+textarea.input-dark,
+input[type="date"].input-dark {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--card) !important;   /* lighter dark blue */
+  color: var(--text) !important;              /* light text */
+  border: 1px solid rgba(255,255,255,0.12);
+  caret-color: var(--text);
+  outline: none;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms,
+    background-color 120ms,
+    color 120ms;
+}
+
+/* Placeholder on dark inputs */
+.input-dark::placeholder {
+  color: var(--muted);
+}
+
+/* Hover state for dark inputs */
+.input-dark:hover,
+select.input-dark:hover,
+textarea.input-dark:hover,
+input[type="date"].input-dark:hover {
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* Focus state for dark inputs */
+.input-dark:focus,
+.input-dark:focus-visible,
+select.input-dark:focus,
+select.input-dark:focus-visible,
+textarea.input-dark:focus,
+textarea.input-dark:focus-visible,
+input[type="date"].input-dark:focus,
+input[type="date"].input-dark:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110,231,255,0.28);
+}
+
+/* Remove default up/down arrows from number inputs (for nights control) */
+.input-no-spinner[type="number"]::-webkit-outer-spin-button,
+.input-no-spinner[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-no-spinner[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Multi-select comfortable height */
 select.input[multiple] { height: 7rem; }
 
-/* Checkbox/Radio accent (can keep brand if you like) */
+/* Checkbox/Radio accent */
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--brand);
 }
 
-/* Disabled state */
+/* Disabled state (light inputs only) */
 .input:disabled,
 select.input:disabled {
   background: #f3f4f6; /* gray-100 */
@@ -96,7 +156,7 @@ select.input:disabled {
   cursor: not-allowed;
 }
 
-/* Remove Safari yellow autofill and unify colors */
+/* Remove Safari yellow autofill and unify colors (light inputs) */
 input.input:-webkit-autofill,
 input.input:-webkit-autofill:hover,
 input.input:-webkit-autofill:focus {
@@ -106,7 +166,10 @@ input.input:-webkit-autofill:focus {
 }
 
 /* Optional: compact labels */
-.filter-label { color: #6b7280; font-size: 0.875rem; }
+.filter-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
 
 /* ----------------------------- */
 /* Buttons (Clear button, etc.)  */
@@ -118,7 +181,12 @@ input.input:-webkit-autofill:focus {
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 600;
-  transition: transform 120ms, box-shadow 120ms, background-color 120ms, color 120ms, border-color 120ms;
+  transition:
+    transform 120ms,
+    box-shadow 120ms,
+    background-color 120ms,
+    color 120ms,
+    border-color 120ms;
   border: 1px solid transparent;
 }
 
@@ -136,6 +204,17 @@ input.input:-webkit-autofill:focus {
   filter: saturate(110%);
 }
 
+/* Hide native date picker icon; we use our own calendar button */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+input[type="date"]::-ms-clear,
+input[type="date"]::-ms-expand {
+  display: none;
+}
+
 .btn-brand:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
@@ -144,3 +223,31 @@ input.input:-webkit-autofill:focus {
 /* Muted list text & bullets for dark sections */
 .list-muted { color: var(--muted); }
 .list-muted li::marker { color: var(--muted); }
+
+/* ----------------------------- */
+/* DayPicker (react-day-picker)  */
+/* ----------------------------- */
+
+/* Dark theme + horizontal months */
+.rdp {
+  color: var(--text);
+  background: transparent;
+  font-size: 0.875rem;
+}
+
+.rdp-months {
+  display: flex;
+  flex-wrap: nowrap;  /* keep months in a row on desktop */
+  gap: 1.5rem;
+}
+
+.rdp-month {
+  background: transparent;
+}
+
+/* On narrow screens let months stack if needed */
+@media (max-width: 640px) {
+  .rdp-months {
+    flex-wrap: wrap;
+  }
+}

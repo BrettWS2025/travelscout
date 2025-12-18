@@ -16,7 +16,11 @@
     "classnames": "2.5.1",
     "recharts": "^2",
     "@vercel/analytics": "latest",
-    "@vercel/speed-insights": "latest"
+    "@vercel/speed-insights": "latest",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "leaflet-routing-machine": "^3.2.0",
+    "react-day-picker": "^9.0.5"
   },
   "devDependencies": {
     "autoprefixer": "10.4.20",
@@ -24,6 +28,7 @@
     "tailwindcss": "3.4.10",
     "typescript": "5.4.5",
     "@types/react": "18.2.79",
-    "@types/node": "20.11.30"
+    "@types/node": "20.11.30",
+    "@types/leaflet": "^1.9.9"
   }
 }
