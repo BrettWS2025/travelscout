@@ -184,7 +184,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
 /**
  * Desktop profile / account menu.
- * Styled to match the main nav items.
+ * Now uses the same outer wrapper and spacing as the other nav items.
  */
 function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
@@ -195,78 +195,78 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
     alert("Sign out clicked (wire this up to Supabase later)");
   };
 
-  if (!isLoggedIn) {
-    // Signed OUT: looks like another nav item
-    return (
-      <Link
-        href="/auth/login"
-        className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
-        style={{ color: "var(--text)" }}
-      >
-        <Briefcase className="w-4 h-4" />
-        <span>Sign in</span>
-      </Link>
-    );
-  }
-
-  // Signed IN: Account with dropdown
   return (
     <div
-      className="relative pb-2"
+      className="relative pb-2" // <-- same as NavDropdown wrapper
       onMouseLeave={() => setOpen(false)}
     >
-      <button
-        type="button"
-        onMouseEnter={() => setOpen(true)}
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
-        style={{ color: "var(--text)" }}
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <Briefcase className="w-4 h-4" />
-        <span>Account</span>
-        <ChevronDown
-          className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div
-          className="absolute right-0 top-full -mt-px w-48 card p-2 z-50"
-          role="menu"
-          aria-label="Account menu"
+      {!isLoggedIn ? (
+        // Signed OUT: looks like another nav item
+        <Link
+          href="/auth/login"
+          className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
           style={{ color: "var(--text)" }}
         >
-          <ul className="space-y-1 text-sm">
-            <li>
-              <Link
-                href="/account/details"
-                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
-              >
-                <span>Account details</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/account/itineraries"
-                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
-              >
-                <span>Itineraries</span>
-              </Link>
-            </li>
-            <li className="border-t border-white/10 mt-1 pt-1">
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign out</span>
-              </button>
-            </li>
-          </ul>
-        </div>
+          <Briefcase className="w-4 h-4" />
+          <span>Sign in</span>
+        </Link>
+      ) : (
+        <>
+          {/* Signed IN: Account with dropdown */}
+          <button
+            type="button"
+            onMouseEnter={() => setOpen(true)}
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+            style={{ color: "var(--text)" }}
+            aria-haspopup="menu"
+            aria-expanded={open}
+          >
+            <Briefcase className="w-4 h-4" />
+            <span>Account</span>
+            <ChevronDown
+              className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {open && (
+            <div
+              className="absolute right-0 top-full -mt-px w-48 card p-2 z-50"
+              role="menu"
+              aria-label="Account menu"
+              style={{ color: "var(--text)" }}
+            >
+              <ul className="space-y-1 text-sm">
+                <li>
+                  <Link
+                    href="/account/details"
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+                  >
+                    <span>Account details</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/account/itineraries"
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+                  >
+                    <span>Itineraries</span>
+                  </Link>
+                </li>
+                <li className="border-t border-white/10 mt-1 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-white/10"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign out</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -279,7 +279,7 @@ export function Navbar() {
     Record<string, boolean>
   >({});
 
-  // TEMP: flip to true to see the "Account" version.
+  // TEMP: flip to true to preview the "Account" version.
   const isLoggedIn = false;
 
   return (
@@ -459,7 +459,7 @@ export function Navbar() {
               {!isLoggedIn ? (
                 <Link
                   href="/auth/login"
-                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
+                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg:white/10"
                 >
                   <Briefcase className="w-4 h-4" />
                   <span>Sign in</span>
