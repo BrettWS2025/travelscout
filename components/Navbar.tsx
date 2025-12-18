@@ -10,6 +10,8 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronRight,
+  Briefcase,
+  LogOut,
 } from "lucide-react";
 
 type MenuItem = {
@@ -33,14 +35,13 @@ const MENU: MenuSection[] = [
     href: "/compare",
     icon: PanelsTopLeft,
     items: [
-      /* { label: "Airlines", href: "/(product)/compare#airpoints" },*/
-      /*{ label: "Hotels", href: "/(product)/compare#cards" },*/
-      /*{ label: "Rental Cars", href: "/(product)/compare#lounges" },*/
-      { label: "Travel Agencies, OTAs and Direct Bookings",href: "/compare/travel-agencies-otas-and-direct"},
+      {
+        label: "Travel Agencies, OTAs and Direct Bookings",
+        href: "/compare/travel-agencies-otas-and-direct",
+      },
       { label: "Best Time to Book", href: "/compare/best-time-to-book" },
       { label: "Cruises", href: "/compare/cruise" },
-      /*{ label: "Tours", href: "/(product)/compare#lounges" },*/
-      { label: "Travel Insurance", href: "/compare/travel-insurance" },      
+      { label: "Travel Insurance", href: "/compare/travel-insurance" },
     ],
   },
   {
@@ -63,24 +64,15 @@ const MENU: MenuSection[] = [
     label: "Deals",
     href: "/top-deals",
     icon: Percent,
-    items: [
-      { label: "Top Deals", href: "/top-deals/topdeals" },
-      /*{ label: "Weekly Sales", href: "/(marketing)/top-deals#weekly" },*/
-      /*{ label: "Error Fares", href: "/(marketing)/top-deals#error-fares" },*/
-    ],
+    items: [{ label: "Top Deals", href: "/top-deals/topdeals" }],
   },
-{
-  key: "trip-planner",
-  label: "Trip Planner",
-  href: "/trip-planner",
-  icon: Lightbulb,
-  items: [
-    { label: "Plan Your Trip", href: "/trip-planner" },
-    // { label: "Family Travel", href: "/(marketing)/tips#family" },
-    // { label: "Beat Jet Lag", href: "/(marketing)/tips#jetlag" },
-    // { label: "Save on FX", href: "/(marketing)/tips#fx" },
-  ],
-},
+  {
+    key: "trip-planner",
+    label: "Trip Planner",
+    href: "/trip-planner",
+    icon: Lightbulb,
+    items: [{ label: "Plan Your Trip", href: "/trip-planner" }],
+  },
 ];
 
 /**
@@ -88,7 +80,7 @@ const MENU: MenuSection[] = [
  * Add keys here to hide sections from the navbar
  * without deleting their configuration.
  */
-const HIDE_KEYS = new Set<string>(["guides",]);
+const HIDE_KEYS = new Set<string>(["guides"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
@@ -155,7 +147,9 @@ function NavDropdown({ section }: { section: MenuSection }) {
       >
         <Icon className="w-4 h-4" />
         {section.label}
-        <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
+        />
       </Link>
 
       {open && (
@@ -188,25 +182,119 @@ function NavDropdown({ section }: { section: MenuSection }) {
   );
 }
 
+/**
+ * Desktop profile / account menu.
+ * Right now this uses a hard-coded isLoggedIn flag.
+ * We’ll swap this to real Supabase auth later.
+ */
+function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  // Placeholder – this will become your real sign-out logic.
+  const handleSignOut = () => {
+    setOpen(false);
+    // TODO: replace with Supabase signOut
+    alert("Sign out clicked (wire this up to Supabase later)");
+  };
+
+  if (!isLoggedIn) {
+    // Signed OUT: show briefcase + "Sign in"
+    return (
+      <Link
+        href="/auth/login"
+        className="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/10"
+        style={{ color: "var(--text)" }}
+      >
+        <Briefcase className="w-4 h-4" />
+        <span>Sign in</span>
+      </Link>
+    );
+  }
+
+  // Signed IN: briefcase + "Account" with dropdown
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/10"
+        style={{ color: "var(--text)" }}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <Briefcase className="w-4 h-4" />
+        <span>Account</span>
+        <ChevronDown
+          className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 mt-2 w-48 card p-2 z-50"
+          role="menu"
+          aria-label="Account menu"
+          style={{ color: "var(--text)" }}
+        >
+          <ul className="space-y-1 text-sm">
+            <li>
+              <Link
+                href="/account/details"
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+              >
+                <span>Account details</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/account/itineraries"
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+              >
+                <span>Itineraries</span>
+              </Link>
+            </li>
+            <li className="border-t border-white/10 mt-1 pt-1">
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-white/10"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign out</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>({});
+  const [expandedNested, setExpandedNested] = useState<
+    Record<string, boolean>
+  >({});
+
+  // TEMP: change this to true to see the "Account" version of the menu.
+  // Later we’ll replace this with real Supabase auth state.
+  const isLoggedIn = false;
 
   return (
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)",             // translucent over your --bg (#16223A)
+        background: "rgba(22,34,58,0.55)", // translucent over your --bg (#16223A)
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)",    // glass effect
+        backdropFilter: "saturate(160%) blur(12px)", // glass effect
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
         isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Keep desktop the same; clamp logo width on mobile so it can't push the burger off-screen */}
+        {/* Logo */}
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink"
@@ -215,8 +303,8 @@ export function Navbar() {
           <span
             className="
               relative block h-10
-              w-[433px] max-w-[calc(100vw-72px)]   /* <-- clamp on mobile */
-              md:w-[541px] md:max-w-none           /* <-- desktop unchanged */
+              w-[433px] max-w-[calc(100vw-72px)]
+              md:w-[541px] md:max-w-none
               overflow-visible
             "
           >
@@ -233,14 +321,17 @@ export function Navbar() {
           <span className="sr-only">TravelScout</span>
         </Link>
 
-        {/* Desktop nav (unchanged) */}
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
+
+          {/* Profile / Account button on the far right */}
+          <ProfileMenu isLoggedIn={isLoggedIn} />
         </nav>
 
-        {/* Mobile burger: fixed 40×40 hit area; stays visible */}
+        {/* Mobile burger */}
         <button
           className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
@@ -252,7 +343,7 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer (unchanged) */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
           <div className="card p-2" style={{ color: "var(--text)" }}>
@@ -268,7 +359,10 @@ export function Navbar() {
                   <button
                     className="w-full flex items-center justify-between px-3 py-3"
                     onClick={() =>
-                      setExpanded((prev) => ({ ...prev, [section.key]: !prev[section.key] }))
+                      setExpanded((prev) => ({
+                        ...prev,
+                        [section.key]: !prev[section.key],
+                      }))
                     }
                     aria-expanded={isOpen}
                     style={{ color: "var(--text)" }}
@@ -276,7 +370,11 @@ export function Navbar() {
                     <span className="flex items-center gap-2">
                       <Icon className="w-4 h-4" /> {section.label}
                     </span>
-                    <ChevronDown className={`w-4 h-4 transition ${isOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 transition ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
 
                   {isOpen && (
@@ -295,7 +393,11 @@ export function Navbar() {
                         if (!hasChildren) {
                           return (
                             <li key={key}>
-                              <Link className="block" href={it.href ?? "#"} style={{ color: "var(--text)" }}>
+                              <Link
+                                className="block"
+                                href={it.href ?? "#"}
+                                style={{ color: "var(--text)" }}
+                              >
                                 {it.label}
                               </Link>
                             </li>
@@ -303,23 +405,40 @@ export function Navbar() {
                         }
 
                         return (
-                          <li key={key} className="border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
+                          <li
+                            key={key}
+                            className="border-l pl-3"
+                            style={{
+                              borderColor: "rgba(255,255,255,0.12)",
+                            }}
+                          >
                             <button
                               className="w-full flex items-center justify-between py-2"
                               onClick={() =>
-                                setExpandedNested((prev) => ({ ...prev, [key]: !prev[key] }))
+                                setExpandedNested((prev) => ({
+                                  ...prev,
+                                  [key]: !prev[key],
+                                }))
                               }
                               aria-expanded={open}
                               style={{ color: "var(--text)" }}
                             >
                               <span>{it.label}</span>
-                              <ChevronDown className={`w-4 h-4 transition ${open ? "rotate-180" : ""}`} />
+                              <ChevronDown
+                                className={`w-4 h-4 transition ${
+                                  open ? "rotate-180" : ""
+                                }`}
+                              />
                             </button>
                             {open && (
                               <ul className="pl-3 space-y-2">
                                 {it.items!.map((child) => (
                                   <li key={child.label}>
-                                    <Link className="block" href={child.href ?? "#"} style={{ color: "var(--text)" }}>
+                                    <Link
+                                      className="block"
+                                      href={child.href ?? "#"}
+                                      style={{ color: "var(--text)" }}
+                                    >
                                       {child.label}
                                     </Link>
                                   </li>
@@ -334,6 +453,45 @@ export function Navbar() {
                 </div>
               );
             })}
+
+            {/* Mobile account / sign-in block at bottom */}
+            <div className="mt-2 border-t pt-2 border-white/10">
+              {!isLoggedIn ? (
+                <Link
+                  href="/auth/login"
+                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Sign in</span>
+                </Link>
+              ) : (
+                <div className="space-y-1 text-sm">
+                  <Link
+                    href="/account/details"
+                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    <span>Account details</span>
+                  </Link>
+                  <Link
+                    href="/account/itineraries"
+                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                  >
+                    <span>Itineraries</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      alert("Sign out clicked (wire this up to Supabase later)")
+                    }
+                    className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/10"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
