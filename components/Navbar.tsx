@@ -184,13 +184,11 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
 /**
  * Desktop profile / account menu.
- * Right now this uses a hard-coded isLoggedIn flag.
- * We’ll swap this to real Supabase auth later.
+ * Styled to match the main nav items.
  */
 function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
 
-  // Placeholder – this will become your real sign-out logic.
   const handleSignOut = () => {
     setOpen(false);
     // TODO: replace with Supabase signOut
@@ -198,11 +196,11 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   if (!isLoggedIn) {
-    // Signed OUT: show briefcase + "Sign in"
+    // Signed OUT: looks like another nav item
     return (
       <Link
         href="/auth/login"
-        className="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/10"
+        className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
         style={{ color: "var(--text)" }}
       >
         <Briefcase className="w-4 h-4" />
@@ -211,13 +209,17 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
     );
   }
 
-  // Signed IN: briefcase + "Account" with dropdown
+  // Signed IN: Account with dropdown
   return (
-    <div className="relative">
+    <div
+      className="relative pb-2"
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         type="button"
+        onMouseEnter={() => setOpen(true)}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/10"
+        className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
         style={{ color: "var(--text)" }}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -231,7 +233,7 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       {open && (
         <div
-          className="absolute right-0 mt-2 w-48 card p-2 z-50"
+          className="absolute right-0 top-full -mt-px w-48 card p-2 z-50"
           role="menu"
           aria-label="Account menu"
           style={{ color: "var(--text)" }}
@@ -277,8 +279,7 @@ export function Navbar() {
     Record<string, boolean>
   >({});
 
-  // TEMP: change this to true to see the "Account" version of the menu.
-  // Later we’ll replace this with real Supabase auth state.
+  // TEMP: flip to true to see the "Account" version.
   const isLoggedIn = false;
 
   return (
@@ -326,8 +327,7 @@ export function Navbar() {
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
-
-          {/* Profile / Account button on the far right */}
+          {/* Profile / Account on far right */}
           <ProfileMenu isLoggedIn={isLoggedIn} />
         </nav>
 
