@@ -77,6 +77,11 @@ const MENU: MenuSection[] = [
   },
 ];
 
+/**
+ * TEMPORARY HIDES:
+ * Add keys here to hide sections from the navbar
+ * without deleting their configuration.
+ */
 const HIDE_KEYS = new Set<string>(["guides"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
@@ -179,6 +184,9 @@ function NavDropdown({ section }: { section: MenuSection }) {
   );
 }
 
+/**
+ * Desktop profile / account menu.
+ */
 function ProfileMenu({
   isLoggedIn,
   onSignOut,
@@ -239,7 +247,7 @@ function ProfileMenu({
                 <li>
                   <Link
                     href="/account/itineraries"
-                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg:white/10"
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
                   >
                     <span>Itineraries</span>
                   </Link>
@@ -289,7 +297,7 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)",
+        background: "rgba(22,34,58,0.55)", // translucent over --bg
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
         backdropFilter: "saturate(160%) blur(12px)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -298,7 +306,7 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo */}
+        {/* LOGO + HOME LINK (restored) */}
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink"
@@ -318,7 +326,7 @@ export function Navbar() {
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y:[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) calc(100vw - 72px), 541px"
             />
           </span>
