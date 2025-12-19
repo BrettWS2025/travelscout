@@ -156,6 +156,29 @@ function allocateNightsForStops(stopCount: number, totalDays: number): number[] 
   return nights;
 }
 
+/**
+ * Per-day metadata for which stop it belongs to, and whether it's
+ * the first day of that stop block.
+ */
+type DayStopMeta = {
+  stopIndex: number;
+  isFirstForStop: boolean;
+};
+
+function buildDayStopMeta(stops: string[], nightsPerStop: number[]): DayStopMeta[] {
+  const meta: DayStopMeta[] = [];
+  for (let i = 0; i < stops.length; i++) {
+    const nights = nightsPerStop[i] ?? 0;
+    for (let n = 0; n < nights; n++) {
+      meta.push({
+        stopIndex: i,
+        isFirstForStop: n === 0,
+      });
+    }
+  }
+  return meta;
+}
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -178,6 +201,8 @@ export default function TripPlanner() {
   const [routeStops, setRouteStops] = useState<string[]>([]);
   // Nights per stop (editable)
   const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
+  // For each day, which stop index it belongs to + whether it's the first day of that stop
+  const [dayStopMeta, setDayStopMeta] = useState<DayStopMeta[]>([]);
 
   // Points passed down to the map: start → (ordered matched waypoints) → end
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
@@ -264,17 +289,11 @@ export default function TripPlanner() {
       const rawWaypointNames = waypoints;
 
       // 2) Use coordinates to order waypoint names in a logical route order
-      const {
-        orderedNames,
-        matchedStopsInOrder,
-      } = orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
+      const { orderedNames, matchedStopsInOrder } =
+        orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
 
       // 3) Build routeStops = start + ordered waypoints + end
-      const stops: string[] = [
-        startCity.name,
-        ...orderedNames,
-        endCity.name,
-      ];
+      const stops: string[] = [startCity.name, ...orderedNames, endCity.name];
       setRouteStops(stops);
 
       // 4) Compute total days and initial nights per stop
@@ -283,9 +302,14 @@ export default function TripPlanner() {
       setNightsPerStop(initialNights);
 
       // 5) Build the day-by-day itinerary from stops + nights
-      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
+      const nextPlan = buildTripPlanFromStopsAndNights(
+        stops,
+        initialNights,
+        startDate
+      );
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
+      setDayStopMeta(buildDayStopMeta(stops, initialNights));
 
       // Keep endDate in sync with the last day of the plan
       if (nextPlan.days.length > 0) {
@@ -333,15 +357,23 @@ export default function TripPlanner() {
     if (!routeStops.length) return;
     if (!startDate) return;
 
-    const safe = Math.max(0, Math.floor(Number.isNaN(newValue) ? 0 : newValue));
+    const safe = Math.max(
+      0,
+      Math.floor(Number.isNaN(newValue) ? 0 : newValue)
+    );
     const next = [...nightsPerStop];
     next[idx] = safe;
 
     setNightsPerStop(next);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      routeStops,
+      next,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(routeStops, next));
 
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
@@ -402,9 +434,7 @@ export default function TripPlanner() {
   }
 
   const totalTripDays =
-    startDate && endDate
-      ? countDaysInclusive(startDate, endDate)
-      : 0;
+    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
   const whenLabel =
     startDate && endDate
@@ -484,7 +514,6 @@ export default function TripPlanner() {
                   onSelect={handleDateRangeChange}
                   numberOfMonths={2}
                   weekStartsOn={1}
-                  /* Force months to sit horizontally */
                   styles={{
                     months: {
                       display: "flex",
@@ -511,7 +540,8 @@ export default function TripPlanner() {
 
           {totalTripDays > 0 && (
             <p className="text-[11px] text-gray-400 mt-1">
-              Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+              Total days in itinerary (inclusive):{" "}
+              <strong>{totalTripDays}</strong>
             </p>
           )}
 
@@ -528,9 +558,10 @@ export default function TripPlanner() {
             Places you&apos;d like to visit
           </label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a logical
-            route between your start and end cities where we recognise the stops,
-            and estimate <strong>road</strong> driving times between each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a
+            logical route between your start and end cities where we recognise
+            the stops, and estimate <strong>road</strong> driving times between
+            each leg.
           </p>
 
           <WaypointInput
@@ -540,11 +571,7 @@ export default function TripPlanner() {
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-red-400">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button
           type="submit"
@@ -554,65 +581,7 @@ export default function TripPlanner() {
         </button>
       </form>
 
-      {/* Nights per stop editor */}
-      {routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
-        <div className="card p-4 md:p-6 space-y-3">
-          <h2 className="text-lg font-semibold">Adjust nights per stop</h2>
-          <p className="text-xs text-gray-400">
-            Fine-tune how long you spend in each place. We&apos;ll rebuild the
-            day-by-day plan starting from your chosen start date.
-          </p>
-
-          <div className="space-y-2">
-            {routeStops.map((stopName, idx) => (
-              <div
-                key={`${stopName}-${idx}`}
-                className="flex items-center justify-between gap-3 text-sm"
-              >
-                <span>{stopName}</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) - 1)
-                    }
-                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min={0}
-                    value={nightsPerStop[idx] ?? 0}
-                    onChange={(e) =>
-                      handleChangeNights(idx, Number(e.target.value))
-                    }
-                    className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleChangeNights(idx, (nightsPerStop[idx] ?? 0) + 1)
-                    }
-                    className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {totalTripDays > 0 && (
-            <p className="text-xs text-gray-400">
-              Total days in itinerary: <strong>{totalTripDays}</strong>. The end
-              date updates to match the last day.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Results: itinerary table */}
+      {/* Results: itinerary table with inline nights editor */}
       {hasSubmitted && !plan && !error && (
         <p className="text-sm text-gray-400">
           Fill in your trip details and click &quot;Generate itinerary&quot;.
@@ -623,8 +592,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Expand a day to add what you&apos;re doing, where you&apos;re staying,
-            and (soon) pick activities and events for that date.
+            Adjust nights for each stop and expand a day to add what you&apos;re
+            doing and where you&apos;re staying.
           </p>
 
           <div className="overflow-x-auto">
@@ -634,14 +603,20 @@ export default function TripPlanner() {
                   <th className="py-2 pr-4">Day</th>
                   <th className="py-2 pr-4">Date</th>
                   <th className="py-2 pr-4">Location</th>
+                  <th className="py-2 pr-4">Nights</th>
                   <th className="py-2 pr-4">Details</th>
                 </tr>
               </thead>
               <tbody>
-                {plan.days.map((d) => {
+                {plan.days.map((d, dayIdx) => {
                   const key = makeDayKey(d.date, d.location);
                   const detail = dayDetails[key];
                   const isOpen = detail?.isOpen ?? false;
+
+                  const meta = dayStopMeta[dayIdx];
+                  const stopIndex = meta?.stopIndex ?? -1;
+                  const showStepper =
+                    !!meta && meta.isFirstForStop && stopIndex >= 0;
 
                   return (
                     <>
@@ -657,6 +632,48 @@ export default function TripPlanner() {
                         </td>
                         <td className="py-2 pr-4">{d.location}</td>
                         <td className="py-2 pr-4">
+                          {showStepper ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleChangeNights(
+                                    stopIndex,
+                                    (nightsPerStop[stopIndex] ?? 0) - 1
+                                  )
+                                }
+                                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min={0}
+                                value={nightsPerStop[stopIndex] ?? 0}
+                                onChange={(e) =>
+                                  handleChangeNights(
+                                    stopIndex,
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleChangeNights(
+                                    stopIndex,
+                                    (nightsPerStop[stopIndex] ?? 0) + 1
+                                  )
+                                }
+                                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="py-2 pr-4">
                           <button
                             type="button"
                             onClick={() => toggleDayOpen(d.date, d.location)}
@@ -670,7 +687,7 @@ export default function TripPlanner() {
                       {isOpen && (
                         <tr key={`details-${d.dayNumber}-${key}`}>
                           <td
-                            colSpan={4}
+                            colSpan={5}
                             className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
                           >
                             <div className="space-y-3">
@@ -716,13 +733,14 @@ export default function TripPlanner() {
                                       disabled
                                       className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
                                     >
-                                      Search things to do in {d.location} (coming soon)
+                                      Search things to do in {d.location} (coming
+                                      soon)
                                     </button>
                                     <p className="text-[10px] text-gray-500">
-                                      Soon this will surface tours, attractions and
-                                      events for {d.location} on{" "}
-                                      {formatDisplayDate(d.date)}, with
-                                      bookable links.
+                                      Soon this will surface tours, attractions
+                                      and events for {d.location} on{" "}
+                                      {formatDisplayDate(d.date)}, with bookable
+                                      links.
                                     </p>
                                   </div>
                                 </div>
@@ -798,6 +816,38 @@ export default function TripPlanner() {
           )}
         </div>
       )}
+
+      {/* Trip summary at the very bottom (read-only) */}
+      {plan &&
+        routeStops.length > 0 &&
+        nightsPerStop.length === routeStops.length && (
+          <div className="card p-4 md:p-6 space-y-3">
+            <h2 className="text-lg font-semibold">Trip summary</h2>
+            <p className="text-sm text-gray-400">
+              A quick overview of where you&apos;re staying and for how long.
+              This section will later include bookings and confirmations.
+            </p>
+
+            <ul className="space-y-1 text-sm">
+              {routeStops.map((stopName, idx) => (
+                <li key={`${stopName}-${idx}`} className="flex justify-between">
+                  <span>{stopName}</span>
+                  <span className="text-gray-300">
+                    {nightsPerStop[idx] ?? 0} night
+                    {(nightsPerStop[idx] ?? 0) === 1 ? "" : "s"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {totalTripDays > 0 && startDate && endDate && (
+              <p className="text-xs text-gray-400 mt-2">
+                Total days: <strong>{totalTripDays}</strong> (
+                {formatDisplayDate(startDate)} – {formatDisplayDate(endDate)}).
+              </p>
+            )}
+          </div>
+        )}
     </div>
   );
 }
