@@ -361,7 +361,9 @@ export default function TripPlanner() {
       setMapPoints([]);
       setLegs([]);
       setLegsLoading(false);
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
     }
   }
 
