@@ -301,6 +301,23 @@ input[type="date"]::-ms-expand {
   color: #0b1b2f !important;
 }
 
+/* Default day text: white */
+.rdp-day {
+  color: var(--text); /* your white */
+}
+
+/* Selected days (the green circles): dark text */
+.rdp-day_selected,
+.rdp-day_selected:hover,
+.rdp-day_selected:focus-visible,
+.rdp-day_range_start,
+.rdp-day_range_end,
+.rdp-day_range_start:hover,
+.rdp-day_range_end:hover,
+.rdp-day_button[aria-pressed="true"] {
+  color: #0b1b2f !important; /* or just #000 if you prefer pure black */
+}
+
 /* On narrow screens let months stack if needed */
 @media (max-width: 640px) {
   .rdp-months {
