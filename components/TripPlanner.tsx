@@ -93,14 +93,6 @@ function toIsoDate(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// Helper to convert "YYYY-MM-DD" -> Date | undefined
-function fromIsoDate(s: string): Date | undefined {
-  if (!s) return undefined;
-  const d = new Date(s + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return undefined;
-  return d;
-}
-
 /**
  * Fetch road-based distances & times between points using OSRM.
  * This calls the public demo server for now – fine for prototyping.
@@ -222,6 +214,12 @@ export default function TripPlanner() {
 
   // Per-day UI details: keyed by dayKey = `${date}__${location}`
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
+
+  // UI state for "add stop after this"
+  const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
+  const [newStopCityId, setNewStopCityId] = useState<string | null>(
+    NZ_CITIES[0]?.id ?? null
+  );
 
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
@@ -450,6 +448,84 @@ export default function TripPlanner() {
         .finally(() => setLegsLoading(false));
     } else {
       setLegs([]);
+    }
+  }
+
+  /** Start the "add stop after this" flow for a given stop index. */
+  function handleStartAddStop(afterIndex: number) {
+    setAddingStopAfterIndex(afterIndex);
+    if (!newStopCityId && NZ_CITIES.length > 0) {
+      setNewStopCityId(NZ_CITIES[0].id);
+    }
+  }
+
+  /** Cancel the add-stop flow. */
+  function handleCancelAddStop() {
+    setAddingStopAfterIndex(null);
+  }
+
+  /** Confirm adding a new stop after the selected stop. */
+  function handleConfirmAddStop() {
+    if (addingStopAfterIndex === null || !newStopCityId) return;
+
+    const city = getCityById(newStopCityId);
+    if (!city) {
+      alert("Please select a valid stop.");
+      return;
+    }
+
+    const insertIndex = addingStopAfterIndex + 1;
+
+    // Insert city name into routeStops
+    const newRouteStops = [...routeStops];
+    newRouteStops.splice(insertIndex, 0, city.name);
+
+    // Insert 1 night for this new stop (trip grows by 1 day)
+    const newNightsPerStop = [...nightsPerStop];
+    newNightsPerStop.splice(insertIndex, 0, 1);
+
+    // Insert map point in same position to keep in sync
+    const newMapPoints = [...mapPoints];
+    newMapPoints.splice(insertIndex, 0, {
+      lat: city.lat,
+      lng: city.lng,
+      name: city.name,
+    });
+
+    setRouteStops(newRouteStops);
+    setNightsPerStop(newNightsPerStop);
+    setMapPoints(newMapPoints);
+    setAddingStopAfterIndex(null);
+
+    // Rebuild plan, metadata and end date
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      newRouteStops,
+      newNightsPerStop,
+      startDate
+    );
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
+
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+
+    // Recompute legs with new map points
+    if (newMapPoints.length >= 2) {
+      setLegsLoading(true);
+      fetchRoadLegs(newMapPoints)
+        .then((roadLegs) => setLegs(roadLegs))
+        .catch((routingErr) => {
+          console.error(
+            "Road routing failed after adding stop, falling back to straight-line:",
+            routingErr
+          );
+          const fallbackLegs = buildLegsFromPoints(newMapPoints);
+          setLegs(fallbackLegs);
+        })
+        .finally(() => setLegsLoading(false));
     }
   }
 
@@ -752,9 +828,9 @@ export default function TripPlanner() {
                           <button
                             type="button"
                             onClick={() => toggleDayOpen(d.date, d.location)}
-                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bgwhite/10"
+                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bg-white/10"
                           >
-                            {isOpen ? "Hide details" : "Day details & options"}
+                            {isOpen ? "Hide details" : "Day details"}
                           </button>
                         </td>
                       </tr>
@@ -822,19 +898,79 @@ export default function TripPlanner() {
                               </div>
 
                               {/* Stop-level options */}
-                              {isFirstForStop &&
-                                stopIndex > 0 &&
-                                stopIndex < routeStops.length - 1 && (
-                                  <div className="flex justify-end pt-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveStop(stopIndex)}
-                                      className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                                    >
-                                      Remove this stop from trip
-                                    </button>
+                              {isFirstForStop && (
+                                <div className="pt-3 mt-2 border-t border-white/10">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-[11px] text-gray-400">
+                                      Stop options for {routeStops[stopIndex]}
+                                    </span>
+                                    <div className="flex flex-wrap gap-3 items-center">
+                                      {stopIndex <
+                                        routeStops.length - 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleStartAddStop(stopIndex)
+                                          }
+                                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                                        >
+                                          + Add stop after this
+                                        </button>
+                                      )}
+                                      {stopIndex > 0 &&
+                                        stopIndex <
+                                          routeStops.length - 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleRemoveStop(stopIndex)
+                                            }
+                                            className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                                          >
+                                            Remove this stop from trip
+                                          </button>
+                                        )}
+                                    </div>
                                   </div>
-                                )}
+
+                                  {/* Inline add-stop UI */}
+                                  {addingStopAfterIndex ===
+                                    stopIndex && (
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                      <select
+                                        value={newStopCityId ?? ""}
+                                        onChange={(e) =>
+                                          setNewStopCityId(e.target.value)
+                                        }
+                                        className="input-dark text-xs w-56"
+                                      >
+                                        {NZ_CITIES.map((city) => (
+                                          <option
+                                            key={city.id}
+                                            value={city.id}
+                                          >
+                                            {city.name}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <button
+                                        type="button"
+                                        onClick={handleConfirmAddStop}
+                                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
+                                      >
+                                        Add stop
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelAddStop}
+                                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
