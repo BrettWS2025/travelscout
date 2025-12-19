@@ -232,16 +232,6 @@ input[type="date"]::-ms-expand {
   color: var(--text);
   background: transparent;
   font-size: 0.875rem;
-
-  /* Tell DayPicker what colours to use internally */
-  --rdp-accent-background-color: var(--brand); /* start/end circles */
-  --rdp-accent-color: #0b1b2f;                 /* text on start/end */
-
-  /* Range colours */
-  --rdp-range_start-color: #0b1b2f;
-  --rdp-range_end-color: #0b1b2f;
-  --rdp-range_middle-background-color: #e5e7eb;
-  --rdp-range_middle-color: #111827;
 }
 
 /* Keep months side-by-side on desktop */
@@ -255,41 +245,27 @@ input[type="date"]::-ms-expand {
   background: transparent;
 }
 
-/* Make each day pill-shaped so start/end become circles */
+/* Make days pill-shaped so start/end can be circles */
 .rdp-day {
   border-radius: 999px;
 }
 
-/* Optional: highlight "today" slightly */
-.rdp-day_today {
-  font-weight: 600;
-  color: var(--accent);
-}
-
-/* START + END of the range: brand-green circles with dark text */
-.rdp .rdp-day_selected,
-.rdp .rdp-day_selected:focus-visible,
-.rdp .rdp-day_selected:hover,
-.rdp .rdp-day_range_start,
-.rdp .rdp-day_range_start:hover,
-.rdp .rdp-day_range_end,
-.rdp .rdp-day_range_end:hover {
-  background: var(--brand) !important;
-  color: #0b1b2f !important;        /* dark text */
-  border-radius: 999px !important;  /* circles */
-  border: none !important;
+/* Start + end of the range: brand-green circles with dark text */
+.rdp-day_range_start,
+.rdp-day_range_end,
+.rdp-day_selected {
+  background-color: var(--brand);
+  color: #0b1b2f;         /* dark text */
 }
 
 /* Middle of the range: light grey bar with dark numbers */
-.rdp .rdp-day_range_middle,
-.rdp .rdp-day_range_middle:hover,
-.rdp .rdp-day_range_middle:focus-visible {
-  background: #e5e7eb !important;   /* light grey bar */
-  color: #111827 !important;        /* dark text */
-  border-radius: 0 !important;      /* straight bar between circles */
+.rdp-day_range_middle {
+  background-color: #e5e7eb;  /* light grey bar */
+  color: #111827;             /* dark text */
+  border-radius: 0;           /* straight bar between the circles */
 }
 
-/* Days outside the current month */
+/* Days outside the current month a bit faded */
 .rdp-day_outside {
   opacity: 0.35;
 }
