@@ -1,3 +1,4 @@
+import "react-day-picker/dist/style.css"; // DayPicker first
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/Navbar";
