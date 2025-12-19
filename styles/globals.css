@@ -244,6 +244,26 @@ input[type="date"]::-ms-expand {
   background: transparent;
 }
 
+/* React DayPicker theming via CSS variables */
+.rdp-root {
+  /* Make all day buttons pill-shaped */
+  --rdp-day_button-border-radius: 9999px;
+
+  /* Start & end of the range: brand green circles with dark text */
+  --rdp-range_start-background: var(--brand);
+  --rdp-range_start-color: #0b1b2f;
+  --rdp-range_end-background: var(--brand);
+  --rdp-range_end-color: #0b1b2f;
+
+  /* Middle of the range: light grey bar with dark numbers */
+  --rdp-range_middle-background-color: #e5e7eb;
+  --rdp-range_middle-color: #0b1b2f;
+
+  /* Optional: tweak general accent colours if needed */
+  --rdp-accent-color: #0b1b2f;
+  --rdp-accent-background-color: var(--brand);
+}
+
 /* On narrow screens let months stack if needed */
 @media (max-width: 640px) {
   .rdp-months {
