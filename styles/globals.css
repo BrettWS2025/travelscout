@@ -234,40 +234,14 @@ input[type="date"]::-ms-expand {
   font-size: 0.875rem;
 }
 
-/* Keep months side-by-side on desktop */
 .rdp-months {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap;  /* keep months in a row on desktop */
   gap: 1.5rem;
 }
 
 .rdp-month {
   background: transparent;
-}
-
-/* Make days pill-shaped so start/end can be circles */
-.rdp-day {
-  border-radius: 999px;
-}
-
-/* Start + end of the range: brand-green circles with dark text */
-.rdp-day_range_start,
-.rdp-day_range_end,
-.rdp-day_selected {
-  background-color: var(--brand);
-  color: #0b1b2f;         /* dark text */
-}
-
-/* Middle of the range: light grey bar with dark numbers */
-.rdp-day_range_middle {
-  background-color: #e5e7eb;  /* light grey bar */
-  color: #111827;             /* dark text */
-  border-radius: 0;           /* straight bar between the circles */
-}
-
-/* Days outside the current month a bit faded */
-.rdp-day_outside {
-  opacity: 0.35;
 }
 
 /* On narrow screens let months stack if needed */
