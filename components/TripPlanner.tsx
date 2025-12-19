@@ -18,7 +18,7 @@ import {
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
-import { DayPicker, getDefaultClassNames } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "lucide-react";
 
@@ -222,8 +222,6 @@ export default function TripPlanner() {
     NZ_CITIES[0]?.id ?? null
   );
 
-  const defaultClassNames = getDefaultClassNames();
-
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -363,9 +361,7 @@ export default function TripPlanner() {
       setMapPoints([]);
       setLegs([]);
       setLegsLoading(false);
-      setError(
-        err instanceof Error ? err.message : "Something went wrong."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
@@ -589,9 +585,7 @@ export default function TripPlanner() {
 
   const whenLabel =
     startDate && endDate
-      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(
-          endDate
-        )}`
+      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
       : "Add dates";
 
   return (
@@ -667,7 +661,6 @@ export default function TripPlanner() {
                   onSelect={handleDateRangeChange}
                   numberOfMonths={2}
                   weekStartsOn={1}
-                  /* Layout: keep months horizontal */
                   styles={{
                     months: {
                       display: "flex",
@@ -677,18 +670,6 @@ export default function TripPlanner() {
                     month: {
                       width: "auto",
                     },
-                  }}
-                  /* Visual styling via Tailwind */
-                  classNames={{
-                    ...defaultClassNames,
-                    // Make every day pill-shaped
-                    day: `${defaultClassNames.day} rounded-full`,
-                    // Start + end of range: brand green circles with dark text
-                    selected: `${defaultClassNames.selected} bg-[var(--brand)] text-slate-900`,
-                    range_start: `${defaultClassNames.range_start} bg-[var(--brand)] text-slate-900`,
-                    range_end: `${defaultClassNames.range_end} bg-[var(--brand)] text-slate-900`,
-                    // Middle of range: light grey bar with dark numbers
-                    range_middle: `${defaultClassNames.range_middle} bg-gray-200 text-slate-900 rounded-none`,
                   }}
                 />
                 <div className="flex justify-end mt-2">
@@ -921,8 +902,7 @@ export default function TripPlanner() {
                                       Stop options for {routeStops[stopIndex]}
                                     </span>
                                     <div className="flex flex-wrap gap-3 items-center">
-                                      {stopIndex <
-                                        routeStops.length - 1 && (
+                                      {stopIndex < routeStops.length - 1 && (
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -934,8 +914,7 @@ export default function TripPlanner() {
                                         </button>
                                       )}
                                       {stopIndex > 0 &&
-                                        stopIndex <
-                                          routeStops.length - 1 && (
+                                        stopIndex < routeStops.length - 1 && (
                                           <button
                                             type="button"
                                             onClick={() =>
