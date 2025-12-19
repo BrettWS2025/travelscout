@@ -118,9 +118,10 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
 
   const data = await res.json();
   const route = data.routes?.[0];
-  const legsData = route?.legs as { distance: number; duration: number }[] | undefined;
+  const legsData =
+    (route?.legs as { distance: number; duration: number }[]) || [];
 
-  if (!route || !legsData || !Array.isArray(legsData)) {
+  if (!route || !Array.isArray(legsData)) {
     throw new Error("OSRM response did not contain route legs");
   }
 
@@ -140,7 +141,10 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
  * - sums up to totalDays (inclusive day count)
  * - starts with 1 per stop, then distributes the rest round-robin
  */
-function allocateNightsForStops(stopCount: number, totalDays: number): number[] {
+function allocateNightsForStops(
+  stopCount: number,
+  totalDays: number
+): number[] {
   if (stopCount <= 0 || totalDays <= 0) return [];
 
   const nights = new Array(stopCount).fill(1);
@@ -165,7 +169,10 @@ type DayStopMeta = {
   isFirstForStop: boolean;
 };
 
-function buildDayStopMeta(stops: string[], nightsPerStop: number[]): DayStopMeta[] {
+function buildDayStopMeta(
+  stops: string[],
+  nightsPerStop: number[]
+): DayStopMeta[] {
   const meta: DayStopMeta[] = [];
   for (let i = 0; i < stops.length; i++) {
     const nights = nightsPerStop[i] ?? 0;
@@ -191,7 +198,10 @@ export default function TripPlanner() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
+  const [waypoints, setWaypoints] = useState<string[]>([
+    "Lake Tekapo",
+    "Cromwell",
+  ]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -338,7 +348,10 @@ export default function TripPlanner() {
         const roadLegs = await fetchRoadLegs(points);
         setLegs(roadLegs);
       } catch (routingErr) {
-        console.error("Road routing failed, falling back to straight-line:", routingErr);
+        console.error(
+          "Road routing failed, falling back to straight-line:",
+          routingErr
+        );
         const fallbackLegs = buildLegsFromPoints(points);
         setLegs(fallbackLegs);
       } finally {
@@ -349,15 +362,17 @@ export default function TripPlanner() {
       setMapPoints([]);
       setLegs([]);
       setLegsLoading(false);
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
     }
   }
 
+  /** Change nights for a stop, with min 1 night so stops never disappear. */
   function handleChangeNights(idx: number, newValue: number) {
     if (!routeStops.length) return;
     if (!startDate) return;
 
-    // 👇 Clamp to minimum of 1 night so a stop never disappears by accident
     const safe = Math.max(
       1,
       Math.floor(Number.isNaN(newValue) ? 1 : newValue)
@@ -380,6 +395,61 @@ export default function TripPlanner() {
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
       setEndDate(last.date);
+    }
+  }
+
+  /** Remove an intermediate stop entirely (not start/end). */
+  function handleRemoveStop(idx: number) {
+    if (idx <= 0 || idx >= routeStops.length - 1) {
+      alert("You can’t remove your start or end city from here.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Remove ${routeStops[idx]} from this trip? All days for this stop will be deleted.`
+      )
+    ) {
+      return;
+    }
+
+    const newRouteStops = routeStops.filter((_, i) => i !== idx);
+    const newNightsPerStop = nightsPerStop.filter((_, i) => i !== idx);
+    const newMapPoints = mapPoints.filter((_, i) => i !== idx);
+
+    setRouteStops(newRouteStops);
+    setNightsPerStop(newNightsPerStop);
+    setMapPoints(newMapPoints);
+
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      newRouteStops,
+      newNightsPerStop,
+      startDate
+    );
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
+
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+
+    // Recompute legs for the updated route
+    if (newMapPoints.length >= 2) {
+      setLegsLoading(true);
+      fetchRoadLegs(newMapPoints)
+        .then((roadLegs) => setLegs(roadLegs))
+        .catch((routingErr) => {
+          console.error(
+            "Road routing failed after removing stop, falling back to straight-line:",
+            routingErr
+          );
+          const fallbackLegs = buildLegsFromPoints(newMapPoints);
+          setLegs(fallbackLegs);
+        })
+        .finally(() => setLegsLoading(false));
+    } else {
+      setLegs([]);
     }
   }
 
@@ -440,7 +510,9 @@ export default function TripPlanner() {
 
   const whenLabel =
     startDate && endDate
-      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
+      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(
+          endDate
+        )}`
       : "Add dates";
 
   return (
@@ -617,8 +689,9 @@ export default function TripPlanner() {
 
                   const meta = dayStopMeta[dayIdx];
                   const stopIndex = meta?.stopIndex ?? -1;
+                  const isFirstForStop = meta?.isFirstForStop ?? false;
                   const showStepper =
-                    !!meta && meta.isFirstForStop && stopIndex >= 0;
+                    !!meta && isFirstForStop && stopIndex >= 0;
 
                   return (
                     <>
@@ -650,7 +723,7 @@ export default function TripPlanner() {
                               </button>
                               <input
                                 type="number"
-                                min={1} // 👈 user cannot type less than 1
+                                min={1}
                                 value={nightsPerStop[stopIndex] ?? 1}
                                 onChange={(e) =>
                                   handleChangeNights(
@@ -679,9 +752,9 @@ export default function TripPlanner() {
                           <button
                             type="button"
                             onClick={() => toggleDayOpen(d.date, d.location)}
-                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bg-white/10"
+                            className="px-2 py-1 rounded-full border border-white/25 text-xs hover:bgwhite/10"
                           >
-                            {isOpen ? "− Hide" : "+ Add details"}
+                            {isOpen ? "Hide details" : "Day details & options"}
                           </button>
                         </td>
                       </tr>
@@ -747,6 +820,21 @@ export default function TripPlanner() {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Stop-level options */}
+                              {isFirstForStop &&
+                                stopIndex > 0 &&
+                                stopIndex < routeStops.length - 1 && (
+                                  <div className="flex justify-end pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveStop(stopIndex)}
+                                      className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                                    >
+                                      Remove this stop from trip
+                                    </button>
+                                  </div>
+                                )}
                             </div>
                           </td>
                         </tr>
