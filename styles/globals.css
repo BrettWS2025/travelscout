@@ -228,21 +228,60 @@ input[type="date"]::-ms-expand {
 /* DayPicker (react-day-picker)  */
 /* ----------------------------- */
 
-/* Dark theme + horizontal months */
 .rdp {
   color: var(--text);
   background: transparent;
   font-size: 0.875rem;
 }
 
+/* Keep months side-by-side on desktop */
 .rdp-months {
   display: flex;
-  flex-wrap: nowrap;  /* keep months in a row on desktop */
+  flex-wrap: nowrap;
   gap: 1.5rem;
 }
 
 .rdp-month {
   background: transparent;
+}
+
+/* Make each day look like a pill so start/end become circles */
+.rdp-day {
+  border-radius: 999px;
+}
+
+/* Today (optional little hint) */
+.rdp-day_today {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* START + END of the range: brand-green circles with dark text */
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover,
+.rdp-day_start,
+.rdp-day_end,
+.rdp-day_start:hover,
+.rdp-day_end:hover {
+  background: var(--brand);      /* same green as buttons */
+  color: #0b1b2f;                /* dark text for contrast */
+  border-radius: 999px;
+  border: none;
+}
+
+/* Middle of the range: light grey bar with dark text */
+.rdp-day_range_middle,
+.rdp-day_range_middle:hover,
+.rdp-day_range_middle:focus-visible {
+  background: #e5e7eb;           /* light grey bar */
+  color: #111827;                /* dark text */
+  border-radius: 0;              /* makes it a straight bar between the circles */
+}
+
+/* Make sure outside days don’t get weird colours */
+.rdp-day_outside {
+  opacity: 0.35;
 }
 
 /* On narrow screens let months stack if needed */
