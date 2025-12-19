@@ -228,6 +228,12 @@ input[type="date"]::-ms-expand {
 /* DayPicker (react-day-picker)  */
 /* ----------------------------- */
 
+.rdp,
+.rdp-root {
+  --rdp-accent-color: var(--brand);
+  --rdp-accent-color-dark: var(--brand);
+}
+
 /* Base dark theme */
 .rdp {
   color: var(--text);
