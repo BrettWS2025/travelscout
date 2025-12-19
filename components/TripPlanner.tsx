@@ -357,10 +357,12 @@ export default function TripPlanner() {
     if (!routeStops.length) return;
     if (!startDate) return;
 
+    // 👇 Clamp to minimum of 1 night so a stop never disappears by accident
     const safe = Math.max(
-      0,
-      Math.floor(Number.isNaN(newValue) ? 0 : newValue)
+      1,
+      Math.floor(Number.isNaN(newValue) ? 1 : newValue)
     );
+
     const next = [...nightsPerStop];
     next[idx] = safe;
 
@@ -639,7 +641,7 @@ export default function TripPlanner() {
                                 onClick={() =>
                                   handleChangeNights(
                                     stopIndex,
-                                    (nightsPerStop[stopIndex] ?? 0) - 1
+                                    (nightsPerStop[stopIndex] ?? 1) - 1
                                   )
                                 }
                                 className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
@@ -648,8 +650,8 @@ export default function TripPlanner() {
                               </button>
                               <input
                                 type="number"
-                                min={0}
-                                value={nightsPerStop[stopIndex] ?? 0}
+                                min={1} // 👈 user cannot type less than 1
+                                value={nightsPerStop[stopIndex] ?? 1}
                                 onChange={(e) =>
                                   handleChangeNights(
                                     stopIndex,
@@ -663,7 +665,7 @@ export default function TripPlanner() {
                                 onClick={() =>
                                   handleChangeNights(
                                     stopIndex,
-                                    (nightsPerStop[stopIndex] ?? 0) + 1
+                                    (nightsPerStop[stopIndex] ?? 1) + 1
                                   )
                                 }
                                 className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
@@ -833,8 +835,8 @@ export default function TripPlanner() {
                 <li key={`${stopName}-${idx}`} className="flex justify-between">
                   <span>{stopName}</span>
                   <span className="text-gray-300">
-                    {nightsPerStop[idx] ?? 0} night
-                    {(nightsPerStop[idx] ?? 0) === 1 ? "" : "s"}
+                    {nightsPerStop[idx] ?? 1} night
+                    {(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
                   </span>
                 </li>
               ))}
