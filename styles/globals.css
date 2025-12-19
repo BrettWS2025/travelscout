@@ -277,6 +277,24 @@ input[type="date"]::-ms-expand {
   color: #0b1b2f !important;
 }
 
+/* Ensure selected start/end days use brand green, not DayPicker's default blue */
+.rdp-day_selected,
+.rdp-day_selected:hover,
+.rdp-day_selected:focus-visible,
+.rdp-day_range_start,
+.rdp-day_range_end,
+.rdp-day_range_start:hover,
+.rdp-day_range_end:hover {
+  background: var(--brand) !important;
+  color: #0b1b2f !important;  /* dark text inside the green circle */
+}
+
+/* For the newer API where the button has aria-pressed="true" */
+.rdp-day_button[aria-pressed="true"] {
+  background: var(--brand) !important;
+  color: #0b1b2f !important;
+}
+
 /* On narrow screens let months stack if needed */
 @media (max-width: 640px) {
   .rdp-months {
