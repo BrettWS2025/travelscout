@@ -228,10 +228,21 @@ input[type="date"]::-ms-expand {
 /* DayPicker (react-day-picker)  */
 /* ----------------------------- */
 
+/* Override DayPicker CSS variables (works regardless of import order) */
 .rdp,
 .rdp-root {
+  /* Selected day background (your green) */
   --rdp-accent-color: var(--brand);
   --rdp-accent-color-dark: var(--brand);
+
+  /* Text colour for selected / range start / range end days */
+  --rdp-selected-color: #0b1b2f;
+  --rdp-range_start-color: #0b1b2f;
+  --rdp-range_end-color: #0b1b2f;
+
+  /* Middle of a range: grey bar with dark text */
+  --rdp-range_middle-background-color: #e5e7eb;
+  --rdp-range_middle-color: #0b1b2f;
 }
 
 /* Base dark theme */
@@ -264,58 +275,21 @@ input[type="date"]::-ms-expand {
   background: transparent !important;
 }
 
-/* Middle of the range: light grey bar */
-.rdp-day_range_middle {
-  background: #e5e7eb !important;   /* light grey bar behind the numbers */
+/* Default day text: white */
+.rdp-day {
+  color: var(--text);
 }
 
-/* Start & end (and single selected) days: green circles with dark text */
-.rdp-day_selected .rdp-day_button,
-.rdp-day_range_start .rdp-day_button,
-.rdp-day_range_end .rdp-day_button {
-  background: var(--brand) !important;  /* brand green */
-  color: #0b1b2f !important;           /* dark text */
-}
-
-/* Middle of range: dark text, transparent button so bar shows through */
+/* Middle of the range: let the bar show, but use dark text */
 .rdp-day_range_middle .rdp-day_button {
-  background: transparent !important;
+  background: transparent !important; /* bar comes from the variable above */
   color: #0b1b2f !important;
-}
-
-/* Ensure selected start/end days use brand green, not DayPicker's default blue */
-.rdp-day_selected,
-.rdp-day_selected:hover,
-.rdp-day_selected:focus-visible,
-.rdp-day_range_start,
-.rdp-day_range_end,
-.rdp-day_range_start:hover,
-.rdp-day_range_end:hover {
-  background: var(--brand) !important;
-  color: #0b1b2f !important;  /* dark text inside the green circle */
 }
 
 /* For the newer API where the button has aria-pressed="true" */
 .rdp-day_button[aria-pressed="true"] {
-  background: var(--brand) !important;
+  /* background is already var(--rdp-accent-color); just ensure dark text */
   color: #0b1b2f !important;
-}
-
-/* Default day text: white */
-.rdp-day {
-  color: var(--text); /* your white */
-}
-
-/* Selected days (the green circles): dark text */
-.rdp-day_selected,
-.rdp-day_selected:hover,
-.rdp-day_selected:focus-visible,
-.rdp-day_range_start,
-.rdp-day_range_end,
-.rdp-day_range_start:hover,
-.rdp-day_range_end:hover,
-.rdp-day_button[aria-pressed="true"] {
-  color: #0b1b2f !important; /* or just #000 if you prefer pure black */
 }
 
 /* On narrow screens let months stack if needed */
