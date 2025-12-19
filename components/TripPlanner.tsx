@@ -216,13 +216,14 @@ export default function TripPlanner() {
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
   // UI state for "add stop after this"
-  const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
+  const [addingStopAfterIndex, setAddingStopAfterIndex] =
+    useState<number | null>(null);
   const [newStopCityId, setNewStopCityId] = useState<string | null>(
     NZ_CITIES[0]?.id ?? null
   );
 
   const defaultClassNames = getDefaultClassNames();
-  
+
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -659,7 +660,8 @@ export default function TripPlanner() {
             </button>
 
             {showCalendar && (
-              <DayPicker
+              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
+                <DayPicker
                   mode="range"
                   selected={dateRange}
                   onSelect={handleDateRangeChange}
@@ -948,8 +950,7 @@ export default function TripPlanner() {
                                   </div>
 
                                   {/* Inline add-stop UI */}
-                                  {addingStopAfterIndex ===
-                                    stopIndex && (
+                                  {addingStopAfterIndex === stopIndex && (
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                       <select
                                         value={newStopCityId ?? ""}
