@@ -18,7 +18,7 @@ import {
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, getDefaultClassNames } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "lucide-react";
 
@@ -221,6 +221,8 @@ export default function TripPlanner() {
     NZ_CITIES[0]?.id ?? null
   );
 
+  const defaultClassNames = getDefaultClassNames();
+  
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -664,6 +666,7 @@ export default function TripPlanner() {
                   onSelect={handleDateRangeChange}
                   numberOfMonths={2}
                   weekStartsOn={1}
+                  /* Layout: keep months horizontal */
                   styles={{
                     months: {
                       display: "flex",
@@ -673,6 +676,18 @@ export default function TripPlanner() {
                     month: {
                       width: "auto",
                     },
+                  }}
+                  /* Visual styling via Tailwind */
+                  classNames={{
+                    ...defaultClassNames,
+                    // Make every day pill-shaped
+                    day: `${defaultClassNames.day} rounded-full`,
+                    // Start + end of range: brand green circles with dark text
+                    day_selected: `${defaultClassNames.day_selected} bg-[var(--brand)] text-slate-900`,
+                    day_range_start: `${defaultClassNames.day_range_start} bg-[var(--brand)] text-slate-900`,
+                    day_range_end: `${defaultClassNames.day_range_end} bg-[var(--brand)] text-slate-900`,
+                    // Middle of range: light grey bar with dark numbers
+                    day_range_middle: `${defaultClassNames.day_range_middle} bg-gray-200 text-slate-900 rounded-none`,
                   }}
                 />
                 <div className="flex justify-end mt-2">
