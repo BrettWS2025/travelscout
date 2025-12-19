@@ -233,11 +233,11 @@ input[type="date"]::-ms-expand {
   background: transparent;
   font-size: 0.875rem;
 
-  /* Use DayPicker's CSS variables for selection + range colours */
+  /* Tell DayPicker what colours to use internally */
   --rdp-accent-background-color: var(--brand); /* start/end circles */
   --rdp-accent-color: #0b1b2f;                 /* text on start/end */
 
-  /* These are used by the range theme in newer versions */
+  /* Range colours */
   --rdp-range_start-color: #0b1b2f;
   --rdp-range_end-color: #0b1b2f;
   --rdp-range_middle-background-color: #e5e7eb;
@@ -260,33 +260,33 @@ input[type="date"]::-ms-expand {
   border-radius: 999px;
 }
 
-/* Optional: highlight "today" a bit */
+/* Optional: highlight "today" slightly */
 .rdp-day_today {
   font-weight: 600;
   color: var(--accent);
 }
 
 /* START + END of the range: brand-green circles with dark text */
-.rdp-day_selected,
-.rdp-day_selected:focus-visible,
-.rdp-day_selected:hover,
-.rdp-day_start,
-.rdp-day_start:hover,
-.rdp-day_end,
-.rdp-day_end:hover {
+.rdp .rdp-day_selected,
+.rdp .rdp-day_selected:focus-visible,
+.rdp .rdp-day_selected:hover,
+.rdp .rdp-day_range_start,
+.rdp .rdp-day_range_start:hover,
+.rdp .rdp-day_range_end,
+.rdp .rdp-day_range_end:hover {
   background: var(--brand) !important;
-  color: #0b1b2f !important;
-  border-radius: 999px !important;
+  color: #0b1b2f !important;        /* dark text */
+  border-radius: 999px !important;  /* circles */
   border: none !important;
 }
 
-/* Middle of the range: light grey bar, dark text */
-.rdp-day_range_middle,
-.rdp-day_range_middle:hover,
-.rdp-day_range_middle:focus-visible {
-  background: #e5e7eb !important;    /* light grey bar */
-  color: #111827 !important;         /* dark numbers */
-  border-radius: 0 !important;       /* straight bar between circles */
+/* Middle of the range: light grey bar with dark numbers */
+.rdp .rdp-day_range_middle,
+.rdp .rdp-day_range_middle:hover,
+.rdp .rdp-day_range_middle:focus-visible {
+  background: #e5e7eb !important;   /* light grey bar */
+  color: #111827 !important;        /* dark text */
+  border-radius: 0 !important;      /* straight bar between circles */
 }
 
 /* Days outside the current month */
