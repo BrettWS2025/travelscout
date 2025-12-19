@@ -659,8 +659,7 @@ export default function TripPlanner() {
             </button>
 
             {showCalendar && (
-              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
-                <DayPicker
+              <DayPicker
                   mode="range"
                   selected={dateRange}
                   onSelect={handleDateRangeChange}
@@ -683,11 +682,11 @@ export default function TripPlanner() {
                     // Make every day pill-shaped
                     day: `${defaultClassNames.day} rounded-full`,
                     // Start + end of range: brand green circles with dark text
-                    day_selected: `${defaultClassNames.day_selected} bg-[var(--brand)] text-slate-900`,
-                    day_range_start: `${defaultClassNames.day_range_start} bg-[var(--brand)] text-slate-900`,
-                    day_range_end: `${defaultClassNames.day_range_end} bg-[var(--brand)] text-slate-900`,
+                    selected: `${defaultClassNames.selected} bg-[var(--brand)] text-slate-900`,
+                    range_start: `${defaultClassNames.range_start} bg-[var(--brand)] text-slate-900`,
+                    range_end: `${defaultClassNames.range_end} bg-[var(--brand)] text-slate-900`,
                     // Middle of range: light grey bar with dark numbers
-                    day_range_middle: `${defaultClassNames.day_range_middle} bg-gray-200 text-slate-900 rounded-none`,
+                    range_middle: `${defaultClassNames.range_middle} bg-gray-200 text-slate-900 rounded-none`,
                   }}
                 />
                 <div className="flex justify-end mt-2">
