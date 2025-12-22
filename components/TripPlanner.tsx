@@ -1,7 +1,7 @@
 // components/TripPlanner.tsx
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   buildTripPlanFromStopsAndNights,
@@ -20,7 +20,7 @@ import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
-import { Calendar } from "lucide-react";
+import { Calendar, MapPin, ChevronDown } from "lucide-react";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
@@ -133,10 +133,7 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
  * - sums up to totalDays (inclusive day count)
  * - starts with 1 per stop, then distributes the rest round-robin
  */
-function allocateNightsForStops(
-  stopCount: number,
-  totalDays: number
-): number[] {
+function allocateNightsForStops(stopCount: number, totalDays: number): number[] {
   if (stopCount <= 0 || totalDays <= 0) return [];
 
   const nights = new Array(stopCount).fill(1);
@@ -161,10 +158,7 @@ type DayStopMeta = {
   isFirstForStop: boolean;
 };
 
-function buildDayStopMeta(
-  stops: string[],
-  nightsPerStop: number[]
-): DayStopMeta[] {
+function buildDayStopMeta(stops: string[], nightsPerStop: number[]): DayStopMeta[] {
   const meta: DayStopMeta[] = [];
   for (let i = 0; i < stops.length; i++) {
     const nights = nightsPerStop[i] ?? 0;
@@ -178,6 +172,8 @@ function buildDayStopMeta(
   return meta;
 }
 
+type ActivePill = "where" | "when" | null;
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -188,12 +184,17 @@ export default function TripPlanner() {
 
   // Shared calendar range selection + popover state
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+  // New pill / step UI state
+  const [activePill, setActivePill] = useState<ActivePill>(null);
+  const [whereStep, setWhereStep] = useState<"start" | "end">("start");
+  const [showWherePopover, setShowWherePopover] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const [waypoints, setWaypoints] = useState<string[]>([
-    "Lake Tekapo",
-    "Cromwell",
-  ]);
+  const whereRef = useRef<HTMLDivElement | null>(null);
+  const whenRef = useRef<HTMLDivElement | null>(null);
+
+  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -216,11 +217,34 @@ export default function TripPlanner() {
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
   // UI state for "add stop after this"
-  const [addingStopAfterIndex, setAddingStopAfterIndex] =
-    useState<number | null>(null);
+  const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
   const [newStopCityId, setNewStopCityId] = useState<string | null>(
     NZ_CITIES[0]?.id ?? null
   );
+
+  /** Close popovers when clicking outside */
+  useEffect(() => {
+    function onDocMouseDown(e: MouseEvent) {
+      const t = e.target as Node | null;
+      if (!t) return;
+
+      const inWhere = whereRef.current?.contains(t);
+      const inWhen = whenRef.current?.contains(t);
+
+      if (!inWhere) {
+        setShowWherePopover(false);
+        if (activePill === "where") setActivePill(null);
+      }
+      if (!inWhen) {
+        setShowCalendar(false);
+        if (activePill === "when") setActivePill(null);
+      }
+    }
+
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePill]);
 
   /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
@@ -266,8 +290,36 @@ export default function TripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    // We keep the calendar open; user closes with "Done"
+
+    // Auto-close once both dates selected (Airbnb-ish flow)
+    setShowCalendar(false);
+    setActivePill(null);
   }
+
+  /** After end city selection, automatically move user to "When" */
+  useEffect(() => {
+    if (!startCityId || !endCityId) return;
+
+    // If user just finished "Where" and hasn't picked dates yet, open calendar
+    if (whereStep === "end" && showWherePopover) {
+      // allow end selection to finish first, then advance
+      // (microtask-ish)
+      setTimeout(() => {
+        setShowWherePopover(false);
+        setActivePill("when");
+        setShowCalendar(true);
+      }, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endCityId]);
+
+  /** Keep where step aligned if start changes */
+  useEffect(() => {
+    if (!startCityId) return;
+    // if user is in where popover and picks start, push to end
+    if (showWherePopover) setWhereStep("end");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startCityId]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -298,8 +350,11 @@ export default function TripPlanner() {
       const rawWaypointNames = waypoints;
 
       // 2) Use coordinates to order waypoint names in a logical route order
-      const { orderedNames, matchedStopsInOrder } =
-        orderWaypointNamesByRoute(startCity, endCity, rawWaypointNames);
+      const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
+        startCity,
+        endCity,
+        rawWaypointNames
+      );
 
       // 3) Build routeStops = start + ordered waypoints + end
       const stops: string[] = [startCity.name, ...orderedNames, endCity.name];
@@ -311,11 +366,7 @@ export default function TripPlanner() {
       setNightsPerStop(initialNights);
 
       // 5) Build the day-by-day itinerary from stops + nights
-      const nextPlan = buildTripPlanFromStopsAndNights(
-        stops,
-        initialNights,
-        startDate
-      );
+      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
@@ -347,10 +398,7 @@ export default function TripPlanner() {
         const roadLegs = await fetchRoadLegs(points);
         setLegs(roadLegs);
       } catch (routingErr) {
-        console.error(
-          "Road routing failed, falling back to straight-line:",
-          routingErr
-        );
+        console.error("Road routing failed, falling back to straight-line:", routingErr);
         const fallbackLegs = buildLegsFromPoints(points);
         setLegs(fallbackLegs);
       } finally {
@@ -361,9 +409,7 @@ export default function TripPlanner() {
       setMapPoints([]);
       setLegs([]);
       setLegsLoading(false);
-      setError(
-        err instanceof Error ? err.message : "Something went wrong."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
@@ -372,21 +418,14 @@ export default function TripPlanner() {
     if (!routeStops.length) return;
     if (!startDate) return;
 
-    const safe = Math.max(
-      1,
-      Math.floor(Number.isNaN(newValue) ? 1 : newValue)
-    );
+    const safe = Math.max(1, Math.floor(Number.isNaN(newValue) ? 1 : newValue));
 
     const next = [...nightsPerStop];
     next[idx] = safe;
 
     setNightsPerStop(next);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(
-      routeStops,
-      next,
-      startDate
-    );
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(routeStops, next));
@@ -419,11 +458,7 @@ export default function TripPlanner() {
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(
-      newRouteStops,
-      newNightsPerStop,
-      startDate
-    );
+    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
@@ -499,11 +534,7 @@ export default function TripPlanner() {
     setAddingStopAfterIndex(null);
 
     // Rebuild plan, metadata and end date
-    const nextPlan = buildTripPlanFromStopsAndNights(
-      newRouteStops,
-      newNightsPerStop,
-      startDate
-    );
+    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
@@ -566,11 +597,7 @@ export default function TripPlanner() {
     }));
   }
 
-  function updateDayAccommodation(
-    date: string,
-    location: string,
-    accommodation: string
-  ) {
+  function updateDayAccommodation(date: string, location: string, accommodation: string) {
     const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
@@ -582,13 +609,33 @@ export default function TripPlanner() {
     }));
   }
 
-  const totalTripDays =
-    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
+  const totalTripDays = startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
   const whenLabel =
     startDate && endDate
       ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
       : "Add dates";
+
+  const startCity = getCityById(startCityId);
+  const endCity = getCityById(endCityId);
+
+  const whereSummary =
+    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
+
+  function openWhere() {
+    setActivePill("where");
+    setShowWherePopover(true);
+    setShowCalendar(false);
+
+    // Determine which step makes sense to show
+    setWhereStep("start");
+  }
+
+  function openWhen() {
+    setActivePill("when");
+    setShowCalendar(true);
+    setShowWherePopover(false);
+  }
 
   return (
     <div className="space-y-8">
@@ -598,119 +645,221 @@ export default function TripPlanner() {
         className="card p-4 md:p-6 space-y-6"
         style={{ color: "var(--text)" }}
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Start city */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Start city</label>
-            <select
-              value={startCityId}
-              onChange={(e) => setStartCityId(e.target.value)}
-              className="input-dark w-full text-sm"
-            >
-              {NZ_CITIES.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-400">
-              Cities are mapped with latitude &amp; longitude, so we can factor
-              in realistic driving legs later.
-            </p>
-          </div>
+        {/* Pills row (Airbnb-ish) */}
+        <div className="relative">
+          <div className="w-full rounded-full bg-[var(--card)] border border-white/15 shadow-sm">
+            <div className="flex flex-col md:flex-row">
+              {/* WHERE pill */}
+              <div ref={whereRef} className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={openWhere}
+                  className={[
+                    "w-full rounded-full md:rounded-l-full md:rounded-r-none px-4 py-3 text-left",
+                    "hover:bg-white/5 transition flex items-center justify-between gap-3",
+                    activePill === "where" ? "bg-white/5" : "",
+                  ].join(" ")}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                      Where
+                    </div>
+                    <div className="text-sm truncate">{whereSummary}</div>
+                  </div>
+                  <div className="flex items-center gap-2 opacity-80">
+                    <MapPin className="w-4 h-4" />
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </button>
 
-          {/* End city */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">End city</label>
-            <select
-              value={endCityId}
-              onChange={(e) => setEndCityId(e.target.value)}
-              className="input-dark w-full text-sm"
-            >
-              {NZ_CITIES.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+                {showWherePopover && (
+                  <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Start */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">
+                            Start city
+                          </span>
+                          {whereStep === "start" && (
+                            <span className="text-[10px] text-gray-400">
+                              Step 1
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={startCityId}
+                          onChange={(e) => {
+                            setStartCityId(e.target.value);
+                            setWhereStep("end");
+                          }}
+                          className={[
+                            "input-dark w-full text-sm",
+                            whereStep === "start" ? "ring-1 ring-white/25" : "",
+                          ].join(" ")}
+                        >
+                          {NZ_CITIES.map((city) => (
+                            <option key={city.id} value={city.id}>
+                              {city.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-gray-400">
+                          Choose where your trip begins.
+                        </p>
+                      </div>
 
-        {/* Trip dates: single "When" control + calendar */}
-        <div className="space-y-2 relative">
-          <label className="text-sm font-medium">Trip dates</label>
+                      {/* End */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">End city</span>
+                          {whereStep === "end" && (
+                            <span className="text-[10px] text-gray-400">
+                              Step 2
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={endCityId}
+                          onChange={(e) => {
+                            setEndCityId(e.target.value);
+                            // advancing to "When" happens via effect
+                          }}
+                          className={[
+                            "input-dark w-full text-sm",
+                            whereStep === "end" ? "ring-1 ring-white/25" : "",
+                          ].join(" ")}
+                        >
+                          {NZ_CITIES.map((city) => (
+                            <option key={city.id} value={city.id}>
+                              {city.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-gray-400">
+                          After selecting an end city, we’ll move you to dates.
+                        </p>
+                      </div>
+                    </div>
 
-          <div className="relative inline-block">
-            <button
-              type="button"
-              onClick={() => setShowCalendar((v) => !v)}
-              className="flex items-center justify-between w-full md:w-80 px-4 py-3 rounded-full bg-[var(--card)] border border-white/15 hover:border-white/35 text-left"
-            >
-              <div className="flex flex-col">
-                <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-                  When
-                </span>
-                <span className="text-sm">{whenLabel}</span>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <p className="text-[11px] text-gray-400">
+                        Cities are mapped with latitude &amp; longitude, so we
+                        can factor in realistic driving legs later.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowWherePopover(false);
+                          setActivePill(null);
+                        }}
+                        className="text-[11px] text-gray-200 hover:text-white underline underline-offset-2"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <Calendar className="w-4 h-4 opacity-80" />
-            </button>
 
-            {showCalendar && (
-              <div className="absolute left-0 mt-3 z-20 rounded-xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
-                <DayPicker
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={handleDateRangeChange}
-                  numberOfMonths={2}
-                  weekStartsOn={1}
-                  styles={{
-                    months: {
-                      display: "flex",
-                      flexWrap: "nowrap",
-                      gap: "2rem",
-                    },
-                    month: {
-                      width: "auto",
-                    },
-                  }}
-                />
-                <div className="flex justify-end mt-2">
-                  <button
-                    type="button"
-                    className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-                    onClick={() => setShowCalendar(false)}
-                  >
-                    Done
-                  </button>
-                </div>
+              {/* Divider */}
+              <div className="hidden md:block w-px bg-white/10" />
+
+              {/* WHEN pill */}
+              <div ref={whenRef} className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={openWhen}
+                  className={[
+                    "w-full rounded-full md:rounded-r-full md:rounded-l-none px-4 py-3 text-left",
+                    "hover:bg-white/5 transition flex items-center justify-between gap-3",
+                    activePill === "when" ? "bg-white/5" : "",
+                  ].join(" ")}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                      When
+                    </div>
+                    <div className="text-sm truncate">{whenLabel}</div>
+                  </div>
+                  <Calendar className="w-4 h-4 opacity-80" />
+                </button>
+
+                {showCalendar && (
+                  <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
+                    <div className="px-2 pb-2">
+                      <p className="text-[11px] text-gray-300">
+                        Pick a start date, then an end date.
+                      </p>
+                      {startDate && !endDate && (
+                        <p className="text-[11px] text-gray-400">
+                          Now choose your end date.
+                        </p>
+                      )}
+                    </div>
+
+                    <DayPicker
+                      mode="range"
+                      selected={dateRange}
+                      onSelect={handleDateRangeChange}
+                      numberOfMonths={2}
+                      weekStartsOn={1}
+                      styles={{
+                        months: {
+                          display: "flex",
+                          flexWrap: "nowrap",
+                          gap: "2rem",
+                        },
+                        month: {
+                          width: "auto",
+                        },
+                      }}
+                    />
+
+                    <div className="flex justify-between items-center mt-2 px-2">
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          setStartDate("");
+                          setEndDate("");
+                        }}
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setShowCalendar(false);
+                          setActivePill(null);
+                        }}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {totalTripDays > 0 && (
-            <p className="text-[11px] text-gray-400 mt-1">
-              Total days in itinerary (inclusive):{" "}
-              <strong>{totalTripDays}</strong>
+            <p className="text-[11px] text-gray-400 mt-2">
+              Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
             </p>
           )}
-
-          <p className="text-xs text-gray-400">
-            Click once to open the calendar, then choose your arrival and
-            departure dates in one go. We&apos;ll use these to spread nights
-            across your stops.
-          </p>
         </div>
 
-        {/* Waypoints */}
+        {/* Waypoints (unchanged for now) */}
         <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Places you&apos;d like to visit
-          </label>
+          <label className="text-sm font-medium">Places you&apos;d like to visit</label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a
-            logical route between your start and end cities where we recognise
-            the stops, and estimate <strong>road</strong> driving times between
-            each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a logical
+            route between your start and end cities where we recognise the stops, and
+            estimate <strong>road</strong> driving times between each leg.
           </p>
 
           <WaypointInput
@@ -718,6 +867,12 @@ export default function TripPlanner() {
             onChange={setWaypoints}
             placeholder="Add a stop, e.g. Lake Tekapo"
           />
+
+          {/* Future ideas (optional):
+              1) Turn this into an "Add stops" pill with a popover containing the WaypointInput.
+              2) Show selected waypoints as chips inside the pill (like Airbnb guests / filters).
+              3) Add a lightweight "suggestions" dropdown under the input so it feels more guided.
+          */}
         </div>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
@@ -741,8 +896,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Adjust nights for each stop and expand a day to add what you&apos;re
-            doing and where you&apos;re staying.
+            Adjust nights for each stop and expand a day to add what you&apos;re doing and
+            where you&apos;re staying.
           </p>
 
           <div className="overflow-x-auto">
@@ -765,8 +920,7 @@ export default function TripPlanner() {
                   const meta = dayStopMeta[dayIdx];
                   const stopIndex = meta?.stopIndex ?? -1;
                   const isFirstForStop = meta?.isFirstForStop ?? false;
-                  const showStepper =
-                    !!meta && isFirstForStop && stopIndex >= 0;
+                  const showStepper = !!meta && isFirstForStop && stopIndex >= 0;
 
                   return (
                     <>
@@ -774,9 +928,7 @@ export default function TripPlanner() {
                         key={`row-${d.dayNumber}-${key}`}
                         className="border-t border-white/5 align-top"
                       >
-                        <td className="py-2 pr-4 whitespace-nowrap">
-                          Day {d.dayNumber}
-                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">Day {d.dayNumber}</td>
                         <td className="py-2 pr-4 whitespace-nowrap">
                           {formatDisplayDate(d.date)}
                         </td>
@@ -801,10 +953,7 @@ export default function TripPlanner() {
                                 min={1}
                                 value={nightsPerStop[stopIndex] ?? 1}
                                 onChange={(e) =>
-                                  handleChangeNights(
-                                    stopIndex,
-                                    Number(e.target.value)
-                                  )
+                                  handleChangeNights(stopIndex, Number(e.target.value))
                                 }
                                 className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
                               />
@@ -836,10 +985,7 @@ export default function TripPlanner() {
 
                       {isOpen && (
                         <tr key={`details-${d.dayNumber}-${key}`}>
-                          <td
-                            colSpan={5}
-                            className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
-                          >
+                          <td colSpan={5} className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg">
                             <div className="space-y-3">
                               <div className="grid gap-3 md:grid-cols-2">
                                 <div className="space-y-1">
@@ -851,30 +997,18 @@ export default function TripPlanner() {
                                     className="input-dark w-full text-xs"
                                     placeholder="e.g. Morning in the city, afternoon gondola, dinner at ..."
                                     value={detail?.notes ?? ""}
-                                    onChange={(e) =>
-                                      updateDayNotes(
-                                        d.date,
-                                        d.location,
-                                        e.target.value
-                                      )
-                                    }
+                                    onChange={(e) => updateDayNotes(d.date, d.location, e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-medium">
-                                    Where I&apos;m staying
-                                  </label>
+                                  <label className="text-xs font-medium">Where I&apos;m staying</label>
                                   <input
                                     type="text"
                                     className="input-dark w-full text-xs"
                                     placeholder="e.g. Holiday park, hotel name, friend’s place"
                                     value={detail?.accommodation ?? ""}
                                     onChange={(e) =>
-                                      updateDayAccommodation(
-                                        d.date,
-                                        d.location,
-                                        e.target.value
-                                      )
+                                      updateDayAccommodation(d.date, d.location, e.target.value)
                                     }
                                   />
                                   <div className="mt-2 space-y-1">
@@ -883,14 +1017,11 @@ export default function TripPlanner() {
                                       disabled
                                       className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
                                     >
-                                      Search things to do in {d.location} (coming
-                                      soon)
+                                      Search things to do in {d.location} (coming soon)
                                     </button>
                                     <p className="text-[10px] text-gray-500">
-                                      Soon this will surface tours, attractions
-                                      and events for {d.location} on{" "}
-                                      {formatDisplayDate(d.date)}, with bookable
-                                      links.
+                                      Soon this will surface tours, attractions and events for {d.location} on{" "}
+                                      {formatDisplayDate(d.date)}, with bookable links.
                                     </p>
                                   </div>
                                 </div>
@@ -907,26 +1038,21 @@ export default function TripPlanner() {
                                       {stopIndex < routeStops.length - 1 && (
                                         <button
                                           type="button"
-                                          onClick={() =>
-                                            handleStartAddStop(stopIndex)
-                                          }
+                                          onClick={() => handleStartAddStop(stopIndex)}
                                           className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
                                         >
                                           + Add stop after this
                                         </button>
                                       )}
-                                      {stopIndex > 0 &&
-                                        stopIndex < routeStops.length - 1 && (
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handleRemoveStop(stopIndex)
-                                            }
-                                            className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                                          >
-                                            Remove this stop from trip
-                                          </button>
-                                        )}
+                                      {stopIndex > 0 && stopIndex < routeStops.length - 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveStop(stopIndex)}
+                                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                                        >
+                                          Remove this stop from trip
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
 
@@ -935,16 +1061,11 @@ export default function TripPlanner() {
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                       <select
                                         value={newStopCityId ?? ""}
-                                        onChange={(e) =>
-                                          setNewStopCityId(e.target.value)
-                                        }
+                                        onChange={(e) => setNewStopCityId(e.target.value)}
                                         className="input-dark text-xs w-56"
                                       >
                                         {NZ_CITIES.map((city) => (
-                                          <option
-                                            key={city.id}
-                                            value={city.id}
-                                          >
+                                          <option key={city.id} value={city.id}>
                                             {city.name}
                                           </option>
                                         ))}
@@ -985,9 +1106,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Route overview</h2>
           <p className="text-sm text-gray-400">
-            Road route between your start and end cities, passing through any
-            recognised waypoints in logical order (e.g. Christchurch → Lake
-            Tekapo → Cromwell → Queenstown).
+            Road route between your start and end cities, passing through any recognised waypoints in
+            logical order (e.g. Christchurch → Lake Tekapo → Cromwell → Queenstown).
           </p>
 
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
@@ -999,9 +1119,7 @@ export default function TripPlanner() {
               <h3 className="text-sm font-semibold">Driving legs</h3>
 
               {legsLoading && (
-                <p className="text-xs text-gray-400 mb-1">
-                  Fetching road distances…
-                </p>
+                <p className="text-xs text-gray-400 mb-1">Fetching road distances…</p>
               )}
 
               <div className="overflow-x-auto">
@@ -1019,20 +1137,16 @@ export default function TripPlanner() {
                       <tr key={idx} className="border-t border-white/5">
                         <td className="py-2 pr-4">{leg.from}</td>
                         <td className="py-2 pr-4">{leg.to}</td>
-                        <td className="py-2 pr-4">
-                          {formatDistance(leg.distanceKm)}
-                        </td>
-                        <td className="py-2">
-                          {formatDriveHours(leg.driveHours)}
-                        </td>
+                        <td className="py-2 pr-4">{formatDistance(leg.distanceKm)}</td>
+                        <td className="py-2">{formatDriveHours(leg.driveHours)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <p className="text-xs text-gray-500">
-                Distances shown are road distances from a routing engine; actual
-                drive times may vary with traffic, weather, and stops.
+                Distances shown are road distances from a routing engine; actual drive times may vary
+                with traffic, weather, and stops.
               </p>
             </div>
           )}
@@ -1040,36 +1154,33 @@ export default function TripPlanner() {
       )}
 
       {/* Trip summary at the very bottom (read-only) */}
-      {plan &&
-        routeStops.length > 0 &&
-        nightsPerStop.length === routeStops.length && (
-          <div className="card p-4 md:p-6 space-y-3">
-            <h2 className="text-lg font-semibold">Trip summary</h2>
-            <p className="text-sm text-gray-400">
-              A quick overview of where you&apos;re staying and for how long.
-              This section will later include bookings and confirmations.
+      {plan && routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
+        <div className="card p-4 md:p-6 space-y-3">
+          <h2 className="text-lg font-semibold">Trip summary</h2>
+          <p className="text-sm text-gray-400">
+            A quick overview of where you&apos;re staying and for how long. This section will later include
+            bookings and confirmations.
+          </p>
+
+          <ul className="space-y-1 text-sm">
+            {routeStops.map((stopName, idx) => (
+              <li key={`${stopName}-${idx}`} className="flex justify-between">
+                <span>{stopName}</span>
+                <span className="text-gray-300">
+                  {nightsPerStop[idx] ?? 1} night{(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {totalTripDays > 0 && startDate && endDate && (
+            <p className="text-xs text-gray-400 mt-2">
+              Total days: <strong>{totalTripDays}</strong> ({formatDisplayDate(startDate)} –{" "}
+              {formatDisplayDate(endDate)}).
             </p>
-
-            <ul className="space-y-1 text-sm">
-              {routeStops.map((stopName, idx) => (
-                <li key={`${stopName}-${idx}`} className="flex justify-between">
-                  <span>{stopName}</span>
-                  <span className="text-gray-300">
-                    {nightsPerStop[idx] ?? 1} night
-                    {(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            {totalTripDays > 0 && startDate && endDate && (
-              <p className="text-xs text-gray-400 mt-2">
-                Total days: <strong>{totalTripDays}</strong> (
-                {formatDisplayDate(startDate)} – {formatDisplayDate(endDate)}).
-              </p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+      )}
     </div>
   );
 }
