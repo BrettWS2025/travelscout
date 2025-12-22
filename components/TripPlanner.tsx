@@ -94,6 +94,13 @@ function toIsoDate(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function fromIsoDate(s: string): Date | null {
+  if (!s) return null;
+  const d = new Date(s + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
 async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   if (!points || points.length < 2) return [];
 
@@ -194,7 +201,6 @@ function pickSuggestedCities(): CityLite[] {
     .map((c) => ({ id: c.id, name: c.name }));
 
   if (ranked.length >= 4) return ranked;
-
   return NZ_CITIES.slice(0, 6).map((c) => ({ id: c.id, name: c.name }));
 }
 
@@ -229,6 +235,9 @@ export default function TripPlanner() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+  // ✅ Controlled month to prevent "jump back to current month"
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
 
   // Desktop popovers
   const [activePill, setActivePill] = useState<ActivePill>(null);
@@ -344,6 +353,8 @@ export default function TripPlanner() {
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
+      // keep month on the month user is in / just selected
+      setCalendarMonth(range.from);
       return;
     }
 
@@ -353,6 +364,8 @@ export default function TripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
+    // keep month stable (don’t snap back)
+    setCalendarMonth(from);
   }
 
   function pushRecent(city: CityLite) {
@@ -374,6 +387,10 @@ export default function TripPlanner() {
     setActivePill("when");
     setShowCalendar(true);
     setShowWherePopover(false);
+
+    // ✅ open on selected month if present, else current
+    const anchor = fromIsoDate(startDate) ?? new Date();
+    setCalendarMonth(anchor);
   }
 
   function openMobileSheet() {
@@ -382,6 +399,9 @@ export default function TripPlanner() {
     setWhereStep("start");
     setStartQuery(startCity?.name ?? "");
     setEndQuery(endCity?.name ?? "");
+
+    const anchor = fromIsoDate(startDate) ?? new Date();
+    setCalendarMonth(anchor);
   }
 
   function closeMobileSheet() {
@@ -407,8 +427,6 @@ export default function TripPlanner() {
     setEndQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
 
-    // After end selected, open When automatically:
-    // Desktop -> calendar popover; Mobile -> switch tab to when inside sheet.
     setTimeout(() => {
       if (mobileSheetOpen) {
         setMobileActive("when");
@@ -416,6 +434,8 @@ export default function TripPlanner() {
         setShowWherePopover(false);
         setActivePill("when");
         setShowCalendar(true);
+        const anchor = fromIsoDate(startDate) ?? new Date();
+        setCalendarMonth(anchor);
       }
     }, 0);
   }
@@ -432,6 +452,8 @@ export default function TripPlanner() {
         setShowWherePopover(false);
         setActivePill("when");
         setShowCalendar(true);
+        const anchor = fromIsoDate(startDate) ?? new Date();
+        setCalendarMonth(anchor);
       }
     }, 0);
   }
@@ -552,7 +574,11 @@ export default function TripPlanner() {
 
     setNightsPerStop(next);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      routeStops,
+      next,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(routeStops, next));
@@ -614,7 +640,8 @@ export default function TripPlanner() {
 
   function handleStartAddStop(afterIndex: number) {
     setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
+    if (!newStopCityId && NZ_CITIES.length > 0)
+      setNewStopCityId(NZ_CITIES[0].id);
   }
 
   function handleCancelAddStop() {
@@ -681,7 +708,10 @@ export default function TripPlanner() {
     setDayDetails((prev) => {
       const existing = prev[key];
       if (!existing) {
-        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true } };
+        return {
+          ...prev,
+          [key]: { notes: "", accommodation: "", isOpen: true },
+        };
       }
       return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
     });
@@ -699,7 +729,11 @@ export default function TripPlanner() {
     }));
   }
 
-  function updateDayAccommodation(date: string, location: string, accommodation: string) {
+  function updateDayAccommodation(
+    date: string,
+    location: string,
+    accommodation: string
+  ) {
     const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
@@ -722,7 +756,9 @@ export default function TripPlanner() {
       : "Add dates";
 
   const whereSummary =
-    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
+    startCity && endCity
+      ? `${startCity.name} → ${endCity.name}`
+      : "Add destinations";
 
   function WhereListItem({
     title,
@@ -746,9 +782,13 @@ export default function TripPlanner() {
         <CityIcon variant={iconVariant} />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-white truncate">{title}</div>
-          {subtitle ? <div className="text-[12px] text-gray-300 truncate">{subtitle}</div> : null}
+          {subtitle ? (
+            <div className="text-[12px] text-gray-300 truncate">{subtitle}</div>
+          ) : null}
         </div>
-        {right ? <div className="text-[12px] text-gray-300">{right}</div> : null}
+        {right ? (
+          <div className="text-[12px] text-gray-300">{right}</div>
+        ) : null}
       </button>
     );
   }
@@ -760,22 +800,20 @@ export default function TripPlanner() {
     const results = isStart ? startResults : endResults;
 
     const showBrowseLists = normalize(query).length === 0;
-    const header = isStart ? "Where are you starting?" : "Where are you finishing?";
 
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div>
             <div className="text-base font-semibold text-white">
-              {mobileSheetOpen ? "Where?" : header}
+              {mobileSheetOpen ? "Where?" : isStart ? "Where are you starting?" : "Where are you finishing?"}
             </div>
             {!mobileSheetOpen && (
-              <div className="text-[11px] text-gray-300">Type to search, or pick a suggestion.</div>
+              <div className="text-[11px] text-gray-300">
+                Type to search, or pick a suggestion.
+              </div>
             )}
           </div>
-          {!mobileSheetOpen && (
-            <span className="text-[10px] text-gray-400">Step {isStart ? "1" : "2"}</span>
-          )}
         </div>
 
         <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2">
@@ -817,9 +855,15 @@ export default function TripPlanner() {
                       <WhereListItem
                         key={`${step}-recent-${c.id}`}
                         title={c.name}
-                        subtitle={isStart ? "Recently used start city" : "Recently used destination"}
+                        subtitle={
+                          isStart
+                            ? "Recently used start city"
+                            : "Recently used destination"
+                        }
                         iconVariant="recent"
-                        onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                        onClick={() =>
+                          isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                        }
                       />
                     ))}
                   </div>
@@ -837,7 +881,9 @@ export default function TripPlanner() {
                       title={c.name}
                       subtitle={isStart ? "Top departure" : "Top destination"}
                       iconVariant="suggested"
-                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
                     />
                   ))}
                 </div>
@@ -860,123 +906,14 @@ export default function TripPlanner() {
                       title={c.name}
                       subtitle="New Zealand"
                       iconVariant="suggested"
-                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
                     />
                   ))}
                 </div>
               )}
             </>
-          )}
-        </div>
-
-        {!mobileSheetOpen && (
-          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                if (step === "end") setWhereStep("start");
-              }}
-              className={[
-                "text-[11px] underline underline-offset-2",
-                step === "end"
-                  ? "text-gray-200 hover:text-white"
-                  : "text-gray-500 cursor-not-allowed no-underline",
-              ].join(" ")}
-              disabled={step !== "end"}
-            >
-              Back
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowWherePopover(false);
-                setActivePill(null);
-              }}
-              className="text-[11px] text-gray-200 hover:text-white underline underline-offset-2"
-            >
-              Close
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function WhenPanel({ compact }: { compact?: boolean }) {
-    return (
-      <div
-        className={[
-          "rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg overflow-hidden",
-          compact ? "" : "p-3",
-        ].join(" ")}
-      >
-        {!compact && (
-          <div className="px-2 pb-2">
-            <p className="text-[11px] text-gray-300">
-              Pick a start date, then an end date.
-            </p>
-            {startDate && !endDate && (
-              <p className="text-[11px] text-gray-400">Now choose your end date.</p>
-            )}
-          </div>
-        )}
-
-        <div className={compact ? "p-2" : "overflow-x-auto"}>
-          <DayPicker
-            mode="range"
-            selected={dateRange}
-            onSelect={handleDateRangeChange}
-            numberOfMonths={compact ? 1 : 2}
-            weekStartsOn={1}
-            styles={
-              compact
-                ? undefined
-                : {
-                    months: {
-                      display: "flex",
-                      flexWrap: "nowrap",
-                      gap: "24px",
-                      justifyContent: "space-between",
-                    },
-                    month: { width: "320px" },
-                  }
-            }
-          />
-        </div>
-
-        <div className="flex justify-between items-center px-3 pb-3">
-          <button
-            type="button"
-            className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-            onClick={() => {
-              setDateRange(undefined);
-              setStartDate("");
-              setEndDate("");
-            }}
-          >
-            Clear
-          </button>
-
-          {mobileSheetOpen ? (
-            <button
-              type="button"
-              className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-              onClick={closeMobileSheet}
-            >
-              Done
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
-              onClick={() => {
-                setShowCalendar(false);
-                setActivePill(null);
-              }}
-            >
-              Done
-            </button>
           )}
         </div>
       </div>
@@ -1000,7 +937,9 @@ export default function TripPlanner() {
             <div className="flex items-center gap-2 min-w-0">
               <Search className="w-4 h-4 opacity-80" />
               <div className="min-w-0">
-                <div className="text-sm font-medium truncate">Start your Journey</div>
+                <div className="text-sm font-medium truncate">
+                  Start your Journey
+                </div>
                 <div className="text-[11px] text-gray-400 truncate">
                   {whereSummary} · {whenLabel}
                 </div>
@@ -1046,7 +985,8 @@ export default function TripPlanner() {
                     )}
 
                     <div className="mt-3 text-[11px] text-gray-400">
-                      Cities are mapped with latitude &amp; longitude, so we can factor in realistic driving legs later.
+                      Cities are mapped with latitude &amp; longitude, so we can
+                      factor in realistic driving legs later.
                     </div>
                   </div>
                 )}
@@ -1074,9 +1014,73 @@ export default function TripPlanner() {
                   <Calendar className="w-4 h-4 opacity-80" />
                 </button>
 
+                {/* ✅ Single popover container (no double box) */}
                 {showCalendar && (
-                  <div className="absolute left-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg overflow-hidden w-[720px] p-3">
-                    <WhenPanel />
+                  <div
+                    className={[
+                      "absolute left-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg",
+                      "overflow-hidden w-[720px] p-3",
+                    ].join(" ")}
+                  >
+                    <div className="px-2 pb-2">
+                      <p className="text-[11px] text-gray-300">
+                        Pick a start date, then an end date.
+                      </p>
+                      {startDate && !endDate && (
+                        <p className="text-[11px] text-gray-400">
+                          Now choose your end date.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={2}
+                        weekStartsOn={1}
+                        month={calendarMonth}
+                        onMonthChange={setCalendarMonth}
+                        styles={{
+                          months: {
+                            display: "flex",
+                            flexWrap: "nowrap",
+                            gap: "24px",
+                            justifyContent: "space-between",
+                          },
+                          month: {
+                            width: "320px",
+                          },
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center mt-2 px-2">
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          setStartDate("");
+                          setEndDate("");
+                          setCalendarMonth(new Date());
+                        }}
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setShowCalendar(false);
+                          setActivePill(null);
+                        }}
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1085,7 +1089,8 @@ export default function TripPlanner() {
 
           {totalTripDays > 0 && (
             <p className="text-[11px] text-gray-400 mt-2">
-              Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+              Total days in itinerary (inclusive):{" "}
+              <strong>{totalTripDays}</strong>
             </p>
           )}
         </div>
@@ -1122,15 +1127,9 @@ export default function TripPlanner() {
       {/* MOBILE SHEET */}
       {mobileSheetOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
-          {/* backdrop */}
-          <div
-            className="absolute inset-0 bg-black/55"
-            onClick={closeMobileSheet}
-          />
-          {/* sheet */}
+          <div className="absolute inset-0 bg-black/55" onClick={closeMobileSheet} />
           <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl">
             <div className="p-4">
-              {/* header */}
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-white">
                   Start your Journey
@@ -1144,7 +1143,6 @@ export default function TripPlanner() {
                 </button>
               </div>
 
-              {/* inner pills */}
               <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
                 <button
                   type="button"
@@ -1156,9 +1154,7 @@ export default function TripPlanner() {
                 >
                   <div className="text-left">
                     <div className="text-[11px] text-gray-300">Where</div>
-                    <div className="text-sm text-white">
-                      {whereSummary || "Search destinations"}
-                    </div>
+                    <div className="text-sm text-white">{whereSummary}</div>
                   </div>
                   <MapPin className="w-4 h-4 text-gray-200" />
                 </button>
@@ -1181,7 +1177,6 @@ export default function TripPlanner() {
                 </button>
               </div>
 
-              {/* content */}
               <div className="mt-4">
                 {mobileActive === "where" ? (
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
@@ -1192,7 +1187,42 @@ export default function TripPlanner() {
                     )}
                   </div>
                 ) : (
-                  <WhenPanel compact />
+                  <div className="rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg overflow-hidden">
+                    <div className="p-2">
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={1}
+                        weekStartsOn={1}
+                        month={calendarMonth}
+                        onMonthChange={setCalendarMonth}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center px-3 pb-3">
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          setStartDate("");
+                          setEndDate("");
+                          setCalendarMonth(new Date());
+                        }}
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={closeMobileSheet}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -1439,11 +1469,13 @@ export default function TripPlanner() {
           {legs.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">Driving legs</h3>
+
               {legsLoading && (
                 <p className="text-xs text-gray-400 mb-1">
                   Fetching road distances…
                 </p>
               )}
+
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="text-left text-gray-400">
@@ -1459,13 +1491,16 @@ export default function TripPlanner() {
                       <tr key={idx} className="border-t border-white/5">
                         <td className="py-2 pr-4">{leg.from}</td>
                         <td className="py-2 pr-4">{leg.to}</td>
-                        <td className="py-2 pr-4">{formatDistance(leg.distanceKm)}</td>
+                        <td className="py-2 pr-4">
+                          {formatDistance(leg.distanceKm)}
+                        </td>
                         <td className="py-2">{formatDriveHours(leg.driveHours)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
               <p className="text-xs text-gray-500">
                 Distances shown are road distances; actual drive times may vary.
               </p>
