@@ -228,7 +228,24 @@ input[type="date"]::-ms-expand {
 /* DayPicker (react-day-picker)  */
 /* ----------------------------- */
 
-/* Dark theme + horizontal months */
+/* Override DayPicker CSS variables */
+.rdp,
+.rdp-root {
+  /* Selected day background (your green) */
+  --rdp-accent-color: var(--brand);
+  --rdp-accent-color-dark: var(--brand);
+
+  /* Text colour for selected / range start / range end (black) */
+  --rdp-selected-color: #000000;
+  --rdp-range_start-color: #000000;
+  --rdp-range_end-color: #000000;
+
+  /* Middle of the range: grey bar + white text */
+  --rdp-range_middle-background-color: #e5e7eb;
+  --rdp-range_middle-color: var(--text);
+}
+
+/* Base dark theme */
 .rdp {
   color: var(--text);
   background: transparent;
@@ -243,6 +260,43 @@ input[type="date"]::-ms-expand {
 
 .rdp-month {
   background: transparent;
+}
+
+/* Make the day button pill-shaped by default */
+.rdp-day_button {
+  border-radius: 9999px;
+}
+
+/* Clear any default TD background so we don't see coloured squares */
+.rdp-day,
+.rdp-day_selected,
+.rdp-day_range_start,
+.rdp-day_range_end {
+  background: transparent !important;
+}
+
+/* Default day text: white */
+.rdp-day {
+  color: var(--text);
+}
+
+/* Start & end (and single selected) days: green circles with black text */
+.rdp-day_selected .rdp-day_button,
+.rdp-day_range_start .rdp-day_button,
+.rdp-day_range_end .rdp-day_button {
+  background: var(--brand) !important;
+  color: #000000 !important;
+}
+
+/* Middle of the range: keep the grey bar and white, bold text */
+.rdp-day_range_middle {
+  background: #e5e7eb !important;   /* light grey bar behind the numbers */
+}
+
+.rdp-day_range_middle .rdp-day_button {
+  background: transparent !important; /* let the bar show */
+  color: var(--text) !important;      /* white text */
+  font-weight: 600;
 }
 
 /* On narrow screens let months stack if needed */

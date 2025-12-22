@@ -13,6 +13,8 @@ import {
   Briefcase,
   LogOut,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type MenuItem = {
   label: string;
@@ -184,24 +186,22 @@ function NavDropdown({ section }: { section: MenuSection }) {
 
 /**
  * Desktop profile / account menu.
- * Now uses the same outer wrapper and spacing as the other nav items.
  */
-function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
+function ProfileMenu({
+  isLoggedIn,
+  onSignOut,
+}: {
+  isLoggedIn: boolean;
+  onSignOut: () => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
-
-  const handleSignOut = () => {
-    setOpen(false);
-    // TODO: replace with Supabase signOut
-    alert("Sign out clicked (wire this up to Supabase later)");
-  };
 
   return (
     <div
-      className="relative pb-2" // <-- same as NavDropdown wrapper
+      className="relative pb-2"
       onMouseLeave={() => setOpen(false)}
     >
       {!isLoggedIn ? (
-        // Signed OUT: looks like another nav item
         <Link
           href="/auth/login"
           className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
@@ -212,7 +212,6 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
         </Link>
       ) : (
         <>
-          {/* Signed IN: Account with dropdown */}
           <button
             type="button"
             onMouseEnter={() => setOpen(true)}
@@ -256,7 +255,10 @@ function ProfileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <li className="border-t border-white/10 mt-1 pt-1">
                   <button
                     type="button"
-                    onClick={handleSignOut}
+                    onClick={async () => {
+                      setOpen(false);
+                      await onSignOut();
+                    }}
                     className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-white/10"
                   >
                     <LogOut className="w-4 h-4" />
@@ -279,23 +281,32 @@ export function Navbar() {
     Record<string, boolean>
   >({});
 
-  // TEMP: flip to true to preview the "Account" version.
-  const isLoggedIn = false;
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+
+  const signOutUser = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Error signing out", err);
+      alert("Something went wrong signing out. Please try again.");
+    }
+  };
 
   return (
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)", // translucent over your --bg (#16223A)
+        background: "rgba(22,34,58,0.55)", // translucent over --bg
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)", // glass effect
+        backdropFilter: "saturate(160%) blur(12px)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         color: "var(--text)",
         isolation: "isolate",
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo */}
+        {/* LOGO + HOME LINK (restored) */}
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink"
@@ -327,8 +338,7 @@ export function Navbar() {
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
           ))}
-          {/* Profile / Account on far right */}
-          <ProfileMenu isLoggedIn={isLoggedIn} />
+          <ProfileMenu isLoggedIn={isLoggedIn} onSignOut={signOutUser} />
         </nav>
 
         {/* Mobile burger */}
@@ -459,7 +469,7 @@ export function Navbar() {
               {!isLoggedIn ? (
                 <Link
                   href="/auth/login"
-                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg:white/10"
+                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
                 >
                   <Briefcase className="w-4 h-4" />
                   <span>Sign in</span>
@@ -481,9 +491,7 @@ export function Navbar() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() =>
-                      alert("Sign out clicked (wire this up to Supabase later)")
-                    }
+                    onClick={signOutUser}
                     className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/10"
                   >
                     <LogOut className="w-4 h-4" />
