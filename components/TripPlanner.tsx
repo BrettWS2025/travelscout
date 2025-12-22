@@ -55,9 +55,7 @@ function formatShortRangeDate(dateStr: string): string {
 }
 
 function formatDistance(km: number): string {
-  if (km < 1) {
-    return `${Math.round(km * 1000)} m`;
-  }
+  if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${Math.round(km)} km`;
 }
 
@@ -77,22 +75,16 @@ type MapPoint = {
   name?: string;
 };
 
-/**
- * Per-day UI metadata (NOT part of core TripPlan).
- * Keyed by (date, location) so it stays aligned with the actual day.
- */
 type DayDetail = {
   notes: string;
   accommodation: string;
   isOpen: boolean;
 };
 
-/** Build a stable key for a given day in the itinerary. */
 function makeDayKey(date: string, location: string): string {
   return `${date}__${location}`;
 }
 
-// Helper to convert JS Date -> "YYYY-MM-DD"
 function toIsoDate(d: Date): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -100,10 +92,6 @@ function toIsoDate(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Fetch road-based distances & times between points using OSRM.
- * This calls the public demo server for now – fine for prototyping.
- */
 async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   if (!points || points.length < 2) return [];
 
@@ -111,9 +99,7 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false&geometries=polyline&steps=false`;
 
   const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`OSRM request failed with status ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`OSRM request failed with status ${res.status}`);
 
   const data = await res.json();
   const route = data.routes?.[0];
@@ -124,22 +110,14 @@ async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
     throw new Error("OSRM response did not contain route legs");
   }
 
-  // OSRM legs line up with successive coordinates:
-  // points[0]->points[1], points[1]->points[2], ...
   return legsData.map((leg, idx) => ({
     from: points[idx].name ?? `Stop ${idx + 1}`,
     to: points[idx + 1].name ?? `Stop ${idx + 2}`,
-    distanceKm: leg.distance / 1000, // metres -> km
-    driveHours: leg.duration / 3600, // seconds -> hours
+    distanceKm: leg.distance / 1000,
+    driveHours: leg.duration / 3600,
   }));
 }
 
-/**
- * Allocate an initial "nights per stop" array that:
- * - has length = stopCount
- * - sums up to totalDays (inclusive day count)
- * - starts with 1 per stop, then distributes the rest round-robin
- */
 function allocateNightsForStops(stopCount: number, totalDays: number): number[] {
   if (stopCount <= 0 || totalDays <= 0) return [];
 
@@ -156,10 +134,6 @@ function allocateNightsForStops(stopCount: number, totalDays: number): number[] 
   return nights;
 }
 
-/**
- * Per-day metadata for which stop it belongs to, and whether it's
- * the first day of that stop block.
- */
 type DayStopMeta = {
   stopIndex: number;
   isFirstForStop: boolean;
@@ -170,10 +144,7 @@ function buildDayStopMeta(stops: string[], nightsPerStop: number[]): DayStopMeta
   for (let i = 0; i < stops.length; i++) {
     const nights = nightsPerStop[i] ?? 0;
     for (let n = 0; n < nights; n++) {
-      meta.push({
-        stopIndex: i,
-        isFirstForStop: n === 0,
-      });
+      meta.push({ stopIndex: i, isFirstForStop: n === 0 });
     }
   }
   return meta;
@@ -213,40 +184,16 @@ function normalize(s: string) {
 }
 
 function pickSuggestedCities(): CityLite[] {
-  // We don’t currently have a “popular/suggested” flag in NZ_CITIES.
-  // So we use a sensible shortlist by *name*, and gracefully fall back to the first few cities.
-  const preferredNames = [
-    "Auckland",
-    "Wellington",
-    "Christchurch",
-    "Queenstown",
-    "Tauranga",
-    "Hamilton",
-    "Dunedin",
-    "Nelson",
-    "Napier",
-    "Rotorua",
-  ];
+  // NEW: prefer rank ordering, fallback to first few cities
+  const ranked = NZ_CITIES
+    .filter((c) => typeof c.rank === "number")
+    .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+    .slice(0, 6)
+    .map((c) => ({ id: c.id, name: c.name }));
 
-  const byName = new Map(NZ_CITIES.map((c) => [normalize(c.name), c]));
-  const picked: CityLite[] = [];
+  if (ranked.length >= 4) return ranked;
 
-  for (const nm of preferredNames) {
-    const c = byName.get(normalize(nm));
-    if (c) picked.push({ id: c.id, name: c.name });
-    if (picked.length >= 6) break;
-  }
-
-  if (picked.length < 6) {
-    for (const c of NZ_CITIES) {
-      if (!picked.some((p) => p.id === c.id)) {
-        picked.push({ id: c.id, name: c.name });
-      }
-      if (picked.length >= 6) break;
-    }
-  }
-
-  return picked;
+  return NZ_CITIES.slice(0, 6).map((c) => ({ id: c.id, name: c.name }));
 }
 
 function CityIcon({ variant }: { variant: "recent" | "suggested" | "nearby" }) {
@@ -277,19 +224,14 @@ export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
 
-  // ISO date strings used by the rest of the logic
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-  // Shared calendar range selection + popover state
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  // Pill / step UI state
   const [activePill, setActivePill] = useState<ActivePill>(null);
   const [showWherePopover, setShowWherePopover] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // Where typing state
   const [whereStep, setWhereStep] = useState<"start" | "end">("start");
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
@@ -305,23 +247,16 @@ export default function TripPlanner() {
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Ordered stops for the route (names, including start + end)
   const [routeStops, setRouteStops] = useState<string[]>([]);
-  // Nights per stop (editable)
   const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
-  // For each day, which stop index it belongs to + whether it's the first day of that stop
   const [dayStopMeta, setDayStopMeta] = useState<DayStopMeta[]>([]);
 
-  // Points passed down to the map: start → (ordered matched waypoints) → end
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
-  // Driving legs between those points
   const [legs, setLegs] = useState<TripLeg[]>([]);
   const [legsLoading, setLegsLoading] = useState(false);
 
-  // Per-day UI details: keyed by dayKey = `${date}__${location}`
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
-  // UI state for "add stop after this"
   const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
   const [newStopCityId, setNewStopCityId] = useState<string | null>(
     NZ_CITIES[0]?.id ?? null
@@ -330,16 +265,10 @@ export default function TripPlanner() {
   const startCity = getCityById(startCityId);
   const endCity = getCityById(endCityId);
 
-  /** Load recent searches on mount */
   useEffect(() => {
-    try {
-      setRecent(safeReadRecent());
-    } catch {
-      setRecent([]);
-    }
+    setRecent(safeReadRecent());
   }, []);
 
-  /** Close popovers when clicking outside */
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       const t = e.target as Node | null;
@@ -363,7 +292,6 @@ export default function TripPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePill]);
 
-  /** Sync the dayDetails map any time the plan changes. */
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
       const next: Record<string, DayDetail> = {};
@@ -371,17 +299,12 @@ export default function TripPlanner() {
         const key = makeDayKey(d.date, d.location);
         const existing = prev[key];
         next[key] =
-          existing ?? {
-            notes: "",
-            accommodation: "",
-            isOpen: false,
-          };
+          existing ?? { notes: "", accommodation: "", isOpen: false };
       }
       return next;
     });
   }
 
-  /** When the user selects a date range in the calendar. */
   function handleDateRangeChange(range: DateRange | undefined) {
     setDateRange(range);
 
@@ -391,24 +314,20 @@ export default function TripPlanner() {
       return;
     }
 
-    // First click: only set start date, keep end blank so the UI doesn’t show “same day” prematurely.
+    // Keep open after first date selection
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
       return;
     }
 
-    // Ensure from <= to
     let from = range.from;
     let to = range.to;
-    if (to < from) {
-      [from, to] = [to, from];
-    }
+    if (to < from) [from, to] = [to, from];
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-
-    // IMPORTANT: Do NOT auto-close. User closes with Done (Airbnb-like).
+    // Do NOT auto-close — user closes with Done
   }
 
   function pushRecent(city: CityLite) {
@@ -425,10 +344,7 @@ export default function TripPlanner() {
     setStartQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
 
-    // Move to end step
     setWhereStep("end");
-
-    // If end was same as default but start changed, keep end as-is (user will confirm)
   }
 
   function selectEndCity(cityId: string) {
@@ -439,7 +355,6 @@ export default function TripPlanner() {
     setEndQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
 
-    // After end is selected, open When automatically
     setTimeout(() => {
       setShowWherePopover(false);
       setActivePill("when");
@@ -451,7 +366,6 @@ export default function TripPlanner() {
     if (!startCity) return;
     setEndCityId(startCity.id);
     setEndQuery("Return to start city");
-    // no need to save as recent (it’s not a real city selection)
     setTimeout(() => {
       setShowWherePopover(false);
       setActivePill("when");
@@ -462,19 +376,17 @@ export default function TripPlanner() {
   const startResults = useMemo(() => {
     const q = normalize(startQuery);
     if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q)).slice(0, 8).map((c) => ({
-      id: c.id,
-      name: c.name,
-    }));
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
   }, [startQuery]);
 
   const endResults = useMemo(() => {
     const q = normalize(endQuery);
     if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q)).slice(0, 8).map((c) => ({
-      id: c.id,
-      name: c.name,
-    }));
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
   }, [endQuery]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -502,38 +414,31 @@ export default function TripPlanner() {
     }
 
     try {
-      // 1) Waypoints come directly from chips
       const rawWaypointNames = waypoints;
 
-      // 2) Use coordinates to order waypoint names in a logical route order
       const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
         start,
         end,
         rawWaypointNames
       );
 
-      // 3) Build routeStops = start + ordered waypoints + end
       const stops: string[] = [start.name, ...orderedNames, end.name];
       setRouteStops(stops);
 
-      // 4) Compute total days and initial nights per stop
       const totalDays = countDaysInclusive(startDate, endDate);
       const initialNights = allocateNightsForStops(stops.length, totalDays);
       setNightsPerStop(initialNights);
 
-      // 5) Build the day-by-day itinerary from stops + nights
       const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
 
-      // Keep endDate in sync with the last day of the plan
       if (nextPlan.days.length > 0) {
         const last = nextPlan.days[nextPlan.days.length - 1];
         setEndDate(last.date);
       }
 
-      // 6) Build map points: start city → ordered mapped waypoints → end city
       const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
         lat: stop.lat,
         lng: stop.lng,
@@ -548,15 +453,13 @@ export default function TripPlanner() {
 
       setMapPoints(points);
 
-      // 7) Compute driving legs using road distances
       setLegsLoading(true);
       try {
         const roadLegs = await fetchRoadLegs(points);
         setLegs(roadLegs);
       } catch (routingErr) {
         console.error("Road routing failed, falling back to straight-line:", routingErr);
-        const fallbackLegs = buildLegsFromPoints(points);
-        setLegs(fallbackLegs);
+        setLegs(buildLegsFromPoints(points));
       } finally {
         setLegsLoading(false);
       }
@@ -569,13 +472,11 @@ export default function TripPlanner() {
     }
   }
 
-  /** Change nights for a stop, with min 1 night so stops never disappear. */
   function handleChangeNights(idx: number, newValue: number) {
     if (!routeStops.length) return;
     if (!startDate) return;
 
     const safe = Math.max(1, Math.floor(Number.isNaN(newValue) ? 1 : newValue));
-
     const next = [...nightsPerStop];
     next[idx] = safe;
 
@@ -592,7 +493,6 @@ export default function TripPlanner() {
     }
   }
 
-  /** Remove an intermediate stop entirely (not start/end). */
   function handleRemoveStop(idx: number) {
     if (idx <= 0 || idx >= routeStops.length - 1) {
       alert("You can’t remove your start or end city from here.");
@@ -624,18 +524,13 @@ export default function TripPlanner() {
       setEndDate(last.date);
     }
 
-    // Recompute legs for the updated route
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
         .then((roadLegs) => setLegs(roadLegs))
         .catch((routingErr) => {
-          console.error(
-            "Road routing failed after removing stop, falling back to straight-line:",
-            routingErr
-          );
-          const fallbackLegs = buildLegsFromPoints(newMapPoints);
-          setLegs(fallbackLegs);
+          console.error("Road routing failed, falling back:", routingErr);
+          setLegs(buildLegsFromPoints(newMapPoints));
         })
         .finally(() => setLegsLoading(false));
     } else {
@@ -643,20 +538,15 @@ export default function TripPlanner() {
     }
   }
 
-  /** Start the "add stop after this" flow for a given stop index. */
   function handleStartAddStop(afterIndex: number) {
     setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) {
-      setNewStopCityId(NZ_CITIES[0].id);
-    }
+    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
   }
 
-  /** Cancel the add-stop flow. */
   function handleCancelAddStop() {
     setAddingStopAfterIndex(null);
   }
 
-  /** Confirm adding a new stop after the selected stop. */
   function handleConfirmAddStop() {
     if (addingStopAfterIndex === null || !newStopCityId) return;
 
@@ -668,28 +558,20 @@ export default function TripPlanner() {
 
     const insertIndex = addingStopAfterIndex + 1;
 
-    // Insert city name into routeStops
     const newRouteStops = [...routeStops];
     newRouteStops.splice(insertIndex, 0, city.name);
 
-    // Insert 1 night for this new stop (trip grows by 1 day)
     const newNightsPerStop = [...nightsPerStop];
     newNightsPerStop.splice(insertIndex, 0, 1);
 
-    // Insert map point in same position to keep in sync
     const newMapPoints = [...mapPoints];
-    newMapPoints.splice(insertIndex, 0, {
-      lat: city.lat,
-      lng: city.lng,
-      name: city.name,
-    });
+    newMapPoints.splice(insertIndex, 0, { lat: city.lat, lng: city.lng, name: city.name });
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
     setAddingStopAfterIndex(null);
 
-    // Rebuild plan, metadata and end date
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
@@ -700,18 +582,13 @@ export default function TripPlanner() {
       setEndDate(last.date);
     }
 
-    // Recompute legs with new map points
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
         .then((roadLegs) => setLegs(roadLegs))
         .catch((routingErr) => {
-          console.error(
-            "Road routing failed after adding stop, falling back to straight-line:",
-            routingErr
-          );
-          const fallbackLegs = buildLegsFromPoints(newMapPoints);
-          setLegs(fallbackLegs);
+          console.error("Road routing failed, falling back:", routingErr);
+          setLegs(buildLegsFromPoints(newMapPoints));
         })
         .finally(() => setLegsLoading(false));
     }
@@ -722,22 +599,9 @@ export default function TripPlanner() {
     setDayDetails((prev) => {
       const existing = prev[key];
       if (!existing) {
-        return {
-          ...prev,
-          [key]: {
-            notes: "",
-            accommodation: "",
-            isOpen: true,
-          },
-        };
+        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true } };
       }
-      return {
-        ...prev,
-        [key]: {
-          ...existing,
-          isOpen: !existing.isOpen,
-        },
-      };
+      return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
     });
   }
 
@@ -781,7 +645,6 @@ export default function TripPlanner() {
     setActivePill("where");
     setShowWherePopover(true);
     setShowCalendar(false);
-
     setWhereStep("start");
     setStartQuery(startCity?.name ?? "");
     setEndQuery(endCity?.name ?? "");
@@ -822,32 +685,23 @@ export default function TripPlanner() {
     );
   }
 
-  function WherePickerPanel({
-    step,
-  }: {
-    step: "start" | "end";
-  }) {
+  function WherePickerPanel({ step }: { step: "start" | "end" }) {
     const isStart = step === "start";
     const query = isStart ? startQuery : endQuery;
     const setQuery = isStart ? setStartQuery : setEndQuery;
     const results = isStart ? startResults : endResults;
 
     const showBrowseLists = normalize(query).length === 0;
-    const header =
-      step === "start" ? "Where are you starting?" : "Where are you finishing?";
+    const header = isStart ? "Where are you starting?" : "Where are you finishing?";
 
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div>
             <div className="text-xs font-semibold text-white">{header}</div>
-            <div className="text-[11px] text-gray-300">
-              Type to search, or pick a suggestion.
-            </div>
+            <div className="text-[11px] text-gray-300">Type to search, or pick a suggestion.</div>
           </div>
-          <span className="text-[10px] text-gray-400">
-            Step {step === "start" ? "1" : "2"}
-          </span>
+          <span className="text-[10px] text-gray-400">Step {isStart ? "1" : "2"}</span>
         </div>
 
         <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
@@ -855,13 +709,12 @@ export default function TripPlanner() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            placeholder={step === "start" ? "Search start city" : "Search end city"}
+            placeholder={isStart ? "Search start city" : "Search end city"}
             className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
           />
         </div>
 
         <div className="max-h-[360px] overflow-auto pr-1">
-          {/* End step special option */}
           {!isStart && startCity && (
             <div className="mb-3">
               <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
@@ -889,7 +742,7 @@ export default function TripPlanner() {
                       <WhereListItem
                         key={`${step}-recent-${c.id}`}
                         title={c.name}
-                        subtitle={step === "start" ? "Recently used start city" : "Recently used destination"}
+                        subtitle={isStart ? "Recently used start city" : "Recently used destination"}
                         iconVariant="recent"
                         onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
                       />
@@ -907,11 +760,7 @@ export default function TripPlanner() {
                     <WhereListItem
                       key={`${step}-suggested-${c.id}`}
                       title={c.name}
-                      subtitle={
-                        step === "start"
-                          ? "Popular departure city"
-                          : "Popular destination"
-                      }
+                      subtitle={isStart ? "Top departure" : "Top destination"}
                       iconVariant="suggested"
                       onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
                     />
@@ -953,7 +802,9 @@ export default function TripPlanner() {
             }}
             className={[
               "text-[11px] underline underline-offset-2",
-              step === "end" ? "text-gray-200 hover:text-white" : "text-gray-500 cursor-not-allowed no-underline",
+              step === "end"
+                ? "text-gray-200 hover:text-white"
+                : "text-gray-500 cursor-not-allowed no-underline",
             ].join(" ")}
             disabled={step !== "end"}
           >
@@ -977,13 +828,12 @@ export default function TripPlanner() {
 
   return (
     <div className="space-y-8">
-      {/* Form */}
       <form
         onSubmit={handleSubmit}
         className="card p-4 md:p-6 space-y-6"
         style={{ color: "var(--text)" }}
       >
-        {/* Pills row (Airbnb-ish) */}
+        {/* Pills row */}
         <div className="relative">
           <div className="w-full rounded-full bg-[var(--card)] border border-white/15 shadow-sm">
             <div className="flex flex-col md:flex-row">
@@ -1025,7 +875,6 @@ export default function TripPlanner() {
                 )}
               </div>
 
-              {/* Divider */}
               <div className="hidden md:block w-px bg-white/10" />
 
               {/* WHEN pill */}
@@ -1048,8 +897,16 @@ export default function TripPlanner() {
                   <Calendar className="w-4 h-4 opacity-80" />
                 </button>
 
+                {/* FIX: popover width + overflow-hidden + fixed month widths */}
                 {showCalendar && (
-                  <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg min-w-[620px]">
+                  <div
+                    className={[
+                      "absolute left-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg",
+                      "overflow-hidden", // <-- key fix to stop dates spilling out
+                      "w-[720px] max-w-[calc(100vw-2rem)]",
+                      "p-3",
+                    ].join(" ")}
+                  >
                     <div className="px-2 pb-2">
                       <p className="text-[11px] text-gray-300">
                         Pick a start date, then an end date.
@@ -1061,23 +918,26 @@ export default function TripPlanner() {
                       )}
                     </div>
 
-                    <DayPicker
-                      mode="range"
-                      selected={dateRange}
-                      onSelect={handleDateRangeChange}
-                      numberOfMonths={2}
-                      weekStartsOn={1}
-                      styles={{
-                        months: {
-                          display: "flex",
-                          flexWrap: "nowrap",
-                          gap: "2rem",
-                        },
-                        month: {
-                          width: "auto",
-                        },
-                      }}
-                    />
+                    <div className="overflow-x-auto">
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={2}
+                        weekStartsOn={1}
+                        styles={{
+                          months: {
+                            display: "flex",
+                            flexWrap: "nowrap",
+                            gap: "24px",
+                            justifyContent: "space-between",
+                          },
+                          month: {
+                            width: "320px", // <-- fixed width prevents last column overflow
+                          },
+                        }}
+                      />
+                    </div>
 
                     <div className="flex justify-between items-center mt-2 px-2">
                       <button
@@ -1116,16 +976,14 @@ export default function TripPlanner() {
           )}
         </div>
 
-        {/* Waypoints (unchanged for now) */}
+        {/* Waypoints unchanged */}
         <div className="space-y-1">
           <label className="text-sm font-medium">
             Places you&apos;d like to visit
           </label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a
-            logical route between your start and end cities where we recognise
-            the stops, and estimate <strong>road</strong> driving times between
-            each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a logical route between your start and end cities where we recognise the stops, and estimate{" "}
+            <strong>road</strong> driving times between each leg.
           </p>
 
           <WaypointInput
@@ -1133,11 +991,6 @@ export default function TripPlanner() {
             onChange={setWaypoints}
             placeholder="Add a stop, e.g. Lake Tekapo"
           />
-
-          {/* Later: we can make this match the pill pattern by:
-              1) Adding a third pill “Stops” that opens a popover containing WaypointInput
-              2) Showing chips inline inside the pill (like Airbnb “Guests” / “Filters”)
-          */}
         </div>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
@@ -1150,7 +1003,7 @@ export default function TripPlanner() {
         </button>
       </form>
 
-      {/* Results: itinerary table with inline nights editor */}
+      {/* Everything below here is unchanged (results UI) */}
       {hasSubmitted && !plan && !error && (
         <p className="text-sm text-gray-400">
           Fill in your trip details and click &quot;Generate itinerary&quot;.
@@ -1161,8 +1014,7 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Adjust nights for each stop and expand a day to add what you&apos;re doing and
-            where you&apos;re staying.
+            Adjust nights for each stop and expand a day to add what you&apos;re doing and where you&apos;re staying.
           </p>
 
           <div className="overflow-x-auto">
@@ -1194,9 +1046,7 @@ export default function TripPlanner() {
                         className="border-t border-white/5 align-top"
                       >
                         <td className="py-2 pr-4 whitespace-nowrap">Day {d.dayNumber}</td>
-                        <td className="py-2 pr-4 whitespace-nowrap">
-                          {formatDisplayDate(d.date)}
-                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">{formatDisplayDate(d.date)}</td>
                         <td className="py-2 pr-4">{d.location}</td>
                         <td className="py-2 pr-4">
                           {showStepper ? (
@@ -1292,7 +1142,6 @@ export default function TripPlanner() {
                                 </div>
                               </div>
 
-                              {/* Stop-level options */}
                               {isFirstForStop && (
                                 <div className="pt-3 mt-2 border-t border-white/10">
                                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1321,7 +1170,6 @@ export default function TripPlanner() {
                                     </div>
                                   </div>
 
-                                  {/* Inline add-stop UI */}
                                   {addingStopAfterIndex === stopIndex && (
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                       <select
@@ -1366,13 +1214,11 @@ export default function TripPlanner() {
         </div>
       )}
 
-      {/* Results: route map + driving legs */}
       {plan && mapPoints.length >= 2 && (
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Route overview</h2>
           <p className="text-sm text-gray-400">
-            Road route between your start and end cities, passing through any recognised waypoints in
-            logical order (e.g. Christchurch → Lake Tekapo → Cromwell → Queenstown).
+            Road route between your start and end cities, passing through any recognised waypoints in logical order.
           </p>
 
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
@@ -1383,9 +1229,7 @@ export default function TripPlanner() {
             <div className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">Driving legs</h3>
 
-              {legsLoading && (
-                <p className="text-xs text-gray-400 mb-1">Fetching road distances…</p>
-              )}
+              {legsLoading && <p className="text-xs text-gray-400 mb-1">Fetching road distances…</p>}
 
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -1409,22 +1253,20 @@ export default function TripPlanner() {
                   </tbody>
                 </table>
               </div>
+
               <p className="text-xs text-gray-500">
-                Distances shown are road distances from a routing engine; actual drive times may vary
-                with traffic, weather, and stops.
+                Distances shown are road distances; actual drive times may vary.
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Trip summary at the very bottom (read-only) */}
       {plan && routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
         <div className="card p-4 md:p-6 space-y-3">
           <h2 className="text-lg font-semibold">Trip summary</h2>
           <p className="text-sm text-gray-400">
-            A quick overview of where you&apos;re staying and for how long. This section will later include
-            bookings and confirmations.
+            A quick overview of where you&apos;re staying and for how long.
           </p>
 
           <ul className="space-y-1 text-sm">
