@@ -27,6 +27,8 @@ import {
   Clock,
   ArrowLeftRight,
   Navigation,
+  Search,
+  X,
 } from "lucide-react";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
@@ -90,6 +92,13 @@ function toIsoDate(d: Date): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function fromIsoDate(s: string): Date | null {
+  if (!s) return null;
+  const d = new Date(s + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
 }
 
 async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
@@ -165,7 +174,9 @@ function safeReadRecent(): CityLite[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as CityLite[];
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((x) => x && typeof x.id === "string" && typeof x.name === "string");
+    return parsed.filter(
+      (x) => x && typeof x.id === "string" && typeof x.name === "string"
+    );
   } catch {
     return [];
   }
@@ -184,15 +195,12 @@ function normalize(s: string) {
 }
 
 function pickSuggestedCities(): CityLite[] {
-  // NEW: prefer rank ordering, fallback to first few cities
-  const ranked = NZ_CITIES
-    .filter((c) => typeof c.rank === "number")
+  const ranked = NZ_CITIES.filter((c) => typeof c.rank === "number")
     .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
     .slice(0, 6)
     .map((c) => ({ id: c.id, name: c.name }));
 
   if (ranked.length >= 4) return ranked;
-
   return NZ_CITIES.slice(0, 6).map((c) => ({ id: c.id, name: c.name }));
 }
 
@@ -228,10 +236,19 @@ export default function TripPlanner() {
   const [endDate, setEndDate] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
+  // ✅ Controlled month to prevent "jump back to current month"
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+
+  // Desktop popovers
   const [activePill, setActivePill] = useState<ActivePill>(null);
   const [showWherePopover, setShowWherePopover] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // Mobile sheet
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [mobileActive, setMobileActive] = useState<ActivePill>("where");
+
+  // Where typing state
   const [whereStep, setWhereStep] = useState<"start" | "end">("start");
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
@@ -241,7 +258,10 @@ export default function TripPlanner() {
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
 
-  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
+  const [waypoints, setWaypoints] = useState<string[]>([
+    "Lake Tekapo",
+    "Cromwell",
+  ]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -257,7 +277,9 @@ export default function TripPlanner() {
 
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
-  const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
+  // UI state for "add stop after this"
+  const [addingStopAfterIndex, setAddingStopAfterIndex] =
+    useState<number | null>(null);
   const [newStopCityId, setNewStopCityId] = useState<string | null>(
     NZ_CITIES[0]?.id ?? null
   );
@@ -269,6 +291,7 @@ export default function TripPlanner() {
     setRecent(safeReadRecent());
   }, []);
 
+  // Close desktop popovers on outside click
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       const t = e.target as Node | null;
@@ -292,14 +315,27 @@ export default function TripPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePill]);
 
+  // Lock body scroll when mobile sheet open
+  useEffect(() => {
+    if (!mobileSheetOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileSheetOpen]);
+
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
       const next: Record<string, DayDetail> = {};
       for (const d of nextPlan.days) {
         const key = makeDayKey(d.date, d.location);
-        const existing = prev[key];
         next[key] =
-          existing ?? { notes: "", accommodation: "", isOpen: false };
+          prev[key] ?? {
+            notes: "",
+            accommodation: "",
+            isOpen: false,
+          };
       }
       return next;
     });
@@ -314,10 +350,11 @@ export default function TripPlanner() {
       return;
     }
 
-    // Keep open after first date selection
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
+      // keep month on the month user is in / just selected
+      setCalendarMonth(range.from);
       return;
     }
 
@@ -327,13 +364,48 @@ export default function TripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    // Do NOT auto-close — user closes with Done
+    // keep month stable (don’t snap back)
+    setCalendarMonth(from);
   }
 
   function pushRecent(city: CityLite) {
     const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 8);
     setRecent(next);
     safeWriteRecent(next);
+  }
+
+  function openWhereDesktop() {
+    setActivePill("where");
+    setShowWherePopover(true);
+    setShowCalendar(false);
+    setWhereStep("start");
+    setStartQuery(startCity?.name ?? "");
+    setEndQuery(endCity?.name ?? "");
+  }
+
+  function openWhenDesktop() {
+    setActivePill("when");
+    setShowCalendar(true);
+    setShowWherePopover(false);
+
+    // ✅ open on selected month if present, else current
+    const anchor = fromIsoDate(startDate) ?? new Date();
+    setCalendarMonth(anchor);
+  }
+
+  function openMobileSheet() {
+    setMobileSheetOpen(true);
+    setMobileActive("where");
+    setWhereStep("start");
+    setStartQuery(startCity?.name ?? "");
+    setEndQuery(endCity?.name ?? "");
+
+    const anchor = fromIsoDate(startDate) ?? new Date();
+    setCalendarMonth(anchor);
+  }
+
+  function closeMobileSheet() {
+    setMobileSheetOpen(false);
   }
 
   function selectStartCity(cityId: string) {
@@ -356,9 +428,15 @@ export default function TripPlanner() {
     pushRecent({ id: c.id, name: c.name });
 
     setTimeout(() => {
-      setShowWherePopover(false);
-      setActivePill("when");
-      setShowCalendar(true);
+      if (mobileSheetOpen) {
+        setMobileActive("when");
+      } else {
+        setShowWherePopover(false);
+        setActivePill("when");
+        setShowCalendar(true);
+        const anchor = fromIsoDate(startDate) ?? new Date();
+        setCalendarMonth(anchor);
+      }
     }, 0);
   }
 
@@ -366,10 +444,17 @@ export default function TripPlanner() {
     if (!startCity) return;
     setEndCityId(startCity.id);
     setEndQuery("Return to start city");
+
     setTimeout(() => {
-      setShowWherePopover(false);
-      setActivePill("when");
-      setShowCalendar(true);
+      if (mobileSheetOpen) {
+        setMobileActive("when");
+      } else {
+        setShowWherePopover(false);
+        setActivePill("when");
+        setShowCalendar(true);
+        const anchor = fromIsoDate(startDate) ?? new Date();
+        setCalendarMonth(anchor);
+      }
     }, 0);
   }
 
@@ -429,7 +514,11 @@ export default function TripPlanner() {
       const initialNights = allocateNightsForStops(stops.length, totalDays);
       setNightsPerStop(initialNights);
 
-      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
+      const nextPlan = buildTripPlanFromStopsAndNights(
+        stops,
+        initialNights,
+        startDate
+      );
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
@@ -458,7 +547,7 @@ export default function TripPlanner() {
         const roadLegs = await fetchRoadLegs(points);
         setLegs(roadLegs);
       } catch (routingErr) {
-        console.error("Road routing failed, falling back to straight-line:", routingErr);
+        console.error("Road routing failed, falling back:", routingErr);
         setLegs(buildLegsFromPoints(points));
       } finally {
         setLegsLoading(false);
@@ -476,13 +565,20 @@ export default function TripPlanner() {
     if (!routeStops.length) return;
     if (!startDate) return;
 
-    const safe = Math.max(1, Math.floor(Number.isNaN(newValue) ? 1 : newValue));
+    const safe = Math.max(
+      1,
+      Math.floor(Number.isNaN(newValue) ? 1 : newValue)
+    );
     const next = [...nightsPerStop];
     next[idx] = safe;
 
     setNightsPerStop(next);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      routeStops,
+      next,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(routeStops, next));
@@ -514,7 +610,11 @@ export default function TripPlanner() {
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      newRouteStops,
+      newNightsPerStop,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
@@ -540,7 +640,8 @@ export default function TripPlanner() {
 
   function handleStartAddStop(afterIndex: number) {
     setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
+    if (!newStopCityId && NZ_CITIES.length > 0)
+      setNewStopCityId(NZ_CITIES[0].id);
   }
 
   function handleCancelAddStop() {
@@ -565,14 +666,22 @@ export default function TripPlanner() {
     newNightsPerStop.splice(insertIndex, 0, 1);
 
     const newMapPoints = [...mapPoints];
-    newMapPoints.splice(insertIndex, 0, { lat: city.lat, lng: city.lng, name: city.name });
+    newMapPoints.splice(insertIndex, 0, {
+      lat: city.lat,
+      lng: city.lng,
+      name: city.name,
+    });
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
     setAddingStopAfterIndex(null);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      newRouteStops,
+      newNightsPerStop,
+      startDate
+    );
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
@@ -599,7 +708,10 @@ export default function TripPlanner() {
     setDayDetails((prev) => {
       const existing = prev[key];
       if (!existing) {
-        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true } };
+        return {
+          ...prev,
+          [key]: { notes: "", accommodation: "", isOpen: true },
+        };
       }
       return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
     });
@@ -617,7 +729,11 @@ export default function TripPlanner() {
     }));
   }
 
-  function updateDayAccommodation(date: string, location: string, accommodation: string) {
+  function updateDayAccommodation(
+    date: string,
+    location: string,
+    accommodation: string
+  ) {
     const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
@@ -629,7 +745,8 @@ export default function TripPlanner() {
     }));
   }
 
-  const totalTripDays = startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
+  const totalTripDays =
+    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
   const whenLabel =
     startDate && endDate
@@ -639,22 +756,9 @@ export default function TripPlanner() {
       : "Add dates";
 
   const whereSummary =
-    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
-
-  function openWhere() {
-    setActivePill("where");
-    setShowWherePopover(true);
-    setShowCalendar(false);
-    setWhereStep("start");
-    setStartQuery(startCity?.name ?? "");
-    setEndQuery(endCity?.name ?? "");
-  }
-
-  function openWhen() {
-    setActivePill("when");
-    setShowCalendar(true);
-    setShowWherePopover(false);
-  }
+    startCity && endCity
+      ? `${startCity.name} → ${endCity.name}`
+      : "Add destinations";
 
   function WhereListItem({
     title,
@@ -678,9 +782,13 @@ export default function TripPlanner() {
         <CityIcon variant={iconVariant} />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-white truncate">{title}</div>
-          {subtitle ? <div className="text-[12px] text-gray-300 truncate">{subtitle}</div> : null}
+          {subtitle ? (
+            <div className="text-[12px] text-gray-300 truncate">{subtitle}</div>
+          ) : null}
         </div>
-        {right ? <div className="text-[12px] text-gray-300">{right}</div> : null}
+        {right ? (
+          <div className="text-[12px] text-gray-300">{right}</div>
+        ) : null}
       </button>
     );
   }
@@ -692,29 +800,34 @@ export default function TripPlanner() {
     const results = isStart ? startResults : endResults;
 
     const showBrowseLists = normalize(query).length === 0;
-    const header = isStart ? "Where are you starting?" : "Where are you finishing?";
 
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <div className="text-xs font-semibold text-white">{header}</div>
-            <div className="text-[11px] text-gray-300">Type to search, or pick a suggestion.</div>
+            <div className="text-base font-semibold text-white">
+              {mobileSheetOpen ? "Where?" : isStart ? "Where are you starting?" : "Where are you finishing?"}
+            </div>
+            {!mobileSheetOpen && (
+              <div className="text-[11px] text-gray-300">
+                Type to search, or pick a suggestion.
+              </div>
+            )}
           </div>
-          <span className="text-[10px] text-gray-400">Step {isStart ? "1" : "2"}</span>
         </div>
 
-        <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+        <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2">
+          <Search className="w-4 h-4 text-gray-300" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            placeholder={isStart ? "Search start city" : "Search end city"}
+            placeholder="Search destinations"
             className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
           />
         </div>
 
-        <div className="max-h-[360px] overflow-auto pr-1">
+        <div className="max-h-[52vh] overflow-auto pr-1">
           {!isStart && startCity && (
             <div className="mb-3">
               <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
@@ -742,9 +855,15 @@ export default function TripPlanner() {
                       <WhereListItem
                         key={`${step}-recent-${c.id}`}
                         title={c.name}
-                        subtitle={isStart ? "Recently used start city" : "Recently used destination"}
+                        subtitle={
+                          isStart
+                            ? "Recently used start city"
+                            : "Recently used destination"
+                        }
                         iconVariant="recent"
-                        onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                        onClick={() =>
+                          isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                        }
                       />
                     ))}
                   </div>
@@ -762,7 +881,9 @@ export default function TripPlanner() {
                       title={c.name}
                       subtitle={isStart ? "Top departure" : "Top destination"}
                       iconVariant="suggested"
-                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
                     />
                   ))}
                 </div>
@@ -785,42 +906,15 @@ export default function TripPlanner() {
                       title={c.name}
                       subtitle="New Zealand"
                       iconVariant="suggested"
-                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
                     />
                   ))}
                 </div>
               )}
             </>
           )}
-        </div>
-
-        <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => {
-              if (step === "end") setWhereStep("start");
-            }}
-            className={[
-              "text-[11px] underline underline-offset-2",
-              step === "end"
-                ? "text-gray-200 hover:text-white"
-                : "text-gray-500 cursor-not-allowed no-underline",
-            ].join(" ")}
-            disabled={step !== "end"}
-          >
-            Back
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowWherePopover(false);
-              setActivePill(null);
-            }}
-            className="text-[11px] text-gray-200 hover:text-white underline underline-offset-2"
-          >
-            Close
-          </button>
         </div>
       </div>
     );
@@ -833,17 +927,39 @@ export default function TripPlanner() {
         className="card p-4 md:p-6 space-y-6"
         style={{ color: "var(--text)" }}
       >
-        {/* Pills row */}
-        <div className="relative">
+        {/* MOBILE: single pill */}
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={openMobileSheet}
+            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 flex items-center justify-between hover:bg-white/5 transition"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Search className="w-4 h-4 opacity-80" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium truncate">
+                  Start your Journey
+                </div>
+                <div className="text-[11px] text-gray-400 truncate">
+                  {whereSummary} · {whenLabel}
+                </div>
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+        </div>
+
+        {/* DESKTOP: pills row */}
+        <div className="relative hidden md:block">
           <div className="w-full rounded-full bg-[var(--card)] border border-white/15 shadow-sm">
-            <div className="flex flex-col md:flex-row">
+            <div className="flex">
               {/* WHERE pill */}
               <div ref={whereRef} className="relative flex-1">
                 <button
                   type="button"
-                  onClick={openWhere}
+                  onClick={openWhereDesktop}
                   className={[
-                    "w-full rounded-full md:rounded-l-full md:rounded-r-none px-4 py-3 text-left",
+                    "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
                     "hover:bg-white/5 transition flex items-center justify-between gap-3",
                     activePill === "where" ? "bg-white/5" : "",
                   ].join(" ")}
@@ -869,21 +985,22 @@ export default function TripPlanner() {
                     )}
 
                     <div className="mt-3 text-[11px] text-gray-400">
-                      Cities are mapped with latitude &amp; longitude, so we can factor in realistic driving legs later.
+                      Cities are mapped with latitude &amp; longitude, so we can
+                      factor in realistic driving legs later.
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="hidden md:block w-px bg-white/10" />
+              <div className="w-px bg-white/10" />
 
               {/* WHEN pill */}
               <div ref={whenRef} className="relative flex-1">
                 <button
                   type="button"
-                  onClick={openWhen}
+                  onClick={openWhenDesktop}
                   className={[
-                    "w-full rounded-full md:rounded-r-full md:rounded-l-none px-4 py-3 text-left",
+                    "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
                     "hover:bg-white/5 transition flex items-center justify-between gap-3",
                     activePill === "when" ? "bg-white/5" : "",
                   ].join(" ")}
@@ -897,14 +1014,12 @@ export default function TripPlanner() {
                   <Calendar className="w-4 h-4 opacity-80" />
                 </button>
 
-                {/* FIX: popover width + overflow-hidden + fixed month widths */}
+                {/* ✅ Single popover container (no double box) */}
                 {showCalendar && (
                   <div
                     className={[
                       "absolute left-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg",
-                      "overflow-hidden", // <-- key fix to stop dates spilling out
-                      "w-[720px] max-w-[calc(100vw-2rem)]",
-                      "p-3",
+                      "overflow-hidden w-[720px] p-3",
                     ].join(" ")}
                   >
                     <div className="px-2 pb-2">
@@ -925,6 +1040,8 @@ export default function TripPlanner() {
                         onSelect={handleDateRangeChange}
                         numberOfMonths={2}
                         weekStartsOn={1}
+                        month={calendarMonth}
+                        onMonthChange={setCalendarMonth}
                         styles={{
                           months: {
                             display: "flex",
@@ -933,7 +1050,7 @@ export default function TripPlanner() {
                             justifyContent: "space-between",
                           },
                           month: {
-                            width: "320px", // <-- fixed width prevents last column overflow
+                            width: "320px",
                           },
                         }}
                       />
@@ -947,6 +1064,7 @@ export default function TripPlanner() {
                           setDateRange(undefined);
                           setStartDate("");
                           setEndDate("");
+                          setCalendarMonth(new Date());
                         }}
                       >
                         Clear
@@ -971,19 +1089,22 @@ export default function TripPlanner() {
 
           {totalTripDays > 0 && (
             <p className="text-[11px] text-gray-400 mt-2">
-              Total days in itinerary (inclusive): <strong>{totalTripDays}</strong>
+              Total days in itinerary (inclusive):{" "}
+              <strong>{totalTripDays}</strong>
             </p>
           )}
         </div>
 
-        {/* Waypoints unchanged */}
+        {/* Waypoints (unchanged) */}
         <div className="space-y-1">
           <label className="text-sm font-medium">
             Places you&apos;d like to visit
           </label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a logical route between your start and end cities where we recognise the stops, and estimate{" "}
-            <strong>road</strong> driving times between each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a
+            logical route between your start and end cities where we recognise
+            the stops, and estimate <strong>road</strong> driving times between
+            each leg.
           </p>
 
           <WaypointInput
@@ -1003,7 +1124,113 @@ export default function TripPlanner() {
         </button>
       </form>
 
-      {/* Everything below here is unchanged (results UI) */}
+      {/* MOBILE SHEET */}
+      {mobileSheetOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <div className="absolute inset-0 bg-black/55" onClick={closeMobileSheet} />
+          <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-white">
+                  Start your Journey
+                </div>
+                <button
+                  type="button"
+                  onClick={closeMobileSheet}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMobileActive("where")}
+                  className={[
+                    "w-full px-4 py-3 flex items-center justify-between",
+                    mobileActive === "where" ? "bg-white/5" : "",
+                  ].join(" ")}
+                >
+                  <div className="text-left">
+                    <div className="text-[11px] text-gray-300">Where</div>
+                    <div className="text-sm text-white">{whereSummary}</div>
+                  </div>
+                  <MapPin className="w-4 h-4 text-gray-200" />
+                </button>
+
+                <div className="h-px bg-white/10" />
+
+                <button
+                  type="button"
+                  onClick={() => setMobileActive("when")}
+                  className={[
+                    "w-full px-4 py-3 flex items-center justify-between",
+                    mobileActive === "when" ? "bg-white/5" : "",
+                  ].join(" ")}
+                >
+                  <div className="text-left">
+                    <div className="text-[11px] text-gray-300">When</div>
+                    <div className="text-sm text-white">{whenLabel}</div>
+                  </div>
+                  <Calendar className="w-4 h-4 text-gray-200" />
+                </button>
+              </div>
+
+              <div className="mt-4">
+                {mobileActive === "where" ? (
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    {whereStep === "start" ? (
+                      <WherePickerPanel step="start" />
+                    ) : (
+                      <WherePickerPanel step="end" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg overflow-hidden">
+                    <div className="p-2">
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={handleDateRangeChange}
+                        numberOfMonths={1}
+                        weekStartsOn={1}
+                        month={calendarMonth}
+                        onMonthChange={setCalendarMonth}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center px-3 pb-3">
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={() => {
+                          setDateRange(undefined);
+                          setStartDate("");
+                          setEndDate("");
+                          setCalendarMonth(new Date());
+                        }}
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                        onClick={closeMobileSheet}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
       {hasSubmitted && !plan && !error && (
         <p className="text-sm text-gray-400">
           Fill in your trip details and click &quot;Generate itinerary&quot;.
@@ -1014,7 +1241,8 @@ export default function TripPlanner() {
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Adjust nights for each stop and expand a day to add what you&apos;re doing and where you&apos;re staying.
+            Adjust nights for each stop and expand a day to add what you&apos;re
+            doing and where you&apos;re staying.
           </p>
 
           <div className="overflow-x-auto">
@@ -1037,7 +1265,8 @@ export default function TripPlanner() {
                   const meta = dayStopMeta[dayIdx];
                   const stopIndex = meta?.stopIndex ?? -1;
                   const isFirstForStop = meta?.isFirstForStop ?? false;
-                  const showStepper = !!meta && isFirstForStop && stopIndex >= 0;
+                  const showStepper =
+                    !!meta && isFirstForStop && stopIndex >= 0;
 
                   return (
                     <>
@@ -1045,8 +1274,12 @@ export default function TripPlanner() {
                         key={`row-${d.dayNumber}-${key}`}
                         className="border-t border-white/5 align-top"
                       >
-                        <td className="py-2 pr-4 whitespace-nowrap">Day {d.dayNumber}</td>
-                        <td className="py-2 pr-4 whitespace-nowrap">{formatDisplayDate(d.date)}</td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          Day {d.dayNumber}
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          {formatDisplayDate(d.date)}
+                        </td>
                         <td className="py-2 pr-4">{d.location}</td>
                         <td className="py-2 pr-4">
                           {showStepper ? (
@@ -1068,7 +1301,10 @@ export default function TripPlanner() {
                                 min={1}
                                 value={nightsPerStop[stopIndex] ?? 1}
                                 onChange={(e) =>
-                                  handleChangeNights(stopIndex, Number(e.target.value))
+                                  handleChangeNights(
+                                    stopIndex,
+                                    Number(e.target.value)
+                                  )
                                 }
                                 className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
                               />
@@ -1100,7 +1336,10 @@ export default function TripPlanner() {
 
                       {isOpen && (
                         <tr key={`details-${d.dayNumber}-${key}`}>
-                          <td colSpan={5} className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg">
+                          <td
+                            colSpan={5}
+                            className="pb-4 pt-1 pr-4 pl-4 bg-white/5 rounded-lg"
+                          >
                             <div className="space-y-3">
                               <div className="grid gap-3 md:grid-cols-2">
                                 <div className="space-y-1">
@@ -1112,33 +1351,32 @@ export default function TripPlanner() {
                                     className="input-dark w-full text-xs"
                                     placeholder="e.g. Morning in the city, afternoon gondola, dinner at ..."
                                     value={detail?.notes ?? ""}
-                                    onChange={(e) => updateDayNotes(d.date, d.location, e.target.value)}
+                                    onChange={(e) =>
+                                      updateDayNotes(
+                                        d.date,
+                                        d.location,
+                                        e.target.value
+                                      )
+                                    }
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-medium">Where I&apos;m staying</label>
+                                  <label className="text-xs font-medium">
+                                    Where I&apos;m staying
+                                  </label>
                                   <input
                                     type="text"
                                     className="input-dark w-full text-xs"
                                     placeholder="e.g. Holiday park, hotel name, friend’s place"
                                     value={detail?.accommodation ?? ""}
                                     onChange={(e) =>
-                                      updateDayAccommodation(d.date, d.location, e.target.value)
+                                      updateDayAccommodation(
+                                        d.date,
+                                        d.location,
+                                        e.target.value
+                                      )
                                     }
                                   />
-                                  <div className="mt-2 space-y-1">
-                                    <button
-                                      type="button"
-                                      disabled
-                                      className="px-3 py-1.5 rounded-full border border-dashed border-white/25 text-xs text-gray-400 cursor-not-allowed"
-                                    >
-                                      Search things to do in {d.location} (coming soon)
-                                    </button>
-                                    <p className="text-[10px] text-gray-500">
-                                      Soon this will surface tours, attractions and events for {d.location} on{" "}
-                                      {formatDisplayDate(d.date)}, with bookable links.
-                                    </p>
-                                  </div>
                                 </div>
                               </div>
 
@@ -1152,21 +1390,26 @@ export default function TripPlanner() {
                                       {stopIndex < routeStops.length - 1 && (
                                         <button
                                           type="button"
-                                          onClick={() => handleStartAddStop(stopIndex)}
+                                          onClick={() =>
+                                            handleStartAddStop(stopIndex)
+                                          }
                                           className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
                                         >
                                           + Add stop after this
                                         </button>
                                       )}
-                                      {stopIndex > 0 && stopIndex < routeStops.length - 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleRemoveStop(stopIndex)}
-                                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                                        >
-                                          Remove this stop from trip
-                                        </button>
-                                      )}
+                                      {stopIndex > 0 &&
+                                        stopIndex < routeStops.length - 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleRemoveStop(stopIndex)
+                                            }
+                                            className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                                          >
+                                            Remove this stop from trip
+                                          </button>
+                                        )}
                                     </div>
                                   </div>
 
@@ -1174,7 +1417,9 @@ export default function TripPlanner() {
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                       <select
                                         value={newStopCityId ?? ""}
-                                        onChange={(e) => setNewStopCityId(e.target.value)}
+                                        onChange={(e) =>
+                                          setNewStopCityId(e.target.value)
+                                        }
                                         className="input-dark text-xs w-56"
                                       >
                                         {NZ_CITIES.map((city) => (
@@ -1217,10 +1462,6 @@ export default function TripPlanner() {
       {plan && mapPoints.length >= 2 && (
         <div className="card p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold">Route overview</h2>
-          <p className="text-sm text-gray-400">
-            Road route between your start and end cities, passing through any recognised waypoints in logical order.
-          </p>
-
           <div className="w-full aspect-[4/3] rounded-lg overflow-hidden">
             <TripMap points={mapPoints} />
           </div>
@@ -1229,7 +1470,11 @@ export default function TripPlanner() {
             <div className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">Driving legs</h3>
 
-              {legsLoading && <p className="text-xs text-gray-400 mb-1">Fetching road distances…</p>}
+              {legsLoading && (
+                <p className="text-xs text-gray-400 mb-1">
+                  Fetching road distances…
+                </p>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -1246,7 +1491,9 @@ export default function TripPlanner() {
                       <tr key={idx} className="border-t border-white/5">
                         <td className="py-2 pr-4">{leg.from}</td>
                         <td className="py-2 pr-4">{leg.to}</td>
-                        <td className="py-2 pr-4">{formatDistance(leg.distanceKm)}</td>
+                        <td className="py-2 pr-4">
+                          {formatDistance(leg.distanceKm)}
+                        </td>
                         <td className="py-2">{formatDriveHours(leg.driveHours)}</td>
                       </tr>
                     ))}
@@ -1262,32 +1509,31 @@ export default function TripPlanner() {
         </div>
       )}
 
-      {plan && routeStops.length > 0 && nightsPerStop.length === routeStops.length && (
-        <div className="card p-4 md:p-6 space-y-3">
-          <h2 className="text-lg font-semibold">Trip summary</h2>
-          <p className="text-sm text-gray-400">
-            A quick overview of where you&apos;re staying and for how long.
-          </p>
+      {plan &&
+        routeStops.length > 0 &&
+        nightsPerStop.length === routeStops.length && (
+          <div className="card p-4 md:p-6 space-y-3">
+            <h2 className="text-lg font-semibold">Trip summary</h2>
+            <ul className="space-y-1 text-sm">
+              {routeStops.map((stopName, idx) => (
+                <li key={`${stopName}-${idx}`} className="flex justify-between">
+                  <span>{stopName}</span>
+                  <span className="text-gray-300">
+                    {nightsPerStop[idx] ?? 1} night
+                    {(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-          <ul className="space-y-1 text-sm">
-            {routeStops.map((stopName, idx) => (
-              <li key={`${stopName}-${idx}`} className="flex justify-between">
-                <span>{stopName}</span>
-                <span className="text-gray-300">
-                  {nightsPerStop[idx] ?? 1} night{(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          {totalTripDays > 0 && startDate && endDate && (
-            <p className="text-xs text-gray-400 mt-2">
-              Total days: <strong>{totalTripDays}</strong> ({formatDisplayDate(startDate)} –{" "}
-              {formatDisplayDate(endDate)}).
-            </p>
-          )}
-        </div>
-      )}
+            {totalTripDays > 0 && startDate && endDate && (
+              <p className="text-xs text-gray-400 mt-2">
+                Total days: <strong>{totalTripDays}</strong> (
+                {formatDisplayDate(startDate)} – {formatDisplayDate(endDate)}).
+              </p>
+            )}
+          </div>
+        )}
     </div>
   );
 }
