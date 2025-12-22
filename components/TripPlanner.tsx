@@ -1,7 +1,7 @@
 // components/TripPlanner.tsx
 "use client";
 
-import { useEffect, useState, FormEvent, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, FormEvent } from "react";
 import dynamic from "next/dynamic";
 import {
   buildTripPlanFromStopsAndNights,
@@ -20,7 +20,14 @@ import { orderWaypointNamesByRoute } from "@/lib/nzStops";
 import WaypointInput from "@/components/WaypointInput";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
-import { Calendar, MapPin, ChevronDown } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  ChevronDown,
+  Clock,
+  ArrowLeftRight,
+  Navigation,
+} from "lucide-react";
 
 // Dynamically import TripMap only on the client to avoid `window` errors on the server
 const TripMap = dynamic(() => import("@/components/TripMap"), {
@@ -174,6 +181,98 @@ function buildDayStopMeta(stops: string[], nightsPerStop: number[]): DayStopMeta
 
 type ActivePill = "where" | "when" | null;
 
+type CityLite = {
+  id: string;
+  name: string;
+};
+
+const RECENT_KEY = "travelscout_recent_city_searches_v1";
+
+function safeReadRecent(): CityLite[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as CityLite[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x) => x && typeof x.id === "string" && typeof x.name === "string");
+  } catch {
+    return [];
+  }
+}
+
+function safeWriteRecent(items: CityLite[]) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 8)));
+  } catch {
+    // ignore
+  }
+}
+
+function normalize(s: string) {
+  return s.trim().toLowerCase();
+}
+
+function pickSuggestedCities(): CityLite[] {
+  // We don’t currently have a “popular/suggested” flag in NZ_CITIES.
+  // So we use a sensible shortlist by *name*, and gracefully fall back to the first few cities.
+  const preferredNames = [
+    "Auckland",
+    "Wellington",
+    "Christchurch",
+    "Queenstown",
+    "Tauranga",
+    "Hamilton",
+    "Dunedin",
+    "Nelson",
+    "Napier",
+    "Rotorua",
+  ];
+
+  const byName = new Map(NZ_CITIES.map((c) => [normalize(c.name), c]));
+  const picked: CityLite[] = [];
+
+  for (const nm of preferredNames) {
+    const c = byName.get(normalize(nm));
+    if (c) picked.push({ id: c.id, name: c.name });
+    if (picked.length >= 6) break;
+  }
+
+  if (picked.length < 6) {
+    for (const c of NZ_CITIES) {
+      if (!picked.some((p) => p.id === c.id)) {
+        picked.push({ id: c.id, name: c.name });
+      }
+      if (picked.length >= 6) break;
+    }
+  }
+
+  return picked;
+}
+
+function CityIcon({ variant }: { variant: "recent" | "suggested" | "nearby" }) {
+  const base =
+    "w-9 h-9 rounded-xl flex items-center justify-center border border-black/5";
+  if (variant === "recent") {
+    return (
+      <div className={`${base} bg-[#EAF7EA]`}>
+        <Clock className="w-4 h-4 text-emerald-700" />
+      </div>
+    );
+  }
+  if (variant === "nearby") {
+    return (
+      <div className={`${base} bg-[#EAF1FF]`}>
+        <Navigation className="w-4 h-4 text-blue-700" />
+      </div>
+    );
+  }
+  return (
+    <div className={`${base} bg-[#F6F1EA]`}>
+      <MapPin className="w-4 h-4 text-amber-700" />
+    </div>
+  );
+}
+
 export default function TripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -185,11 +284,17 @@ export default function TripPlanner() {
   // Shared calendar range selection + popover state
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  // New pill / step UI state
+  // Pill / step UI state
   const [activePill, setActivePill] = useState<ActivePill>(null);
-  const [whereStep, setWhereStep] = useState<"start" | "end">("start");
   const [showWherePopover, setShowWherePopover] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Where typing state
+  const [whereStep, setWhereStep] = useState<"start" | "end">("start");
+  const [startQuery, setStartQuery] = useState("");
+  const [endQuery, setEndQuery] = useState("");
+  const [recent, setRecent] = useState<CityLite[]>([]);
+  const suggested = useMemo(() => pickSuggestedCities(), []);
 
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
@@ -221,6 +326,18 @@ export default function TripPlanner() {
   const [newStopCityId, setNewStopCityId] = useState<string | null>(
     NZ_CITIES[0]?.id ?? null
   );
+
+  const startCity = getCityById(startCityId);
+  const endCity = getCityById(endCityId);
+
+  /** Load recent searches on mount */
+  useEffect(() => {
+    try {
+      setRecent(safeReadRecent());
+    } catch {
+      setRecent([]);
+    }
+  }, []);
 
   /** Close popovers when clicking outside */
   useEffect(() => {
@@ -274,7 +391,7 @@ export default function TripPlanner() {
       return;
     }
 
-    // If only one date picked so far
+    // First click: only set start date, keep end blank so the UI doesn’t show “same day” prematurely.
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
@@ -291,45 +408,84 @@ export default function TripPlanner() {
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
 
-    // Auto-close once both dates selected (Airbnb-ish flow)
-    setShowCalendar(false);
-    setActivePill(null);
+    // IMPORTANT: Do NOT auto-close. User closes with Done (Airbnb-like).
   }
 
-  /** After end city selection, automatically move user to "When" */
-  useEffect(() => {
-    if (!startCityId || !endCityId) return;
+  function pushRecent(city: CityLite) {
+    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 8);
+    setRecent(next);
+    safeWriteRecent(next);
+  }
 
-    // If user just finished "Where" and hasn't picked dates yet, open calendar
-    if (whereStep === "end" && showWherePopover) {
-      // allow end selection to finish first, then advance
-      // (microtask-ish)
-      setTimeout(() => {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-      }, 0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endCityId]);
+  function selectStartCity(cityId: string) {
+    const c = getCityById(cityId);
+    if (!c) return;
 
-  /** Keep where step aligned if start changes */
-  useEffect(() => {
-    if (!startCityId) return;
-    // if user is in where popover and picks start, push to end
-    if (showWherePopover) setWhereStep("end");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startCityId]);
+    setStartCityId(cityId);
+    setStartQuery(c.name);
+    pushRecent({ id: c.id, name: c.name });
+
+    // Move to end step
+    setWhereStep("end");
+
+    // If end was same as default but start changed, keep end as-is (user will confirm)
+  }
+
+  function selectEndCity(cityId: string) {
+    const c = getCityById(cityId);
+    if (!c) return;
+
+    setEndCityId(cityId);
+    setEndQuery(c.name);
+    pushRecent({ id: c.id, name: c.name });
+
+    // After end is selected, open When automatically
+    setTimeout(() => {
+      setShowWherePopover(false);
+      setActivePill("when");
+      setShowCalendar(true);
+    }, 0);
+  }
+
+  function selectReturnToStart() {
+    if (!startCity) return;
+    setEndCityId(startCity.id);
+    setEndQuery("Return to start city");
+    // no need to save as recent (it’s not a real city selection)
+    setTimeout(() => {
+      setShowWherePopover(false);
+      setActivePill("when");
+      setShowCalendar(true);
+    }, 0);
+  }
+
+  const startResults = useMemo(() => {
+    const q = normalize(startQuery);
+    if (!q) return [];
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q)).slice(0, 8).map((c) => ({
+      id: c.id,
+      name: c.name,
+    }));
+  }, [startQuery]);
+
+  const endResults = useMemo(() => {
+    const q = normalize(endQuery);
+    if (!q) return [];
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q)).slice(0, 8).map((c) => ({
+      id: c.id,
+      name: c.name,
+    }));
+  }, [endQuery]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
     setError(null);
 
-    const startCity = getCityById(startCityId);
-    const endCity = getCityById(endCityId);
+    const start = getCityById(startCityId);
+    const end = getCityById(endCityId);
 
-    if (!startCity || !endCity) {
+    if (!start || !end) {
       setPlan(null);
       setMapPoints([]);
       setLegs([]);
@@ -351,13 +507,13 @@ export default function TripPlanner() {
 
       // 2) Use coordinates to order waypoint names in a logical route order
       const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
-        startCity,
-        endCity,
+        start,
+        end,
         rawWaypointNames
       );
 
       // 3) Build routeStops = start + ordered waypoints + end
-      const stops: string[] = [startCity.name, ...orderedNames, endCity.name];
+      const stops: string[] = [start.name, ...orderedNames, end.name];
       setRouteStops(stops);
 
       // 4) Compute total days and initial nights per stop
@@ -385,9 +541,9 @@ export default function TripPlanner() {
       }));
 
       const points: MapPoint[] = [
-        { lat: startCity.lat, lng: startCity.lng, name: startCity.name },
+        { lat: start.lat, lng: start.lng, name: start.name },
         ...waypointPoints,
-        { lat: endCity.lat, lng: endCity.lng, name: endCity.name },
+        { lat: end.lat, lng: end.lng, name: end.name },
       ];
 
       setMapPoints(points);
@@ -614,10 +770,9 @@ export default function TripPlanner() {
   const whenLabel =
     startDate && endDate
       ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
+      : startDate && !endDate
+      ? `${formatShortRangeDate(startDate)} – Add end date`
       : "Add dates";
-
-  const startCity = getCityById(startCityId);
-  const endCity = getCityById(endCityId);
 
   const whereSummary =
     startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
@@ -627,14 +782,197 @@ export default function TripPlanner() {
     setShowWherePopover(true);
     setShowCalendar(false);
 
-    // Determine which step makes sense to show
     setWhereStep("start");
+    setStartQuery(startCity?.name ?? "");
+    setEndQuery(endCity?.name ?? "");
   }
 
   function openWhen() {
     setActivePill("when");
     setShowCalendar(true);
     setShowWherePopover(false);
+  }
+
+  function WhereListItem({
+    title,
+    subtitle,
+    onClick,
+    iconVariant,
+    right,
+  }: {
+    title: string;
+    subtitle?: string;
+    onClick: () => void;
+    iconVariant: "recent" | "suggested" | "nearby";
+    right?: React.ReactNode;
+  }) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition"
+      >
+        <CityIcon variant={iconVariant} />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-white truncate">{title}</div>
+          {subtitle ? <div className="text-[12px] text-gray-300 truncate">{subtitle}</div> : null}
+        </div>
+        {right ? <div className="text-[12px] text-gray-300">{right}</div> : null}
+      </button>
+    );
+  }
+
+  function WherePickerPanel({
+    step,
+  }: {
+    step: "start" | "end";
+  }) {
+    const isStart = step === "start";
+    const query = isStart ? startQuery : endQuery;
+    const setQuery = isStart ? setStartQuery : setEndQuery;
+    const results = isStart ? startResults : endResults;
+
+    const showBrowseLists = normalize(query).length === 0;
+    const header =
+      step === "start" ? "Where are you starting?" : "Where are you finishing?";
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-xs font-semibold text-white">{header}</div>
+            <div className="text-[11px] text-gray-300">
+              Type to search, or pick a suggestion.
+            </div>
+          </div>
+          <span className="text-[10px] text-gray-400">
+            Step {step === "start" ? "1" : "2"}
+          </span>
+        </div>
+
+        <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoFocus
+            placeholder={step === "start" ? "Search start city" : "Search end city"}
+            className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
+          />
+        </div>
+
+        <div className="max-h-[360px] overflow-auto pr-1">
+          {/* End step special option */}
+          {!isStart && startCity && (
+            <div className="mb-3">
+              <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                Quick option
+              </div>
+              <WhereListItem
+                title="Return to start city"
+                subtitle={`Finish in ${startCity.name}`}
+                iconVariant="suggested"
+                right={<ArrowLeftRight className="w-4 h-4 opacity-80" />}
+                onClick={selectReturnToStart}
+              />
+            </div>
+          )}
+
+          {showBrowseLists ? (
+            <>
+              {recent.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                    Recent searches
+                  </div>
+                  <div className="space-y-1">
+                    {recent.map((c) => (
+                      <WhereListItem
+                        key={`${step}-recent-${c.id}`}
+                        title={c.name}
+                        subtitle={step === "start" ? "Recently used start city" : "Recently used destination"}
+                        iconVariant="recent"
+                        onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-2">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                  Suggested destinations
+                </div>
+                <div className="space-y-1">
+                  {suggested.map((c) => (
+                    <WhereListItem
+                      key={`${step}-suggested-${c.id}`}
+                      title={c.name}
+                      subtitle={
+                        step === "start"
+                          ? "Popular departure city"
+                          : "Popular destination"
+                      }
+                      iconVariant="suggested"
+                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                Matches
+              </div>
+              {results.length === 0 ? (
+                <div className="px-2 py-3 text-sm text-gray-300">
+                  No matches. Try a different spelling.
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {results.map((c) => (
+                    <WhereListItem
+                      key={`${step}-match-${c.id}`}
+                      title={c.name}
+                      subtitle="New Zealand"
+                      iconVariant="suggested"
+                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              if (step === "end") setWhereStep("start");
+            }}
+            className={[
+              "text-[11px] underline underline-offset-2",
+              step === "end" ? "text-gray-200 hover:text-white" : "text-gray-500 cursor-not-allowed no-underline",
+            ].join(" ")}
+            disabled={step !== "end"}
+          >
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowWherePopover(false);
+              setActivePill(null);
+            }}
+            className="text-[11px] text-gray-200 hover:text-white underline underline-offset-2"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -674,89 +1012,14 @@ export default function TripPlanner() {
 
                 {showWherePopover && (
                   <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {/* Start */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold">
-                            Start city
-                          </span>
-                          {whereStep === "start" && (
-                            <span className="text-[10px] text-gray-400">
-                              Step 1
-                            </span>
-                          )}
-                        </div>
-                        <select
-                          value={startCityId}
-                          onChange={(e) => {
-                            setStartCityId(e.target.value);
-                            setWhereStep("end");
-                          }}
-                          className={[
-                            "input-dark w-full text-sm",
-                            whereStep === "start" ? "ring-1 ring-white/25" : "",
-                          ].join(" ")}
-                        >
-                          {NZ_CITIES.map((city) => (
-                            <option key={city.id} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-[11px] text-gray-400">
-                          Choose where your trip begins.
-                        </p>
-                      </div>
+                    {whereStep === "start" ? (
+                      <WherePickerPanel step="start" />
+                    ) : (
+                      <WherePickerPanel step="end" />
+                    )}
 
-                      {/* End */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold">End city</span>
-                          {whereStep === "end" && (
-                            <span className="text-[10px] text-gray-400">
-                              Step 2
-                            </span>
-                          )}
-                        </div>
-                        <select
-                          value={endCityId}
-                          onChange={(e) => {
-                            setEndCityId(e.target.value);
-                            // advancing to "When" happens via effect
-                          }}
-                          className={[
-                            "input-dark w-full text-sm",
-                            whereStep === "end" ? "ring-1 ring-white/25" : "",
-                          ].join(" ")}
-                        >
-                          {NZ_CITIES.map((city) => (
-                            <option key={city.id} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-[11px] text-gray-400">
-                          After selecting an end city, we’ll move you to dates.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <p className="text-[11px] text-gray-400">
-                        Cities are mapped with latitude &amp; longitude, so we
-                        can factor in realistic driving legs later.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowWherePopover(false);
-                          setActivePill(null);
-                        }}
-                        className="text-[11px] text-gray-200 hover:text-white underline underline-offset-2"
-                      >
-                        Close
-                      </button>
+                    <div className="mt-3 text-[11px] text-gray-400">
+                      Cities are mapped with latitude &amp; longitude, so we can factor in realistic driving legs later.
                     </div>
                   </div>
                 )}
@@ -855,11 +1118,14 @@ export default function TripPlanner() {
 
         {/* Waypoints (unchanged for now) */}
         <div className="space-y-1">
-          <label className="text-sm font-medium">Places you&apos;d like to visit</label>
+          <label className="text-sm font-medium">
+            Places you&apos;d like to visit
+          </label>
           <p className="text-xs text-gray-400">
-            Start typing a town or scenic stop. We&apos;ll reorder these into a logical
-            route between your start and end cities where we recognise the stops, and
-            estimate <strong>road</strong> driving times between each leg.
+            Start typing a town or scenic stop. We&apos;ll reorder these into a
+            logical route between your start and end cities where we recognise
+            the stops, and estimate <strong>road</strong> driving times between
+            each leg.
           </p>
 
           <WaypointInput
@@ -868,10 +1134,9 @@ export default function TripPlanner() {
             placeholder="Add a stop, e.g. Lake Tekapo"
           />
 
-          {/* Future ideas (optional):
-              1) Turn this into an "Add stops" pill with a popover containing the WaypointInput.
-              2) Show selected waypoints as chips inside the pill (like Airbnb guests / filters).
-              3) Add a lightweight "suggestions" dropdown under the input so it feels more guided.
+          {/* Later: we can make this match the pill pattern by:
+              1) Adding a third pill “Stops” that opens a popover containing WaypointInput
+              2) Showing chips inline inside the pill (like Airbnb “Guests” / “Filters”)
           */}
         </div>
 
