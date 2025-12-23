@@ -84,30 +84,34 @@ export default function TripPlanner() {
 
       {tp.plan && tp.plan.days.length > 0 && (
         <DraftItinerary
-  plan={tp.plan}
-  routeStops={tp.routeStops}
-  nightsPerStop={tp.nightsPerStop}
-  dayStopMeta={tp.dayStopMeta}
-  dayDetails={tp.dayDetails}
-  openStops={tp.openStops}
-  toggleStopOpen={tp.toggleStopOpen}
-  expandAllStops={tp.expandAllStops}
-  collapseAllStops={tp.collapseAllStops}
-  addingStopAfterIndex={tp.addingStopAfterIndex}
-  newStopCityId={tp.newStopCityId}
-  setNewStopCityId={(v) => tp.setNewStopCityId(v)}
-  onChangeNights={tp.handleChangeNights}
-  onToggleDayOpen={tp.toggleDayOpen}
-  onUpdateDayNotes={tp.updateDayNotes}
-  onUpdateDayAccommodation={tp.updateDayAccommodation}
-  onStartAddStop={tp.handleStartAddStop}
-  onConfirmAddStop={tp.handleConfirmAddStop}
-  onCancelAddStop={tp.handleCancelAddStop}
-  onRemoveStop={tp.handleRemoveStop}
-/>
+          plan={tp.plan}
+          routeStops={tp.routeStops}
+          nightsPerStop={tp.nightsPerStop}
+          dayStopMeta={tp.dayStopMeta}
+          dayDetails={tp.dayDetails}
+          openStops={tp.openStops}
+          onToggleStopOpen={tp.toggleStopOpen}
+          onExpandAllStops={tp.expandAllStops}
+          onCollapseAllStops={tp.collapseAllStops}
+          addingStopAfterIndex={tp.addingStopAfterIndex}
+          newStopCityId={tp.newStopCityId}
+          setNewStopCityId={(v) => tp.setNewStopCityId(v)}
+          onChangeNights={tp.handleChangeNights}
+          onToggleDayOpen={tp.toggleDayOpen}
+          onUpdateDayNotes={tp.updateDayNotes}
+          onUpdateDayAccommodation={tp.updateDayAccommodation}
+          onStartAddStop={tp.handleStartAddStop}
+          onConfirmAddStop={tp.handleConfirmAddStop}
+          onCancelAddStop={tp.handleCancelAddStop}
+          onRemoveStop={tp.handleRemoveStop}
+        />
       )}
 
-      <RouteOverview mapPoints={tp.mapPoints} legs={tp.legs} legsLoading={tp.legsLoading} />
+      <RouteOverview
+        mapPoints={tp.mapPoints}
+        legs={tp.legs}
+        legsLoading={tp.legsLoading}
+      />
 
       <TripSummary
         routeStops={tp.routeStops}
