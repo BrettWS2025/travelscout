@@ -308,7 +308,11 @@ export default function DraftItinerary({
                               onUpdateDayNotes(d.date, d.location, notes)
                             }
                             onUpdateAccommodation={(accommodation) =>
-                              onUpdateDayAccommodation(d.date, d.location, accommodation)
+                              onUpdateDayAccommodation(
+                                d.date,
+                                d.location,
+                                accommodation
+                              )
                             }
                             stopOptions={stopOptions}
                           />
