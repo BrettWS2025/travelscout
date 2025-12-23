@@ -61,6 +61,14 @@ type Props = {
   onReorderStops: (fromIndex: number, toIndex: number) => void;
 };
 
+type StopGroup = {
+  stopIndex: number;
+  stopName: string;
+  dayIndices: number[];
+  startDate: string;
+  endDate: string;
+};
+
 export default function DraftItinerary({
   plan,
   routeStops,
@@ -84,22 +92,13 @@ export default function DraftItinerary({
   onRemoveStop,
   onReorderStops,
 }: Props) {
-  const stopGroups = useMemo(() => {
+  const stopGroups = useMemo<StopGroup[]>(() => {
     if (!plan || plan.days.length === 0) return [];
 
-    type Group = {
-      stopIndex: number;
-      stopName: string;
-      dayIndices: number[];
-      startDate: string;
-      endDate: string;
-    };
-
-    const groups: Group[] = [];
+    const groups: StopGroup[] = [];
     const seen = new Set<number>();
 
     for (let i = 0; i < plan.days.length; i++) {
-      const d = plan.days[i];
       const meta = dayStopMeta[i];
       if (!meta) continue;
 
@@ -112,22 +111,18 @@ export default function DraftItinerary({
         if (dayStopMeta[j]?.stopIndex === idx) dayIndices.push(j);
       }
 
+      const stopName = plan.days[dayIndices[0]]?.location ?? "";
       const startDate = plan.days[dayIndices[0]]?.date ?? "";
       const endDate = plan.days[dayIndices[dayIndices.length - 1]]?.date ?? "";
 
-      groups.push({
-        stopIndex: idx,
-        stopName: d.location,
-        dayIndices,
-        startDate,
-        endDate,
-      });
+      groups.push({ stopIndex: idx, stopName, dayIndices, startDate, endDate });
     }
 
     groups.sort((a, b) => a.stopIndex - b.stopIndex);
     return groups;
-  }, [plan, dayStopMeta, routeStops]);
+  }, [plan, dayStopMeta]);
 
+  // stable id per stop
   const sortableIds = useMemo(
     () => stopGroups.map((g) => `${g.stopName}::${g.stopIndex}`),
     [stopGroups]
@@ -135,19 +130,13 @@ export default function DraftItinerary({
 
   const idToStopIndex = useMemo(() => {
     const m = new Map<string, number>();
-    for (const g of stopGroups) {
-      m.set(`${g.stopName}::${g.stopIndex}`, g.stopIndex);
-    }
+    for (const g of stopGroups) m.set(`${g.stopName}::${g.stopIndex}`, g.stopIndex);
     return m;
   }, [stopGroups]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 180, tolerance: 6 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } })
   );
 
   function onDragEnd(e: DragEndEvent) {
@@ -168,8 +157,7 @@ export default function DraftItinerary({
         <div className="space-y-1">
           <h2 className="text-lg font-semibold">Draft itinerary</h2>
           <p className="text-sm text-gray-400">
-            Tap a stop to expand/collapse its days. Add notes and accommodation
-            info so you remember what you&apos;re doing and where you&apos;re staying.
+            Drag stops to reorder your trip. Tap a stop to expand/collapse its days.
           </p>
         </div>
 
@@ -210,12 +198,12 @@ export default function DraftItinerary({
                 <StopGroupItem
                   key={id}
                   id={id}
-                  plan={plan}
                   group={g}
+                  plan={plan}
                   routeStops={routeStops}
                   nightsPerStop={nightsPerStop}
-                  openStops={openStops}
                   dayDetails={dayDetails}
+                  openStops={openStops}
                   addingStopAfterIndex={addingStopAfterIndex}
                   newStopCityId={newStopCityId}
                   setNewStopCityId={setNewStopCityId}
@@ -239,22 +227,14 @@ export default function DraftItinerary({
   );
 }
 
-type StopGroup = {
-  stopIndex: number;
-  stopName: string;
-  dayIndices: number[];
-  startDate: string;
-  endDate: string;
-};
-
 function StopGroupItem({
   id,
-  plan,
   group: g,
+  plan,
   routeStops,
   nightsPerStop,
-  openStops,
   dayDetails,
+  openStops,
   addingStopAfterIndex,
   newStopCityId,
   setNewStopCityId,
@@ -270,12 +250,12 @@ function StopGroupItem({
   onRemoveStop,
 }: {
   id: string;
-  plan: TripPlan;
   group: StopGroup;
+  plan: TripPlan;
   routeStops: string[];
   nightsPerStop: number[];
-  openStops: Record<number, boolean>;
   dayDetails: Record<string, DayDetail>;
+  openStops: Record<number, boolean>;
   addingStopAfterIndex: number | null;
   newStopCityId: string | null;
   setNewStopCityId: (v: string) => void;
@@ -319,7 +299,6 @@ function StopGroupItem({
         isDragging ? "opacity-80" : ""
       }`}
     >
-      {/* Stop header */}
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {!isDragDisabled && (
@@ -349,15 +328,14 @@ function StopGroupItem({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold truncate">{g.stopName}</span>
                 <span className="text-xs text-gray-400">
-                  {formatShortRangeDate(g.startDate, g.endDate)} • {dayCount}{" "}
-                  day{dayCount === 1 ? "" : "s"}
+                  {formatShortRangeDate(g.startDate, g.endDate)} • {dayCount} day
+                  {dayCount === 1 ? "" : "s"}
                 </span>
               </div>
             </div>
           </button>
         </div>
 
-        {/* Nights stepper for this stop */}
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-[11px] text-gray-400 mr-1">
             Nights
@@ -390,7 +368,6 @@ function StopGroupItem({
         </div>
       </div>
 
-      {/* Stop body */}
       {isStopOpen && (
         <div className="border-t border-white/10">
           <div className="p-3 md:p-4 space-y-3">
@@ -400,75 +377,72 @@ function StopGroupItem({
 
               const detail = dayDetails[key];
               const isOpen = detail?.isOpen ?? false;
-
               const isFirstForStop = localIdx === 0;
 
-              const stopOptions =
-                isFirstForStop ? (
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[11px] text-gray-400">
-                        Stop options for {routeStops[g.stopIndex]}
-                      </span>
-                      <div className="flex flex-wrap gap-3 items-center">
-                        {g.stopIndex < routeStops.length - 1 && (
-                          <button
-                            type="button"
-                            onClick={() => onStartAddStop(g.stopIndex)}
-                            className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                          >
-                            + Add stop after this
-                          </button>
-                        )}
+              const stopOptions = isFirstForStop ? (
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] text-gray-400">
+                      Stop options for {routeStops[g.stopIndex]}
+                    </span>
+                    <div className="flex flex-wrap gap-3 items-center">
+                      {g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onStartAddStop(g.stopIndex)}
+                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                        >
+                          + Add stop after this
+                        </button>
+                      )}
 
-                        {g.stopIndex > 0 &&
-                          g.stopIndex < routeStops.length - 1 && (
-                            <button
-                              type="button"
-                              onClick={() => onRemoveStop(g.stopIndex)}
-                              className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                            >
-                              Remove this stop from trip
-                            </button>
-                          )}
-                      </div>
+                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveStop(g.stopIndex)}
+                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                        >
+                          Remove this stop from trip
+                        </button>
+                      )}
                     </div>
-
-                    {addingStopAfterIndex === g.stopIndex && (
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <select
-                          value={newStopCityId ?? ""}
-                          onChange={(e) => setNewStopCityId(e.target.value)}
-                          className="input-dark text-sm py-2 px-3"
-                        >
-                          {NZ_CITIES.filter(
-                            (c) => c.name !== routeStops[g.stopIndex]
-                          ).map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <button
-                          type="button"
-                          onClick={onConfirmAddStop}
-                          className="btn btn-accent text-sm px-4 py-2"
-                        >
-                          Add
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={onCancelAddStop}
-                          className="btn btn-ghost text-sm px-4 py-2"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
                   </div>
-                ) : undefined;
+
+                  {addingStopAfterIndex === g.stopIndex && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <select
+                        value={newStopCityId ?? ""}
+                        onChange={(e) => setNewStopCityId(e.target.value)}
+                        className="input-dark text-sm py-2 px-3"
+                      >
+                        {NZ_CITIES.filter(
+                          (c) => c.name !== routeStops[g.stopIndex]
+                        ).map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={onConfirmAddStop}
+                        className="btn btn-accent text-sm px-4 py-2"
+                      >
+                        Add
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={onCancelAddStop}
+                        className="btn btn-ghost text-sm px-4 py-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : undefined;
 
               return (
                 <DayCard
