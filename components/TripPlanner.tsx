@@ -14,44 +14,54 @@ export default function TripPlanner() {
     <div className="space-y-8">
       <form onSubmit={tp.handleSubmit} className="card p-4 md:p-6 space-y-6">
         <WhereWhenPicker
-          startCityId={tp.startCityId}
-          endCityId={tp.endCityId}
-          returnToStart={tp.returnToStart}
-          startQuery={tp.startQuery}
-          endQuery={tp.endQuery}
-          startDate={tp.startDate}
-          endDate={tp.endDate}
-          selectedRange={tp.selectedRange}
-          isLoading={tp.isLoading}
-          errorMsg={tp.errorMsg}
-          startResults={tp.startResults}
-          endResults={tp.endResults}
+          whereRef={tp.whereRef}
+          whenRef={tp.whenRef}
           activePill={tp.activePill}
           showWherePopover={tp.showWherePopover}
           showCalendar={tp.showCalendar}
           mobileSheetOpen={tp.mobileSheetOpen}
-          whereRef={tp.whereRef}
-          whenRef={tp.whenRef}
+          mobileActive={tp.mobileActive}
+          whereStep={tp.whereStep}
+          startQuery={tp.startQuery}
+          endQuery={tp.endQuery}
+          startResults={tp.startResults}
+          endResults={tp.endResults}
+          recent={tp.recent}
+          suggested={tp.suggested}
+          startCityId={tp.startCityId}
+          endCityId={tp.endCityId}
+          startDate={tp.startDate}
+          endDate={tp.endDate}
+          dateRange={tp.dateRange}
+          calendarMonth={tp.calendarMonth}
+          whereSummary={tp.whereSummary}
+          whenLabel={tp.whenLabel}
+          totalTripDays={tp.totalTripDays}
+          setMobileActive={tp.setMobileActive}
+          setShowCalendar={tp.setShowCalendar}
+          setActivePill={tp.setActivePill}
           setStartQuery={tp.setStartQuery}
           setEndQuery={tp.setEndQuery}
-          setStartDate={tp.setStartDate}
-          setEndDate={tp.setEndDate}
-          onOpenWhere={tp.openWhereDesktop}
-          onOpenWhen={tp.openWhenDesktop}
-          onOpenMobileSheet={tp.openMobileSheet}
-          onCloseMobileSheet={tp.closeMobileSheet}
-          onSelectStart={tp.selectStartCity}
-          onSelectEnd={tp.selectEndCity}
-          onToggleReturnToStart={tp.selectReturnToStart}
-          onRangeChange={tp.handleDateRangeChange}
+          openMobileSheet={tp.openMobileSheet}
+          closeMobileSheet={tp.closeMobileSheet}
+          openWhereDesktop={tp.openWhereDesktop}
+          openWhenDesktop={tp.openWhenDesktop}
+          selectStartCity={tp.selectStartCity}
+          selectEndCity={tp.selectEndCity}
+          selectReturnToStart={tp.selectReturnToStart}
+          setWhereStep={tp.setWhereStep}
+          handleDateRangeChange={tp.handleDateRangeChange}
+          setDateRange={tp.setDateRange}
+          setCalendarMonth={tp.setCalendarMonth}
+          clearDates={() => {
+            tp.setDateRange(undefined);
+            tp.setStartDate("");
+            tp.setEndDate("");
+            tp.setCalendarMonth(new Date());
+          }}
         />
 
-        <WaypointsSection
-          waypoints={tp.waypoints}
-          setWaypoints={tp.setWaypoints}
-          suggestedWaypoints={tp.suggestedWaypoints}
-          isLoading={tp.isLoading}
-        />
+        <WaypointsSection waypoints={tp.waypoints} onChange={tp.setWaypoints} />
 
         <div className="flex justify-end">
           <button
