@@ -546,6 +546,16 @@ export function useTripPlanner() {
     setOpenStops((prev) => ({ ...prev, [stopIndex]: !(prev[stopIndex] ?? false) }));
   }
 
+  function expandAllStops() {
+    const next: Record<number, boolean> = {};
+    for (let i = 0; i < routeStops.length; i++) next[i] = true;
+    setOpenStops(next);
+  }
+
+  function collapseAllStops() {
+    setOpenStops({});
+  }
+
   const totalTripDays =
     startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
@@ -643,6 +653,8 @@ export function useTripPlanner() {
     updateDayNotes,
     updateDayAccommodation,
     toggleStopOpen,
+    expandAllStops,
+    collapseAllStops,
     // results
     startResults,
     endResults,
