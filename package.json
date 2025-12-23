@@ -9,27 +9,29 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@supabase/supabase-js": "^2.43.0",
+    "@vercel/analytics": "latest",
+    "classnames": "2.5.1",
+    "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.0",
+    "lucide-react": "0.441.0",
     "next": "14.2.5",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "lucide-react": "0.441.0",
-    "classnames": "2.5.1",
-    "recharts": "^2",
-    "@vercel/analytics": "latest",
-    "@vercel/speed-insights": "latest",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1",
-    "leaflet-routing-machine": "^3.2.0",
     "react-day-picker": "^9.0.5",
-    "@supabase/supabase-js": "^2.43.0"
+    "react-dom": "18.2.0",
+    "react-leaflet": "^4.2.1",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.9",
+    "@types/node": "20.11.30",
+    "@types/react": "18.2.79",
     "autoprefixer": "10.4.20",
     "postcss": "8.4.41",
     "tailwindcss": "3.4.10",
-    "typescript": "5.4.5",
-    "@types/react": "18.2.79",
-    "@types/node": "20.11.30",
-    "@types/leaflet": "^1.9.9"
+    "typescript": "5.4.5"
   }
 }
