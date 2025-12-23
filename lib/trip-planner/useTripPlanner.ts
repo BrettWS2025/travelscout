@@ -8,12 +8,12 @@ import {
   countDaysInclusive,
 } from "@/lib/itinerary";
 import {
-  NZ_CITIES,
-  DEFAULT_START_CITY_ID,
   DEFAULT_END_CITY_ID,
+  DEFAULT_START_CITY_ID,
   getCityById,
+  NZ_CITIES,
 } from "@/lib/nzCities";
-import { orderWaypointNamesByRoute } from "@/lib/routeOrdering";
+import { NZ_STOPS } from "@/lib/nzStops";
 import {
   allocateNightsForStops,
   buildDayStopMeta,
@@ -35,26 +35,7 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
   return copy;
 }
 
-type ActivePill = "where" | "when" | null;
-
-export default function useTripPlanner() {
-  // Refs for outside-click close on desktop popovers
-  const whereRef = useRef<HTMLDivElement | null>(null);
-  const whenRef = useRef<HTMLDivElement | null>(null);
-
-  const [activePill, setActivePill] = useState<ActivePill>(null);
-
-  // Desktop popovers
-  const [showWherePopover, setShowWherePopover] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
-
-  // Mobile sheet
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
-
-  // Recent trips
-  const [recent, setRecent] = useState<RecentTrip[]>([]);
-
-  // Form state
+export function useTripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
   const [returnToStart, setReturnToStart] = useState(false);
@@ -69,21 +50,20 @@ export default function useTripPlanner() {
     return d.toISOString().slice(0, 10);
   });
 
-  // Search UI for city selects
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
-
-  // The generated plan (day-by-day)
-  const [plan, setPlan] = useState<TripPlan>({ days: [] });
 
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(
     undefined
   );
 
-  // status
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const [recent, setRecent] = useState<RecentTrip[]>([]);
+
+  const [plan, setPlan] = useState<TripPlan>({ days: [] });
 
   const [routeStops, setRouteStops] = useState<string[]>([]);
   const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
@@ -102,17 +82,21 @@ export default function useTripPlanner() {
     NZ_CITIES[0]?.id ?? null
   );
 
-  // ✅ UI state for nested stop groups (collapsed by default)
+  // stop-group open/close UI
   const [openStops, setOpenStops] = useState<Record<number, boolean>>({});
 
-  const startCity = getCityById(startCityId);
-  const endCity = getCityById(endCityId);
+  // Desktop popovers / mobile sheet state (your existing UI)
+  const whereRef = useRef<HTMLDivElement | null>(null);
+  const whenRef = useRef<HTMLDivElement | null>(null);
+  const [activePill, setActivePill] = useState<"where" | "when" | null>(null);
+  const [showWherePopover, setShowWherePopover] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   useEffect(() => {
     setRecent(safeReadRecent());
   }, []);
 
-  // Close desktop popovers on outside click
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       const t = e.target as Node | null;
@@ -133,12 +117,12 @@ export default function useTripPlanner() {
 
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePill]);
 
-  const totalTripDays = useMemo(() => {
-    return countDaysInclusive(startDate, endDate);
-  }, [startDate, endDate]);
+  const totalTripDays = useMemo(
+    () => countDaysInclusive(startDate, endDate),
+    [startDate, endDate]
+  );
 
   const startResults = useMemo(() => {
     const q = startQuery.trim().toLowerCase();
@@ -151,6 +135,13 @@ export default function useTripPlanner() {
     if (!q) return NZ_CITIES;
     return NZ_CITIES.filter((c) => c.name.toLowerCase().includes(q));
   }, [endQuery]);
+
+  // Waypoints state (used by WaypointsSection in your UI)
+  const [waypoints, setWaypoints] = useState<string[]>(
+    NZ_STOPS.slice(0, 3).map((s) => s.name)
+  );
+
+  const suggestedWaypoints = useMemo(() => NZ_STOPS.map((s) => s.name), []);
 
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
@@ -250,15 +241,8 @@ export default function useTripPlanner() {
     setHasSubmitted(true);
 
     try {
-      // Build ordered route stop names (start + waypoints + end)
-      const orderedNames = orderWaypointNamesByRoute(
-        start.name,
-        end.name,
-        startDate,
-        endDate
-      );
-
-      const stops = [start.name, ...orderedNames, end.name];
+      // stops = start + waypoints + end
+      const stops = [start.name, ...waypoints, end.name];
       setRouteStops(stops);
 
       const totalDays = countDaysInclusive(startDate, endDate);
@@ -273,26 +257,14 @@ export default function useTripPlanner() {
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
-
-      setOpenStops({}); // collapse everything by default
+      setOpenStops({});
 
       // map points
-      const waypointPoints =
-        orderedNames
-          .map((nm) => NZ_CITIES.find((c) => c.name === nm))
-          .filter(Boolean)
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          .map((stop) => ({
-            lat: stop!.lat,
-            lng: stop!.lng,
-            name: stop!.name,
-          })) ?? [];
-
-      const points: MapPoint[] = [
-        { lat: start.lat, lng: start.lng, name: start.name },
-        ...waypointPoints,
-        { lat: end.lat, lng: end.lng, name: end.name },
-      ];
+      const points: MapPoint[] = stops
+        .map((name) => NZ_CITIES.find((c) => c.name === name))
+        .filter(Boolean)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        .map((c) => ({ lat: c!.lat, lng: c!.lng, name: c!.name }));
 
       setMapPoints(points);
 
@@ -307,7 +279,6 @@ export default function useTripPlanner() {
         setLegsLoading(false);
       }
 
-      // Save recent
       safeWriteRecent([
         {
           id: crypto.randomUUID(),
@@ -330,10 +301,7 @@ export default function useTripPlanner() {
   }
 
   function handleChangeNights(stopIndex: number, newValue: number) {
-    if (stopIndex <= 0 || stopIndex >= routeStops.length - 1) {
-      alert("Start/end nights are determined by your trip dates.");
-      return;
-    }
+    if (stopIndex <= 0 || stopIndex >= routeStops.length - 1) return;
 
     const next = nightsPerStop.slice();
     next[stopIndex] = Math.max(1, Math.floor(newValue || 1));
@@ -344,25 +312,10 @@ export default function useTripPlanner() {
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(routeStops, next));
-
-    if (nextPlan.days.length > 0) {
-      const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
-    }
   }
 
   function handleRemoveStop(idx: number) {
-    if (idx <= 0 || idx >= routeStops.length - 1) {
-      alert("You can’t remove your start or end city from here.");
-      return;
-    }
-    if (
-      !window.confirm(
-        `Remove ${routeStops[idx]} from this trip? All days for this stop will be deleted.`
-      )
-    ) {
-      return;
-    }
+    if (idx <= 0 || idx >= routeStops.length - 1) return;
 
     const newRouteStops = routeStops.filter((_, i) => i !== idx);
     const newNightsPerStop = nightsPerStop.filter((_, i) => i !== idx);
@@ -382,11 +335,6 @@ export default function useTripPlanner() {
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
 
-    if (nextPlan.days.length > 0) {
-      const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
-    }
-
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -401,13 +349,12 @@ export default function useTripPlanner() {
     }
   }
 
+  // ✅ NEW: reorder stop groups (keeps start/end fixed), updates map + legs + summary
   function handleReorderStops(fromIndex: number, toIndex: number) {
-    // keep start/end fixed
     const minIndex = 1;
     const maxIndex = routeStops.length - 2;
 
     if (routeStops.length < 3) return;
-    if (fromIndex === toIndex) return;
 
     const from = Math.min(Math.max(fromIndex, minIndex), maxIndex);
     const to = Math.min(Math.max(toIndex, minIndex), maxIndex);
@@ -418,7 +365,7 @@ export default function useTripPlanner() {
     const newNightsPerStop = arrayMove(nightsPerStop, from, to);
     const newMapPoints = arrayMove(mapPoints, from, to);
 
-    // preserve open state by stop name (since indices change)
+    // preserve open state by stop name
     const nextOpenStops: Record<number, boolean> = {};
     for (let oldIdx = 0; oldIdx < routeStops.length; oldIdx++) {
       if (!openStops[oldIdx]) continue;
@@ -441,13 +388,6 @@ export default function useTripPlanner() {
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
 
-    // update endDate to match new plan (defensive)
-    if (nextPlan.days.length > 0) {
-      const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
-    }
-
-    // re-route legs
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -513,11 +453,6 @@ export default function useTripPlanner() {
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
-
-    if (nextPlan.days.length > 0) {
-      const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
-    }
 
     setAddingStopAfterIndex(null);
 
@@ -590,20 +525,15 @@ export default function useTripPlanner() {
   }
 
   return {
-    // refs
     whereRef,
     whenRef,
-
-    // main UI state
     activePill,
     showWherePopover,
     showCalendar,
     mobileSheetOpen,
 
-    // recent
     recent,
 
-    // form state
     startCityId,
     endCityId,
     returnToStart,
@@ -613,7 +543,6 @@ export default function useTripPlanner() {
     endDate,
     selectedRange,
 
-    // results
     plan,
     routeStops,
     nightsPerStop,
@@ -623,11 +552,15 @@ export default function useTripPlanner() {
     legs,
     legsLoading,
 
-    // misc
     totalTripDays,
     isLoading,
     errorMsg,
     hasSubmitted,
+
+    // waypoints
+    waypoints,
+    setWaypoints,
+    suggestedWaypoints,
 
     // add-stop UI
     addingStopAfterIndex,
@@ -661,8 +594,8 @@ export default function useTripPlanner() {
     toggleStopOpen,
     expandAllStops,
     collapseAllStops,
-    // results
+
     startResults,
-    endResults,
+    endResults
   };
 }
