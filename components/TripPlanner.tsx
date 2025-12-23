@@ -12,7 +12,11 @@ export default function TripPlanner() {
 
   return (
     <div className="space-y-8">
-      <form onSubmit={tp.handleSubmit} className="card p-4 md:p-6 space-y-6">
+      <form
+        onSubmit={tp.handleSubmit}
+        className="card p-4 md:p-6 space-y-6"
+        style={{ color: "var(--text)" }}
+      >
         <WhereWhenPicker
           whereRef={tp.whereRef}
           whenRef={tp.whenRef}
@@ -24,14 +28,12 @@ export default function TripPlanner() {
           whereStep={tp.whereStep}
           startQuery={tp.startQuery}
           endQuery={tp.endQuery}
-          startResults={tp.startResults}
-          endResults={tp.endResults}
           recent={tp.recent}
           suggested={tp.suggested}
+          startResults={tp.startResults}
+          endResults={tp.endResults}
           startCityId={tp.startCityId}
           endCityId={tp.endCityId}
-          startDate={tp.startDate}
-          endDate={tp.endDate}
           dateRange={tp.dateRange}
           calendarMonth={tp.calendarMonth}
           whereSummary={tp.whereSummary}
@@ -63,18 +65,24 @@ export default function TripPlanner() {
 
         <WaypointsSection waypoints={tp.waypoints} onChange={tp.setWaypoints} />
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="btn btn-accent px-6 py-3"
-            disabled={tp.isLoading}
-          >
-            {tp.isLoading ? "Generating..." : "Generate itinerary"}
-          </button>
-        </div>
+        {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
+
+        <button
+          type="submit"
+          className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition"
+        >
+          Generate itinerary
+        </button>
       </form>
 
-      {tp.hasSubmitted && tp.plan.days.length > 0 && (
+      {/* Results */}
+      {tp.hasSubmitted && !tp.plan && !tp.error && (
+        <p className="text-sm text-gray-400">
+          Fill in your trip details and click &quot;Generate itinerary&quot;.
+        </p>
+      )}
+
+      {tp.plan && tp.plan.days.length > 0 && (
         <DraftItinerary
           plan={tp.plan}
           routeStops={tp.routeStops}
@@ -100,11 +108,7 @@ export default function TripPlanner() {
         />
       )}
 
-      <RouteOverview
-        mapPoints={tp.mapPoints}
-        legs={tp.legs}
-        legsLoading={tp.legsLoading}
-      />
+      <RouteOverview mapPoints={tp.mapPoints} legs={tp.legs} legsLoading={tp.legsLoading} />
 
       <TripSummary
         routeStops={tp.routeStops}
