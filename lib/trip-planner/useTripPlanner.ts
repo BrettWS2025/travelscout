@@ -35,6 +35,13 @@ import {
 
 type ActivePill = "where" | "when" | null;
 
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  const copy = arr.slice();
+  const [item] = copy.splice(from, 1);
+  copy.splice(to, 0, item);
+  return copy;
+}
+
 export function useTripPlanner() {
   const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
   const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
@@ -65,10 +72,7 @@ export function useTripPlanner() {
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
 
-  const [waypoints, setWaypoints] = useState<string[]>([
-    "Lake Tekapo",
-    "Cromwell",
-  ]);
+  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,11 +89,8 @@ export function useTripPlanner() {
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
 
   // UI state for "add stop after this"
-  const [addingStopAfterIndex, setAddingStopAfterIndex] =
-    useState<number | null>(null);
-  const [newStopCityId, setNewStopCityId] = useState<string | null>(
-    NZ_CITIES[0]?.id ?? null
-  );
+  const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
+  const [newStopCityId, setNewStopCityId] = useState<string | null>(NZ_CITIES[0]?.id ?? null);
 
   // ✅ UI state for nested stop groups (collapsed by default)
   const [openStops, setOpenStops] = useState<Record<number, boolean>>({});
@@ -321,11 +322,7 @@ export function useTripPlanner() {
       const initialNights = allocateNightsForStops(stops.length, totalDays);
       setNightsPerStop(initialNights);
 
-      const nextPlan = buildTripPlanFromStopsAndNights(
-        stops,
-        initialNights,
-        startDate
-      );
+      const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
@@ -413,15 +410,69 @@ export function useTripPlanner() {
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(
-      newRouteStops,
-      newNightsPerStop,
-      startDate
-    );
+    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
+
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+
+    if (newMapPoints.length >= 2) {
+      setLegsLoading(true);
+      fetchRoadLegs(newMapPoints)
+        .then((roadLegs) => setLegs(roadLegs))
+        .catch((routingErr) => {
+          console.error("Road routing failed, falling back:", routingErr);
+          setLegs(buildFallbackLegs(newMapPoints));
+        })
+        .finally(() => setLegsLoading(false));
+    } else {
+      setLegs([]);
+    }
+  }
+
+  // ✅ NEW: drag/drop reorder for main stops
+  function handleReorderStops(fromIndex: number, toIndex: number) {
+    if (!startDate) return;
+    if (!routeStops.length) return;
+
+    // keep start/end fixed
+    const minIndex = 1;
+    const maxIndex = routeStops.length - 2;
+
+    if (routeStops.length < 3) return;
+
+    const from = Math.min(Math.max(fromIndex, minIndex), maxIndex);
+    const to = Math.min(Math.max(toIndex, minIndex), maxIndex);
+
+    if (from === to) return;
+
+    const newRouteStops = arrayMove(routeStops, from, to);
+    const newNightsPerStop = arrayMove(nightsPerStop, from, to);
+    const newMapPoints = arrayMove(mapPoints, from, to);
+
+    // preserve open state by stop name
+    const nextOpenStops: Record<number, boolean> = {};
+    for (let oldIdx = 0; oldIdx < routeStops.length; oldIdx++) {
+      if (!openStops[oldIdx]) continue;
+      const stopName = routeStops[oldIdx];
+      const newIdx = newRouteStops.indexOf(stopName);
+      if (newIdx >= 0) nextOpenStops[newIdx] = true;
+    }
+
+    setRouteStops(newRouteStops);
+    setNightsPerStop(newNightsPerStop);
+    setMapPoints(newMapPoints);
+    setOpenStops(nextOpenStops);
+
+    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
 
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
@@ -480,11 +531,7 @@ export function useTripPlanner() {
     setMapPoints(newMapPoints);
     setAddingStopAfterIndex(null);
 
-    const nextPlan = buildTripPlanFromStopsAndNights(
-      newRouteStops,
-      newNightsPerStop,
-      startDate
-    );
+    const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     syncDayDetailsFromPlan(nextPlan);
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
@@ -556,8 +603,7 @@ export function useTripPlanner() {
     setOpenStops({});
   }
 
-  const totalTripDays =
-    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
+  const totalTripDays = startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
 
   const whenLabel =
     startDate && endDate
@@ -646,6 +692,7 @@ export function useTripPlanner() {
     selectReturnToStart,
     handleChangeNights,
     handleRemoveStop,
+    handleReorderStops,
     handleStartAddStop,
     handleCancelAddStop,
     handleConfirmAddStop,

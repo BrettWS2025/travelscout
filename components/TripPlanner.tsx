@@ -104,14 +104,11 @@ export default function TripPlanner() {
           onConfirmAddStop={tp.handleConfirmAddStop}
           onCancelAddStop={tp.handleCancelAddStop}
           onRemoveStop={tp.handleRemoveStop}
+          onReorderStops={tp.handleReorderStops}
         />
       )}
 
-      <RouteOverview
-        mapPoints={tp.mapPoints}
-        legs={tp.legs}
-        legsLoading={tp.legsLoading}
-      />
+      <RouteOverview mapPoints={tp.mapPoints} legs={tp.legs} legsLoading={tp.legsLoading} />
 
       <TripSummary
         routeStops={tp.routeStops}
