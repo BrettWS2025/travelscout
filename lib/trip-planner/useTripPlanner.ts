@@ -13,65 +13,76 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
 } from "@/lib/nzCities";
-import { orderWaypointNamesByRoute } from "@/lib/nzStops";
+import { orderWaypointNamesByRoute } from "@/lib/routeOrdering";
 import {
   allocateNightsForStops,
   buildDayStopMeta,
   buildFallbackLegs,
   fetchRoadLegs,
-  formatShortRangeDate,
-  fromIsoDate,
   makeDayKey,
-  normalize,
-  pickSuggestedCities,
   safeReadRecent,
   safeWriteRecent,
-  toIsoDate,
-  type CityLite,
   type DayDetail,
   type DayStopMeta,
   type MapPoint,
+  type RecentTrip,
 } from "@/lib/trip-planner/utils";
+
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  const copy = arr.slice();
+  const [item] = copy.splice(from, 1);
+  copy.splice(to, 0, item);
+  return copy;
+}
 
 type ActivePill = "where" | "when" | null;
 
-export function useTripPlanner() {
-  const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
-  const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
+export default function useTripPlanner() {
+  // Refs for outside-click close on desktop popovers
+  const whereRef = useRef<HTMLDivElement | null>(null);
+  const whenRef = useRef<HTMLDivElement | null>(null);
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-
-  // ✅ Controlled month to prevent "jump back to current month"
-  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+  const [activePill, setActivePill] = useState<ActivePill>(null);
 
   // Desktop popovers
-  const [activePill, setActivePill] = useState<ActivePill>(null);
   const [showWherePopover, setShowWherePopover] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
   // Mobile sheet
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
-  const [mobileActive, setMobileActive] = useState<ActivePill>("where");
 
-  // Where typing state
-  const [whereStep, setWhereStep] = useState<"start" | "end">("start");
+  // Recent trips
+  const [recent, setRecent] = useState<RecentTrip[]>([]);
+
+  // Form state
+  const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
+  const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
+  const [returnToStart, setReturnToStart] = useState(false);
+
+  const [startDate, setStartDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 6);
+    return d.toISOString().slice(0, 10);
+  });
+
+  // Search UI for city selects
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
-  const [recent, setRecent] = useState<CityLite[]>([]);
-  const suggested = useMemo(() => pickSuggestedCities(), []);
 
-  const whereRef = useRef<HTMLDivElement | null>(null);
-  const whenRef = useRef<HTMLDivElement | null>(null);
+  // The generated plan (day-by-day)
+  const [plan, setPlan] = useState<TripPlan>({ days: [] });
 
-  const [waypoints, setWaypoints] = useState<string[]>([
-    "Lake Tekapo",
-    "Cromwell",
-  ]);
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(
+    undefined
+  );
 
-  const [plan, setPlan] = useState<TripPlan | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // status
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const [routeStops, setRouteStops] = useState<string[]>([]);
@@ -125,196 +136,129 @@ export function useTripPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePill]);
 
-  // Lock body scroll when mobile sheet open
-  useEffect(() => {
-    if (!mobileSheetOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileSheetOpen]);
+  const totalTripDays = useMemo(() => {
+    return countDaysInclusive(startDate, endDate);
+  }, [startDate, endDate]);
+
+  const startResults = useMemo(() => {
+    const q = startQuery.trim().toLowerCase();
+    if (!q) return NZ_CITIES;
+    return NZ_CITIES.filter((c) => c.name.toLowerCase().includes(q));
+  }, [startQuery]);
+
+  const endResults = useMemo(() => {
+    const q = endQuery.trim().toLowerCase();
+    if (!q) return NZ_CITIES;
+    return NZ_CITIES.filter((c) => c.name.toLowerCase().includes(q));
+  }, [endQuery]);
 
   function syncDayDetailsFromPlan(nextPlan: TripPlan) {
     setDayDetails((prev) => {
       const next: Record<string, DayDetail> = {};
+
       for (const d of nextPlan.days) {
         const key = makeDayKey(d.date, d.location);
-        next[key] =
-          prev[key] ?? {
-            notes: "",
-            accommodation: "",
-            isOpen: false,
-          };
+        const existing = prev[key];
+        next[key] = {
+          isOpen: existing?.isOpen ?? false,
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+        };
       }
+
       return next;
     });
-  }
-
-  function handleDateRangeChange(range: DateRange | undefined) {
-    setDateRange(range);
-
-    if (!range?.from) {
-      setStartDate("");
-      setEndDate("");
-      return;
-    }
-
-    if (!range.to) {
-      setStartDate(toIsoDate(range.from));
-      setEndDate("");
-      setCalendarMonth(range.from);
-      return;
-    }
-
-    let from = range.from;
-    let to = range.to;
-    if (to < from) [from, to] = [to, from];
-
-    setStartDate(toIsoDate(from));
-    setEndDate(toIsoDate(to));
-    setCalendarMonth(from);
-  }
-
-  function pushRecent(city: CityLite) {
-    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 8);
-    setRecent(next);
-    safeWriteRecent(next);
   }
 
   function openWhereDesktop() {
     setActivePill("where");
     setShowWherePopover(true);
     setShowCalendar(false);
-    setWhereStep("start");
-    setStartQuery(startCity?.name ?? "");
-    setEndQuery(endCity?.name ?? "");
   }
 
   function openWhenDesktop() {
     setActivePill("when");
     setShowCalendar(true);
     setShowWherePopover(false);
-
-    const anchor = fromIsoDate(startDate) ?? new Date();
-    setCalendarMonth(anchor);
   }
 
   function openMobileSheet() {
     setMobileSheetOpen(true);
-    setMobileActive("where");
-    setWhereStep("start");
-    setStartQuery(startCity?.name ?? "");
-    setEndQuery(endCity?.name ?? "");
-
-    const anchor = fromIsoDate(startDate) ?? new Date();
-    setCalendarMonth(anchor);
   }
 
   function closeMobileSheet() {
     setMobileSheetOpen(false);
   }
 
-  function selectStartCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
-
-    setStartCityId(cityId);
-    setStartQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
-
-    setWhereStep("end");
+  function selectStartCity(id: string) {
+    setStartCityId(id);
+    const c = getCityById(id);
+    setStartQuery(c?.name ?? "");
+    setShowWherePopover(false);
+    setActivePill(null);
   }
 
-  function selectEndCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
-
-    setEndCityId(cityId);
-    setEndQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
-
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
-      }
-    }, 0);
+  function selectEndCity(id: string) {
+    setEndCityId(id);
+    const c = getCityById(id);
+    setEndQuery(c?.name ?? "");
+    setShowWherePopover(false);
+    setActivePill(null);
   }
 
-  function selectReturnToStart() {
-    if (!startCity) return;
-    setEndCityId(startCity.id);
-    setEndQuery("Return to start city");
-
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
-      }
-    }, 0);
+  function selectReturnToStart(v: boolean) {
+    setReturnToStart(v);
+    if (v) {
+      setEndCityId(startCityId);
+      const c = getCityById(startCityId);
+      setEndQuery(c?.name ?? "");
+    } else {
+      setEndCityId(DEFAULT_END_CITY_ID);
+      const c = getCityById(DEFAULT_END_CITY_ID);
+      setEndQuery(c?.name ?? "");
+    }
   }
 
-  const startResults = useMemo(() => {
-    const q = normalize(startQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
-  }, [startQuery]);
+  function handleDateRangeChange(range: DateRange | undefined) {
+    setSelectedRange(range);
+    if (!range?.from || !range?.to) return;
 
-  const endResults = useMemo(() => {
-    const q = normalize(endQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
-  }, [endQuery]);
+    const from = range.from.toISOString().slice(0, 10);
+    const to = range.to.toISOString().slice(0, 10);
+    setStartDate(from);
+    setEndDate(to);
+  }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setHasSubmitted(true);
-    setError(null);
+    setErrorMsg(null);
 
     const start = getCityById(startCityId);
-    const end = getCityById(endCityId);
-
-    if (!start || !end) {
-      setPlan(null);
-      setMapPoints([]);
-      setLegs([]);
-      setError("Please select both a start city and an end city.");
+    if (!start) {
+      setErrorMsg("Please select a start city.");
       return;
     }
 
-    if (!startDate || !endDate) {
-      setPlan(null);
-      setMapPoints([]);
-      setLegs([]);
-      setError("Please select your trip dates.");
+    const endId = returnToStart ? startCityId : endCityId;
+    const end = getCityById(endId);
+    if (!end) {
+      setErrorMsg("Please select an end city.");
       return;
     }
+
+    setIsLoading(true);
+    setHasSubmitted(true);
 
     try {
-      const rawWaypointNames = waypoints;
-
-      const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
-        start,
-        end,
-        rawWaypointNames
+      // Build ordered route stop names (start + waypoints + end)
+      const orderedNames = orderWaypointNamesByRoute(
+        start.name,
+        end.name,
+        startDate,
+        endDate
       );
 
-      const stops: string[] = [start.name, ...orderedNames, end.name];
+      const stops = [start.name, ...orderedNames, end.name];
       setRouteStops(stops);
 
       const totalDays = countDaysInclusive(startDate, endDate);
@@ -330,19 +274,19 @@ export function useTripPlanner() {
       syncDayDetailsFromPlan(nextPlan);
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
 
-      // collapse stop groups by default for new plans
-      setOpenStops({});
+      setOpenStops({}); // collapse everything by default
 
-      if (nextPlan.days.length > 0) {
-        const last = nextPlan.days[nextPlan.days.length - 1];
-        setEndDate(last.date);
-      }
-
-      const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
-        lat: stop.lat,
-        lng: stop.lng,
-        name: stop.name,
-      }));
+      // map points
+      const waypointPoints =
+        orderedNames
+          .map((nm) => NZ_CITIES.find((c) => c.name === nm))
+          .filter(Boolean)
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          .map((stop) => ({
+            lat: stop!.lat,
+            lng: stop!.lng,
+            name: stop!.name,
+          })) ?? [];
 
       const points: MapPoint[] = [
         { lat: start.lat, lng: start.lng, name: start.name },
@@ -362,22 +306,37 @@ export function useTripPlanner() {
       } finally {
         setLegsLoading(false);
       }
+
+      // Save recent
+      safeWriteRecent([
+        {
+          id: crypto.randomUUID(),
+          createdAt: Date.now(),
+          startCityId,
+          endCityId: endId,
+          returnToStart,
+          startDate,
+          endDate,
+        },
+        ...recent,
+      ]);
+      setRecent(safeReadRecent());
     } catch (err) {
-      setPlan(null);
-      setMapPoints([]);
-      setLegs([]);
-      setLegsLoading(false);
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      console.error(err);
+      setErrorMsg("Something went wrong generating your itinerary.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  function handleChangeNights(idx: number, newValue: number) {
-    if (!routeStops.length) return;
-    if (!startDate) return;
+  function handleChangeNights(stopIndex: number, newValue: number) {
+    if (stopIndex <= 0 || stopIndex >= routeStops.length - 1) {
+      alert("Start/end nights are determined by your trip dates.");
+      return;
+    }
 
-    const safe = Math.max(1, Math.floor(Number.isNaN(newValue) ? 1 : newValue));
-    const next = [...nightsPerStop];
-    next[idx] = safe;
+    const next = nightsPerStop.slice();
+    next[stopIndex] = Math.max(1, Math.floor(newValue || 1));
 
     setNightsPerStop(next);
 
@@ -442,9 +401,77 @@ export function useTripPlanner() {
     }
   }
 
-  function handleStartAddStop(afterIndex: number) {
-    setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
+  function handleReorderStops(fromIndex: number, toIndex: number) {
+    // keep start/end fixed
+    const minIndex = 1;
+    const maxIndex = routeStops.length - 2;
+
+    if (routeStops.length < 3) return;
+    if (fromIndex === toIndex) return;
+
+    const from = Math.min(Math.max(fromIndex, minIndex), maxIndex);
+    const to = Math.min(Math.max(toIndex, minIndex), maxIndex);
+
+    if (from === to) return;
+
+    const newRouteStops = arrayMove(routeStops, from, to);
+    const newNightsPerStop = arrayMove(nightsPerStop, from, to);
+    const newMapPoints = arrayMove(mapPoints, from, to);
+
+    // preserve open state by stop name (since indices change)
+    const nextOpenStops: Record<number, boolean> = {};
+    for (let oldIdx = 0; oldIdx < routeStops.length; oldIdx++) {
+      if (!openStops[oldIdx]) continue;
+      const stopName = routeStops[oldIdx];
+      const newIdx = newRouteStops.indexOf(stopName);
+      if (newIdx >= 0) nextOpenStops[newIdx] = true;
+    }
+
+    setRouteStops(newRouteStops);
+    setNightsPerStop(newNightsPerStop);
+    setMapPoints(newMapPoints);
+    setOpenStops(nextOpenStops);
+
+    const nextPlan = buildTripPlanFromStopsAndNights(
+      newRouteStops,
+      newNightsPerStop,
+      startDate
+    );
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
+
+    // update endDate to match new plan (defensive)
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+
+    // re-route legs
+    if (newMapPoints.length >= 2) {
+      setLegsLoading(true);
+      fetchRoadLegs(newMapPoints)
+        .then((roadLegs) => setLegs(roadLegs))
+        .catch((routingErr) => {
+          console.error("Road routing failed, falling back:", routingErr);
+          setLegs(buildFallbackLegs(newMapPoints));
+        })
+        .finally(() => setLegsLoading(false));
+    } else {
+      setLegs([]);
+    }
+  }
+
+  function handleStartAddStop(stopIndex: number) {
+    if (stopIndex < 0 || stopIndex >= routeStops.length) return;
+    setAddingStopAfterIndex(stopIndex);
+
+    const currentName = routeStops[stopIndex];
+    const current = NZ_CITIES.find((c) => c.name === currentName);
+    const nextCandidate =
+      NZ_CITIES.find((c) => c.id !== current?.id)?.id ?? NZ_CITIES[0]?.id ?? null;
+
+    setNewStopCityId(nextCandidate);
   }
 
   function handleCancelAddStop() {
@@ -452,33 +479,30 @@ export function useTripPlanner() {
   }
 
   function handleConfirmAddStop() {
-    if (addingStopAfterIndex === null || !newStopCityId) return;
+    if (addingStopAfterIndex == null) return;
+    if (!newStopCityId) return;
+
+    const afterIdx = addingStopAfterIndex;
+    if (afterIdx >= routeStops.length - 1) return;
 
     const city = getCityById(newStopCityId);
-    if (!city) {
-      alert("Please select a valid stop.");
-      return;
-    }
+    if (!city) return;
 
-    const insertIndex = addingStopAfterIndex + 1;
+    const insertedName = city.name;
 
-    const newRouteStops = [...routeStops];
-    newRouteStops.splice(insertIndex, 0, city.name);
+    const newRouteStops = routeStops.slice();
+    newRouteStops.splice(afterIdx + 1, 0, insertedName);
 
-    const newNightsPerStop = [...nightsPerStop];
-    newNightsPerStop.splice(insertIndex, 0, 1);
+    const newNightsPerStop = nightsPerStop.slice();
+    newNightsPerStop.splice(afterIdx + 1, 0, 1);
 
-    const newMapPoints = [...mapPoints];
-    newMapPoints.splice(insertIndex, 0, {
-      lat: city.lat,
-      lng: city.lng,
-      name: city.name,
-    });
+    const newPoint: MapPoint = { lat: city.lat, lng: city.lng, name: city.name };
+    const newMapPoints = mapPoints.slice();
+    newMapPoints.splice(afterIdx + 1, 0, newPoint);
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
-    setAddingStopAfterIndex(null);
 
     const nextPlan = buildTripPlanFromStopsAndNights(
       newRouteStops,
@@ -495,6 +519,8 @@ export function useTripPlanner() {
       setEndDate(last.date);
     }
 
+    setAddingStopAfterIndex(null);
+
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -504,18 +530,20 @@ export function useTripPlanner() {
           setLegs(buildFallbackLegs(newMapPoints));
         })
         .finally(() => setLegsLoading(false));
+    } else {
+      setLegs([]);
     }
   }
 
   function toggleDayOpen(date: string, location: string) {
     const key = makeDayKey(date, location);
-    setDayDetails((prev) => {
-      const existing = prev[key];
-      if (!existing) {
-        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true } };
-      }
-      return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
-    });
+    setDayDetails((prev) => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] ?? { isOpen: false, notes: "", accommodation: "" }),
+        isOpen: !(prev[key]?.isOpen ?? false),
+      },
+    }));
   }
 
   function updateDayNotes(date: string, location: string, notes: string) {
@@ -523,27 +551,32 @@ export function useTripPlanner() {
     setDayDetails((prev) => ({
       ...prev,
       [key]: {
+        ...(prev[key] ?? { isOpen: false, notes: "", accommodation: "" }),
         notes,
-        accommodation: prev[key]?.accommodation ?? "",
-        isOpen: prev[key]?.isOpen ?? true,
       },
     }));
   }
 
-  function updateDayAccommodation(date: string, location: string, accommodation: string) {
+  function updateDayAccommodation(
+    date: string,
+    location: string,
+    accommodation: string
+  ) {
     const key = makeDayKey(date, location);
     setDayDetails((prev) => ({
       ...prev,
       [key]: {
-        notes: prev[key]?.notes ?? "",
+        ...(prev[key] ?? { isOpen: false, notes: "", accommodation: "" }),
         accommodation,
-        isOpen: prev[key]?.isOpen ?? true,
       },
     }));
   }
 
   function toggleStopOpen(stopIndex: number) {
-    setOpenStops((prev) => ({ ...prev, [stopIndex]: !(prev[stopIndex] ?? false) }));
+    setOpenStops((prev) => ({
+      ...prev,
+      [stopIndex]: !(prev[stopIndex] ?? false),
+    }));
   }
 
   function expandAllStops() {
@@ -556,85 +589,57 @@ export function useTripPlanner() {
     setOpenStops({});
   }
 
-  const totalTripDays =
-    startDate && endDate ? countDaysInclusive(startDate, endDate) : 0;
-
-  const whenLabel =
-    startDate && endDate
-      ? `${formatShortRangeDate(startDate)} – ${formatShortRangeDate(endDate)}`
-      : startDate && !endDate
-      ? `${formatShortRangeDate(startDate)} – Add end date`
-      : "Add dates";
-
-  const whereSummary =
-    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
-
   return {
     // refs
     whereRef,
     whenRef,
 
-    // main state
-    startCityId,
-    endCityId,
-    startCity,
-    endCity,
-    startDate,
-    endDate,
-    dateRange,
-    calendarMonth,
-
+    // main UI state
     activePill,
     showWherePopover,
     showCalendar,
-
     mobileSheetOpen,
-    mobileActive,
 
-    whereStep,
+    // recent
+    recent,
+
+    // form state
+    startCityId,
+    endCityId,
+    returnToStart,
     startQuery,
     endQuery,
-    recent,
-    suggested,
+    startDate,
+    endDate,
+    selectedRange,
 
-    waypoints,
+    // results
     plan,
-    error,
-    hasSubmitted,
     routeStops,
     nightsPerStop,
     dayStopMeta,
+    dayDetails,
     mapPoints,
     legs,
     legsLoading,
-    dayDetails,
+
+    // misc
+    totalTripDays,
+    isLoading,
+    errorMsg,
+    hasSubmitted,
+
+    // add-stop UI
     addingStopAfterIndex,
     newStopCityId,
+    setNewStopCityId,
     openStops,
 
-    // derived labels
-    totalTripDays,
-    whenLabel,
-    whereSummary,
-
-    // setters
-    setCalendarMonth,
-    setDateRange,
-    setStartDate,
-    setEndDate,
-    setActivePill,
-    setShowWherePopover,
-    setShowCalendar,
-    setMobileActive,
-    setMobileSheetOpen,
-    setWhereStep,
+    // actions
     setStartQuery,
     setEndQuery,
-    setWaypoints,
-    setNewStopCityId,
-    setOpenStops,
-
-    // handlers
+    setStartDate,
+    setEndDate,
     handleDateRangeChange,
     handleSubmit,
     openWhereDesktop,
@@ -646,6 +651,7 @@ export function useTripPlanner() {
     selectReturnToStart,
     handleChangeNights,
     handleRemoveStop,
+    handleReorderStops,
     handleStartAddStop,
     handleCancelAddStop,
     handleConfirmAddStop,
