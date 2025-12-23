@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import type React from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
@@ -15,10 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { NZ_CITIES, getCityById } from "@/lib/nzCities";
-import {
-  normalize,
-  type CityLite,
-} from "@/lib/trip-planner/utils";
+import { normalize, type CityLite } from "@/lib/trip-planner/utils";
 
 type ActivePill = "where" | "when" | null;
 
@@ -47,9 +43,10 @@ function CityIcon({ variant }: { variant: "recent" | "suggested" | "nearby" }) {
 }
 
 export type WhereWhenPickerProps = {
-  // refs for outside click (owned by hook)
-  whereRef: React.RefObject<HTMLDivElement | null>;
-  whenRef: React.RefObject<HTMLDivElement | null>;
+  // ✅ refs for outside click (owned by hook)
+  // NOTE: RefObject<HTMLDivElement> already includes `current: HTMLDivElement | null`
+  whereRef: React.RefObject<HTMLDivElement>;
+  whenRef: React.RefObject<HTMLDivElement>;
 
   // state
   activePill: ActivePill;
@@ -140,8 +137,6 @@ function WhereListItem({
 function WherePickerPanel({
   step,
   mobileSheetOpen,
-  whereStep,
-  setWhereStep,
   startQuery,
   setStartQuery,
   endQuery,
@@ -157,8 +152,6 @@ function WherePickerPanel({
 }: {
   step: "start" | "end";
   mobileSheetOpen: boolean;
-  whereStep: "start" | "end";
-  setWhereStep: (s: "start" | "end") => void;
   startQuery: string;
   setStartQuery: (v: string) => void;
   endQuery: string;
@@ -185,7 +178,11 @@ function WherePickerPanel({
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-base font-semibold text-white">
-            {mobileSheetOpen ? "Where?" : isStart ? "Where are you starting?" : "Where are you finishing?"}
+            {mobileSheetOpen
+              ? "Where?"
+              : isStart
+              ? "Where are you starting?"
+              : "Where are you finishing?"}
           </div>
           {!mobileSheetOpen && (
             <div className="text-[11px] text-gray-300">
@@ -234,9 +231,15 @@ function WherePickerPanel({
                     <WhereListItem
                       key={`${step}-recent-${c.id}`}
                       title={c.name}
-                      subtitle={isStart ? "Recently used start city" : "Recently used destination"}
+                      subtitle={
+                        isStart
+                          ? "Recently used start city"
+                          : "Recently used destination"
+                      }
                       iconVariant="recent"
-                      onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
                     />
                   ))}
                 </div>
@@ -254,7 +257,9 @@ function WherePickerPanel({
                     title={c.name}
                     subtitle={isStart ? "Top departure" : "Top destination"}
                     iconVariant="suggested"
-                    onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                    onClick={() =>
+                      isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                    }
                   />
                 ))}
               </div>
@@ -277,7 +282,9 @@ function WherePickerPanel({
                     title={c.name}
                     subtitle="New Zealand"
                     iconVariant="suggested"
-                    onClick={() => (isStart ? selectStartCity(c.id) : selectEndCity(c.id))}
+                    onClick={() =>
+                      isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                    }
                   />
                 ))}
               </div>
@@ -290,8 +297,6 @@ function WherePickerPanel({
 }
 
 export default function WhereWhenPicker(props: WhereWhenPickerProps) {
-  const startCity = getCityById(props.startCityId);
-
   return (
     <>
       {/* MOBILE: single pill */}
@@ -304,7 +309,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
           <div className="flex items-center gap-2 min-w-0">
             <Search className="w-4 h-4 opacity-80" />
             <div className="min-w-0">
-              <div className="text-sm font-medium truncate">Start your Journey</div>
+              <div className="text-sm font-medium truncate">
+                Start your Journey
+              </div>
               <div className="text-[11px] text-gray-400 truncate">
                 {props.whereSummary} · {props.whenLabel}
               </div>
@@ -330,7 +337,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 ].join(" ")}
               >
                 <div className="min-w-0">
-                  <div className="text-[11px] text-gray-400 uppercase tracking-wide">Where</div>
+                  <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                    Where
+                  </div>
                   <div className="text-sm truncate">{props.whereSummary}</div>
                 </div>
                 <div className="flex items-center gap-2 opacity-80">
@@ -345,8 +354,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                     <WherePickerPanel
                       step="start"
                       mobileSheetOpen={false}
-                      whereStep={props.whereStep}
-                      setWhereStep={props.setWhereStep}
                       startQuery={props.startQuery}
                       setStartQuery={props.setStartQuery}
                       endQuery={props.endQuery}
@@ -364,8 +371,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                     <WherePickerPanel
                       step="end"
                       mobileSheetOpen={false}
-                      whereStep={props.whereStep}
-                      setWhereStep={props.setWhereStep}
                       startQuery={props.startQuery}
                       setStartQuery={props.setStartQuery}
                       endQuery={props.endQuery}
@@ -382,8 +387,8 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   )}
 
                   <div className="mt-3 text-[11px] text-gray-400">
-                    Cities are mapped with latitude &amp; longitude, so we can factor in realistic
-                    driving legs later.
+                    Cities are mapped with latitude &amp; longitude, so we can
+                    factor in realistic driving legs later.
                   </div>
                 </div>
               )}
@@ -403,7 +408,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 ].join(" ")}
               >
                 <div className="min-w-0">
-                  <div className="text-[11px] text-gray-400 uppercase tracking-wide">When</div>
+                  <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                    When
+                  </div>
                   <div className="text-sm truncate">{props.whenLabel}</div>
                 </div>
                 <Calendar className="w-4 h-4 opacity-80" />
@@ -417,7 +424,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   ].join(" ")}
                 >
                   <div className="px-2 pb-2">
-                    <p className="text-[11px] text-gray-300">Pick a start date, then an end date.</p>
+                    <p className="text-[11px] text-gray-300">
+                      Pick a start date, then an end date.
+                    </p>
                   </div>
 
                   <div className="overflow-x-auto">
@@ -469,7 +478,8 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
 
         {props.totalTripDays > 0 && (
           <p className="text-[11px] text-gray-400 mt-2">
-            Total days in itinerary (inclusive): <strong>{props.totalTripDays}</strong>
+            Total days in itinerary (inclusive):{" "}
+            <strong>{props.totalTripDays}</strong>
           </p>
         )}
       </div>
@@ -477,11 +487,16 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
       {/* MOBILE SHEET */}
       {props.mobileSheetOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
-          <div className="absolute inset-0 bg-black/55" onClick={props.closeMobileSheet} />
+          <div
+            className="absolute inset-0 bg-black/55"
+            onClick={props.closeMobileSheet}
+          />
           <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl">
             <div className="p-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-white">Start your Journey</div>
+                <div className="text-sm font-semibold text-white">
+                  Start your Journey
+                </div>
                 <button
                   type="button"
                   onClick={props.closeMobileSheet}
@@ -532,8 +547,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                       <WherePickerPanel
                         step="start"
                         mobileSheetOpen
-                        whereStep={props.whereStep}
-                        setWhereStep={props.setWhereStep}
                         startQuery={props.startQuery}
                         setStartQuery={props.setStartQuery}
                         endQuery={props.endQuery}
@@ -551,8 +564,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                       <WherePickerPanel
                         step="end"
                         mobileSheetOpen
-                        whereStep={props.whereStep}
-                        setWhereStep={props.setWhereStep}
                         startQuery={props.startQuery}
                         setStartQuery={props.setStartQuery}
                         endQuery={props.endQuery}
