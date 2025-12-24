@@ -12,9 +12,15 @@ export default function LoginPage() {
   // Signup-only
   const [fullName, setFullName] = useState("");
 
-  // Both
+  // Login/signup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Forgot password flow
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState<string | null>(null);
+  const [forgotError, setForgotError] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -45,16 +51,13 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            data: {
-              full_name: name,
-            },
+            data: { full_name: name },
           },
         });
 
         if (error) throw error;
 
-        // Try to set profile name immediately if we have a user object.
-        // If email confirmation is ON, a session might not exist yet — that's OK.
+        // Best-effort update to profiles (may not run if confirm-email is enabled)
         if (data.user) {
           await supabase
             .from("profiles")
@@ -62,12 +65,10 @@ export default function LoginPage() {
             .eq("id", data.user.id);
         }
 
-        // If confirm-email is enabled, user may need to verify email before login works.
         setInfo(
           "Account created. If email confirmation is enabled, check your inbox to verify before signing in."
         );
 
-        // Optionally switch to login mode after signup:
         setMode("login");
         setPassword("");
       }
@@ -76,6 +77,41 @@ export default function LoginPage() {
       setError(err?.message ?? "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotMsg(null);
+
+    const em = email.trim();
+    if (!em) {
+      setForgotError("Enter your email above first, then click Send reset email.");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const redirectToUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/reset-password`
+          : undefined;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(em, {
+        redirectTo: redirectToUrl,
+      });
+
+      if (error) throw error;
+
+      setForgotMsg(
+        "Reset email sent. Check your inbox for a link to set a new password."
+      );
+    } catch (err: any) {
+      console.error(err);
+      setForgotError(err?.message ?? "Could not send reset email.");
+    } finally {
+      setForgotLoading(false);
     }
   }
 
@@ -103,7 +139,7 @@ export default function LoginPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              placeholder=""
+              placeholder="e.g. Brett Strawbridge"
             />
           </div>
         )}
@@ -137,6 +173,27 @@ export default function LoginPage() {
           />
         </div>
 
+        {mode === "login" && (
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setForgotOpen((v) => !v);
+                setForgotMsg(null);
+                setForgotError(null);
+              }}
+              className="text-sm text-[var(--accent)] hover:underline"
+            >
+              Forgot password?
+            </button>
+
+            {/* Optional: keep layout balanced */}
+            <span className="text-xs text-white/60">
+              {/* Could put a hint here if you want */}
+            </span>
+          </div>
+        )}
+
         {error && <p className="text-sm text-red-400">{error}</p>}
         {info && <p className="text-sm text-emerald-300">{info}</p>}
 
@@ -155,6 +212,46 @@ export default function LoginPage() {
         </button>
       </form>
 
+      {/* Forgot password panel */}
+      {mode === "login" && forgotOpen && (
+        <div className="mt-4 card p-6 space-y-3">
+          <div>
+            <div className="font-semibold">Reset your password</div>
+            <p className="text-sm text-white/70">
+              We’ll email you a link to set a new password.
+            </p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="space-y-3">
+            {forgotError && <p className="text-sm text-red-400">{forgotError}</p>}
+            {forgotMsg && <p className="text-sm text-emerald-300">{forgotMsg}</p>}
+
+            <button
+              type="submit"
+              disabled={forgotLoading}
+              className="w-full rounded px-4 py-2 text-sm font-semibold hover:bg-white/10 disabled:opacity-60"
+              style={{
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              {forgotLoading ? "Sending…" : "Send reset email"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setForgotOpen(false);
+                setForgotMsg(null);
+                setForgotError(null);
+              }}
+              className="w-full rounded px-4 py-2 text-sm hover:bg-white/10"
+            >
+              Close
+            </button>
+          </form>
+        </div>
+      )}
+
       <div className="mt-4 text-sm">
         {mode === "login" ? (
           <button
@@ -163,6 +260,9 @@ export default function LoginPage() {
               setMode("signup");
               setError(null);
               setInfo(null);
+              setForgotOpen(false);
+              setForgotMsg(null);
+              setForgotError(null);
             }}
             className="text-[var(--accent)] hover:underline"
           >
