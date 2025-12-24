@@ -77,11 +77,6 @@ const MENU: MenuSection[] = [
   },
 ];
 
-/**
- * TEMPORARY HIDES:
- * Add keys here to hide sections from the navbar
- * without deleting their configuration.
- */
 const HIDE_KEYS = new Set<string>(["guides"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
@@ -184,9 +179,6 @@ function NavDropdown({ section }: { section: MenuSection }) {
   );
 }
 
-/**
- * Desktop profile / account menu.
- */
 function ProfileMenu({
   isLoggedIn,
   onSignOut,
@@ -197,10 +189,7 @@ function ProfileMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div
-      className="relative pb-2"
-      onMouseLeave={() => setOpen(false)}
-    >
+    <div className="relative pb-2" onMouseLeave={() => setOpen(false)}>
       {!isLoggedIn ? (
         <Link
           href="/auth/login"
@@ -277,9 +266,9 @@ function ProfileMenu({
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [expandedNested, setExpandedNested] = useState<
-    Record<string, boolean>
-  >({});
+  const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -297,7 +286,7 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)", // translucent over --bg
+        background: "rgba(22,34,58,0.55)",
         WebkitBackdropFilter: "saturate(160%) blur(12px)",
         backdropFilter: "saturate(160%) blur(12px)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -306,7 +295,6 @@ export function Navbar() {
       }}
     >
       <div className="container flex items-center justify-between py-4">
-        {/* LOGO + HOME LINK (restored) */}
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink"
@@ -333,7 +321,6 @@ export function Navbar() {
           <span className="sr-only">TravelScout</span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           {VISIBLE_MENU.map((section) => (
             <NavDropdown key={section.key} section={section} />
@@ -341,7 +328,6 @@ export function Navbar() {
           <ProfileMenu isLoggedIn={isLoggedIn} onSignOut={signOutUser} />
         </nav>
 
-        {/* Mobile burger */}
         <button
           className="md:hidden inline-flex h-10 w-10 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
@@ -353,7 +339,6 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden container pb-4">
           <div className="card p-2" style={{ color: "var(--text)" }}>
@@ -464,7 +449,6 @@ export function Navbar() {
               );
             })}
 
-            {/* Mobile account / sign-in block at bottom */}
             <div className="mt-2 border-t pt-2 border-white/10">
               {!isLoggedIn ? (
                 <Link
@@ -477,7 +461,7 @@ export function Navbar() {
               ) : (
                 <div className="space-y-1 text-sm">
                   <Link
-                    href="/account/details"
+                    href="/account/profile"
                     className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
                   >
                     <Briefcase className="w-4 h-4" />
