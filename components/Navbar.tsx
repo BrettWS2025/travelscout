@@ -238,7 +238,7 @@ function ProfileMenu({
               <ul className="space-y-1 text-sm">
                 <li>
                   <Link
-                    href="/account/details"
+                    href="/account/profile"
                     className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
                   >
                     <span>Account details</span>
