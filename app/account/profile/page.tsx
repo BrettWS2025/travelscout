@@ -93,13 +93,13 @@ export default function ProfilePage() {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium" htmlFor="displayName">
-            Display name
+            Full Name
           </label>
           <input
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="e.g. Brett"
+            placeholder=""
             className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
