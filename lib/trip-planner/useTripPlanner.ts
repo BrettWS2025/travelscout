@@ -487,7 +487,7 @@ export function useTripPlanner() {
 
   function handleRemoveStop(idx: number) {
     if (idx <= 0 || idx >= routeStops.length - 1) {
-      alert("You can’t remove your start or end city from here.");
+      alert("You can't remove your start or end city from here.");
       return;
     }
     if (
@@ -498,9 +498,80 @@ export function useTripPlanner() {
       return;
     }
 
+    // Get the end city to ensure it's always preserved
+    const endCityName = endCity?.name;
+    if (!endCity || !endCityName) {
+      console.error("End city not found");
+      return;
+    }
+
     const newRouteStops = routeStops.filter((_, i) => i !== idx);
     const newNightsPerStop = nightsPerStop.filter((_, i) => i !== idx);
-    const newMapPoints = mapPoints.filter((_, i) => i !== idx);
+    
+    // Always ensure the end city is the last stop (in case it was duplicated)
+    if (newRouteStops[newRouteStops.length - 1] !== endCityName) {
+      // If the last stop is not the end city, replace it
+      newRouteStops[newRouteStops.length - 1] = endCityName;
+    }
+
+    // Rebuild mapPoints to ensure start and end cities are always correct
+    const newMapPoints: MapPoint[] = [];
+    
+    // Always start with the start city
+    if (startCity) {
+      newMapPoints.push({
+        lat: startCity.lat,
+        lng: startCity.lng,
+        name: startCity.name,
+      });
+    }
+
+    // Add middle stops (skip first and last from newRouteStops)
+    for (let i = 1; i < newRouteStops.length - 1; i++) {
+      const stopName = newRouteStops[i];
+      // Try to find the corresponding mapPoint from the original array
+      // We need to map the index correctly since we removed one item
+      let originalMapIdx = i;
+      if (i > idx) {
+        // If we're past the removed index, we need to adjust
+        originalMapIdx = i + 1;
+      }
+      
+      // Find the mapPoint that matches this stop name and wasn't at the removed index
+      const matchingPoint = mapPoints.find((p, origIdx) => {
+        return p.name === stopName && origIdx !== idx && origIdx !== 0 && origIdx !== mapPoints.length - 1;
+      });
+      
+      if (matchingPoint) {
+        newMapPoints.push(matchingPoint);
+      } else {
+        // Fallback: look up coordinates
+        const stop = NZ_STOPS.find((s) => s.name === stopName);
+        if (stop) {
+          newMapPoints.push({
+            lat: stop.lat,
+            lng: stop.lng,
+            name: stop.name,
+          });
+        } else {
+          const city = NZ_CITIES.find((c) => c.name === stopName);
+          if (city) {
+            newMapPoints.push({
+              lat: city.lat,
+              lng: city.lng,
+              name: city.name,
+            });
+          }
+        }
+      }
+    }
+
+    // Always end with the end city
+    newMapPoints.push({
+      lat: endCity.lat,
+      lng: endCity.lng,
+      name: endCity.name,
+    });
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);

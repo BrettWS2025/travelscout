@@ -72,7 +72,7 @@ const MENU: MenuSection[] = [
     key: "trip-planner",
     label: "Trip Planner",
     href: "/trip-planner",
-    icon: Lightbulb,
+    icon: Compass,
     items: [{ label: "Plan Your Trip", href: "/trip-planner" }],
   },
 ];
