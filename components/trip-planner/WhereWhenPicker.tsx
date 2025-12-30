@@ -197,7 +197,7 @@ function WherePickerPanel({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          autoFocus
+          autoFocus={!mobileSheetOpen}
           placeholder="Search destinations"
           className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
         />
