@@ -94,12 +94,14 @@ export default function TripPlanner() {
 
         {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
 
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition"
-        >
-          Generate itinerary
-        </button>
+        <div className="flex justify-center md:justify-start">
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition"
+          >
+            Generate itinerary
+          </button>
+        </div>
       </form>
 
       {/* Results */}

@@ -113,9 +113,15 @@ export function useTripPlanner() {
 
   // Close desktop popovers on outside click
   useEffect(() => {
-    function onDocMouseDown(e: MouseEvent) {
+    function onDocMouseDown(e: MouseEvent | TouchEvent) {
       const t = e.target as Node | null;
       if (!t) return;
+
+      // Check if clicking on a button or interactive element - don't close if so
+      const target = e.target as HTMLElement;
+      if (target.tagName === "BUTTON" || target.closest("button") || target.closest("input")) {
+        return;
+      }
 
       const inWhere = whereRef.current?.contains(t);
       const inWhen = whenRef.current?.contains(t);
@@ -141,7 +147,11 @@ export function useTripPlanner() {
     }
 
     document.addEventListener("mousedown", onDocMouseDown);
-    return () => document.removeEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("touchstart", onDocMouseDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("touchstart", onDocMouseDown);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePill, activePlacesThingsPill]);
 
