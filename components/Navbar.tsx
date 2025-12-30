@@ -77,7 +77,7 @@ const MENU: MenuSection[] = [
   },
 ];
 
-const HIDE_KEYS = new Set<string>(["guides"]);
+const HIDE_KEYS = new Set<string>(["guides", "compare", "deals"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
@@ -189,7 +189,7 @@ function ProfileMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative pb-2" onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseLeave={() => setOpen(false)}>
       {!isLoggedIn ? (
         <Link
           href="/auth/login"
@@ -322,9 +322,24 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          {VISIBLE_MENU.map((section) => (
-            <NavDropdown key={section.key} section={section} />
-          ))}
+          {VISIBLE_MENU.map((section) => {
+            // Trip Planner should be a simple link, not a dropdown
+            if (section.key === "trip-planner") {
+              const Icon = section.icon;
+              return (
+                <Link
+                  key={section.key}
+                  href={section.href}
+                  className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+                  style={{ color: "var(--text)" }}
+                >
+                  <Icon className="w-4 h-4" />
+                  {section.label}
+                </Link>
+              );
+            }
+            return <NavDropdown key={section.key} section={section} />;
+          })}
           <ProfileMenu isLoggedIn={isLoggedIn} onSignOut={signOutUser} />
         </nav>
 
@@ -344,6 +359,25 @@ export function Navbar() {
           <div className="card p-2" style={{ color: "var(--text)" }}>
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
+              // Trip Planner should be a simple link, not a dropdown
+              if (section.key === "trip-planner") {
+                return (
+                  <div
+                    key={section.key}
+                    className="border-b last:border-none"
+                    style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                  >
+                    <Link
+                      href={section.href}
+                      className="flex items-center gap-2 px-3 py-3"
+                      style={{ color: "var(--text)" }}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {section.label}
+                    </Link>
+                  </div>
+                );
+              }
               const isOpen = !!expanded[section.key];
               return (
                 <div
