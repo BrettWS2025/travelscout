@@ -43,8 +43,8 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 }
 
 export function useTripPlanner() {
-  const [startCityId, setStartCityId] = useState(DEFAULT_START_CITY_ID);
-  const [endCityId, setEndCityId] = useState(DEFAULT_END_CITY_ID);
+  const [startCityId, setStartCityId] = useState("");
+  const [endCityId, setEndCityId] = useState("");
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");

@@ -282,6 +282,12 @@ export function Navbar() {
     }
   };
 
+  const closeMobileMenu = () => {
+    setMobileOpen(false);
+    setExpanded({});
+    setExpandedNested({});
+  };
+
   return (
     <header
       className="sticky top-0 z-[1000]"
@@ -371,6 +377,7 @@ export function Navbar() {
                       href={section.href}
                       className="flex items-center gap-2 px-3 py-3"
                       style={{ color: "var(--text)" }}
+                      onClick={closeMobileMenu}
                     >
                       <Icon className="w-4 h-4" />
                       {section.label}
@@ -409,7 +416,7 @@ export function Navbar() {
                   {isOpen && (
                     <ul className="px-3 pb-3 space-y-2">
                       <li>
-                        <Link className="link" href={section.href}>
+                        <Link className="link" href={section.href} onClick={closeMobileMenu}>
                           Overview
                         </Link>
                       </li>
@@ -426,6 +433,7 @@ export function Navbar() {
                                 className="block"
                                 href={it.href ?? "#"}
                                 style={{ color: "var(--text)" }}
+                                onClick={closeMobileMenu}
                               >
                                 {it.label}
                               </Link>
@@ -467,6 +475,7 @@ export function Navbar() {
                                       className="block"
                                       href={child.href ?? "#"}
                                       style={{ color: "var(--text)" }}
+                                      onClick={closeMobileMenu}
                                     >
                                       {child.label}
                                     </Link>
@@ -488,6 +497,7 @@ export function Navbar() {
                 <Link
                   href="/auth/login"
                   className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
+                  onClick={closeMobileMenu}
                 >
                   <Briefcase className="w-4 h-4" />
                   <span>Sign in</span>
@@ -497,6 +507,7 @@ export function Navbar() {
                   <Link
                     href="/account/profile"
                     className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    onClick={closeMobileMenu}
                   >
                     <Briefcase className="w-4 h-4" />
                     <span>Account details</span>
@@ -504,12 +515,16 @@ export function Navbar() {
                   <Link
                     href="/account/itineraries"
                     className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    onClick={closeMobileMenu}
                   >
                     <span>Itineraries</span>
                   </Link>
                   <button
                     type="button"
-                    onClick={signOutUser}
+                    onClick={() => {
+                      closeMobileMenu();
+                      signOutUser();
+                    }}
                     className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/10"
                   >
                     <LogOut className="w-4 h-4" />
