@@ -13,7 +13,7 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
 } from "@/lib/nzCities";
-import { orderWaypointNamesByRoute } from "@/lib/nzStops";
+import { orderWaypointNamesByRoute, NZ_STOPS, type NzStop } from "@/lib/nzStops";
 import {
   allocateNightsForStops,
   buildDayStopMeta,
@@ -72,7 +72,16 @@ export function useTripPlanner() {
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
 
-  const [waypoints, setWaypoints] = useState<string[]>(["Lake Tekapo", "Cromwell"]);
+  // Places/Things state
+  const placesRef = useRef<HTMLDivElement | null>(null);
+  const thingsRef = useRef<HTMLDivElement | null>(null);
+  const [activePlacesThingsPill, setActivePlacesThingsPill] = useState<"places" | "things" | null>(null);
+  const [showPlacesPopover, setShowPlacesPopover] = useState(false);
+  const [showThingsPopover, setShowThingsPopover] = useState(false);
+  const [placesQuery, setPlacesQuery] = useState("");
+  const [thingsQuery, setThingsQuery] = useState("");
+  const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+  const [selectedThingIds, setSelectedThingIds] = useState<string[]>([]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +119,8 @@ export function useTripPlanner() {
 
       const inWhere = whereRef.current?.contains(t);
       const inWhen = whenRef.current?.contains(t);
+      const inPlaces = placesRef.current?.contains(t);
+      const inThings = thingsRef.current?.contains(t);
 
       if (!inWhere) {
         setShowWherePopover(false);
@@ -119,12 +130,20 @@ export function useTripPlanner() {
         setShowCalendar(false);
         if (activePill === "when") setActivePill(null);
       }
+      if (!inPlaces) {
+        setShowPlacesPopover(false);
+        if (activePlacesThingsPill === "places") setActivePlacesThingsPill(null);
+      }
+      if (!inThings) {
+        setShowThingsPopover(false);
+        if (activePlacesThingsPill === "things") setActivePlacesThingsPill(null);
+      }
     }
 
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePill]);
+  }, [activePill, activePlacesThingsPill]);
 
   // Lock body scroll when mobile sheet open
   useEffect(() => {
@@ -199,6 +218,55 @@ export function useTripPlanner() {
 
     const anchor = fromIsoDate(startDate) ?? new Date();
     setCalendarMonth(anchor);
+  }
+
+  function openPlacesDesktop() {
+    setActivePlacesThingsPill("places");
+    setShowPlacesPopover(true);
+    setShowThingsPopover(false);
+    setPlacesQuery("");
+  }
+
+  function openThingsDesktop() {
+    setActivePlacesThingsPill("things");
+    setShowThingsPopover(true);
+    setShowPlacesPopover(false);
+    setThingsQuery("");
+  }
+
+  function selectPlace(cityId: string) {
+    const c = getCityById(cityId);
+    if (!c) return;
+
+    // Add to array if not already selected
+    if (!selectedPlaceIds.includes(cityId)) {
+      setSelectedPlaceIds([...selectedPlaceIds, cityId]);
+    }
+    setPlacesQuery("");
+    pushRecent({ id: c.id, name: c.name });
+
+    // Keep popover open for multiple selections
+  }
+
+  function removePlace(cityId: string) {
+    setSelectedPlaceIds(selectedPlaceIds.filter((id) => id !== cityId));
+  }
+
+  function selectThing(stopId: string) {
+    const stop = NZ_STOPS.find((s) => s.id === stopId);
+    if (!stop) return;
+
+    // Add to array if not already selected
+    if (!selectedThingIds.includes(stopId)) {
+      setSelectedThingIds([...selectedThingIds, stopId]);
+    }
+    setThingsQuery("");
+
+    // Keep popover open for multiple selections
+  }
+
+  function removeThing(stopId: string) {
+    setSelectedThingIds(selectedThingIds.filter((id) => id !== stopId));
   }
 
   function openMobileSheet() {
@@ -282,6 +350,23 @@ export function useTripPlanner() {
       .map((c) => ({ id: c.id, name: c.name }));
   }, [endQuery]);
 
+  const placesResults = useMemo(() => {
+    const q = normalize(placesQuery);
+    if (!q) return [];
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
+  }, [placesQuery]);
+
+  const thingsResults = useMemo(() => {
+    const q = normalize(thingsQuery);
+    if (!q) return [];
+    return NZ_STOPS.filter((stop) => {
+      if (normalize(stop.name).includes(q)) return true;
+      return stop.aliases?.some((alias) => normalize(alias).includes(q));
+    }).slice(0, 8);
+  }, [thingsQuery]);
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setHasSubmitted(true);
@@ -307,7 +392,18 @@ export function useTripPlanner() {
     }
 
     try {
-      const rawWaypointNames = waypoints;
+      // Combine selected places (city names) and things (stop names) into waypoint names
+      const placeNames = selectedPlaceIds.map((id) => {
+        const city = getCityById(id);
+        return city?.name ?? "";
+      }).filter(Boolean);
+      
+      const thingNames = selectedThingIds.map((id) => {
+        const stop = NZ_STOPS.find((s) => s.id === id);
+        return stop?.name ?? "";
+      }).filter(Boolean);
+      
+      const rawWaypointNames = [...placeNames, ...thingNames];
 
       const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
         start,
@@ -615,10 +711,28 @@ export function useTripPlanner() {
   const whereSummary =
     startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
 
+  const selectedPlaces = useMemo(() => {
+    return selectedPlaceIds.map((id) => getCityById(id)).filter((c): c is NonNullable<typeof c> => c !== undefined);
+  }, [selectedPlaceIds]);
+
+  const selectedThings = useMemo(() => {
+    return selectedThingIds.map((id) => NZ_STOPS.find((s) => s.id === id)).filter((s): s is NonNullable<typeof s> => s !== undefined);
+  }, [selectedThingIds]);
+
+  const placesSummary = selectedPlaces.length > 0 
+    ? `${selectedPlaces.length} place${selectedPlaces.length > 1 ? 's' : ''} selected`
+    : "Add places";
+
+  const thingsSummary = selectedThings.length > 0
+    ? `${selectedThings.length} thing${selectedThings.length > 1 ? 's' : ''} selected`
+    : "Add things to do";
+
   return {
     // refs
     whereRef,
     whenRef,
+    placesRef,
+    thingsRef,
 
     // main state
     startCityId,
@@ -643,7 +757,17 @@ export function useTripPlanner() {
     recent,
     suggested,
 
-    waypoints,
+    // places/things state
+    activePlacesThingsPill,
+    showPlacesPopover,
+    showThingsPopover,
+    placesQuery,
+    thingsQuery,
+    selectedPlaceIds,
+    selectedThingIds,
+    selectedPlaces,
+    selectedThings,
+
     plan,
     error,
     hasSubmitted,
@@ -662,6 +786,8 @@ export function useTripPlanner() {
     totalTripDays,
     whenLabel,
     whereSummary,
+    placesSummary,
+    thingsSummary,
 
     // setters
     setCalendarMonth,
@@ -676,7 +802,13 @@ export function useTripPlanner() {
     setWhereStep,
     setStartQuery,
     setEndQuery,
-    setWaypoints,
+    setPlacesQuery,
+    setThingsQuery,
+    setActivePlacesThingsPill,
+    setShowPlacesPopover,
+    setShowThingsPopover,
+    setSelectedPlaceIds,
+    setSelectedThingIds,
     setNewStopCityId,
     setOpenStops,
 
@@ -685,11 +817,17 @@ export function useTripPlanner() {
     handleSubmit,
     openWhereDesktop,
     openWhenDesktop,
+    openPlacesDesktop,
+    openThingsDesktop,
     openMobileSheet,
     closeMobileSheet,
     selectStartCity,
     selectEndCity,
     selectReturnToStart,
+    selectPlace,
+    selectThing,
+    removePlace,
+    removeThing,
     handleChangeNights,
     handleRemoveStop,
     handleReorderStops,
@@ -705,5 +843,7 @@ export function useTripPlanner() {
     // results
     startResults,
     endResults,
+    placesResults,
+    thingsResults,
   };
 }

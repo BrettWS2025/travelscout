@@ -1,7 +1,7 @@
 "use client";
 
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
-import WaypointsSection from "@/components/trip-planner/WaypointsSection";
+import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
@@ -63,7 +63,34 @@ export default function TripPlanner() {
           }}
         />
 
-        <WaypointsSection waypoints={tp.waypoints} onChange={tp.setWaypoints} />
+        <PlacesThingsPicker
+          placesRef={tp.placesRef}
+          thingsRef={tp.thingsRef}
+          activePill={tp.activePlacesThingsPill}
+          showPlacesPopover={tp.showPlacesPopover}
+          showThingsPopover={tp.showThingsPopover}
+          placesQuery={tp.placesQuery}
+          thingsQuery={tp.thingsQuery}
+          placesResults={tp.placesResults}
+          thingsResults={tp.thingsResults}
+          recent={tp.recent}
+          suggested={tp.suggested}
+          selectedPlaceIds={tp.selectedPlaceIds}
+          selectedThingIds={tp.selectedThingIds}
+          placesSummary={tp.placesSummary}
+          thingsSummary={tp.thingsSummary}
+          setPlacesQuery={tp.setPlacesQuery}
+          setThingsQuery={tp.setThingsQuery}
+          setActivePill={tp.setActivePlacesThingsPill}
+          setShowPlacesPopover={tp.setShowPlacesPopover}
+          setShowThingsPopover={tp.setShowThingsPopover}
+          openPlacesDesktop={tp.openPlacesDesktop}
+          openThingsDesktop={tp.openThingsDesktop}
+          selectPlace={tp.selectPlace}
+          selectThing={tp.selectThing}
+          removePlace={tp.removePlace}
+          removeThing={tp.removeThing}
+        />
 
         {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
 
