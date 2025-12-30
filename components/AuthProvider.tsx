@@ -21,37 +21,80 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Start as false so page renders immediately
 
   useEffect(() => {
     let ignore = false;
 
     async function loadInitialSession() {
-      const { data, error } = await supabase.auth.getSession();
+      // Only run on client side
+      if (typeof window === "undefined") {
+        return;
+      }
 
-      if (!ignore) {
-        if (error) {
-          console.error("Error loading auth session", error);
+      try {
+        // Set a timeout to prevent infinite loading (5 seconds)
+        const timeoutId = setTimeout(() => {
+          if (!ignore) {
+            console.warn("Auth session loading timeout - continuing without auth");
+            setSession(null);
+            setUser(null);
+          }
+        }, 5000);
+
+        const { data, error } = await supabase.auth.getSession();
+        clearTimeout(timeoutId);
+
+        if (!ignore) {
+          if (error) {
+            console.error("Error loading auth session", error);
+          }
+
+          setSession(data?.session ?? null);
+          setUser(data?.session?.user ?? null);
+          setIsLoading(false);
         }
-
-        setSession(data.session ?? null);
-        setUser(data.session?.user ?? null);
-        setIsLoading(false);
+      } catch (err) {
+        if (!ignore) {
+          console.error("Error loading auth session", err);
+          // Set to null session on error so page can still render
+          setSession(null);
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     }
 
     loadInitialSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-    });
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    // Only set up listener on client side
+    if (typeof window !== "undefined") {
+      try {
+        const {
+          data: { subscription: sub },
+        } = supabase.auth.onAuthStateChange((_event: string, newSession: Session | null) => {
+          if (!ignore) {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+          }
+        });
+        subscription = sub;
+      } catch (err) {
+        console.error("Error setting up auth state change listener", err);
+      }
+    }
 
     return () => {
       ignore = true;
-      subscription.unsubscribe();
+      if (subscription) {
+        try {
+          subscription.unsubscribe();
+        } catch (err) {
+          console.error("Error unsubscribing from auth state changes", err);
+        }
+      }
     };
   }, []);
 
