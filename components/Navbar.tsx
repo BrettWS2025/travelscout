@@ -72,12 +72,12 @@ const MENU: MenuSection[] = [
     key: "trip-planner",
     label: "Trip Planner",
     href: "/trip-planner",
-    icon: Lightbulb,
+    icon: Compass,
     items: [{ label: "Plan Your Trip", href: "/trip-planner" }],
   },
 ];
 
-const HIDE_KEYS = new Set<string>(["guides"]);
+const HIDE_KEYS = new Set<string>(["guides", "compare", "deals"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
 
 function SubmenuItem({ item }: { item: MenuItem }) {
@@ -189,7 +189,7 @@ function ProfileMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative pb-2" onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseLeave={() => setOpen(false)}>
       {!isLoggedIn ? (
         <Link
           href="/auth/login"
@@ -282,6 +282,12 @@ export function Navbar() {
     }
   };
 
+  const closeMobileMenu = () => {
+    setMobileOpen(false);
+    setExpanded({});
+    setExpandedNested({});
+  };
+
   return (
     <header
       className="sticky top-0 z-[1000]"
@@ -322,9 +328,24 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          {VISIBLE_MENU.map((section) => (
-            <NavDropdown key={section.key} section={section} />
-          ))}
+          {VISIBLE_MENU.map((section) => {
+            // Trip Planner should be a simple link, not a dropdown
+            if (section.key === "trip-planner") {
+              const Icon = section.icon;
+              return (
+                <Link
+                  key={section.key}
+                  href={section.href}
+                  className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+                  style={{ color: "var(--text)" }}
+                >
+                  <Icon className="w-4 h-4" />
+                  {section.label}
+                </Link>
+              );
+            }
+            return <NavDropdown key={section.key} section={section} />;
+          })}
           <ProfileMenu isLoggedIn={isLoggedIn} onSignOut={signOutUser} />
         </nav>
 
@@ -344,6 +365,26 @@ export function Navbar() {
           <div className="card p-2" style={{ color: "var(--text)" }}>
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
+              // Trip Planner should be a simple link, not a dropdown
+              if (section.key === "trip-planner") {
+                return (
+                  <div
+                    key={section.key}
+                    className="border-b last:border-none"
+                    style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                  >
+                    <Link
+                      href={section.href}
+                      className="flex items-center gap-2 px-3 py-3"
+                      style={{ color: "var(--text)" }}
+                      onClick={closeMobileMenu}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {section.label}
+                    </Link>
+                  </div>
+                );
+              }
               const isOpen = !!expanded[section.key];
               return (
                 <div
@@ -375,7 +416,7 @@ export function Navbar() {
                   {isOpen && (
                     <ul className="px-3 pb-3 space-y-2">
                       <li>
-                        <Link className="link" href={section.href}>
+                        <Link className="link" href={section.href} onClick={closeMobileMenu}>
                           Overview
                         </Link>
                       </li>
@@ -392,6 +433,7 @@ export function Navbar() {
                                 className="block"
                                 href={it.href ?? "#"}
                                 style={{ color: "var(--text)" }}
+                                onClick={closeMobileMenu}
                               >
                                 {it.label}
                               </Link>
@@ -433,6 +475,7 @@ export function Navbar() {
                                       className="block"
                                       href={child.href ?? "#"}
                                       style={{ color: "var(--text)" }}
+                                      onClick={closeMobileMenu}
                                     >
                                       {child.label}
                                     </Link>
@@ -454,6 +497,7 @@ export function Navbar() {
                 <Link
                   href="/auth/login"
                   className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
+                  onClick={closeMobileMenu}
                 >
                   <Briefcase className="w-4 h-4" />
                   <span>Sign in</span>
@@ -463,6 +507,7 @@ export function Navbar() {
                   <Link
                     href="/account/profile"
                     className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    onClick={closeMobileMenu}
                   >
                     <Briefcase className="w-4 h-4" />
                     <span>Account details</span>
@@ -470,12 +515,16 @@ export function Navbar() {
                   <Link
                     href="/account/itineraries"
                     className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    onClick={closeMobileMenu}
                   >
                     <span>Itineraries</span>
                   </Link>
                   <button
                     type="button"
-                    onClick={signOutUser}
+                    onClick={() => {
+                      closeMobileMenu();
+                      signOutUser();
+                    }}
                     className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/10"
                   >
                     <LogOut className="w-4 h-4" />
