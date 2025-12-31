@@ -452,8 +452,6 @@ function StopGroupCard({
                   <DayCard
                     key={`day-${d.dayNumber}-${key}`}
                     day={d}
-                    stopName={g.stopName}
-                    isFirstForStop={isFirstForStop}
                     isOpen={isOpen}
                     detail={detail}
                     onToggleOpen={() => onToggleDayOpen(d.date, d.location)}

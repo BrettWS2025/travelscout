@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import { formatDisplayDate, type DayDetail } from "@/lib/trip-planner/utils";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
@@ -10,8 +9,6 @@ type TripDay = TripPlan["days"][number];
 
 type Props = {
   day: TripDay;
-  stopName: string;
-  isFirstForStop: boolean;
   isOpen: boolean;
   detail?: DayDetail;
 
@@ -25,8 +22,6 @@ type Props = {
 
 export default function DayCard({
   day,
-  stopName,
-  isFirstForStop,
   isOpen,
   detail,
   onToggleOpen,
@@ -47,17 +42,6 @@ export default function DayCard({
               <span className="text-[11px] text-gray-300">
                 {formatDisplayDate(day.date)}
               </span>
-
-              {isFirstForStop && (
-                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
-                  First day here
-                </span>
-              )}
-            </div>
-
-            <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
-              <ChevronRight className="w-3 h-3 opacity-70" />
-              <span>Days in {stopName}</span>
             </div>
           </div>
 
@@ -80,17 +64,6 @@ export default function DayCard({
               <span className="text-[11px] text-gray-300">
                 {formatDisplayDate(day.date)}
               </span>
-
-              {isFirstForStop && (
-                <span className="ml-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
-                  First day here
-                </span>
-              )}
-            </div>
-
-            <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-              <ChevronRight className="w-3 h-3 opacity-70" />
-              <span>Days in {stopName}</span>
             </div>
           </div>
 
