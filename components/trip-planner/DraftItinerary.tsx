@@ -448,73 +448,10 @@ function StopGroupCard({
 
                 const isFirstForStop = localIdx === 0;
 
-                const stopOptions =
-                  isFirstForStop ? (
-                    <div>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[11px] text-gray-400">
-                          Stop options for {routeStops[g.stopIndex]}
-                        </span>
-                        <div className="flex flex-wrap gap-3 items-center">
-                          {g.stopIndex < routeStops.length - 1 && (
-                            <button
-                              type="button"
-                              onClick={() => onStartAddStop(g.stopIndex)}
-                              className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                            >
-                              + Add stop after this
-                            </button>
-                          )}
-                          {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
-                            <button
-                              type="button"
-                              onClick={() => onRemoveStop(g.stopIndex)}
-                              className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                            >
-                              Remove this stop from trip
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {addingStopAfterIndex === g.stopIndex && (
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <select
-                            value={newStopCityId ?? ""}
-                            onChange={(e) => setNewStopCityId(e.target.value)}
-                            className="input-dark text-xs w-56"
-                          >
-                            {NZ_CITIES.map((city) => (
-                              <option key={city.id} value={city.id}>
-                                {city.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            onClick={onConfirmAddStop}
-                            className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
-                          >
-                            Add stop
-                          </button>
-                          <button
-                            type="button"
-                            onClick={onCancelAddStop}
-                            className="text-[11px] text-gray-300 hover:underline underline-offset-2"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : undefined;
-
                 return (
                   <DayCard
                     key={`day-${d.dayNumber}-${key}`}
                     day={d}
-                    stopName={g.stopName}
-                    isFirstForStop={isFirstForStop}
                     isOpen={isOpen}
                     detail={detail}
                     onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
@@ -522,10 +459,122 @@ function StopGroupCard({
                     onUpdateAccommodation={(accommodation) =>
                       onUpdateDayAccommodation(d.date, d.location, accommodation)
                     }
-                    stopOptions={stopOptions}
                   />
                 );
               })}
+            </div>
+
+            {/* Stop options - only visible when expanded */}
+            <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-white/10">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
+                {/* Mobile: Stack layout */}
+                <div className="md:hidden space-y-3">
+                  {addingStopAfterIndex === g.stopIndex ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={newStopCityId ?? ""}
+                        onChange={(e) => setNewStopCityId(e.target.value)}
+                        className="input-dark text-xs flex-1 min-w-[200px]"
+                      >
+                        {NZ_CITIES.map((city) => (
+                          <option key={city.id} value={city.id}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={onConfirmAddStop}
+                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
+                      >
+                        Add stop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onCancelAddStop}
+                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-3">
+                      {g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onStartAddStop(g.stopIndex)}
+                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                        >
+                          + Add stop after this
+                        </button>
+                      )}
+                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveStop(g.stopIndex)}
+                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                        >
+                          Remove this stop from trip
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop: Horizontal layout, aligned right */}
+                <div className="hidden md:flex items-center gap-3">
+                  {addingStopAfterIndex === g.stopIndex ? (
+                    <>
+                      <select
+                        value={newStopCityId ?? ""}
+                        onChange={(e) => setNewStopCityId(e.target.value)}
+                        className="input-dark text-xs w-56"
+                      >
+                        {NZ_CITIES.map((city) => (
+                          <option key={city.id} value={city.id}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={onConfirmAddStop}
+                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
+                      >
+                        Add stop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onCancelAddStop}
+                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onStartAddStop(g.stopIndex)}
+                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                        >
+                          + Add stop after this
+                        </button>
+                      )}
+                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveStop(g.stopIndex)}
+                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                        >
+                          Remove this stop from trip
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

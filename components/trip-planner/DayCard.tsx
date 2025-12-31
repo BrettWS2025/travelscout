@@ -1,16 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import { formatDisplayDate, type DayDetail } from "@/lib/trip-planner/utils";
+import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 
 type TripDay = TripPlan["days"][number];
 
 type Props = {
   day: TripDay;
-  stopName: string;
-  isFirstForStop: boolean;
   isOpen: boolean;
   detail?: DayDetail;
 
@@ -20,22 +18,16 @@ type Props = {
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
   children?: ReactNode;
-
-  /** Optional: render stop-level controls (add/remove stop etc). Usually only on first day of a stop. */
-  stopOptions?: ReactNode;
 };
 
 export default function DayCard({
   day,
-  stopName,
-  isFirstForStop,
   isOpen,
   detail,
   onToggleOpen,
   onUpdateNotes,
   onUpdateAccommodation,
   children,
-  stopOptions,
 }: Props) {
   return (
     <div className="rounded-2xl bg-[#1E2C4B]/40 border border-white/10 overflow-hidden">
@@ -50,17 +42,6 @@ export default function DayCard({
               <span className="text-[11px] text-gray-300">
                 {formatDisplayDate(day.date)}
               </span>
-
-              {isFirstForStop && (
-                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
-                  First day here
-                </span>
-              )}
-            </div>
-
-            <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
-              <ChevronRight className="w-3 h-3 opacity-70" />
-              <span>Days in {stopName}</span>
             </div>
           </div>
 
@@ -83,17 +64,6 @@ export default function DayCard({
               <span className="text-[11px] text-gray-300">
                 {formatDisplayDate(day.date)}
               </span>
-
-              {isFirstForStop && (
-                <span className="ml-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
-                  First day here
-                </span>
-              )}
-            </div>
-
-            <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-              <ChevronRight className="w-3 h-3 opacity-70" />
-              <span>Days in {stopName}</span>
             </div>
           </div>
 
@@ -137,12 +107,21 @@ export default function DayCard({
               </div>
             </div>
 
+            {/* Events and Attractions */}
+            <div className="pt-3 border-t border-white/10">
+              <div className="mb-2">
+                <h4 className="text-xs font-semibold text-white">
+                  Events & Attractions
+                </h4>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Available for this day
+                </p>
+              </div>
+              <EventsAttractionsCarousel />
+            </div>
+
             {children ? (
               <div className="pt-3 border-t border-white/10">{children}</div>
-            ) : null}
-
-            {stopOptions ? (
-              <div className="pt-3 border-t border-white/10">{stopOptions}</div>
             ) : null}
           </div>
         </div>
