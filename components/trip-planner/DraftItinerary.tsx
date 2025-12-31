@@ -148,10 +148,10 @@ export default function DraftItinerary({
 
   return (
     <div className="card p-4 md:p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
         <div>
           <h2 className="text-lg font-semibold">Your draft itinerary</h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-400 mt-1">
             Expand a location to see its days. Drag the grip to reorder stops.
           </p>
         </div>
@@ -160,14 +160,14 @@ export default function DraftItinerary({
           <button
             type="button"
             onClick={onExpandAllStops}
-            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10"
+            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10 active:bg-white/15 transition"
           >
             Expand all
           </button>
           <button
             type="button"
             onClick={onCollapseAllStops}
-            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10"
+            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10 active:bg-white/15 transition"
           >
             Collapse all
           </button>
@@ -278,76 +278,154 @@ function StopGroupCard({
       ].join(" ")}
     >
       {/* Stop header */}
-      <div className="px-4 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {!isDragDisabled && (
+      <div className="px-3 md:px-4 py-3">
+        {/* Mobile: Stack layout */}
+        <div className="md:hidden space-y-3">
+          <div className="flex items-center gap-2 min-w-0">
+            {!isDragDisabled && (
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 -ml-1 rounded-full border border-white/15 text-gray-300 hover:bg-white/10 active:bg-white/15 touch-none cursor-grab"
+                aria-label="Reorder stop"
+                {...listeners}
+                {...attributes}
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={(e) => e.stopPropagation()}
-              className="p-2 -ml-2 rounded-full border border-white/15 text-gray-300 hover:bg-white/10 active:bg-white/15 touch-none cursor-grab"
-              aria-label="Reorder stop"
-              {...listeners}
-              {...attributes}
+              onClick={() => onToggleStopOpen(g.stopIndex)}
+              className="flex items-center gap-2.5 min-w-0 flex-1 group"
             >
-              <GripVertical className="w-4 h-4" />
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onToggleStopOpen(g.stopIndex)}
-            className="flex items-center gap-3 min-w-0 group"
-          >
-            <span
-              className={[
-                "w-8 h-8 rounded-xl flex items-center justify-center",
-                "border border-white/10 bg-white/5 group-hover:bg-white/10 transition",
-              ].join(" ")}
-              aria-hidden
-            >
-              <ChevronDown
+              <span
                 className={[
-                  "w-4 h-4 opacity-80 transition-transform duration-200",
-                  isStopOpen ? "rotate-0" : "-rotate-90",
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                  "border border-white/10 bg-white/5 group-hover:bg-white/10 transition",
                 ].join(" ")}
-              />
-            </span>
+                aria-hidden
+              >
+                <ChevronDown
+                  className={[
+                    "w-3.5 h-3.5 opacity-80 transition-transform duration-200",
+                    isStopOpen ? "rotate-0" : "-rotate-90",
+                  ].join(" ")}
+                />
+              </span>
 
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-white truncate">{g.stopName}</div>
-              <div className="text-[11px] text-gray-300 truncate">
-                {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
-                {dayCount === 1 ? "" : "s"}
+              <div className="min-w-0 flex-1">
+                <div className="text-base font-semibold text-white break-words">{g.stopName}</div>
+                <div className="text-[11px] text-gray-300 mt-0.5">
+                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
+                  {dayCount === 1 ? "" : "s"}
+                </div>
               </div>
+            </button>
+          </div>
+
+          {/* Nights stepper for mobile */}
+          <div className="flex items-center gap-2 pl-9">
+            <span className="text-[11px] text-gray-400">Nights:</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
+                className="w-8 h-8 rounded-lg border border-white/20 text-sm hover:bg-white/10 active:bg-white/15 flex items-center justify-center"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min={1}
+                value={nightsHere}
+                onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
+                className="w-12 text-center input-dark input-no-spinner text-sm py-1.5 px-1"
+              />
+              <button
+                type="button"
+                onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
+                className="w-8 h-8 rounded-lg border border-white/20 text-sm hover:bg-white/10 active:bg-white/15 flex items-center justify-center"
+              >
+                +
+              </button>
             </div>
-          </button>
+          </div>
         </div>
 
-        {/* Nights stepper for this stop */}
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:inline text-[11px] text-gray-400 mr-1">Nights</span>
+        {/* Desktop: Horizontal layout */}
+        <div className="hidden md:flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            {!isDragDisabled && (
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 -ml-2 rounded-full border border-white/15 text-gray-300 hover:bg-white/10 active:bg-white/15 touch-none cursor-grab"
+                aria-label="Reorder stop"
+                {...listeners}
+                {...attributes}
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onToggleStopOpen(g.stopIndex)}
+              className="flex items-center gap-3 min-w-0 group"
+            >
+              <span
+                className={[
+                  "w-8 h-8 rounded-xl flex items-center justify-center",
+                  "border border-white/10 bg-white/5 group-hover:bg-white/10 transition",
+                ].join(" ")}
+                aria-hidden
+              >
+                <ChevronDown
+                  className={[
+                    "w-4 h-4 opacity-80 transition-transform duration-200",
+                    isStopOpen ? "rotate-0" : "-rotate-90",
+                  ].join(" ")}
+                />
+              </span>
+
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white truncate">{g.stopName}</div>
+                <div className="text-[11px] text-gray-300 truncate">
+                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
+                  {dayCount === 1 ? "" : "s"}
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Nights stepper for desktop */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
-              className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-            >
-              −
-            </button>
-            <input
-              type="number"
-              min={1}
-              value={nightsHere}
-              onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
-              className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
-            />
-            <button
-              type="button"
-              onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
-              className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-            >
-              +
-            </button>
+            <span className="text-[11px] text-gray-400 mr-1">Nights</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
+                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min={1}
+                value={nightsHere}
+                onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
+                className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
+              />
+              <button
+                type="button"
+                onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
+                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -360,8 +438,8 @@ function StopGroupCard({
         ].join(" ")}
       >
         <div className="overflow-hidden">
-          <div className="px-4 pb-4">
-            <div className="pl-3 border-l border-white/10 space-y-2">
+          <div className="px-3 md:px-4 pb-4">
+            <div className="pl-2 md:pl-3 border-l border-white/10 space-y-2">
               {g.dayIndices.map((dayIdx, localIdx) => {
                 const d = plan.days[dayIdx];
                 const key = makeDayKey(d.date, d.location);
