@@ -39,36 +39,72 @@ export default function DayCard({
 }: Props) {
   return (
     <div className="rounded-2xl bg-[#1E2C4B]/40 border border-white/10 overflow-hidden">
-      <div className="px-3 py-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="text-xs font-semibold text-white">
-              Day {day.dayNumber}
-            </div>
-            <span className="text-[11px] text-gray-300">
-              {formatDisplayDate(day.date)}
-            </span>
-
-            {isFirstForStop && (
-              <span className="ml-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
-                First day here
+      <div className="px-3 py-3">
+        {/* Mobile: Stacked layout */}
+        <div className="md:hidden space-y-2.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="text-sm font-semibold text-white">
+                Day {day.dayNumber}
+              </div>
+              <span className="text-[11px] text-gray-300">
+                {formatDisplayDate(day.date)}
               </span>
-            )}
+
+              {isFirstForStop && (
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
+                  First day here
+                </span>
+              )}
+            </div>
+
+            <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+              <ChevronRight className="w-3 h-3 opacity-70" />
+              <span>Days in {stopName}</span>
+            </div>
           </div>
 
-          <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-            <ChevronRight className="w-3 h-3 opacity-70" />
-            <span>Days in {stopName}</span>
-          </div>
+          <button
+            type="button"
+            onClick={onToggleOpen}
+            className="w-full py-2.5 rounded-xl border border-white/20 text-sm font-medium hover:bg-white/10 active:bg-white/15 transition"
+          >
+            {isOpen ? "Hide details" : "Day details"}
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleOpen}
-          className="px-2.5 py-1.5 rounded-full border border-white/20 text-xs hover:bg-white/10"
-        >
-          {isOpen ? "Hide details" : "Day details"}
-        </button>
+        {/* Desktop: Horizontal layout */}
+        <div className="hidden md:flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-semibold text-white">
+                Day {day.dayNumber}
+              </div>
+              <span className="text-[11px] text-gray-300">
+                {formatDisplayDate(day.date)}
+              </span>
+
+              {isFirstForStop && (
+                <span className="ml-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-white/15 text-gray-200 bg-white/5">
+                  First day here
+                </span>
+              )}
+            </div>
+
+            <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
+              <ChevronRight className="w-3 h-3 opacity-70" />
+              <span>Days in {stopName}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onToggleOpen}
+            className="px-2.5 py-1.5 rounded-full border border-white/20 text-xs hover:bg-white/10"
+          >
+            {isOpen ? "Hide details" : "Day details"}
+          </button>
+        </div>
       </div>
 
       {isOpen && (
