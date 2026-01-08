@@ -45,6 +45,9 @@ export default function AccountItinerariesPage() {
   }, [user]);
 
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   function getItinerarySummary(row: ItineraryRow) {
     const tripInput = row.trip_input;
     const tripPlan = row.trip_plan;
@@ -62,6 +65,50 @@ export default function AccountItinerariesPage() {
     return { startCity, endCity, startDate, endDate, days };
   }
 
+  async function handleDeleteItinerary(id: string) {
+    if (!confirm("Are you sure you want to delete this itinerary? This action cannot be undone.")) {
+      return;
+    }
+
+    if (!user) return;
+
+    setDeletingId(id);
+    setDeleteError(null);
+
+    try {
+      const { error } = await supabase
+        .from("itineraries")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setDeleteError(error.message);
+        setDeletingId(null);
+        return;
+      }
+
+      // Refresh the list
+      const { data, error: fetchError } = await supabase
+        .from("itineraries")
+        .select("id,title,trip_input,trip_plan,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        setDeleteError(fetchError.message);
+      } else {
+        setRows((data as ItineraryRow[]) ?? []);
+      }
+
+      setDeletingId(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete itinerary";
+      setDeleteError(errorMessage);
+      setDeletingId(null);
+    }
+  }
+
   return (
     <main className="container py-10">
       <div className="flex items-center justify-between gap-4">
@@ -69,6 +116,7 @@ export default function AccountItinerariesPage() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {deleteError && <p className="mt-4 text-sm text-red-400">{deleteError}</p>}
       {loading && <p className="mt-4 text-sm text-white/70">Loading…</p>}
 
       <div className="mt-6 space-y-3">
@@ -105,12 +153,18 @@ export default function AccountItinerariesPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      // TODO: Navigate to view/edit itinerary
-                      alert("View/edit functionality coming soon!");
+                      router.push(`/trip-planner/${r.id}`);
                     }}
-                    className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/15 text-sm font-medium transition"
+                    className="px-3 py-1.5 rounded bg-[var(--accent)] text-slate-900 hover:brightness-110 text-sm font-medium transition"
                   >
-                    View
+                    View & Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItinerary(r.id)}
+                    disabled={deletingId === r.id}
+                    className="px-3 py-1.5 rounded bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed border border-red-600/30"
+                  >
+                    {deletingId === r.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>

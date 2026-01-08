@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
@@ -9,13 +9,39 @@ import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
+import type { TripInput } from "@/lib/itinerary";
 
-export default function TripPlanner() {
+type ItineraryData = {
+  id: string;
+  title: string;
+  trip_input: TripInput;
+  trip_plan: any;
+  created_at: string;
+};
+
+type TripPlannerProps = {
+  initialItinerary?: ItineraryData | null;
+};
+
+export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();
   const { user } = useAuth();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [itineraryLoaded, setItineraryLoaded] = useState(false);
+
+  // Load initial itinerary if provided
+  useEffect(() => {
+    if (initialItinerary && !itineraryLoaded) {
+      const result = tp.loadItinerary(initialItinerary.trip_input, initialItinerary.trip_plan);
+      if (result.success) {
+        setItineraryLoaded(true);
+      } else {
+        console.error("Failed to load itinerary:", result.error);
+      }
+    }
+  }, [initialItinerary, itineraryLoaded, tp]);
 
   const handleSaveClick = () => {
     if (!user) {
@@ -23,10 +49,10 @@ export default function TripPlanner() {
       alert("Please log in to save your itinerary");
       return;
     }
-    // Generate default title
-    const defaultTitle = tp.startCity && tp.endCity
+    // Use existing title if editing, otherwise generate default
+    const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
       ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
-      : "My Trip";
+      : "My Trip");
     setSaveTitle(defaultTitle);
     setShowSaveDialog(true);
     setSaveSuccess(false);
@@ -38,7 +64,7 @@ export default function TripPlanner() {
       return;
     }
 
-    const result = await tp.saveItinerary(saveTitle.trim());
+    const result = await tp.saveItinerary(saveTitle.trim(), initialItinerary?.id);
     if (result.success) {
       setSaveSuccess(true);
       setTimeout(() => {
@@ -161,7 +187,7 @@ export default function TripPlanner() {
                 disabled={tp.saving}
                 className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {tp.saving ? "Saving..." : "Save Itinerary"}
+                {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
               </button>
             </div>
             {tp.saveError && (
@@ -204,7 +230,9 @@ export default function TripPlanner() {
           />
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Save Itinerary</h3>
+              <h3 className="text-lg font-semibold text-white">
+                {initialItinerary ? "Update Itinerary" : "Save Itinerary"}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowSaveDialog(false)}
@@ -216,7 +244,9 @@ export default function TripPlanner() {
 
             {saveSuccess ? (
               <div className="text-center py-4">
-                <p className="text-green-400 font-medium">Itinerary saved successfully!</p>
+                <p className="text-green-400 font-medium">
+                  {initialItinerary ? "Itinerary updated successfully!" : "Itinerary saved successfully!"}
+                </p>
               </div>
             ) : (
               <>
@@ -253,7 +283,7 @@ export default function TripPlanner() {
                     disabled={tp.saving || !saveTitle.trim()}
                     className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-slate-900 text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {tp.saving ? "Saving..." : "Save"}
+                    {tp.saving ? (initialItinerary ? "Updating..." : "Saving...") : (initialItinerary ? "Update" : "Save")}
                   </button>
                 </div>
               </>
