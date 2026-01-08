@@ -1,8 +1,6 @@
 name: Crawl Travel Packages Nightly
 
 on:
-  schedule:
-    - cron: "25 12 * * *"
   workflow_dispatch:
     inputs:
       spiders:
