@@ -35,6 +35,7 @@ export default function AccountItinerariesPage() {
       const { data, error } = await supabase
         .from("itineraries")
         .select("id,title,trip_input,trip_plan,created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) setError(error.message);
@@ -43,64 +44,87 @@ export default function AccountItinerariesPage() {
     })();
   }, [user]);
 
-  async function saveExampleItinerary() {
-    // Replace this with the real TripPlanner data
-    const trip_input = { example: true };
-    const trip_plan = { days: [{ dayNumber: 1, date: "2026-01-01", location: "Auckland" }] };
 
-    setLoading(true);
-    setError(null);
+  function getItinerarySummary(row: ItineraryRow) {
+    const tripInput = row.trip_input;
+    const tripPlan = row.trip_plan;
 
-    const { error } = await supabase.from("itineraries").insert({
-      title: "My NZ Trip",
-      trip_input,
-      trip_plan,
-    });
+    if (!tripInput || !tripPlan) {
+      return null;
+    }
 
-    if (error) setError(error.message);
+    const startCity = tripInput.startCity?.name || "Unknown";
+    const endCity = tripInput.endCity?.name || "Unknown";
+    const startDate = tripInput.startDate || "";
+    const endDate = tripInput.endDate || "";
+    const days = tripPlan.days?.length || 0;
 
-    // refresh list
-    const { data } = await supabase
-      .from("itineraries")
-      .select("id,title,trip_input,trip_plan,created_at")
-      .order("created_at", { ascending: false });
-
-    setRows((data as ItineraryRow[]) ?? []);
-    setLoading(false);
+    return { startCity, endCity, startDate, endDate, days };
   }
 
   return (
     <main className="container py-10">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold">Your itineraries</h1>
-        <button
-          onClick={saveExampleItinerary}
-          className="rounded bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-slate-900"
-          disabled={loading}
-        >
-          Save example itinerary
-        </button>
       </div>
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
       {loading && <p className="mt-4 text-sm text-white/70">Loading…</p>}
 
       <div className="mt-6 space-y-3">
-        {rows.map((r) => (
-          <div key={r.id} className="card p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{r.title}</div>
-                <div className="text-xs text-white/60">
-                  {new Date(r.created_at).toLocaleString()}
+        {rows.map((r) => {
+          const summary = getItinerarySummary(r);
+          return (
+            <div key={r.id} className="card p-4 hover:bg-white/5 transition">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-lg mb-1">{r.title}</div>
+                  {summary && (
+                    <div className="space-y-1 text-sm text-white/70">
+                      <div>
+                        <span className="font-medium">Route:</span> {summary.startCity} → {summary.endCity}
+                      </div>
+                      {summary.startDate && summary.endDate && (
+                        <div>
+                          <span className="font-medium">Dates:</span>{" "}
+                          {new Date(summary.startDate + "T00:00:00").toLocaleDateString()} -{" "}
+                          {new Date(summary.endDate + "T00:00:00").toLocaleDateString()}
+                        </div>
+                      )}
+                      {summary.days > 0 && (
+                        <div>
+                          <span className="font-medium">Duration:</span> {summary.days} day{summary.days !== 1 ? "s" : ""}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="text-xs text-white/50 mt-2">
+                    Saved {new Date(r.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      // TODO: Navigate to view/edit itinerary
+                      alert("View/edit functionality coming soon!");
+                    }}
+                    className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/15 text-sm font-medium transition"
+                  >
+                    View
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {!loading && rows.length === 0 && (
-          <p className="text-sm text-white/70">No itineraries saved yet.</p>
+          <div className="card p-8 text-center">
+            <p className="text-white/70">No itineraries saved yet.</p>
+            <p className="text-sm text-white/50 mt-2">
+              Create an itinerary on the home page and save it to see it here.
+            </p>
+          </div>
         )}
       </div>
     </main>

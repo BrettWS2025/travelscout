@@ -1,14 +1,53 @@
 "use client";
 
+import { useState } from "react";
+import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function TripPlanner() {
   const tp = useTripPlanner();
+  const { user } = useAuth();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveTitle, setSaveTitle] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveClick = () => {
+    if (!user) {
+      // Could redirect to login, but for now just show dialog
+      alert("Please log in to save your itinerary");
+      return;
+    }
+    // Generate default title
+    const defaultTitle = tp.startCity && tp.endCity
+      ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
+      : "My Trip";
+    setSaveTitle(defaultTitle);
+    setShowSaveDialog(true);
+    setSaveSuccess(false);
+  };
+
+  const handleSaveConfirm = async () => {
+    if (!saveTitle.trim()) {
+      alert("Please enter a title for your itinerary");
+      return;
+    }
+
+    const result = await tp.saveItinerary(saveTitle.trim());
+    if (result.success) {
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setShowSaveDialog(false);
+        setSaveSuccess(false);
+        setSaveTitle("");
+      }, 1500);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -112,29 +151,115 @@ export default function TripPlanner() {
       )}
 
       {tp.plan && tp.plan.days.length > 0 && (
-        <DraftItinerary
-          plan={tp.plan}
-          routeStops={tp.routeStops}
-          nightsPerStop={tp.nightsPerStop}
-          dayStopMeta={tp.dayStopMeta}
-          dayDetails={tp.dayDetails}
-          openStops={tp.openStops}
-          onToggleStopOpen={tp.toggleStopOpen}
-          onExpandAllStops={tp.expandAllStops}
-          onCollapseAllStops={tp.collapseAllStops}
-          addingStopAfterIndex={tp.addingStopAfterIndex}
-          newStopCityId={tp.newStopCityId}
-          setNewStopCityId={(v) => tp.setNewStopCityId(v)}
-          onChangeNights={tp.handleChangeNights}
-          onToggleDayOpen={tp.toggleDayOpen}
-          onUpdateDayNotes={tp.updateDayNotes}
-          onUpdateDayAccommodation={tp.updateDayAccommodation}
-          onStartAddStop={tp.handleStartAddStop}
-          onConfirmAddStop={tp.handleConfirmAddStop}
-          onCancelAddStop={tp.handleCancelAddStop}
-          onRemoveStop={tp.handleRemoveStop}
-          onReorderStops={tp.handleReorderStops}
-        />
+        <>
+          <div className="card p-4 md:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-xl font-semibold">Your Itinerary</h2>
+              <button
+                type="button"
+                onClick={handleSaveClick}
+                disabled={tp.saving}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {tp.saving ? "Saving..." : "Save Itinerary"}
+              </button>
+            </div>
+            {tp.saveError && (
+              <p className="mt-2 text-sm text-red-400">{tp.saveError}</p>
+            )}
+          </div>
+
+          <DraftItinerary
+            plan={tp.plan}
+            routeStops={tp.routeStops}
+            nightsPerStop={tp.nightsPerStop}
+            dayStopMeta={tp.dayStopMeta}
+            dayDetails={tp.dayDetails}
+            openStops={tp.openStops}
+            onToggleStopOpen={tp.toggleStopOpen}
+            onExpandAllStops={tp.expandAllStops}
+            onCollapseAllStops={tp.collapseAllStops}
+            addingStopAfterIndex={tp.addingStopAfterIndex}
+            newStopCityId={tp.newStopCityId}
+            setNewStopCityId={(v) => tp.setNewStopCityId(v)}
+            onChangeNights={tp.handleChangeNights}
+            onToggleDayOpen={tp.toggleDayOpen}
+            onUpdateDayNotes={tp.updateDayNotes}
+            onUpdateDayAccommodation={tp.updateDayAccommodation}
+            onStartAddStop={tp.handleStartAddStop}
+            onConfirmAddStop={tp.handleConfirmAddStop}
+            onCancelAddStop={tp.handleCancelAddStop}
+            onRemoveStop={tp.handleRemoveStop}
+            onReorderStops={tp.handleReorderStops}
+          />
+        </>
+      )}
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowSaveDialog(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Save Itinerary</h3>
+              <button
+                type="button"
+                onClick={() => setShowSaveDialog(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {saveSuccess ? (
+              <div className="text-center py-4">
+                <p className="text-green-400 font-medium">Itinerary saved successfully!</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2 mb-4">
+                  <label className="text-sm font-medium text-white">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={saveTitle}
+                    onChange={(e) => setSaveTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSaveConfirm();
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    placeholder="Enter itinerary title"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowSaveDialog(false)}
+                    className="flex-1 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-medium transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveConfirm}
+                    disabled={tp.saving || !saveTitle.trim()}
+                    className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-slate-900 text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {tp.saving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       <RouteOverview mapPoints={tp.mapPoints} legs={tp.legs} legsLoading={tp.legsLoading} />

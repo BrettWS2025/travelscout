@@ -6,6 +6,7 @@ import {
   buildTripPlanFromStopsAndNights,
   type TripPlan,
   countDaysInclusive,
+  type TripInput,
 } from "@/lib/itinerary";
 import {
   NZ_CITIES,
@@ -32,6 +33,8 @@ import {
   type DayStopMeta,
   type MapPoint,
 } from "@/lib/trip-planner/utils";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type ActivePill = "where" | "when" | null;
 
@@ -86,6 +89,11 @@ export function useTripPlanner() {
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Save state
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const [routeStops, setRouteStops] = useState<string[]>([]);
   const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
@@ -808,6 +816,89 @@ export function useTripPlanner() {
     ? `${selectedThings.length} thing${selectedThings.length > 1 ? 's' : ''} selected`
     : "Add things to do";
 
+  async function saveItinerary(title: string): Promise<{ success: boolean; error?: string }> {
+    if (!user) {
+      return { success: false, error: "You must be logged in to save an itinerary" };
+    }
+
+    if (!plan || plan.days.length === 0) {
+      return { success: false, error: "No itinerary to save" };
+    }
+
+    if (!startCity || !endCity) {
+      return { success: false, error: "Start and end cities are required" };
+    }
+
+    if (!startDate || !endDate) {
+      return { success: false, error: "Start and end dates are required" };
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      // Build trip_input
+      const waypoints: string[] = [];
+      
+      // Add selected places as waypoints
+      selectedPlaces.forEach((city) => {
+        if (city.name && city.name !== startCity.name && city.name !== endCity.name) {
+          waypoints.push(city.name);
+        }
+      });
+
+      // Add selected things (stops) as waypoints
+      selectedThings.forEach((stop) => {
+        if (stop.name && stop.name !== startCity.name && stop.name !== endCity.name) {
+          waypoints.push(stop.name);
+        }
+      });
+
+      const trip_input: TripInput = {
+        startCity,
+        endCity,
+        startDate,
+        endDate,
+        waypoints,
+      };
+
+      // Build extended trip_plan with additional data
+      const extended_trip_plan = {
+        ...plan,
+        routeStops,
+        nightsPerStop,
+        dayStopMeta,
+        dayDetails,
+        mapPoints,
+        legs,
+        selectedPlaceIds,
+        selectedThingIds,
+      };
+
+      const { error: insertError } = await supabase
+        .from("itineraries")
+        .insert({
+          user_id: user.id,
+          title: title || `Trip from ${startCity.name} to ${endCity.name}`,
+          trip_input,
+          trip_plan: extended_trip_plan,
+        });
+
+      if (insertError) {
+        setSaveError(insertError.message);
+        return { success: false, error: insertError.message };
+      }
+
+      setSaving(false);
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to save itinerary";
+      setSaveError(errorMessage);
+      setSaving(false);
+      return { success: false, error: errorMessage };
+    }
+  }
+
   return {
     // refs
     whereRef,
@@ -852,6 +943,8 @@ export function useTripPlanner() {
     plan,
     error,
     hasSubmitted,
+    saving,
+    saveError,
     routeStops,
     nightsPerStop,
     dayStopMeta,
@@ -921,6 +1014,7 @@ export function useTripPlanner() {
     toggleStopOpen,
     expandAllStops,
     collapseAllStops,
+    saveItinerary,
     // results
     startResults,
     endResults,
