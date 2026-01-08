@@ -3,6 +3,7 @@ name: Deploy Supabase Migrations - Dev
 on:
   push:
     branches:
+      - Dev
       - dev
       - develop
       - 'feature/**'
