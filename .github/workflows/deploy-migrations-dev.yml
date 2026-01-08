@@ -26,6 +26,28 @@ jobs:
         with:
           version: latest
 
+      - name: Verify secrets are set
+        run: |
+          echo "Checking required secrets..."
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "❌ ERROR: SUPABASE_ACCESS_TOKEN is not set"
+            echo "Please set this secret in: Settings → Environments → dev → Secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DEV_PROJECT_ID }}" ]; then
+            echo "❌ ERROR: SUPABASE_DEV_PROJECT_ID is not set"
+            echo "Please set this secret in: Settings → Environments → dev → Secrets"
+            echo "Or use repository-level secrets at: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DEV_DB_PASSWORD }}" ]; then
+            echo "❌ ERROR: SUPABASE_DEV_DB_PASSWORD is not set"
+            echo "Please set this secret in: Settings → Environments → dev → Secrets"
+            echo "Or use repository-level secrets at: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✓ All required secrets are set"
+
       - name: Deploy migrations to Dev
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
