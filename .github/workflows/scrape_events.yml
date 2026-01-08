@@ -1,0 +1,145 @@
+name: Scrape events
+
+on:
+  workflow_dispatch:
+    inputs:
+      spiders:
+        description: "Comma-separated spider names to run"
+        # e.g. "auckland_events,christchurch_events"
+        default: "auckland_events,christchurch_events,queenstown_events"
+        required: true
+      feed_path:
+        description: "Path under scraper/ to write the JSON Lines feed"
+        default: "data/Events.jsonl"
+        required: true
+      spider_args:
+        description: "Optional extra args for scrapy crawl (e.g. -a listing_pages=0-40 -a load_more=45)"
+        default: ""
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Run Scrapy spiders
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: scraper
+
+    env:
+      SCRAPY_SETTINGS_MODULE: tscraper.settings
+      PYTHONPATH: ${{ github.workspace }}/scraper
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "utf-8"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright (Chromium) with system deps
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: Prepare folders
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+        run: |
+          mkdir -p debug httpcache
+          mkdir -p "$(dirname "$FEED_PATH")"
+
+      - name: Reset feed (start fresh each run)
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+        run: |
+          # Truncate or create the target JSONL file
+          : > "$FEED_PATH"
+
+      - name: Show Scrapy version & discovered spiders
+        run: |
+          scrapy version -v
+          scrapy list | tee debug/spiders.txt
+
+      - name: Run spiders (append to the same JSONL)
+        id: runspiders
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+          SPIDERS: ${{ github.event.inputs.spiders }}
+          EXTRA_ARGS: ${{ github.event.inputs.spider_args }}
+        run: |
+          set -euo pipefail
+
+          # Always append, because we already truncated the file once above
+          FEEDS_JSON="$(python - <<'PY'
+          import json, os
+          p = os.environ.get("FEED_PATH", "data/Events.jsonl")
+          print(json.dumps({p: {"format": "jsonlines", "encoding": "utf8", "overwrite": False}}))
+          PY
+          )"
+
+          echo "FEED will go to: ${FEED_PATH}"
+          echo "FEEDS mapping: ${FEEDS_JSON}"
+          echo "EXTRA_ARGS: ${EXTRA_ARGS}"
+
+          IFS=',' read -ra S <<< "${SPIDERS}"
+          for s in "${S[@]}"; do
+            s="$(echo "$s" | xargs)"
+            [[ -z "$s" ]] && continue
+            echo "::group::scrapy crawl $s"
+            # shellcheck disable=SC2086
+            scrapy crawl "$s" -s FEEDS="$FEEDS_JSON" ${EXTRA_ARGS}
+            echo "::endgroup::"
+          done
+
+      - name: Verify feed file exists
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+        run: |
+          set -e
+          ls -la "$(dirname "$FEED_PATH")" || true
+          test -s "$FEED_PATH" || (echo "ERROR: Feed file $FEED_PATH not found or empty." && exit 1)
+          echo "First 5 lines:"
+          head -n 5 "$FEED_PATH" || true
+
+      - name: Upload data (JSONL)
+        uses: actions/upload-artifact@v4
+        with:
+          name: events-jsonl
+          path: scraper/${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+          if-no-files-found: error
+          retention-days: 10
+
+      - name: Commit feed back to repository
+        if: ${{ github.ref_type == 'branch' }}
+        env:
+          FEED_PATH: ${{ github.event.inputs.feed_path || 'data/Events.jsonl' }}
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$FEED_PATH" || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: update ${FEED_PATH} [skip ci]"
+          git push
