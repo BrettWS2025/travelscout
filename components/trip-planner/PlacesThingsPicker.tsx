@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useEffect, useState } from "react";
 import {
   MapPin,
   ChevronDown,
@@ -80,6 +81,7 @@ function PlacesPickerPanel({
   selectedCityIds,
   onSelectCity,
   onRemoveCity,
+  mobileSheetOpen = false,
 }: {
   query: string;
   setQuery: (v: string) => void;
@@ -89,7 +91,19 @@ function PlacesPickerPanel({
   selectedCityIds: string[];
   onSelectCity: (cityId: string) => void;
   onRemoveCity: (cityId: string) => void;
+  mobileSheetOpen?: boolean;
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const showBrowseLists = normalize(query).length === 0;
   const filteredRecent = recent.filter((c) => !selectedCityIds.includes(c.id));
   const filteredSuggested = suggested.filter((c) => !selectedCityIds.includes(c.id));
@@ -145,7 +159,7 @@ function PlacesPickerPanel({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          autoFocus
+          autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search places"
           className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
         />
@@ -226,6 +240,7 @@ function ThingsPickerPanel({
   selectedStopIds,
   onSelectStop,
   onRemoveStop,
+  mobileSheetOpen = false,
 }: {
   query: string;
   setQuery: (v: string) => void;
@@ -233,7 +248,19 @@ function ThingsPickerPanel({
   selectedStopIds: string[];
   onSelectStop: (stopId: string) => void;
   onRemoveStop: (stopId: string) => void;
+  mobileSheetOpen?: boolean;
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const showBrowseLists = normalize(query).length === 0;
   const browseStops = NZ_STOPS.slice(0, 20).filter((s) => !selectedStopIds.includes(s.id));
   const filteredResults = results.filter((s) => !selectedStopIds.includes(s.id));
@@ -288,7 +315,7 @@ function ThingsPickerPanel({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          autoFocus
+          autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search things to do"
           className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
         />
@@ -348,6 +375,8 @@ export type PlacesThingsPickerProps = {
   activePill: ActivePlacesThingsPill;
   showPlacesPopover: boolean;
   showThingsPopover: boolean;
+  placesMobileSheetOpen: boolean;
+  thingsMobileSheetOpen: boolean;
 
   placesQuery: string;
   thingsQuery: string;
@@ -371,6 +400,8 @@ export type PlacesThingsPickerProps = {
   setShowThingsPopover: (v: boolean) => void;
   openPlacesDesktop: () => void;
   openThingsDesktop: () => void;
+  closePlacesMobileSheet: () => void;
+  closeThingsMobileSheet: () => void;
   selectPlace: (cityId: string) => void;
   selectThing: (stopId: string) => void;
   removePlace: (cityId: string) => void;
@@ -387,11 +418,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openPlacesDesktop}
-            className={[
-              "w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3",
-              "hover:bg-white/5 transition flex items-center justify-between gap-3",
-              props.activePill === "places" ? "bg-white/5" : "",
-            ].join(" ")}
+            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <MapPin className="w-4 h-4 opacity-80" />
@@ -404,26 +431,6 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             </div>
             <ChevronDown className="w-4 h-4 opacity-70" />
           </button>
-
-          {props.showPlacesPopover && (
-            <div 
-              className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg"
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <PlacesPickerPanel
-                query={props.placesQuery}
-                setQuery={props.setPlacesQuery}
-                results={props.placesResults}
-                recent={props.recent}
-                suggested={props.suggested}
-                selectedCityIds={props.selectedPlaceIds}
-                onSelectCity={props.selectPlace}
-                onRemoveCity={props.removePlace}
-              />
-            </div>
-          )}
         </div>
 
         {/* THINGS pill */}
@@ -431,11 +438,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openThingsDesktop}
-            className={[
-              "w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3",
-              "hover:bg-white/5 transition flex items-center justify-between gap-3",
-              props.activePill === "things" ? "bg-white/5" : "",
-            ].join(" ")}
+            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Navigation className="w-4 h-4 opacity-80" />
@@ -448,24 +451,6 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             </div>
             <ChevronDown className="w-4 h-4 opacity-70" />
           </button>
-
-          {props.showThingsPopover && (
-            <div 
-              className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg"
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ThingsPickerPanel
-                query={props.thingsQuery}
-                setQuery={props.setThingsQuery}
-                results={props.thingsResults}
-                selectedStopIds={props.selectedThingIds}
-                onSelectStop={props.selectThing}
-                onRemoveStop={props.removeThing}
-              />
-            </div>
-          )}
         </div>
       </div>
 
@@ -507,6 +492,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                     selectedCityIds={props.selectedPlaceIds}
                     onSelectCity={props.selectPlace}
                     onRemoveCity={props.removePlace}
+                    mobileSheetOpen={false}
                   />
                 </div>
               )}
@@ -546,6 +532,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                     selectedStopIds={props.selectedThingIds}
                     onSelectStop={props.selectThing}
                     onRemoveStop={props.removeThing}
+                    mobileSheetOpen={false}
                   />
                 </div>
               )}
@@ -553,6 +540,115 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           </div>
         </div>
       </div>
+
+      {/* MOBILE SHEETS */}
+      {/* Places Mobile Sheet */}
+      {props.placesMobileSheetOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <div
+            className="absolute inset-0 bg-black/55"
+            onClick={props.closePlacesMobileSheet}
+          />
+          <div 
+            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-white">
+                  Places to go
+                </div>
+                <button
+                  type="button"
+                  onClick={props.closePlacesMobileSheet}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4">
+                <PlacesPickerPanel
+                  query={props.placesQuery}
+                  setQuery={props.setPlacesQuery}
+                  results={props.placesResults}
+                  recent={props.recent}
+                  suggested={props.suggested}
+                  selectedCityIds={props.selectedPlaceIds}
+                  onSelectCity={props.selectPlace}
+                  onRemoveCity={props.removePlace}
+                  mobileSheetOpen={true}
+                />
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={props.closePlacesMobileSheet}
+                  className="text-sm text-gray-300 hover:text-white underline underline-offset-2"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Things Mobile Sheet */}
+      {props.thingsMobileSheetOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <div
+            className="absolute inset-0 bg-black/55"
+            onClick={props.closeThingsMobileSheet}
+          />
+          <div 
+            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-white">
+                  Things to do
+                </div>
+                <button
+                  type="button"
+                  onClick={props.closeThingsMobileSheet}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4">
+                <ThingsPickerPanel
+                  query={props.thingsQuery}
+                  setQuery={props.setThingsQuery}
+                  results={props.thingsResults}
+                  selectedStopIds={props.selectedThingIds}
+                  onSelectStop={props.selectThing}
+                  onRemoveStop={props.removeThing}
+                  mobileSheetOpen={true}
+                />
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={props.closeThingsMobileSheet}
+                  className="text-sm text-gray-300 hover:text-white underline underline-offset-2"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

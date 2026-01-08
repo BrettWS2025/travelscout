@@ -81,6 +81,8 @@ export function useTripPlanner() {
   const [activePlacesThingsPill, setActivePlacesThingsPill] = useState<"places" | "things" | null>(null);
   const [showPlacesPopover, setShowPlacesPopover] = useState(false);
   const [showThingsPopover, setShowThingsPopover] = useState(false);
+  const [placesMobileSheetOpen, setPlacesMobileSheetOpen] = useState(false);
+  const [thingsMobileSheetOpen, setThingsMobileSheetOpen] = useState(false);
   const [placesQuery, setPlacesQuery] = useState("");
   const [thingsQuery, setThingsQuery] = useState("");
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
@@ -239,17 +241,37 @@ export function useTripPlanner() {
   }
 
   function openPlacesDesktop() {
-    setActivePlacesThingsPill("places");
-    setShowPlacesPopover(true);
-    setShowThingsPopover(false);
-    setPlacesQuery("");
+    // Check if mobile (screen width < 768px)
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setPlacesMobileSheetOpen(true);
+      setPlacesQuery("");
+    } else {
+      setActivePlacesThingsPill("places");
+      setShowPlacesPopover(true);
+      setShowThingsPopover(false);
+      setPlacesQuery("");
+    }
   }
 
   function openThingsDesktop() {
-    setActivePlacesThingsPill("things");
-    setShowThingsPopover(true);
-    setShowPlacesPopover(false);
-    setThingsQuery("");
+    // Check if mobile (screen width < 768px)
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setThingsMobileSheetOpen(true);
+      setThingsQuery("");
+    } else {
+      setActivePlacesThingsPill("things");
+      setShowThingsPopover(true);
+      setShowPlacesPopover(false);
+      setThingsQuery("");
+    }
+  }
+
+  function closePlacesMobileSheet() {
+    setPlacesMobileSheetOpen(false);
+  }
+
+  function closeThingsMobileSheet() {
+    setThingsMobileSheetOpen(false);
   }
 
   function selectPlace(cityId: string) {
@@ -1050,6 +1072,8 @@ export function useTripPlanner() {
     activePlacesThingsPill,
     showPlacesPopover,
     showThingsPopover,
+    placesMobileSheetOpen,
+    thingsMobileSheetOpen,
     placesQuery,
     thingsQuery,
     selectedPlaceIds,
@@ -1112,6 +1136,8 @@ export function useTripPlanner() {
     openThingsDesktop,
     openMobileSheet,
     closeMobileSheet,
+    closePlacesMobileSheet,
+    closeThingsMobileSheet,
     selectStartCity,
     selectEndCity,
     selectReturnToStart,
