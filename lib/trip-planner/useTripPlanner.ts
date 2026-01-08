@@ -6,6 +6,7 @@ import {
   buildTripPlanFromStopsAndNights,
   type TripPlan,
   countDaysInclusive,
+  type TripInput,
 } from "@/lib/itinerary";
 import {
   NZ_CITIES,
@@ -32,6 +33,8 @@ import {
   type DayStopMeta,
   type MapPoint,
 } from "@/lib/trip-planner/utils";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type ActivePill = "where" | "when" | null;
 
@@ -78,6 +81,8 @@ export function useTripPlanner() {
   const [activePlacesThingsPill, setActivePlacesThingsPill] = useState<"places" | "things" | null>(null);
   const [showPlacesPopover, setShowPlacesPopover] = useState(false);
   const [showThingsPopover, setShowThingsPopover] = useState(false);
+  const [placesMobileSheetOpen, setPlacesMobileSheetOpen] = useState(false);
+  const [thingsMobileSheetOpen, setThingsMobileSheetOpen] = useState(false);
   const [placesQuery, setPlacesQuery] = useState("");
   const [thingsQuery, setThingsQuery] = useState("");
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
@@ -86,6 +91,11 @@ export function useTripPlanner() {
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Save state
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const [routeStops, setRouteStops] = useState<string[]>([]);
   const [nightsPerStop, setNightsPerStop] = useState<number[]>([]);
@@ -231,17 +241,37 @@ export function useTripPlanner() {
   }
 
   function openPlacesDesktop() {
-    setActivePlacesThingsPill("places");
-    setShowPlacesPopover(true);
-    setShowThingsPopover(false);
-    setPlacesQuery("");
+    // Check if mobile (screen width < 768px)
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setPlacesMobileSheetOpen(true);
+      setPlacesQuery("");
+    } else {
+      setActivePlacesThingsPill("places");
+      setShowPlacesPopover(true);
+      setShowThingsPopover(false);
+      setPlacesQuery("");
+    }
   }
 
   function openThingsDesktop() {
-    setActivePlacesThingsPill("things");
-    setShowThingsPopover(true);
-    setShowPlacesPopover(false);
-    setThingsQuery("");
+    // Check if mobile (screen width < 768px)
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setThingsMobileSheetOpen(true);
+      setThingsQuery("");
+    } else {
+      setActivePlacesThingsPill("things");
+      setShowThingsPopover(true);
+      setShowPlacesPopover(false);
+      setThingsQuery("");
+    }
+  }
+
+  function closePlacesMobileSheet() {
+    setPlacesMobileSheetOpen(false);
+  }
+
+  function closeThingsMobileSheet() {
+    setThingsMobileSheetOpen(false);
   }
 
   function selectPlace(cityId: string) {
@@ -808,6 +838,206 @@ export function useTripPlanner() {
     ? `${selectedThings.length} thing${selectedThings.length > 1 ? 's' : ''} selected`
     : "Add things to do";
 
+  async function saveItinerary(title: string, itineraryId?: string): Promise<{ success: boolean; error?: string }> {
+    if (!user) {
+      return { success: false, error: "You must be logged in to save an itinerary" };
+    }
+
+    if (!plan || plan.days.length === 0) {
+      return { success: false, error: "No itinerary to save" };
+    }
+
+    if (!startCity || !endCity) {
+      return { success: false, error: "Start and end cities are required" };
+    }
+
+    if (!startDate || !endDate) {
+      return { success: false, error: "Start and end dates are required" };
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      // Build trip_input
+      const waypoints: string[] = [];
+      
+      // Add selected places as waypoints
+      selectedPlaces.forEach((city) => {
+        if (city.name && city.name !== startCity.name && city.name !== endCity.name) {
+          waypoints.push(city.name);
+        }
+      });
+
+      // Add selected things (stops) as waypoints
+      selectedThings.forEach((stop) => {
+        if (stop.name && stop.name !== startCity.name && stop.name !== endCity.name) {
+          waypoints.push(stop.name);
+        }
+      });
+
+      const trip_input: TripInput = {
+        startCity,
+        endCity,
+        startDate,
+        endDate,
+        waypoints,
+      };
+
+      // Build extended trip_plan with additional data
+      const extended_trip_plan = {
+        ...plan,
+        routeStops,
+        nightsPerStop,
+        dayStopMeta,
+        dayDetails,
+        mapPoints,
+        legs,
+        selectedPlaceIds,
+        selectedThingIds,
+      };
+
+      const itineraryData = {
+        title: title || `Trip from ${startCity.name} to ${endCity.name}`,
+        trip_input,
+        trip_plan: extended_trip_plan,
+      };
+
+      let error;
+      
+      if (itineraryId) {
+        // Update existing itinerary
+        const { error: updateError } = await supabase
+          .from("itineraries")
+          .update(itineraryData)
+          .eq("id", itineraryId)
+          .eq("user_id", user.id);
+        error = updateError;
+      } else {
+        // Insert new itinerary
+        const { error: insertError } = await supabase
+          .from("itineraries")
+          .insert({
+            user_id: user.id,
+            ...itineraryData,
+          });
+        error = insertError;
+      }
+
+      if (error) {
+        setSaveError(error.message);
+        return { success: false, error: error.message };
+      }
+
+      setSaving(false);
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to save itinerary";
+      setSaveError(errorMessage);
+      setSaving(false);
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  function loadItinerary(trip_input: TripInput, trip_plan: any): { success: boolean; error?: string } {
+    try {
+      // Validate required data
+      if (!trip_input || !trip_plan) {
+        return { success: false, error: "Invalid itinerary data" };
+      }
+
+      if (!trip_input.startCity || !trip_input.endCity) {
+        return { success: false, error: "Start and end cities are required" };
+      }
+
+      // Restore basic trip input
+      setStartCityId(trip_input.startCity.id);
+      setEndCityId(trip_input.endCity.id);
+      setStartDate(trip_input.startDate);
+      setEndDate(trip_input.endDate);
+
+      // Restore date range
+      const start = fromIsoDate(trip_input.startDate);
+      const end = fromIsoDate(trip_input.endDate);
+      if (start && end) {
+        setDateRange({ from: start, to: end });
+        setCalendarMonth(start);
+      }
+
+      // Restore selected places and things
+      // First try to restore from saved IDs (preferred)
+      if (trip_plan.selectedPlaceIds && Array.isArray(trip_plan.selectedPlaceIds)) {
+        setSelectedPlaceIds(trip_plan.selectedPlaceIds);
+      } else {
+        // Fall back to reconstructing from waypoints
+        const waypoints = trip_input.waypoints || [];
+        const placeIds: string[] = [];
+        waypoints.forEach((waypoint: string) => {
+          const city = NZ_CITIES.find((c) => c.name === waypoint);
+          if (city) {
+            placeIds.push(city.id);
+          }
+        });
+        setSelectedPlaceIds(placeIds);
+      }
+
+      if (trip_plan.selectedThingIds && Array.isArray(trip_plan.selectedThingIds)) {
+        setSelectedThingIds(trip_plan.selectedThingIds);
+      } else {
+        // Fall back to reconstructing from waypoints
+        const waypoints = trip_input.waypoints || [];
+        const thingIds: string[] = [];
+        waypoints.forEach((waypoint: string) => {
+          const stop = NZ_STOPS.find((s) => s.name === waypoint);
+          if (stop) {
+            thingIds.push(stop.id);
+          }
+        });
+        setSelectedThingIds(thingIds);
+      }
+
+      // Restore route stops and nights
+      const savedRouteStops = trip_plan.routeStops || [];
+      const savedNightsPerStop = trip_plan.nightsPerStop || [];
+
+      if (savedRouteStops.length > 0 && savedNightsPerStop.length > 0) {
+        setRouteStops(savedRouteStops);
+        setNightsPerStop(savedNightsPerStop);
+        setDayStopMeta(buildDayStopMeta(savedRouteStops, savedNightsPerStop));
+      }
+
+      // Restore plan
+      if (trip_plan.days && trip_plan.days.length > 0) {
+        setPlan(trip_plan);
+        syncDayDetailsFromPlan(trip_plan);
+      }
+
+      // Restore day details
+      if (trip_plan.dayDetails) {
+        setDayDetails(trip_plan.dayDetails);
+      }
+
+      // Restore map points and legs
+      if (trip_plan.mapPoints && trip_plan.mapPoints.length > 0) {
+        setMapPoints(trip_plan.mapPoints);
+      }
+
+      if (trip_plan.legs && trip_plan.legs.length > 0) {
+        setLegs(trip_plan.legs);
+      }
+
+      // Mark as submitted so the UI shows the plan
+      setHasSubmitted(true);
+      setError(null);
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load itinerary";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }
+
   return {
     // refs
     whereRef,
@@ -842,6 +1072,8 @@ export function useTripPlanner() {
     activePlacesThingsPill,
     showPlacesPopover,
     showThingsPopover,
+    placesMobileSheetOpen,
+    thingsMobileSheetOpen,
     placesQuery,
     thingsQuery,
     selectedPlaceIds,
@@ -852,6 +1084,8 @@ export function useTripPlanner() {
     plan,
     error,
     hasSubmitted,
+    saving,
+    saveError,
     routeStops,
     nightsPerStop,
     dayStopMeta,
@@ -902,6 +1136,8 @@ export function useTripPlanner() {
     openThingsDesktop,
     openMobileSheet,
     closeMobileSheet,
+    closePlacesMobileSheet,
+    closeThingsMobileSheet,
     selectStartCity,
     selectEndCity,
     selectReturnToStart,
@@ -921,6 +1157,8 @@ export function useTripPlanner() {
     toggleStopOpen,
     expandAllStops,
     collapseAllStops,
+    saveItinerary,
+    loadItinerary,
     // results
     startResults,
     endResults,
