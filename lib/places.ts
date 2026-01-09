@@ -40,7 +40,7 @@ export async function getAllPlaces(): Promise<Place[]> {
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
-    .order("rank", { ascending: true, nullsLast: true })
+    .order("rank", { ascending: true, nullsFirst: false })
     .order("name", { ascending: true });
 
   if (error) {
