@@ -165,11 +165,14 @@ export function safeWriteRecent(items: CityLite[]) {
 }
 
 export function pickSuggestedCities(): CityLite[] {
-  const ranked = NZ_CITIES.filter((c) => typeof c.rank === "number")
+  // Use cached places from Supabase, or fallback to static array
+  const cities = NZ_CITIES.length > 0 ? NZ_CITIES : [];
+  
+  const ranked = cities.filter((c) => typeof c.rank === "number")
     .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
     .slice(0, 6)
     .map((c) => ({ id: c.id, name: c.name }));
 
   if (ranked.length >= 4) return ranked;
-  return NZ_CITIES.slice(0, 6).map((c) => ({ id: c.id, name: c.name }));
+  return cities.slice(0, 6).map((c) => ({ id: c.id, name: c.name }));
 }
