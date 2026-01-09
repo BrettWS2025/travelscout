@@ -13,6 +13,7 @@ import {
   DEFAULT_START_CITY_ID,
   DEFAULT_END_CITY_ID,
   getCityById,
+  getAllPlaces,
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute, NZ_STOPS, type NzStop } from "@/lib/nzStops";
 import {
@@ -70,7 +71,7 @@ export function useTripPlanner() {
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
   const [recent, setRecent] = useState<CityLite[]>([]);
-  const suggested = useMemo(() => pickSuggestedCities(), []);
+  const [suggested, setSuggested] = useState<CityLite[]>(() => pickSuggestedCities());
 
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +120,12 @@ export function useTripPlanner() {
 
   useEffect(() => {
     setRecent(safeReadRecent());
+    
+    // Load places from Supabase and update suggested cities when ready
+    getAllPlaces().then(() => {
+      // Places are now loaded, update suggested cities
+      setSuggested(pickSuggestedCities());
+    });
   }, []);
 
   // Close desktop popovers on outside click

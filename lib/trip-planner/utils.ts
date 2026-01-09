@@ -1,5 +1,6 @@
 import { buildLegsFromPoints, type TripLeg } from "@/lib/itinerary";
 import { NZ_CITIES } from "@/lib/nzCities";
+import { getPlacesCache } from "@/lib/places";
 
 export type MapPoint = {
   lat: number;
@@ -165,8 +166,9 @@ export function safeWriteRecent(items: CityLite[]) {
 }
 
 export function pickSuggestedCities(): CityLite[] {
-  // Use cached places from Supabase, or fallback to static array
-  const cities = NZ_CITIES.length > 0 ? NZ_CITIES : [];
+  // Try to get from cache first (most up-to-date), then fallback to NZ_CITIES
+  const cache = getPlacesCache();
+  const cities = (cache && cache.length > 0) ? cache : (NZ_CITIES.length > 0 ? NZ_CITIES : []);
   
   const ranked = cities.filter((c) => typeof c.rank === "number")
     .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))

@@ -27,6 +27,11 @@ let placesCache: Place[] | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Export a getter for the cache (for use in pickSuggestedCities)
+export function getPlacesCache(): Place[] | null {
+  return placesCache;
+}
+
 /**
  * Fetch all places from Supabase
  * Results are cached for 5 minutes
