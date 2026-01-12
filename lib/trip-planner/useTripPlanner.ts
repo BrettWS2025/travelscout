@@ -709,7 +709,7 @@ export function useTripPlanner() {
 
   function handleStartAddStop(afterIndex: number) {
     setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
+    setNewStopCityId(null);
   }
 
   function handleCancelAddStop() {

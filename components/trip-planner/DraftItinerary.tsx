@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
-import { ChevronDown, GripVertical } from "lucide-react";
-import { NZ_CITIES } from "@/lib/nzCities";
+import { useMemo, useState, useRef, useEffect, type CSSProperties } from "react";
+import { ChevronDown, GripVertical, Search, MapPin } from "lucide-react";
+import { NZ_CITIES, getCityById } from "@/lib/nzCities";
 import type { TripPlan } from "@/lib/itinerary";
 import {
   formatShortRangeDate,
   makeDayKey,
+  normalize,
   type DayDetail,
   type DayStopMeta,
+  type CityLite,
+  pickSuggestedCities,
 } from "@/lib/trip-planner/utils";
 import DayCard from "@/components/trip-planner/DayCard";
 
@@ -205,6 +208,230 @@ export default function DraftItinerary({
         </DndContext>
       </div>
     </div>
+  );
+}
+
+function CitySearchPill({
+  value,
+  onSelect,
+  onCancel,
+  onConfirm,
+}: {
+  value: string | null;
+  onSelect: (cityId: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedCity = value ? getCityById(value) : null;
+  const suggested = pickSuggestedCities();
+
+  const searchResults = useMemo(() => {
+    const q = normalize(query);
+    if (!q) return [];
+    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
+  }, [query]);
+
+  const showSuggestions = normalize(query).length === 0;
+  const filteredSuggested = suggested.filter((c) => c.id !== value);
+  const filteredResults = searchResults.filter((c) => c.id !== value);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  function handleSelectCity(cityId: string) {
+    onSelect(cityId);
+    setIsOpen(false);
+    setQuery("");
+  }
+
+  // Calculate dropdown position
+  const [dropdownStyle, setDropdownStyle] = useState<{ top?: string; left?: string; width?: string }>({});
+  
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
+
+    function updatePosition() {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: `${containerRect.bottom + 8}px`,
+        left: `${containerRect.left}px`,
+        width: `${containerRect.width}px`,
+      });
+    }
+
+    // Update position initially
+    updatePosition();
+
+    // Update position on scroll and resize
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen]);
+
+  return (
+    <>
+      <div ref={containerRef} className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            {!isOpen ? (
+              <button
+                type="button"
+                onClick={() => setIsOpen(true)}
+                className={[
+                  "w-full rounded-full bg-[var(--card)] border border-white/15",
+                  "px-3 py-2 md:px-4 md:py-2",
+                  "hover:bg-white/5 transition flex items-center gap-2 text-left",
+                ].join(" ")}
+              >
+                <Search className="w-4 h-4 text-gray-300 shrink-0" />
+                <span className={selectedCity ? "text-sm text-white font-semibold truncate" : "text-sm text-gray-400 truncate"}>
+                  {selectedCity ? selectedCity.name : "Search places"}
+                </span>
+              </button>
+            ) : (
+              <div className="rounded-full bg-[var(--card)] border border-white/15 px-3 py-2 md:px-4 md:py-2 flex items-center gap-2">
+                <Search className="w-4 h-4 text-gray-300 shrink-0" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search places"
+                  className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setIsOpen(false);
+                      setQuery("");
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {!isOpen && (
+            <>
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={!value}
+                className="rounded-full px-3 py-1.5 md:px-4 md:py-2 text-[11px] md:text-xs font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add stop
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="text-[11px] md:text-xs text-gray-300 hover:underline underline-offset-2"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] rounded-2xl bg-[#1E2C4B] p-3 border border-white/10 shadow-lg max-h-64 overflow-auto"
+          style={dropdownStyle}
+        >
+          {showSuggestions ? (
+            <>
+              {filteredSuggested.length > 0 && (
+                <div className="mb-2">
+                  <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                    Suggested places
+                  </div>
+                  <div className="space-y-1">
+                    {filteredSuggested.map((c) => (
+                      <button
+                        key={`suggested-${c.id}`}
+                        type="button"
+                        onClick={() => handleSelectCity(c.id)}
+                        className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-[#F6F1EA] flex items-center justify-center border border-black/5">
+                          <MapPin className="w-4 h-4 text-amber-700" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{c.name}</div>
+                          <div className="text-[12px] text-gray-300 truncate">Top destination</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                Matches
+              </div>
+              {filteredResults.length === 0 ? (
+                <div className="px-2 py-3 text-sm text-gray-300">
+                  No matches. Try a different spelling.
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredResults.map((c) => (
+                    <button
+                      key={`result-${c.id}`}
+                      type="button"
+                      onClick={() => handleSelectCity(c.id)}
+                      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-[#F6F1EA] flex items-center justify-center border border-black/5">
+                        <MapPin className="w-4 h-4 text-amber-700" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">{c.name}</div>
+                        <div className="text-[12px] text-gray-300 truncate">New Zealand</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -470,33 +697,12 @@ function StopGroupCard({
                 {/* Mobile: Stack layout */}
                 <div className="md:hidden space-y-3">
                   {addingStopAfterIndex === g.stopIndex ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={newStopCityId ?? ""}
-                        onChange={(e) => setNewStopCityId(e.target.value)}
-                        className="input-dark text-xs flex-1 min-w-[200px]"
-                      >
-                        {NZ_CITIES.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={onConfirmAddStop}
-                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
-                      >
-                        Add stop
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onCancelAddStop}
-                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                    <CitySearchPill
+                      value={newStopCityId}
+                      onSelect={setNewStopCityId}
+                      onCancel={onCancelAddStop}
+                      onConfirm={onConfirmAddStop}
+                    />
                   ) : (
                     <div className="flex flex-wrap items-center gap-3">
                       {g.stopIndex < routeStops.length - 1 && (
@@ -524,33 +730,12 @@ function StopGroupCard({
                 {/* Desktop: Horizontal layout, aligned right */}
                 <div className="hidden md:flex items-center gap-3">
                   {addingStopAfterIndex === g.stopIndex ? (
-                    <>
-                      <select
-                        value={newStopCityId ?? ""}
-                        onChange={(e) => setNewStopCityId(e.target.value)}
-                        className="input-dark text-xs w-56"
-                      >
-                        {NZ_CITIES.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={onConfirmAddStop}
-                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
-                      >
-                        Add stop
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onCancelAddStop}
-                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
-                      >
-                        Cancel
-                      </button>
-                    </>
+                    <CitySearchPill
+                      value={newStopCityId}
+                      onSelect={setNewStopCityId}
+                      onCancel={onCancelAddStop}
+                      onConfirm={onConfirmAddStop}
+                    />
                   ) : (
                     <>
                       {g.stopIndex < routeStops.length - 1 && (
