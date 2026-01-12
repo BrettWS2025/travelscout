@@ -300,7 +300,7 @@ export function Navbar() {
         isolation: "isolate",
       }}
     >
-      <div className="container flex items-center justify-between py-4">
+      <div className="container navbar-responsive flex items-center justify-between">
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink"
@@ -308,7 +308,7 @@ export function Navbar() {
         >
           <span
             className="
-              relative block h-10
+              relative block h-[22.5px] md:h-[33px]
               w-[433px] max-w-[calc(100vw-72px)]
               md:w-[541px] md:max-w-none
               overflow-visible
@@ -320,7 +320,7 @@ export function Navbar() {
               width={706}
               height={313}
               priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+32px)] h-[192px] md:h-[240px] w-auto select-none pointer-events-none"
+              className="absolute left-0 top-1/2 translate-y-[calc(-50%+18px)] md:translate-y-[calc(-50%+26.4px)] h-[108px] md:h-[198px] w-auto select-none pointer-events-none"
               sizes="(max-width: 768px) calc(100vw - 72px), 541px"
             />
           </span>
@@ -350,7 +350,7 @@ export function Navbar() {
         </nav>
 
         <button
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center"
+          className="md:hidden inline-flex h-12 w-12 items-center justify-center"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}

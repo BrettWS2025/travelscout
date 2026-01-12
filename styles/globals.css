@@ -48,6 +48,18 @@ body {
 
 header.sticky.top-0 .container { padding-top: 2rem; padding-bottom: 2rem; }
 
+header.sticky.top-0 .container.navbar-responsive {
+  padding-top: 1.125rem; /* 10% shorter on mobile (from 20px base) */
+  padding-bottom: 1.125rem;
+}
+
+@media (min-width: 768px) {
+  header.sticky.top-0 .container.navbar-responsive {
+    padding-top: 1.65rem; /* 20% taller on desktop */
+    padding-bottom: 1.65rem;
+  }
+}
+
 main, section, .overflow-x-auto { position: relative; z-index: 0; }
 
 /* ----------------------------- */
