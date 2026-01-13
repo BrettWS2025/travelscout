@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [redirectTo, setRedirectTo] = useState("/account/itineraries");
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
@@ -27,9 +27,16 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Get return URL from query params, default to account itineraries
-  const returnTo = searchParams.get("returnTo");
-  const redirectTo = returnTo ? decodeURIComponent(returnTo) : "/account/itineraries";
+  // Get return URL from query params on client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo");
+      if (returnTo) {
+        setRedirectTo(decodeURIComponent(returnTo));
+      }
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
