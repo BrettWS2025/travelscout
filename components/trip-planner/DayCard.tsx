@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import type { TripPlan } from "@/lib/itinerary";
 import { formatDisplayDate, type DayDetail } from "@/lib/trip-planner/utils";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
+import { useEvents } from "@/lib/hooks/useEvents";
+import { getCityById, NZ_CITIES, type NzCity } from "@/lib/nzCities";
 
 type TripDay = TripPlan["days"][number];
 
@@ -29,6 +32,34 @@ export default function DayCard({
   onUpdateAccommodation,
   children,
 }: Props) {
+  // Find location coordinates by matching location name
+  // Try to match by city ID first, then by name
+  const locationCoords = useMemo(() => {
+    // First try to find by city ID if location matches an ID pattern
+    const city = getCityById(day.location);
+    if (city) {
+      return { lat: city.lat, lng: city.lng };
+    }
+    
+    // Try to find by name in NZ_CITIES (fallback data or cached)
+    const place = NZ_CITIES.find((p: NzCity) => 
+      p.name.toLowerCase() === day.location.toLowerCase()
+    );
+    if (place) {
+      return { lat: place.lat, lng: place.lng };
+    }
+    
+    return undefined;
+  }, [day.location]);
+
+  // Fetch events for this day
+  const { events, loading } = useEvents(
+    day.date,
+    day.location,
+    locationCoords?.lat,
+    locationCoords?.lng
+  );
+
   return (
     <div className="rounded-2xl bg-[#1E2C4B]/40 border border-white/10 overflow-hidden">
       <div className="px-3 py-3">
@@ -107,18 +138,24 @@ export default function DayCard({
               </div>
             </div>
 
-            {/* Events and Attractions */}
-            <div className="pt-3 border-t border-white/10">
-              <div className="mb-2">
-                <h4 className="text-xs font-semibold text-white">
-                  Events & Attractions
-                </h4>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  Available for this day
-                </p>
+            {/* Events and Attractions - only show if there are events */}
+            {events.length > 0 && (
+              <div className="pt-3 border-t border-white/10">
+                <div className="mb-2">
+                  <h4 className="text-xs font-semibold text-white">
+                    Events & Attractions
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Available for this day
+                  </p>
+                </div>
+                {loading ? (
+                  <div className="text-xs text-gray-400">Loading events...</div>
+                ) : (
+                  <EventsAttractionsCarousel events={events} />
+                )}
               </div>
-              <EventsAttractionsCarousel />
-            </div>
+            )}
 
             {children ? (
               <div className="pt-3 border-t border-white/10">{children}</div>

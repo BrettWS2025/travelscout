@@ -2,18 +2,13 @@
 
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-type EventAttraction = {
-  id: string;
-  title: string;
-  // Additional fields will be added when API is integrated
-};
+import type { Event } from "@/lib/hooks/useEvents";
 
 type Props = {
-  items?: EventAttraction[];
+  events?: Event[];
 };
 
-export default function EventsAttractionsCarousel({ items = [] }: Props) {
+export default function EventsAttractionsCarousel({ events = [] }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -23,13 +18,10 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
   const touchEndX = useRef<number | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Generate placeholder items (3 for now)
-  const displayItems: EventAttraction[] = items.length > 0 
-    ? items 
-    : Array.from({ length: 3 }, (_, i) => ({
-        id: `placeholder-${i}`,
-        title: `Event or Attraction ${i + 1}`,
-      }));
+  // Don't render if no events
+  if (events.length === 0) {
+    return null;
+  }
 
   const checkScrollButtons = () => {
     if (!scrollContainerRef.current) return;
@@ -51,7 +43,7 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
         const itemWidth = itemElement.offsetWidth;
         const gap = 12; // gap-3 = 0.75rem = 12px
         const scrollIndex = Math.round(container.scrollLeft / (itemWidth + gap));
-        setCurrentIndex(Math.max(0, Math.min(scrollIndex, displayItems.length - 1)));
+        setCurrentIndex(Math.max(0, Math.min(scrollIndex, events.length - 1)));
       }
     };
 
@@ -61,7 +53,7 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", checkScrollButtons);
     };
-  }, [displayItems.length]);
+  }, [events.length]);
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollContainerRef.current) return;
@@ -97,7 +89,7 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && currentIndex < displayItems.length - 1) {
+    if (isLeftSwipe && currentIndex < events.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     }
     if (isRightSwipe && currentIndex > 0) {
@@ -120,7 +112,7 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
         behavior: "smooth",
       });
     }
-  }, [currentIndex, displayItems.length]);
+  }, [currentIndex, events.length]);
 
   return (
     <div className="relative">
@@ -167,9 +159,9 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
           "snap-x snap-mandatory",
         ].join(" ")}
       >
-        {displayItems.map((item, index) => (
+        {events.map((event, index) => (
           <div
-            key={item.id}
+            key={event.id}
             data-carousel-item
             className={[
               "flex-shrink-0 snap-start",
@@ -180,15 +172,45 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
             ].join(" ")}
           >
             <div className="rounded-xl bg-white/5 border border-white/10 p-4 h-full">
-              <div className="aspect-video bg-white/5 rounded-lg mb-3 flex items-center justify-center">
-                <span className="text-xs text-gray-400">Image placeholder</span>
+              <div className="aspect-video bg-white/5 rounded-lg mb-3 overflow-hidden">
+                {event.imageUrl ? (
+                  <img
+                    src={event.imageUrl}
+                    alt={event.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const placeholder = target.nextElementSibling as HTMLElement;
+                      if (placeholder) placeholder.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={[
+                    "w-full h-full flex items-center justify-center",
+                    event.imageUrl ? "hidden" : "",
+                  ].join(" ")}
+                >
+                  <span className="text-xs text-gray-400">No image</span>
+                </div>
               </div>
               <h4 className="text-sm font-semibold text-white mb-1">
-                {item.title}
+                <a
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[var(--accent)] transition-colors"
+                >
+                  {event.name}
+                </a>
               </h4>
-              <p className="text-xs text-gray-400 line-clamp-2">
-                Description placeholder text for event or attraction details.
-              </p>
+              {event.description && (
+                <p className="text-xs text-gray-400 line-clamp-3">
+                  {event.description}
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -196,7 +218,7 @@ export default function EventsAttractionsCarousel({ items = [] }: Props) {
 
       {/* Mobile: Show indicators */}
       <div className="md:hidden flex items-center justify-center gap-2 mt-3">
-        {displayItems.map((_, index) => (
+        {events.map((_, index) => (
           <button
             key={index}
             type="button"

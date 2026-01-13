@@ -84,6 +84,8 @@ interface EventfindaResponse {
  * - q: search query string (optional)
  * - category: filter by category ID (optional)
  * - location: filter by location ID (optional)
+ * - start_date: filter events starting from this date (YYYY-MM-DD format, optional)
+ * - end_date: filter events ending before this date (YYYY-MM-DD format, optional)
  */
 export async function GET(req: Request) {
   try {
@@ -110,6 +112,8 @@ export async function GET(req: Request) {
     const q = searchParams.get("q");
     const category = searchParams.get("category");
     const location = searchParams.get("location");
+    const startDate = searchParams.get("start_date"); // YYYY-MM-DD format
+    const endDate = searchParams.get("end_date"); // YYYY-MM-DD format
 
     // Build API URL
     const apiUrl = new URL("https://api.eventfinda.co.nz/v2/events.json");
@@ -138,6 +142,15 @@ export async function GET(req: Request) {
     
     if (location) {
       apiUrl.searchParams.append("location", location);
+    }
+    
+    // Add date filtering if provided
+    if (startDate) {
+      apiUrl.searchParams.append("start_date", startDate);
+    }
+    
+    if (endDate) {
+      apiUrl.searchParams.append("end_date", endDate);
     }
 
     // Explicitly request images field
