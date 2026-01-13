@@ -1045,6 +1045,117 @@ export function useTripPlanner() {
     }
   }
 
+  // Save current state to localStorage for persistence across navigation
+  function saveStateToLocalStorage(): void {
+    try {
+      if (!startCity || !endCity || !startDate || !endDate) {
+        return; // Don't save incomplete state
+      }
+
+      const state = {
+        startCityId,
+        endCityId,
+        startDate,
+        endDate,
+        selectedPlaceIds,
+        selectedThingIds,
+        routeStops,
+        nightsPerStop,
+        plan: plan ? {
+          ...plan,
+          routeStops,
+          nightsPerStop,
+          dayStopMeta,
+          dayDetails,
+          mapPoints,
+          legs,
+          selectedPlaceIds,
+          selectedThingIds,
+        } : null,
+      };
+
+      localStorage.setItem("tripPlanner_draft", JSON.stringify(state));
+    } catch (err) {
+      console.error("Failed to save trip planner state:", err);
+    }
+  }
+
+  // Restore state from localStorage
+  function restoreStateFromLocalStorage(): boolean {
+    try {
+      const saved = localStorage.getItem("tripPlanner_draft");
+      if (!saved) return false;
+
+      const state = JSON.parse(saved);
+      
+      if (!state.startCityId || !state.endCityId || !state.startDate || !state.endDate) {
+        return false;
+      }
+
+      // Restore basic trip input
+      setStartCityId(state.startCityId);
+      setEndCityId(state.endCityId);
+      setStartDate(state.startDate);
+      setEndDate(state.endDate);
+
+      // Restore date range
+      const start = fromIsoDate(state.startDate);
+      const end = fromIsoDate(state.endDate);
+      if (start && end) {
+        setDateRange({ from: start, to: end });
+        setCalendarMonth(start);
+      }
+
+      // Restore selected places and things
+      if (state.selectedPlaceIds) {
+        setSelectedPlaceIds(state.selectedPlaceIds);
+      }
+      if (state.selectedThingIds) {
+        setSelectedThingIds(state.selectedThingIds);
+      }
+
+      // Restore route stops and nights
+      if (state.routeStops && state.nightsPerStop) {
+        setRouteStops(state.routeStops);
+        setNightsPerStop(state.nightsPerStop);
+        setDayStopMeta(buildDayStopMeta(state.routeStops, state.nightsPerStop));
+      }
+
+      // Restore plan if it exists
+      if (state.plan && state.plan.days && state.plan.days.length > 0) {
+        setPlan(state.plan);
+        syncDayDetailsFromPlan(state.plan);
+        
+        // Restore extended plan data
+        if (state.plan.dayDetails) {
+          setDayDetails(state.plan.dayDetails);
+        }
+        if (state.plan.mapPoints) {
+          setMapPoints(state.plan.mapPoints);
+        }
+        if (state.plan.legs) {
+          setLegs(state.plan.legs);
+        }
+        
+        setHasSubmitted(true);
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Failed to restore trip planner state:", err);
+      return false;
+    }
+  }
+
+  // Clear saved state from localStorage
+  function clearSavedState(): void {
+    try {
+      localStorage.removeItem("tripPlanner_draft");
+    } catch (err) {
+      console.error("Failed to clear saved state:", err);
+    }
+  }
+
   return {
     // refs
     whereRef,
@@ -1166,6 +1277,9 @@ export function useTripPlanner() {
     collapseAllStops,
     saveItinerary,
     loadItinerary,
+    saveStateToLocalStorage,
+    restoreStateFromLocalStorage,
+    clearSavedState,
     // results
     startResults,
     endResults,

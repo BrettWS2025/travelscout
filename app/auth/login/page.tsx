@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
@@ -26,7 +27,9 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = "/account/itineraries";
+  // Get return URL from query params, default to account itineraries
+  const returnTo = searchParams.get("returnTo");
+  const redirectTo = returnTo ? decodeURIComponent(returnTo) : "/account/itineraries";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +45,10 @@ export default function LoginPage() {
         });
         if (error) throw error;
 
-        router.push(redirectTo);
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          router.push(redirectTo);
+        }, 100);
       } else {
         const name = fullName.trim();
         if (!name) throw new Error("Please enter your full name.");

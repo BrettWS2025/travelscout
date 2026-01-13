@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
@@ -26,10 +27,22 @@ type TripPlannerProps = {
 export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();
   const { user } = useAuth();
+  const router = useRouter();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
+  const [stateRestored, setStateRestored] = useState(false);
+
+  // Restore state from localStorage on mount (if not loading initialItinerary)
+  useEffect(() => {
+    if (!initialItinerary && !stateRestored) {
+      const restored = tp.restoreStateFromLocalStorage();
+      if (restored) {
+        setStateRestored(true);
+      }
+    }
+  }, [initialItinerary, stateRestored, tp]);
 
   // Load initial itinerary if provided
   useEffect(() => {
@@ -45,8 +58,12 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
   const handleSaveClick = () => {
     if (!user) {
-      // Could redirect to login, but for now just show dialog
-      alert("Please log in to save your itinerary");
+      // Save current state to localStorage before redirecting
+      tp.saveStateToLocalStorage();
+      
+      // Redirect to login with return URL
+      const returnUrl = encodeURIComponent("/trip-planner");
+      router.push(`/auth/login?returnTo=${returnUrl}`);
       return;
     }
     // Use existing title if editing, otherwise generate default
@@ -66,6 +83,8 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
     const result = await tp.saveItinerary(saveTitle.trim(), initialItinerary?.id);
     if (result.success) {
+      // Clear saved draft state after successful save
+      tp.clearSavedState();
       setSaveSuccess(true);
       setTimeout(() => {
         setShowSaveDialog(false);
@@ -182,23 +201,6 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
       {tp.plan && tp.plan.days.length > 0 && (
         <>
-          <div className="card p-4 md:p-6">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold">Your Itinerary</h2>
-              <button
-                type="button"
-                onClick={handleSaveClick}
-                disabled={tp.saving}
-                className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
-              </button>
-            </div>
-            {tp.saveError && (
-              <p className="mt-2 text-sm text-red-400">{tp.saveError}</p>
-            )}
-          </div>
-
           <DraftItinerary
             plan={tp.plan}
             routeStops={tp.routeStops}
@@ -305,6 +307,22 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
         startDate={tp.startDate}
         endDate={tp.endDate}
       />
+
+      {tp.plan && tp.plan.days.length > 0 && (
+        <div className="flex flex-col items-center gap-3 pt-4">
+          {tp.saveError && (
+            <p className="text-sm text-red-400">{tp.saveError}</p>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            disabled={tp.saving}
+            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
