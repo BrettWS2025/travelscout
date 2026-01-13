@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
+import { getRedisClient } from "@/lib/redis/client";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
+
+// Cache TTL: 1 hour (3600 seconds) - events data changes frequently but not too often
+const CACHE_TTL_SECONDS = 3600;
 
 interface EventfindaEvent {
   id: number;
@@ -139,8 +144,28 @@ export async function GET(req: Request) {
     // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height))
     apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug))");
 
+    // Generate cache key from query parameters
+    const cacheKey = `eventfinda:${crypto
+      .createHash("sha256")
+      .update(apiUrl.toString())
+      .digest("hex")}`;
+
+    // Try to get cached response
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          const cachedData = JSON.parse(cached);
+          return NextResponse.json(cachedData);
+        }
+      } catch (cacheError) {
+        // Log but don't fail - continue to API call
+        console.warn("Redis cache read error:", cacheError);
+      }
+    }
+
     // Make request to Eventfinda API
-    // Note: Caching will be implemented with Redis in the future
     const auth = Buffer.from(`${username}:${password}`).toString("base64");
     const response = await fetch(apiUrl.toString(), {
       headers: {
@@ -164,14 +189,26 @@ export async function GET(req: Request) {
 
     const data: EventfindaResponse = await response.json();
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       count: data.events?.length || 0,
       total: data.meta?.total || data.events?.length || 0,
       offset: offset,
       rows: rows,
       events: data.events || [],
-    });
+    };
+
+    // Cache the response
+    if (redis) {
+      try {
+        await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(responseData));
+      } catch (cacheError) {
+        // Log but don't fail - response is still valid
+        console.warn("Redis cache write error:", cacheError);
+      }
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error("Error in events API route:", error);
