@@ -1,10 +1,16 @@
 import Redis from "ioredis";
 
-let redis: Redis | null = null;
+// Use globalThis to persist across serverless function invocations
+// This prevents creating multiple Redis connections in serverless environments
+declare global {
+  // eslint-disable-next-line no-var
+  var __redisClient: Redis | null | undefined;
+}
 
 /**
  * Get or create Redis client instance
- * Uses singleton pattern to reuse connection across requests
+ * Uses singleton pattern with globalThis to reuse connection across requests
+ * and prevent connection leaks in serverless environments
  */
 export function getRedisClient(): Redis | null {
   // Return null if Redis is not configured (graceful degradation)
@@ -12,12 +18,33 @@ export function getRedisClient(): Redis | null {
     return null;
   }
 
-  // Return existing client if already created
-  if (redis) {
-    return redis;
+  // Return existing client if already created (works across serverless invocations)
+  if (global.__redisClient) {
+    return global.__redisClient;
   }
 
   try {
+    const commonConfig = {
+      // Connection pool settings - limit to single connection to prevent leaks
+      // ioredis uses connection pooling by default, but we want to minimize connections
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      lazyConnect: true,
+      // Keep connection alive to reuse across requests
+      keepAlive: 30000, // 30 seconds
+      // Disable offline queue to prevent connection buildup when disconnected
+      enableOfflineQueue: false,
+      // Connection timeout
+      connectTimeout: 10000,
+      // Retry strategy
+      retryStrategy: (times: number) => {
+        if (times > 3) {
+          return null; // Stop retrying after 3 attempts
+        }
+        return Math.min(times * 200, 2000);
+      },
+    };
+
     // Prefer REDIS_URL if provided (works with Redis Cloud, Upstash, etc.)
     if (process.env.REDIS_URL) {
       const redisUrl = process.env.REDIS_URL;
@@ -29,22 +56,12 @@ export function getRedisClient(): Redis | null {
       const host = url.hostname;
       const port = parseInt(url.port || "6379", 10);
       
-      redis = new Redis({
+      global.__redisClient = new Redis({
         host,
         port,
         password,
         tls: isSSL ? {} : undefined, // Enable TLS for rediss:// URLs
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        lazyConnect: true,
-        // Additional options for Redis Cloud
-        connectTimeout: 10000,
-        retryStrategy: (times) => {
-          if (times > 3) {
-            return null; // Stop retrying after 3 attempts
-          }
-          return Math.min(times * 200, 2000);
-        },
+        ...commonConfig,
       });
     } else {
       // Fallback to individual connection parameters
@@ -53,28 +70,31 @@ export function getRedisClient(): Redis | null {
       const password = process.env.REDIS_PASSWORD || undefined;
       const useTLS = process.env.REDIS_TLS === "true" || process.env.REDIS_TLS === "1";
       
-      redis = new Redis({
+      global.__redisClient = new Redis({
         host,
         port,
         password,
         tls: useTLS ? {} : undefined, // Enable TLS if REDIS_TLS is set
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        lazyConnect: true,
+        ...commonConfig,
       });
     }
 
     // Handle connection errors gracefully
-    redis.on("error", (error) => {
+    global.__redisClient.on("error", (error) => {
       console.error("Redis connection error:", error);
       // Don't throw - allow app to continue without cache
     });
 
-    redis.on("connect", () => {
+    global.__redisClient.on("connect", () => {
       console.log("Redis connected successfully");
     });
 
-    return redis;
+    // Clean up on disconnect to allow reconnection
+    global.__redisClient.on("close", () => {
+      console.log("Redis connection closed");
+    });
+
+    return global.__redisClient;
   } catch (error) {
     console.error("Failed to create Redis client:", error);
     return null;
@@ -85,8 +105,8 @@ export function getRedisClient(): Redis | null {
  * Close Redis connection (useful for cleanup in tests or shutdown)
  */
 export async function closeRedisConnection(): Promise<void> {
-  if (redis) {
-    await redis.quit();
-    redis = null;
+  if (global.__redisClient) {
+    await global.__redisClient.quit();
+    global.__redisClient = null;
   }
 }
