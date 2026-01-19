@@ -15,6 +15,7 @@ import {
   getCityById,
   getAllPlaces,
   searchPlacesByName,
+  type Place,
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute, NZ_STOPS, type NzStop } from "@/lib/nzStops";
 import {
@@ -88,6 +89,7 @@ export function useTripPlanner() {
   const [placesQuery, setPlacesQuery] = useState("");
   const [thingsQuery, setThingsQuery] = useState("");
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+  const [selectedPlaceData, setSelectedPlaceData] = useState<Map<string, Place>>(new Map());
   const [selectedThingIds, setSelectedThingIds] = useState<string[]>([]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
@@ -116,8 +118,36 @@ export function useTripPlanner() {
   // ✅ UI state for nested stop groups (collapsed by default)
   const [openStops, setOpenStops] = useState<Record<number, boolean>>({});
 
-  const startCity = getCityById(startCityId);
-  const endCity = getCityById(endCityId);
+  // Store selected city data directly to handle places not yet in cache
+  const [startCityData, setStartCityData] = useState<Place | null>(null);
+  const [endCityData, setEndCityData] = useState<Place | null>(null);
+
+  // Use stored data if available, otherwise fall back to cache lookup
+  const startCity = startCityData || getCityById(startCityId);
+  const endCity = endCityData || getCityById(endCityId);
+
+  // Sync stored city data with cache when it becomes available
+  useEffect(() => {
+    if (!startCityId) {
+      setStartCityData(null);
+    } else if (!startCityData || startCityData.id !== startCityId) {
+      const cached = getCityById(startCityId);
+      if (cached) {
+        setStartCityData(cached);
+      }
+    }
+  }, [startCityId, startCityData]);
+
+  useEffect(() => {
+    if (!endCityId) {
+      setEndCityData(null);
+    } else if (!endCityData || endCityData.id !== endCityId) {
+      const cached = getCityById(endCityId);
+      if (cached) {
+        setEndCityData(cached);
+      }
+    }
+  }, [endCityId, endCityData]);
 
   useEffect(() => {
     setRecent(safeReadRecent());
@@ -282,22 +312,63 @@ export function useTripPlanner() {
     setThingsMobileSheetOpen(false);
   }
 
-  function selectPlace(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
+  async function selectPlace(cityId: string) {
+    try {
+      // Try to get from cache first
+      let c = getCityById(cityId);
+      
+      // If not in cache, fetch from database
+      if (!c) {
+        const { getPlaceById } = await import("@/lib/nzCities");
+        c = await getPlaceById(cityId);
+      }
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = placesSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          const { getPlaceById } = await import("@/lib/nzCities");
+          c = await getPlaceById(found.id);
+        }
+      }
+      
+      if (!c) {
+        console.error(`Could not find place with ID: ${cityId}`);
+        return;
+      }
 
-    // Add to array if not already selected
-    if (!selectedPlaceIds.includes(cityId)) {
-      setSelectedPlaceIds([...selectedPlaceIds, cityId]);
+      // Validate coordinates - allow if they're in valid range (not just check for 0,0)
+      // Some places might legitimately be at 0,0 (though unlikely for NZ)
+      const hasValidCoords = (c.lat >= -90 && c.lat <= 90 && c.lng >= -180 && c.lng <= 180);
+      if (!hasValidCoords || (c.lat === 0 && c.lng === 0)) {
+        console.warn(`Place ${c.name} has invalid coordinates (lat=${c.lat}, lng=${c.lng}), but adding anyway - will try to fetch coordinates later`);
+        // Don't return - allow it to be added, we'll try to fetch coordinates when generating itinerary
+      }
+
+      // Add to array if not already selected
+      if (!selectedPlaceIds.includes(cityId)) {
+        setSelectedPlaceIds([...selectedPlaceIds, cityId]);
+        // Store the place data
+        setSelectedPlaceData((prev) => new Map(prev).set(cityId, c));
+        console.log(`Added place: ${c.name} (${cityId}) with coordinates: lat=${c.lat}, lng=${c.lng}`);
+      }
+      setPlacesQuery("");
+      pushRecent({ id: c.id, name: c.name });
+
+      // Keep popover open for multiple selections
+    } catch (error) {
+      console.error("Error selecting place:", error);
     }
-    setPlacesQuery("");
-    pushRecent({ id: c.id, name: c.name });
-
-    // Keep popover open for multiple selections
   }
 
   function removePlace(cityId: string) {
     setSelectedPlaceIds(selectedPlaceIds.filter((id) => id !== cityId));
+    setSelectedPlaceData((prev) => {
+      const next = new Map(prev);
+      next.delete(cityId);
+      return next;
+    });
   }
 
   function selectThing(stopId: string) {
@@ -332,10 +403,52 @@ export function useTripPlanner() {
     setMobileSheetOpen(false);
   }
 
-  function selectStartCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
+  async function selectStartCity(cityId: string) {
+    // Try to get from cache first
+    let c = getCityById(cityId);
+    
+    // If not in cache, fetch from database
+    if (!c) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      c = await getPlaceById(cityId);
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = startSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          c = await getPlaceById(found.id);
+        }
+      }
+    }
+    
+    if (!c) {
+      // Last resort: try querying database directly by name if we have search results
+      const found = startSearchResults.find((r) => r.id === cityId);
+      if (found) {
+        // Try one more direct database query by name as fallback
+        const { searchPlacesByName } = await import("@/lib/nzCities");
+        const searchResults = await searchPlacesByName(found.name, 1);
+        if (searchResults.length > 0 && searchResults[0].id === cityId) {
+          c = searchResults[0];
+        } else {
+          console.error(`Could not find place in database: ${found.name} (${cityId})`);
+          return;
+        }
+      } else {
+        console.error(`Could not find place: ${cityId}`);
+        return; // Can't find the city anywhere
+      }
+    }
 
+    // Validate coordinates before storing
+    if ((c.lat === 0 && c.lng === 0) || !c.lat || !c.lng) {
+      console.error(`Place ${c.name} (${cityId}) has invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
+      // Still store it, but log the error - we'll try to fetch coordinates when generating itinerary
+    }
+
+    // Store the city data in state so it's immediately available
+    setStartCityData(c);
     setStartCityId(cityId);
     setStartQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
@@ -343,10 +456,52 @@ export function useTripPlanner() {
     setWhereStep("end");
   }
 
-  function selectEndCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
+  async function selectEndCity(cityId: string) {
+    // Try to get from cache first
+    let c = getCityById(cityId);
+    
+    // If not in cache, fetch from database
+    if (!c) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      c = await getPlaceById(cityId);
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = endSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          c = await getPlaceById(found.id);
+        }
+      }
+    }
+    
+    if (!c) {
+      // Last resort: try querying database directly by name if we have search results
+      const found = endSearchResults.find((r) => r.id === cityId);
+      if (found) {
+        // Try one more direct database query by name as fallback
+        const { searchPlacesByName } = await import("@/lib/nzCities");
+        const searchResults = await searchPlacesByName(found.name, 1);
+        if (searchResults.length > 0 && searchResults[0].id === cityId) {
+          c = searchResults[0];
+        } else {
+          console.error(`Could not find place in database: ${found.name} (${cityId})`);
+          return;
+        }
+      } else {
+        console.error(`Could not find place: ${cityId}`);
+        return; // Can't find the city anywhere
+      }
+    }
 
+    // Validate coordinates before storing
+    if ((c.lat === 0 && c.lng === 0) || !c.lat || !c.lng) {
+      console.error(`Place ${c.name} (${cityId}) has invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
+      // Still store it, but log the error - we'll try to fetch coordinates when generating itinerary
+    }
+
+    // Store the city data in state so it's immediately available
+    setEndCityData(c);
     setEndCityId(cityId);
     setEndQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
@@ -382,24 +537,58 @@ export function useTripPlanner() {
     }, 0);
   }
 
-  const startResults = useMemo(() => {
-    const q = normalize(startQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
-  }, [startQuery]);
-
-  const endResults = useMemo(() => {
-    const q = normalize(endQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
-  }, [endQuery]);
-
+  const [startSearchResults, setStartSearchResults] = useState<CityLite[]>([]);
+  const [endSearchResults, setEndSearchResults] = useState<CityLite[]>([]);
   const [placesSearchResults, setPlacesSearchResults] = useState<CityLite[]>([]);
   
+  // Search places for start city using database (searches across all name variants)
+  useEffect(() => {
+    if (!startQuery.trim()) {
+      setStartSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(startQuery, 20);
+        setStartSearchResults(
+          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+        );
+      } catch (error) {
+        console.error("Error searching places for start city:", error);
+        setStartSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
+  }, [startQuery]);
+
+  // Search places for end city using database (searches across all name variants)
+  useEffect(() => {
+    if (!endQuery.trim()) {
+      setEndSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(endQuery, 20);
+        setEndSearchResults(
+          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+        );
+      } catch (error) {
+        console.error("Error searching places for end city:", error);
+        setEndSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
+  }, [endQuery]);
+
   // Search places using database (searches across all name variants)
   useEffect(() => {
     if (!placesQuery.trim()) {
@@ -423,6 +612,14 @@ export function useTripPlanner() {
     const timeoutId = setTimeout(searchPlaces, 300);
     return () => clearTimeout(timeoutId);
   }, [placesQuery]);
+
+  const startResults = useMemo(() => {
+    return startSearchResults;
+  }, [startSearchResults]);
+
+  const endResults = useMemo(() => {
+    return endSearchResults;
+  }, [endSearchResults]);
   
   const placesResults = useMemo(() => {
     return placesSearchResults;
@@ -442,8 +639,9 @@ export function useTripPlanner() {
     setHasSubmitted(true);
     setError(null);
 
-    const start = getCityById(startCityId);
-    const end = getCityById(endCityId);
+    // Use the computed startCity and endCity which include stored data
+    const start = startCity;
+    const end = endCity;
 
     if (!start || !end) {
       setPlan(null);
@@ -462,11 +660,81 @@ export function useTripPlanner() {
     }
 
     try {
+      // Get selected places using stored data (includes places not in cache)
+      // Also fetch any missing coordinates from database
+      const selectedPlacesDataPromises = selectedPlaceIds.map(async (id) => {
+        // Try stored data first, then cache lookup
+        let place = selectedPlaceData.get(id) || getCityById(id);
+        
+        // If not found or has invalid coordinates, try fetching from database
+        if (!place || (place.lat === 0 && place.lng === 0) || !place.lat || !place.lng) {
+          console.log(`Fetching coordinates for place ID: ${id}`);
+          const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+          
+          // First try by ID
+          let fetched = await getPlaceById(id);
+          
+          // If still not found or invalid coords, try searching by name if we have it
+          if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && place?.name) {
+            console.log(`Trying to find ${place.name} by name search`);
+            const searchResults = await searchPlacesByName(place.name, 5);
+            const exactMatch = searchResults.find(p => p.id === id || p.name.toLowerCase() === place.name.toLowerCase());
+            if (exactMatch && (exactMatch.lat !== 0 || exactMatch.lng !== 0)) {
+              fetched = exactMatch;
+            }
+          }
+          
+          if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+            place = fetched;
+            // Update stored data
+            setSelectedPlaceData((prev) => new Map(prev).set(id, fetched));
+            console.log(`Found coordinates for ${fetched.name}: lat=${fetched.lat}, lng=${fetched.lng}`);
+          } else {
+            console.error(`Could not fetch valid coordinates for place ID: ${id}, name: ${place?.name}`);
+          }
+        }
+        
+        return place;
+      });
+      
+      const selectedPlacesData = (await Promise.all(selectedPlacesDataPromises))
+        .filter((c): c is Place => c !== undefined);
+      
+      // Also ensure start and end cities have valid coordinates
+      if ((start.lat === 0 && start.lng === 0) || !start.lat || !start.lng) {
+        console.log(`Fetching coordinates for start city: ${start.name} (${startCityId})`);
+        const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+        let fetched = await getPlaceById(startCityId);
+        if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && start.name) {
+          const searchResults = await searchPlacesByName(start.name, 5);
+          const exactMatch = searchResults.find(p => p.id === startCityId || p.name.toLowerCase() === start.name.toLowerCase());
+          if (exactMatch) fetched = exactMatch;
+        }
+        if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+          setStartCityData(fetched);
+          Object.assign(start, { lat: fetched.lat, lng: fetched.lng });
+          console.log(`Updated start city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+        }
+      }
+      
+      if ((end.lat === 0 && end.lng === 0) || !end.lat || !end.lng) {
+        console.log(`Fetching coordinates for end city: ${end.name} (${endCityId})`);
+        const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+        let fetched = await getPlaceById(endCityId);
+        if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && end.name) {
+          const searchResults = await searchPlacesByName(end.name, 5);
+          const exactMatch = searchResults.find(p => p.id === endCityId || p.name.toLowerCase() === end.name.toLowerCase());
+          if (exactMatch) fetched = exactMatch;
+        }
+        if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+          setEndCityData(fetched);
+          Object.assign(end, { lat: fetched.lat, lng: fetched.lng });
+          console.log(`Updated end city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+        }
+      }
+
       // Combine selected places (city names) and things (stop names) into waypoint names
-      const placeNames = selectedPlaceIds.map((id) => {
-        const city = getCityById(id);
-        return city?.name ?? "";
-      }).filter(Boolean);
+      const placeNames = selectedPlacesData.map((city) => city.name);
       
       const thingNames = selectedThingIds.map((id) => {
         const stop = NZ_STOPS.find((s) => s.id === id);
@@ -480,6 +748,17 @@ export function useTripPlanner() {
         end,
         rawWaypointNames
       );
+
+      // Debug logging
+      console.log("Waypoint processing:", {
+        selectedPlaceIds,
+        selectedPlacesData: selectedPlacesData.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })),
+        placeNames,
+        rawWaypointNames,
+        orderedNames,
+        start: start.name,
+        end: end.name
+      });
 
       const stops: string[] = [start.name, ...orderedNames, end.name];
       setRouteStops(stops);
@@ -501,11 +780,46 @@ export function useTripPlanner() {
         setEndDate(last.date);
       }
 
-      const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
-        lat: stop.lat,
-        lng: stop.lng,
-        name: stop.name,
-      }));
+      // Build map points from all selected places, not just matched stops
+      // Create a map of place names to their coordinates for quick lookup
+      const placeCoordsMap = new Map<string, { lat: number; lng: number; name: string }>();
+      
+      // Add selected places coordinates (case-insensitive lookup)
+      selectedPlacesData.forEach((place) => {
+        const key = place.name.toLowerCase();
+        placeCoordsMap.set(key, { lat: place.lat, lng: place.lng, name: place.name });
+      });
+      
+      // Add matched stops coordinates (for things/stops)
+      matchedStopsInOrder.forEach((stop) => {
+        const key = stop.name.toLowerCase();
+        if (!placeCoordsMap.has(key)) {
+          placeCoordsMap.set(key, { lat: stop.lat, lng: stop.lng, name: stop.name });
+        }
+      });
+
+      // Build waypoint points in the order they appear in orderedNames
+      const waypointPoints: MapPoint[] = orderedNames.map((name) => {
+        // Try case-insensitive lookup first
+        const key = name.toLowerCase();
+        const coords = placeCoordsMap.get(key);
+        if (coords) {
+          return { lat: coords.lat, lng: coords.lng, name: coords.name };
+        }
+        // Fallback: try exact match in selected places
+        const place = selectedPlacesData.find((p) => p.name.toLowerCase() === key);
+        if (place) {
+          return { lat: place.lat, lng: place.lng, name: place.name };
+        }
+        // Fallback: try exact match in matched stops
+        const stop = matchedStopsInOrder.find((s) => s.name.toLowerCase() === key);
+        if (stop) {
+          return { lat: stop.lat, lng: stop.lng, name: stop.name };
+        }
+        // Last resort: log warning and return with 0,0 (shouldn't happen)
+        console.warn(`Could not find coordinates for waypoint: ${name}`);
+        return { lat: 0, lng: 0, name };
+      }).filter((p) => p.lat !== 0 || p.lng !== 0); // Filter out invalid coordinates
 
       const points: MapPoint[] = [
         { lat: start.lat, lng: start.lng, name: start.name },
@@ -513,15 +827,61 @@ export function useTripPlanner() {
         { lat: end.lat, lng: end.lng, name: end.name },
       ];
 
-      setMapPoints(points);
+      // Validate all points have valid coordinates
+      const validPoints = points.filter((p) => {
+        const isValid = p.lat !== 0 && p.lng !== 0 && 
+                       p.lat >= -90 && p.lat <= 90 && 
+                       p.lng >= -180 && p.lng <= 180;
+        if (!isValid) {
+          console.warn(`Invalid coordinates for ${p.name}: lat=${p.lat}, lng=${p.lng}`);
+        }
+        return isValid;
+      });
+
+      console.log("Map points validation:", {
+        total: points.length,
+        valid: validPoints.length,
+        points: points.map(p => ({ name: p.name, lat: p.lat, lng: p.lng }))
+      });
+
+      // Need at least start and end cities with valid coordinates
+      if (validPoints.length < 2) {
+        console.error("Not enough valid map points:", validPoints);
+        // Try to provide more helpful error message
+        const missingPlaces = points
+          .filter(p => {
+            const isValid = p.lat !== 0 && p.lng !== 0 && 
+                           p.lat >= -90 && p.lat <= 90 && 
+                           p.lng >= -180 && p.lng <= 180;
+            return !isValid;
+          })
+          .map(p => p.name);
+        
+        if (missingPlaces.length > 0) {
+          setError(`Could not generate map: missing valid coordinates for: ${missingPlaces.join(", ")}. Please try selecting these places again.`);
+        } else {
+          setError("Could not generate map: missing valid coordinates for selected places.");
+        }
+        // Still set the valid points we have (at least start/end if valid)
+        setMapPoints(validPoints);
+        return;
+      }
+
+      setMapPoints(validPoints);
 
       setLegsLoading(true);
       try {
-        const roadLegs = await fetchRoadLegs(points);
-        setLegs(roadLegs);
+        // Only fetch legs if we have valid points
+        if (validPoints.length >= 2) {
+          const roadLegs = await fetchRoadLegs(validPoints);
+          setLegs(roadLegs);
+        } else {
+          console.warn("Not enough valid points for routing, using fallback");
+          setLegs(buildFallbackLegs(validPoints));
+        }
       } catch (routingErr) {
         console.error("Road routing failed, falling back:", routingErr);
-        setLegs(buildFallbackLegs(points));
+        setLegs(buildFallbackLegs(validPoints));
       } finally {
         setLegsLoading(false);
       }
@@ -853,8 +1213,11 @@ export function useTripPlanner() {
     startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
 
   const selectedPlaces = useMemo(() => {
-    return selectedPlaceIds.map((id) => getCityById(id)).filter((c): c is NonNullable<typeof c> => c !== undefined);
-  }, [selectedPlaceIds]);
+    return selectedPlaceIds.map((id) => {
+      // First try stored data, then cache lookup
+      return selectedPlaceData.get(id) || getCityById(id);
+    }).filter((c): c is NonNullable<typeof c> => c !== undefined);
+  }, [selectedPlaceIds, selectedPlaceData]);
 
   const selectedThings = useMemo(() => {
     return selectedThingIds.map((id) => NZ_STOPS.find((s) => s.id === id)).filter((s): s is NonNullable<typeof s> => s !== undefined);

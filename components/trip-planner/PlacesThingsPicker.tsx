@@ -79,6 +79,7 @@ function PlacesPickerPanel({
   recent,
   suggested,
   selectedCityIds,
+  selectedPlaces,
   onSelectCity,
   onRemoveCity,
   mobileSheetOpen = false,
@@ -89,6 +90,7 @@ function PlacesPickerPanel({
   recent: CityLite[];
   suggested: CityLite[];
   selectedCityIds: string[];
+  selectedPlaces?: Array<{ id: string; name: string }>;
   onSelectCity: (cityId: string) => void;
   onRemoveCity: (cityId: string) => void;
   mobileSheetOpen?: boolean;
@@ -128,7 +130,8 @@ function PlacesPickerPanel({
             Selected places
           </div>
           {selectedCityIds.map((cityId) => {
-            const city = getCityById(cityId);
+            // Try to get from selectedPlaces first, then fall back to getCityById
+            const city = selectedPlaces?.find((p) => p.id === cityId) || getCityById(cityId);
             if (!city) return null;
             return (
               <div
@@ -180,7 +183,13 @@ function PlacesPickerPanel({
                       title={c.name}
                       subtitle="Recently used place"
                       iconVariant="recent"
-                      onClick={() => onSelectCity(c.id)}
+                      onClick={async () => {
+                        try {
+                          await onSelectCity(c.id);
+                        } catch (error) {
+                          console.error("Error selecting city:", error);
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -198,7 +207,13 @@ function PlacesPickerPanel({
                     title={c.name}
                     subtitle="Top destination"
                     iconVariant="suggested"
-                    onClick={() => onSelectCity(c.id)}
+                    onClick={async () => {
+                      try {
+                        await onSelectCity(c.id);
+                      } catch (error) {
+                        console.error("Error selecting city:", error);
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -221,7 +236,13 @@ function PlacesPickerPanel({
                     title={c.name}
                     subtitle="New Zealand"
                     iconVariant="suggested"
-                    onClick={() => onSelectCity(c.id)}
+                    onClick={async () => {
+                      try {
+                        await onSelectCity(c.id);
+                      } catch (error) {
+                        console.error("Error selecting city:", error);
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -388,6 +409,7 @@ export type PlacesThingsPickerProps = {
   suggested: CityLite[];
 
   selectedPlaceIds: string[];
+  selectedPlaces?: Array<{ id: string; name: string }>;
   selectedThingIds: string[];
 
   placesSummary: string;
@@ -402,7 +424,7 @@ export type PlacesThingsPickerProps = {
   openThingsDesktop: () => void;
   closePlacesMobileSheet: () => void;
   closeThingsMobileSheet: () => void;
-  selectPlace: (cityId: string) => void;
+  selectPlace: (cityId: string) => void | Promise<void>;
   selectThing: (stopId: string) => void;
   removePlace: (cityId: string) => void;
   removeThing: (stopId: string) => void;
@@ -490,6 +512,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                     recent={props.recent}
                     suggested={props.suggested}
                     selectedCityIds={props.selectedPlaceIds}
+                    selectedPlaces={props.selectedPlaces}
                     onSelectCity={props.selectPlace}
                     onRemoveCity={props.removePlace}
                     mobileSheetOpen={false}
@@ -577,6 +600,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                   recent={props.recent}
                   suggested={props.suggested}
                   selectedCityIds={props.selectedPlaceIds}
+                  selectedPlaces={props.selectedPlaces}
                   onSelectCity={props.selectPlace}
                   onRemoveCity={props.removePlace}
                   mobileSheetOpen={true}

@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { TripPlan } from "@/lib/itinerary";
 import { formatDisplayDate, type DayDetail } from "@/lib/trip-planner/utils";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import { useEvents } from "@/lib/hooks/useEvents";
-import { getCityById, NZ_CITIES, type NzCity } from "@/lib/nzCities";
+import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
 
 type TripDay = TripPlan["days"][number];
 
@@ -33,12 +33,15 @@ export default function DayCard({
   children,
 }: Props) {
   // Find location coordinates by matching location name
-  // Try to match by city ID first, then by name
-  const locationCoords = useMemo(() => {
+  // Try to match by city ID first, then by name, then search database
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
+
+  useEffect(() => {
     // First try to find by city ID if location matches an ID pattern
     const city = getCityById(day.location);
     if (city) {
-      return { lat: city.lat, lng: city.lng };
+      setLocationCoords({ lat: city.lat, lng: city.lng });
+      return;
     }
     
     // Try to find by name in NZ_CITIES (fallback data or cached)
@@ -46,10 +49,21 @@ export default function DayCard({
       p.name.toLowerCase() === day.location.toLowerCase()
     );
     if (place) {
-      return { lat: place.lat, lng: place.lng };
+      setLocationCoords({ lat: place.lat, lng: place.lng });
+      return;
     }
     
-    return undefined;
+    // Last resort: search database for the place
+    searchPlacesByName(day.location, 1).then((results) => {
+      if (results.length > 0) {
+        const found = results[0];
+        setLocationCoords({ lat: found.lat, lng: found.lng });
+      } else {
+        setLocationCoords(undefined);
+      }
+    }).catch(() => {
+      setLocationCoords(undefined);
+    });
   }, [day.location]);
 
   // Fetch events for this day

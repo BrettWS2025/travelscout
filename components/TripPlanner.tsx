@@ -8,6 +8,7 @@ import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
+import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
@@ -96,6 +97,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
   return (
     <div className="space-y-8">
+      <LoadingScreen isLoading={tp.legsLoading} />
       <form
         onSubmit={tp.handleSubmit}
         className="card p-4 md:p-6 space-y-6"
@@ -162,6 +164,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
           recent={tp.recent}
           suggested={tp.suggested}
           selectedPlaceIds={tp.selectedPlaceIds}
+          selectedPlaces={tp.selectedPlaces}
           selectedThingIds={tp.selectedThingIds}
           placesSummary={tp.placesSummary}
           thingsSummary={tp.thingsSummary}

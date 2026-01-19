@@ -82,11 +82,33 @@ export function fromIsoDate(s: string): Date | null {
 export async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
   if (!points || points.length < 2) return [];
 
+  // Validate all points have valid coordinates
+  const invalidPoints = points.filter((p) => 
+    p.lat === 0 && p.lng === 0 || 
+    p.lat < -90 || p.lat > 90 || 
+    p.lng < -180 || p.lng > 180
+  );
+  
+  if (invalidPoints.length > 0) {
+    console.error("Invalid coordinates in points:", invalidPoints);
+    throw new Error(`Invalid coordinates detected for: ${invalidPoints.map(p => p.name).join(", ")}`);
+  }
+
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
   const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false&geometries=polyline&steps=false`;
 
+  console.log("Fetching route from OSRM:", { 
+    pointCount: points.length, 
+    points: points.map(p => ({ name: p.name, lat: p.lat, lng: p.lng })),
+    url 
+  });
+
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`OSRM request failed with status ${res.status}`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("OSRM request failed:", { status: res.status, error: errorText });
+    throw new Error(`OSRM request failed with status ${res.status}: ${errorText}`);
+  }
 
   const data = await res.json();
   const route = data.routes?.[0];
@@ -94,15 +116,19 @@ export async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {
     (route?.legs as { distance: number; duration: number }[]) || [];
 
   if (!route || !Array.isArray(legsData)) {
+    console.error("OSRM response invalid:", data);
     throw new Error("OSRM response did not contain route legs");
   }
 
-  return legsData.map((leg, idx) => ({
+  const legs = legsData.map((leg, idx) => ({
     from: points[idx].name ?? `Stop ${idx + 1}`,
     to: points[idx + 1].name ?? `Stop ${idx + 2}`,
     distanceKm: leg.distance / 1000,
     driveHours: leg.duration / 3600,
   }));
+
+  console.log("OSRM route calculated:", legs);
+  return legs;
 }
 
 /**

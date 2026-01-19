@@ -62,10 +62,46 @@ export async function getAllPlaces(): Promise<Place[]> {
 
 /**
  * Get a place by its ID
+ * First tries the cache, then queries the database directly if not found
  */
 export async function getPlaceById(id: string): Promise<Place | undefined> {
+  // First try cache
   const places = await getAllPlaces();
-  return places.find((p) => p.id === id);
+  const cached = places.find((p) => p.id === id);
+  if (cached) return cached;
+  
+  // If not in cache, query database directly (bypasses is_active filter)
+  const { data, error } = await supabase
+    .from("places")
+    .select("id, name, lat, lng, rank")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    // If single() fails, try without it (in case there are duplicates)
+    const { data: dataArray, error: arrayError } = await supabase
+      .from("places")
+      .select("id, name, lat, lng, rank")
+      .eq("id", id)
+      .limit(1);
+    
+    if (arrayError || !dataArray || dataArray.length === 0) {
+      console.warn(`Place not found in database: ${id}`, error || arrayError);
+      return undefined;
+    }
+    
+    return dataArray[0] as Place;
+  }
+  
+  if (data) {
+    // Update cache with this place so it's available next time
+    if (placesCache) {
+      placesCache.push(data as Place);
+    }
+    return data as Place;
+  }
+  
+  return undefined;
 }
 
 /**
@@ -96,6 +132,7 @@ export async function getSuggestedPlaces(count: number = 6): Promise<Place[]> {
 
 /**
  * Search places by name (case-insensitive partial match)
+ * First tries active places, then searches all places if no results
  */
 export async function searchPlacesByName(query: string, limit: number = 20): Promise<Place[]> {
   if (!query.trim()) return [];
@@ -117,7 +154,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     }));
   }
 
-  // Fallback to direct places table search if function doesn't exist or fails
+  // Fallback to direct places table search - first try active places
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
@@ -130,7 +167,24 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     return [];
   }
 
-  return (data || []) as Place[];
+  // If we found results, return them
+  if (data && data.length > 0) {
+    return (data || []) as Place[];
+  }
+
+  // If no active places found, search all places (including inactive) as fallback
+  const { data: allData, error: allError } = await supabase
+    .from("places")
+    .select("id, name, lat, lng, rank")
+    .ilike("name", `%${query}%`)
+    .limit(limit);
+
+  if (allError) {
+    console.error("Error searching all places:", allError);
+    return [];
+  }
+
+  return (allData || []) as Place[];
 }
 
 /**
