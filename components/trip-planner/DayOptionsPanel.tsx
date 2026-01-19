@@ -23,10 +23,10 @@ export default function DayOptionsPanel({
   children,
 }: Props) {
   return (
-    <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+    <div className="rounded-xl bg-gray-50 border border-gray-200 p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold text-white">{title}</div>
+          <div className="text-xs font-semibold text-[var(--text)]">{title}</div>
           <div className="text-[11px] text-gray-400 mt-0.5">{description}</div>
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}

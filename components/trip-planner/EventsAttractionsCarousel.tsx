@@ -123,10 +123,10 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
           onClick={() => scroll("left")}
           disabled={!canScrollLeft}
           className={[
-            "p-1.5 rounded-lg border border-white/20 transition",
+            "p-1.5 rounded-lg border border-white/20 bg-[#1E2C4B]/40 transition",
             canScrollLeft
-              ? "hover:bg-white/10 cursor-pointer"
-              : "opacity-40 cursor-not-allowed",
+              ? "hover:bg-white/10 cursor-pointer text-white"
+              : "opacity-40 cursor-not-allowed text-white",
           ].join(" ")}
           aria-label="Scroll left"
         >
@@ -137,10 +137,10 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
           onClick={() => scroll("right")}
           disabled={!canScrollRight}
           className={[
-            "p-1.5 rounded-lg border border-white/20 transition",
+            "p-1.5 rounded-lg border border-white/20 bg-[#1E2C4B]/40 transition",
             canScrollRight
-              ? "hover:bg-white/10 cursor-pointer"
-              : "opacity-40 cursor-not-allowed",
+              ? "hover:bg-white/10 cursor-pointer text-white"
+              : "opacity-40 cursor-not-allowed text-white",
           ].join(" ")}
           aria-label="Scroll right"
         >
@@ -171,8 +171,8 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
               "md:w-[calc((100%-1.5rem)/3)]",
             ].join(" ")}
           >
-            <div className="rounded-xl bg-white/5 border border-white/10 p-4 h-full">
-              <div className="aspect-video bg-white/5 rounded-lg mb-3 overflow-hidden">
+            <div className="rounded-xl bg-[#1E2C4B]/40 border border-white/10 p-4 h-full">
+              <div className="aspect-video bg-[#1E2C4B]/60 rounded-lg mb-3 overflow-hidden">
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
