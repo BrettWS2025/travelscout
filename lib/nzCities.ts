@@ -4,6 +4,7 @@
 
 export type {
   NzCity,
+  Place,
   Place as PlaceType,
 } from "@/lib/places";
 
