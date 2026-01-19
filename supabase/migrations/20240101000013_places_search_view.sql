@@ -52,8 +52,11 @@ GRANT SELECT ON places_search_view TO anon;
 -- UPDATE EXISTING FUNCTION: find_places_within_radius
 -- ============================================================================
 -- Update to use places_search_view for consistency
+-- Note: Must DROP first because we're changing the return type
 
-CREATE OR REPLACE FUNCTION find_places_within_radius(
+DROP FUNCTION IF EXISTS find_places_within_radius(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION) CASCADE;
+
+CREATE FUNCTION find_places_within_radius(
   center_lat DOUBLE PRECISION,
   center_lng DOUBLE PRECISION,
   radius_km DOUBLE PRECISION
