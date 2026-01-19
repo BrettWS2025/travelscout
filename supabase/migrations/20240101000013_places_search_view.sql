@@ -19,33 +19,30 @@ SELECT
   p.geometry,
   p.created_at,
   p.updated_at,
-  -- Array of all searchable names
-  ARRAY_AGG(DISTINCT pn.name ORDER BY 
-    CASE pn.name_type
-      WHEN 'official' THEN 1
-      WHEN 'maori' THEN 2
-      WHEN 'normalized' THEN 3
-      WHEN 'macronless' THEN 4
-      ELSE 5
-    END
-  ) FILTER (WHERE pn.name IS NOT NULL) AS search_names
+  -- Array of all searchable names (ordered and distinct)
+  COALESCE(
+    (
+      SELECT ARRAY_AGG(DISTINCT ordered_names.name)
+      FROM (
+        SELECT DISTINCT ON (pn.name) pn.name
+        FROM place_names pn
+        WHERE pn.place_id = p.id
+          AND pn.name IS NOT NULL
+        ORDER BY 
+          pn.name,
+          CASE pn.name_type
+            WHEN 'official' THEN 1
+            WHEN 'maori' THEN 2
+            WHEN 'normalized' THEN 3
+            WHEN 'macronless' THEN 4
+            ELSE 5
+          END
+      ) ordered_names
+    ),
+    ARRAY[]::TEXT[]
+  ) AS search_names
 FROM places p
-LEFT JOIN place_names pn ON pn.place_id = p.id
-WHERE p.is_active = true
-GROUP BY 
-  p.id,
-  p.name,
-  p.lat,
-  p.lng,
-  p.rank,
-  p.category,
-  p.region,
-  p.status,
-  p.maori_name,
-  p.is_active,
-  p.geometry,
-  p.created_at,
-  p.updated_at;
+WHERE p.is_active = true;
 
 -- Grant access to the view
 GRANT SELECT ON places_search_view TO authenticated;
