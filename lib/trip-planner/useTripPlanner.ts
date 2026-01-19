@@ -678,7 +678,8 @@ export function useTripPlanner() {
           if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && place?.name) {
             console.log(`Trying to find ${place.name} by name search`);
             const searchResults = await searchPlacesByName(place.name, 5);
-            const exactMatch = searchResults.find(p => p.id === id || p.name.toLowerCase() === place.name.toLowerCase());
+            const placeName = place.name.toLowerCase();
+            const exactMatch = searchResults.find(p => p.id === id || p.name.toLowerCase() === placeName);
             if (exactMatch && (exactMatch.lat !== 0 || exactMatch.lng !== 0)) {
               fetched = exactMatch;
             }
