@@ -14,6 +14,7 @@ import {
   DEFAULT_END_CITY_ID,
   getCityById,
   getAllPlaces,
+  searchPlacesByName,
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute, NZ_STOPS, type NzStop } from "@/lib/nzStops";
 import {
@@ -397,13 +398,35 @@ export function useTripPlanner() {
       .map((c) => ({ id: c.id, name: c.name }));
   }, [endQuery]);
 
-  const placesResults = useMemo(() => {
-    const q = normalize(placesQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
+  const [placesSearchResults, setPlacesSearchResults] = useState<CityLite[]>([]);
+  
+  // Search places using database (searches across all name variants)
+  useEffect(() => {
+    if (!placesQuery.trim()) {
+      setPlacesSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(placesQuery, 20);
+        setPlacesSearchResults(
+          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+        );
+      } catch (error) {
+        console.error("Error searching places:", error);
+        setPlacesSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
   }, [placesQuery]);
+  
+  const placesResults = useMemo(() => {
+    return placesSearchResults;
+  }, [placesSearchResults]);
 
   const thingsResults = useMemo(() => {
     const q = normalize(thingsQuery);

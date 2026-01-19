@@ -45,6 +45,7 @@ export async function getAllPlaces(): Promise<Place[]> {
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
+    .eq("is_active", true) // Only get active places
     .order("rank", { ascending: true, nullsFirst: false })
     .order("name", { ascending: true });
 
@@ -99,9 +100,28 @@ export async function getSuggestedPlaces(count: number = 6): Promise<Place[]> {
 export async function searchPlacesByName(query: string, limit: number = 20): Promise<Place[]> {
   if (!query.trim()) return [];
 
+  // Try using the database search function first (searches across all name variants)
+  const { data: searchData, error: searchError } = await supabase.rpc("search_places_by_name", {
+    search_query: query,
+    result_limit: limit,
+  });
+
+  if (!searchError && searchData && searchData.length > 0) {
+    // Map the search results to Place format
+    return searchData.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      lat: p.lat,
+      lng: p.lng,
+      rank: p.rank,
+    }));
+  }
+
+  // Fallback to direct places table search if function doesn't exist or fails
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
+    .eq("is_active", true)
     .ilike("name", `%${query}%`)
     .limit(limit);
 

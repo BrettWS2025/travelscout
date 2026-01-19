@@ -57,6 +57,7 @@ BEGIN
 
   -- Insert/update places from LINZ data
   -- Only process POINT geometries (skip LINE, POLYGON, etc.)
+  -- Include all POINT places regardless of status
   -- Only process records with valid coordinates
   WITH linz_data AS (
     SELECT DISTINCT ON (name_id)
@@ -78,13 +79,7 @@ BEGIN
       AND crd_longitude != ''
       AND crd_latitude::DOUBLE PRECISION BETWEEN -90 AND 90
       AND crd_longitude::DOUBLE PRECISION BETWEEN -180 AND 180
-    ORDER BY name_id, 
-      CASE status 
-        WHEN 'Official Approved' THEN 1
-        WHEN 'Official Recorded' THEN 2
-        WHEN 'Unofficial Recorded' THEN 3
-        ELSE 4
-      END
+    ORDER BY name_id
   ),
   existing_places AS (
     SELECT id, source_id FROM places WHERE source_id IS NOT NULL
@@ -116,11 +111,8 @@ BEGIN
     'other' AS category,  -- Default, will be updated by feature_type_map
     ld.region,
     ld.status,
-    NULLIF(ld.maori_name, '') AS maori_name,
-    CASE 
-      WHEN ld.status IN ('Official Approved', 'Official Recorded') THEN true
-      ELSE true  -- Include all for now, can filter later
-    END AS is_active,
+      NULLIF(ld.maori_name, '') AS maori_name,
+      true AS is_active,  -- Include all POINT places regardless of status
     COALESCE(
       (SELECT created_at FROM places WHERE source_id = ld.name_id),
       NOW()
