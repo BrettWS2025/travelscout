@@ -1,8 +1,15 @@
 import { Hero } from "@/components/Hero";
 import { FeatureCards } from "@/components/FeatureCards";
 import WhenToBookCarousel from "@/components/WhenToBookCarousel";
+import type { Metadata } from "next";
 
 import dynamic from "next/dynamic";
+
+export const metadata: Metadata = {
+  title: "Best Time to Book Flights",
+  description:
+    "We analysed over 200,000 flights to bring you the best times to book flights for domestic New Zealand, Australia & Pacific Islands, and international routes to get the best deals.",
+};
 
 const DomesticFlightBookingTimingChart = dynamic(
   () => import("@/components/DomesticFlightBookingTimingChart"),

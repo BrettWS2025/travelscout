@@ -1,7 +1,11 @@
 import ComparisonTable, { type ProductsColumn } from "@/components/ComparisonTable";
 import type { ProductOffer } from "@/lib/products";
+import type { Metadata } from "next";
 
-export const metadata = { title: "Compare" };
+export const metadata: Metadata = {
+  title: "Compare Travel Options",
+  description: "Compare travel agencies, OTAs, and direct booking options. Make informed decisions about how to book your New Zealand travel with transparent comparisons.",
+};
 
 type ChannelRow = ProductOffer;
 

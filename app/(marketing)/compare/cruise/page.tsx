@@ -1,9 +1,10 @@
 import CruiseComparisonsTable from "@/components/CruiseComparisonsTable";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Cruise Comparisons",
   description:
-    "Compare cruise lines by cost, add-ons, vibe, and more.",
+    "Compare cruise lines by cost, add-ons, vibe, and more. Find the perfect cruise for your New Zealand adventure.",
 };
 
 export default function CruiseComparePage() {

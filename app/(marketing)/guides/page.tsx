@@ -1,4 +1,9 @@
-export const metadata = { title: "Travel Guides" };
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Travel Guides",
+  description: "Destination deep-dives, airport hacks, loyalty sweet spots, and travel tips to help you travel smarter across New Zealand and beyond.",
+};
 export default function Guides() {
   return (
     <section className="space-y-4">

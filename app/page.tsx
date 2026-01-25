@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { MapPin, Calendar, Compass, Sparkles, Route, BookOpen, Star } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Plan Your New Zealand Journey | TravelScout",
+  description: "Discover New Zealand your way. Plan your journey across Aotearoa with our intelligent trip planner. Book events and attractions along the way, and create the perfect itinerary tailored to your travel style.",
+  openGraph: {
+    title: "Plan Your New Zealand Journey | TravelScout",
+    description: "Discover New Zealand your way. Plan your journey across Aotearoa with our intelligent trip planner.",
+  },
+};
 
 export default function Home() {
   return (
