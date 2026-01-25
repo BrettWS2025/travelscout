@@ -40,50 +40,7 @@ END;
 $$;
 
 -- ============================================================================
--- FIX 3: find_places_within_radius (from places.sql)
--- ============================================================================
-CREATE OR REPLACE FUNCTION find_places_within_radius(
-  center_lat DOUBLE PRECISION,
-  center_lng DOUBLE PRECISION,
-  radius_km DOUBLE PRECISION
-)
-RETURNS TABLE (
-  id TEXT,
-  name TEXT,
-  lat DOUBLE PRECISION,
-  lng DOUBLE PRECISION,
-  rank INTEGER
-)
-LANGUAGE plpgsql
-STABLE
-SET search_path = ''
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    p.id,
-    p.name,
-    p.lat,
-    p.lng,
-    p.rank
-  FROM places p
-  WHERE p.geometry IS NOT NULL
-    AND ST_DWithin(
-      p.geometry::geography,
-      ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography,
-      radius_km * 1000 -- Convert km to meters for ST_DWithin
-    )
-  ORDER BY 
-    ST_Distance(
-      p.geometry::geography,
-      ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography
-    )
-  LIMIT 50;
-END;
-$$;
-
--- ============================================================================
--- FIX 4: update_place_geometry
+-- FIX 3: update_place_geometry
 -- ============================================================================
 CREATE OR REPLACE FUNCTION update_place_geometry()
 RETURNS TRIGGER
@@ -376,10 +333,10 @@ END;
 $$;
 
 -- ============================================================================
--- FIX 10: find_places_within_radius (from places_search_view.sql - updated version)
+-- FIX 10: find_places_within_radius (from places_search_view.sql)
 -- ============================================================================
--- Note: This function was updated in places_search_view.sql to use places_search_view
--- We need to update it with search_path
+-- Note: This function was updated in migration 13 (places_search_view.sql) to use 
+-- places_search_view and return category/region. We drop and recreate it to add search_path.
 DROP FUNCTION IF EXISTS find_places_within_radius(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION) CASCADE;
 
 CREATE FUNCTION find_places_within_radius(
