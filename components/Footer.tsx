@@ -5,14 +5,13 @@ export function Footer() {
       <div className="container grid md:grid-cols-3 gap-6 text-sm" style={{color:"var(--muted)"}}>
         <div>
           <h3 className="text-white font-semibold mb-2">About</h3>
-          <p>Independent travel comparisons, guides and tools to help Kiwis travel smarter.</p>
+          <p>Plan your travel journey and travel smarter.</p>
         </div>
         <div>
           <h3 className="text-white font-semibold mb-2">Legal</h3>
           <ul className="space-y-1">
-            <li><Link className="link" href="#">How this site works</Link></li>
-            <li><Link className="link" href="#">Advertising policy</Link></li>
-            <li><Link className="link" href="#">Privacy</Link></li>
+            <li><Link className="link" href="/terms">Terms of Service</Link></li>
+            <li><Link className="link" href="/privacy">Privacy</Link></li>
           </ul>
         </div>
         <div>
@@ -20,7 +19,6 @@ export function Footer() {
           <ul className="space-y-1">
             <li><a className="link" href="#">Instagram</a></li>
             <li><a className="link" href="#">YouTube</a></li>
-            <li><a className="link" href="#">Newsletter</a></li>
           </ul>
         </div>
       </div>
