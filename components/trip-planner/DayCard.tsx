@@ -75,16 +75,16 @@ export default function DayCard({
   );
 
   return (
-    <div className="rounded-2xl bg-[#1E2C4B]/40 border border-white/10 overflow-hidden">
+    <div className="rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden">
       <div className="px-3 py-3">
         {/* Mobile: Stacked layout */}
         <div className="md:hidden space-y-2.5">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="text-sm font-semibold text-white">
+              <div className="text-sm font-semibold text-slate-900">
                 Day {day.dayNumber}
               </div>
-              <span className="text-[11px] text-gray-300">
+              <span className="text-[11px] text-slate-700">
                 {formatDisplayDate(day.date)}
               </span>
             </div>
@@ -93,7 +93,7 @@ export default function DayCard({
           <button
             type="button"
             onClick={onToggleOpen}
-            className="w-full py-2.5 rounded-xl border border-white/20 text-sm font-medium hover:bg-white/10 active:bg-white/15 transition"
+            className="w-full py-2.5 rounded-xl border border-slate-300 text-sm font-medium hover:bg-slate-100 active:bg-slate-200 transition text-slate-900"
           >
             {isOpen ? "Hide details" : "Day details"}
           </button>
@@ -103,10 +103,10 @@ export default function DayCard({
         <div className="hidden md:flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="text-xs font-semibold text-white">
+              <div className="text-xs font-semibold text-slate-900">
                 Day {day.dayNumber}
               </div>
-              <span className="text-[11px] text-gray-300">
+              <span className="text-[11px] text-slate-700">
                 {formatDisplayDate(day.date)}
               </span>
             </div>
@@ -115,7 +115,7 @@ export default function DayCard({
           <button
             type="button"
             onClick={onToggleOpen}
-            className="px-2.5 py-1.5 rounded-full border border-white/20 text-xs hover:bg-white/10"
+            className="px-2.5 py-1.5 rounded-full border border-slate-300 text-xs hover:bg-slate-100 text-slate-900"
           >
             {isOpen ? "Hide details" : "Day details"}
           </button>
@@ -124,10 +124,10 @@ export default function DayCard({
 
       {isOpen && (
         <div className="px-3 pb-3">
-          <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-3">
+          <div className="rounded-xl bg-white border border-slate-200 p-3 space-y-3">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium">
+                <label className="text-xs font-medium text-slate-900">
                   What I&apos;m doing on this day
                 </label>
                 <textarea
@@ -139,13 +139,13 @@ export default function DayCard({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium">
+                <label className="text-xs font-medium text-slate-900">
                   Where I&apos;m staying
                 </label>
                 <input
                   type="text"
                   className="input-dark w-full text-xs"
-                  placeholder="e.g. Holiday park, hotel name, friend’s place"
+                  placeholder="e.g. Holiday park, hotel name, friend's place"
                   value={detail?.accommodation ?? ""}
                   onChange={(e) => onUpdateAccommodation(e.target.value)}
                 />
@@ -154,17 +154,17 @@ export default function DayCard({
 
             {/* Events and Attractions - only show if there are events */}
             {events.length > 0 && (
-              <div className="pt-3 border-t border-white/10">
+              <div className="pt-3 border-t border-slate-200">
                 <div className="mb-2">
-                  <h4 className="text-xs font-semibold text-white">
+                  <h4 className="text-xs font-semibold text-slate-900">
                     Events & Attractions
                   </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-slate-600 mt-0.5">
                     Available for this day
                   </p>
                 </div>
                 {loading ? (
-                  <div className="text-xs text-gray-400">Loading events...</div>
+                  <div className="text-xs text-slate-600">Loading events...</div>
                 ) : (
                   <EventsAttractionsCarousel events={events} />
                 )}
@@ -172,7 +172,7 @@ export default function DayCard({
             )}
 
             {children ? (
-              <div className="pt-3 border-t border-white/10">{children}</div>
+              <div className="pt-3 border-t border-slate-200">{children}</div>
             ) : null}
           </div>
         </div>

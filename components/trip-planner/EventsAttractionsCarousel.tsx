@@ -123,9 +123,9 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
           onClick={() => scroll("left")}
           disabled={!canScrollLeft}
           className={[
-            "p-1.5 rounded-lg border border-white/20 bg-[#1E2C4B]/40 transition",
+            "p-1.5 rounded-lg border border-slate-400 bg-slate-300 transition",
             canScrollLeft
-              ? "hover:bg-white/10 cursor-pointer text-white"
+              ? "hover:bg-slate-400 cursor-pointer text-white"
               : "opacity-40 cursor-not-allowed text-white",
           ].join(" ")}
           aria-label="Scroll left"
@@ -171,8 +171,8 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
               "md:w-[calc((100%-1.5rem)/3)]",
             ].join(" ")}
           >
-            <div className="rounded-xl bg-[#1E2C4B]/40 border border-white/10 p-4 h-full">
-              <div className="aspect-video bg-[#1E2C4B]/60 rounded-lg mb-3 overflow-hidden">
+            <div className="rounded-xl bg-slate-300 border border-slate-400 p-4 h-full">
+              <div className="aspect-video bg-slate-400 rounded-lg mb-3 overflow-hidden">
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
@@ -193,21 +193,21 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
                     event.imageUrl ? "hidden" : "",
                   ].join(" ")}
                 >
-                  <span className="text-xs text-gray-400">No image</span>
+                  <span className="text-xs text-slate-700">No image</span>
                 </div>
               </div>
-              <h4 className="text-sm font-semibold text-white mb-1">
+              <h4 className="text-sm font-semibold text-slate-900 mb-1">
                 <a
                   href={event.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-[var(--accent)] transition-colors"
+                  className="hover:text-indigo-600 transition-colors"
                 >
                   {event.name}
                 </a>
               </h4>
               {event.description && (
-                <p className="text-xs text-gray-400 line-clamp-3">
+                <p className="text-xs text-slate-800 line-clamp-3">
                   {event.description}
                 </p>
               )}

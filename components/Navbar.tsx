@@ -91,7 +91,7 @@ function SubmenuItem({ item }: { item: MenuItem }) {
       <div className="flex items-center justify-between px-2 py-1 rounded">
         <Link
           href={item.href ?? "#"}
-          className="flex-1 transition-colors hover:text-[var(--accent)]"
+          className="flex-1 transition-colors hover:text-indigo-600 font-medium"
           style={{ color: "var(--text)" }}
         >
           {item.label}
@@ -111,7 +111,7 @@ function SubmenuItem({ item }: { item: MenuItem }) {
               <li key={child.label}>
                 <Link
                   href={child.href ?? "#"}
-                  className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                  className="block px-2 py-1 rounded transition-colors hover:bg-indigo-50 hover:text-indigo-600"
                   style={{ color: "var(--text)" }}
                 >
                   {child.label}
@@ -137,7 +137,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
     >
       <Link
         href={section.href}
-        className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+        className="group flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
         aria-haspopup="menu"
         aria-expanded={open}
         style={{ color: "var(--text)" }}
@@ -163,7 +163,7 @@ function NavDropdown({ section }: { section: MenuSection }) {
               ) : (
                 <li key={it.label}>
                   <Link
-                    className="block px-2 py-1 rounded transition-colors hover:bg-white/10"
+                    className="block px-2 py-1 rounded transition-colors hover:bg-indigo-50 hover:text-indigo-600"
                     href={it.href ?? "#"}
                     style={{ color: "var(--text)" }}
                   >
@@ -193,7 +193,7 @@ function ProfileMenu({
       {!isLoggedIn ? (
         <Link
           href="/auth/login"
-          className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+          className="flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
           style={{ color: "var(--text)" }}
         >
           <Briefcase className="w-4 h-4" />
@@ -205,7 +205,7 @@ function ProfileMenu({
             type="button"
             onMouseEnter={() => setOpen(true)}
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+            className="flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
             style={{ color: "var(--text)" }}
             aria-haspopup="menu"
             aria-expanded={open}
@@ -228,7 +228,7 @@ function ProfileMenu({
                 <li>
                   <Link
                     href="/account/profile"
-                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                   >
                     <span>Account details</span>
                   </Link>
@@ -236,19 +236,19 @@ function ProfileMenu({
                 <li>
                   <Link
                     href="/account/itineraries"
-                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                   >
                     <span>Itineraries</span>
                   </Link>
                 </li>
-                <li className="border-t border-white/10 mt-1 pt-1">
+                <li className="border-t border-slate-200 mt-1 pt-1">
                   <button
                     type="button"
                     onClick={async () => {
                       setOpen(false);
                       await onSignOut();
                     }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-white/10"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-red-50 hover:text-red-600 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign out</span>
@@ -292,12 +292,13 @@ export function Navbar() {
     <header
       className="sticky top-0 z-[1000]"
       style={{
-        background: "rgba(22,34,58,0.55)",
-        WebkitBackdropFilter: "saturate(160%) blur(12px)",
-        backdropFilter: "saturate(160%) blur(12px)",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255, 255, 255, 0.8)",
+        WebkitBackdropFilter: "saturate(180%) blur(20px)",
+        backdropFilter: "saturate(180%) blur(20px)",
+        borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
         color: "var(--text)",
         isolation: "isolate",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
       <div className="container navbar-responsive flex items-center justify-between">
@@ -336,7 +337,7 @@ export function Navbar() {
                 <Link
                   key={section.key}
                   href={section.href}
-                  className="group flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+                  className="group flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
                   style={{ color: "var(--text)" }}
                 >
                   <Icon className="w-4 h-4" />
@@ -350,7 +351,7 @@ export function Navbar() {
         </nav>
 
         <button
-          className="md:hidden inline-flex h-12 w-12 items-center justify-center"
+          className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-lg hover:bg-slate-100 transition-colors font-bold text-xl"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
@@ -370,12 +371,11 @@ export function Navbar() {
                 return (
                   <div
                     key={section.key}
-                    className="border-b last:border-none"
-                    style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                    className="border-b last:border-none border-slate-200"
                   >
                     <Link
                       href={section.href}
-                      className="flex items-center gap-2 px-3 py-3"
+                      className="flex items-center gap-2 px-3 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium"
                       style={{ color: "var(--text)" }}
                       onClick={closeMobileMenu}
                     >
@@ -389,11 +389,10 @@ export function Navbar() {
               return (
                 <div
                   key={section.key}
-                  className="border-b last:border-none"
-                  style={{ borderColor: "rgba(255,255,255,0.08)" }}
+                  className="border-b last:border-none border-slate-200"
                 >
                   <button
-                    className="w-full flex items-center justify-between px-3 py-3"
+                    className="w-full flex items-center justify-between px-3 py-3 hover:bg-indigo-50 transition-colors font-medium"
                     onClick={() =>
                       setExpanded((prev) => ({
                         ...prev,
@@ -444,13 +443,10 @@ export function Navbar() {
                         return (
                           <li
                             key={key}
-                            className="border-l pl-3"
-                            style={{
-                              borderColor: "rgba(255,255,255,0.12)",
-                            }}
+                            className="border-l pl-3 border-slate-200"
                           >
                             <button
-                              className="w-full flex items-center justify-between py-2"
+                              className="w-full flex items-center justify-between py-2 hover:text-indigo-600 transition-colors"
                               onClick={() =>
                                 setExpandedNested((prev) => ({
                                   ...prev,
@@ -472,7 +468,7 @@ export function Navbar() {
                                 {it.items!.map((child) => (
                                   <li key={child.label}>
                                     <Link
-                                      className="block"
+                                      className="block hover:text-indigo-600 transition-colors"
                                       href={child.href ?? "#"}
                                       style={{ color: "var(--text)" }}
                                       onClick={closeMobileMenu}
@@ -492,11 +488,11 @@ export function Navbar() {
               );
             })}
 
-            <div className="mt-2 border-t pt-2 border-white/10">
+            <div className="mt-2 border-t pt-2 border-slate-200">
               {!isLoggedIn ? (
                 <Link
                   href="/auth/login"
-                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-white/10"
+                  className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                   onClick={closeMobileMenu}
                 >
                   <Briefcase className="w-4 h-4" />
@@ -506,7 +502,7 @@ export function Navbar() {
                 <div className="space-y-1 text-sm">
                   <Link
                     href="/account/profile"
-                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                     onClick={closeMobileMenu}
                   >
                     <Briefcase className="w-4 h-4" />
@@ -514,7 +510,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/account/itineraries"
-                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/10"
+                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                     onClick={closeMobileMenu}
                   >
                     <span>Itineraries</span>
@@ -525,7 +521,7 @@ export function Navbar() {
                       closeMobileMenu();
                       signOutUser();
                     }}
-                    className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/10"
+                    className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-red-50 hover:text-red-600 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign out</span>
