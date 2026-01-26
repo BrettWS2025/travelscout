@@ -301,30 +301,21 @@ export function Navbar() {
         boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
-      <div className="container navbar-responsive flex items-center justify-between">
+      <div className="container navbar-responsive flex items-center justify-between py-0 md:py-0">
         <Link
           href="/"
-          className="relative flex items-center min-w-0 shrink"
+          className="relative flex items-center min-w-0 shrink py-0"
           style={{ color: "var(--text)" }}
         >
-          <span
-            className="
-              relative block h-[22.5px] md:h-[33px]
-              w-[433px] max-w-[calc(100vw-72px)]
-              md:w-[541px] md:max-w-none
-              overflow-visible
-            "
-          >
-            <Image
-              src="/TravelScout-Main.png"
-              alt="TravelScout"
-              width={706}
-              height={313}
-              priority
-              className="absolute left-0 top-1/2 translate-y-[calc(-50%+18px)] md:translate-y-[calc(-50%+26.4px)] h-[108px] md:h-[198px] w-auto select-none pointer-events-none"
-              sizes="(max-width: 768px) calc(100vw - 72px), 541px"
-            />
-          </span>
+          <Image
+            src="/TravelscoutLogo2Cropped.png"
+            alt="TravelScout"
+            width={200}
+            height={60}
+            priority
+            className="h-[64px] md:h-[80px] w-auto select-none pointer-events-none"
+            sizes="(max-width: 768px) calc(100vw - 72px), 200px"
+          />
           <span className="sr-only">TravelScout</span>
         </Link>
 

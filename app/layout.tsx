@@ -126,7 +126,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* 👇 Everything that needs to know about auth lives inside here */}
         <AuthProvider>
           <Navbar />
-          <main className="container pt-[160px] pb-10">{children}</main>
+          <main className="container pt-[120px] pb-10">{children}</main>
           <Footer />
           {isProd && <Analytics />}
           {isProd && <SpeedInsights />}
