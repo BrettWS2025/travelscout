@@ -23,7 +23,7 @@ DECLARE
   v_after_count BIGINT;
 BEGIN
   -- Count existing places
-  SELECT COUNT(*) INTO v_before_count FROM places WHERE source_id IS NOT NULL;
+  SELECT COUNT(*) INTO v_before_count FROM public.places WHERE source_id IS NOT NULL;
 
   -- Insert/update places from LINZ data
   -- Process both POINT and POLYGON geometries
@@ -42,7 +42,7 @@ BEGIN
       region,
       maori_name,
       geom_type
-    FROM linz_gazetteer_raw
+    FROM public.linz_gazetteer_raw
     WHERE geom_type IN ('POINT', 'POLYGON')
       AND crd_latitude IS NOT NULL
       AND crd_longitude IS NOT NULL
@@ -53,9 +53,9 @@ BEGIN
     ORDER BY name_id
   ),
   existing_places AS (
-    SELECT id, source_id FROM places WHERE source_id IS NOT NULL
+    SELECT id, source_id FROM public.places WHERE source_id IS NOT NULL
   )
-  INSERT INTO places (
+  INSERT INTO public.places (
     id,
     source_id,
     source_feat_id,
@@ -72,7 +72,7 @@ BEGIN
     updated_at
   )
   SELECT 
-    COALESCE(ep.id, uuid_generate_v4()::TEXT) AS id,
+    COALESCE(ep.id, public.uuid_generate_v4()::TEXT) AS id,
     ld.name_id AS source_id,
     ld.feat_id AS source_feat_id,
     ld.name,
@@ -85,7 +85,7 @@ BEGIN
     NULLIF(ld.maori_name, '') AS maori_name,
     true AS is_active,
     COALESCE(
-      (SELECT created_at FROM places WHERE source_id = ld.name_id),
+      (SELECT created_at FROM public.places WHERE source_id = ld.name_id),
       NOW()
     ) AS created_at,
     NOW() AS updated_at
@@ -104,13 +104,13 @@ BEGIN
 
   -- Count inserted (new source_ids)
   SELECT COUNT(*) INTO v_inserted
-  FROM places
+  FROM public.places
   WHERE source_id IS NOT NULL
     AND created_at >= NOW() - INTERVAL '1 minute';
 
   -- Count updated (existing source_ids that were updated)
   SELECT COUNT(*) INTO v_updated
-  FROM places
+  FROM public.places
   WHERE source_id IS NOT NULL
     AND updated_at >= NOW() - INTERVAL '1 minute'
     AND updated_at > created_at;
@@ -118,7 +118,7 @@ BEGIN
   -- Count skipped (invalid data or unsupported geometry types)
   -- Now only LINE and other unsupported types are skipped
   SELECT COUNT(*) INTO v_skipped
-  FROM linz_gazetteer_raw
+  FROM public.linz_gazetteer_raw
   WHERE geom_type NOT IN ('POINT', 'POLYGON')
      OR crd_latitude IS NULL
      OR crd_longitude IS NULL
