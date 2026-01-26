@@ -137,9 +137,9 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
           onClick={() => scroll("right")}
           disabled={!canScrollRight}
           className={[
-            "p-1.5 rounded-lg border border-white/20 bg-[#1E2C4B]/40 transition",
+            "p-1.5 rounded-lg border border-slate-400 bg-slate-300 transition",
             canScrollRight
-              ? "hover:bg-white/10 cursor-pointer text-white"
+              ? "hover:bg-slate-400 cursor-pointer text-white"
               : "opacity-40 cursor-not-allowed text-white",
           ].join(" ")}
           aria-label="Scroll right"
