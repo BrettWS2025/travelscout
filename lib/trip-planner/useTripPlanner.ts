@@ -1100,10 +1100,18 @@ export function useTripPlanner() {
     setAddingStopAfterIndex(null);
   }
 
-  function handleConfirmAddStop() {
+  async function handleConfirmAddStop() {
     if (addingStopAfterIndex === null || !newStopCityId) return;
 
-    const city = getCityById(newStopCityId);
+    // Try to get from cache first
+    let city = getCityById(newStopCityId);
+    
+    // If not in cache, fetch from database
+    if (!city) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      city = await getPlaceById(newStopCityId);
+    }
+    
     if (!city) {
       alert("Please select a valid stop.");
       return;

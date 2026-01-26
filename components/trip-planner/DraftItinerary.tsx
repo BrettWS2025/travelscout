@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect, type CSSProperties } from "react";
 import { ChevronDown, GripVertical, Search, MapPin } from "lucide-react";
-import { NZ_CITIES, getCityById } from "@/lib/nzCities";
+import { NZ_CITIES, getCityById, searchPlacesByName, getPlaceById, type Place } from "@/lib/nzCities";
 import type { TripPlan } from "@/lib/itinerary";
 import {
   formatShortRangeDate,
@@ -224,20 +224,89 @@ function CitySearchPill({
 }) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [dbSearchResults, setDbSearchResults] = useState<Place[]>([]);
+  const [selectedPlaceData, setSelectedPlaceData] = useState<Place | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedCity = value ? getCityById(value) : null;
+  // Try to get selected city from stored data, cache, or fetch from database
+  const selectedCity = useMemo(() => {
+    if (!value) return null;
+    
+    // First try stored data
+    if (selectedPlaceData && selectedPlaceData.id === value) {
+      return selectedPlaceData;
+    }
+    
+    // Then try cache
+    const cached = getCityById(value);
+    if (cached) return cached;
+    
+    return null;
+  }, [value, selectedPlaceData]);
+
   const suggested = pickSuggestedCities();
 
-  const searchResults = useMemo(() => {
-    const q = normalize(query);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
+  // Search places from database when user types (same as PlacesPickerPanel)
+  useEffect(() => {
+    if (!query.trim()) {
+      setDbSearchResults([]);
+      return;
+    }
+
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(query, 20);
+        setDbSearchResults(results.slice(0, 8));
+      } catch (error) {
+        console.error("Error searching places:", error);
+        setDbSearchResults([]);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
   }, [query]);
+
+  // Fetch place data when value changes (if not already stored)
+  useEffect(() => {
+    if (!value) {
+      setSelectedPlaceData(null);
+      return;
+    }
+
+    // If we already have the data, don't fetch again
+    if (selectedPlaceData && selectedPlaceData.id === value) {
+      return;
+    }
+
+    // Try cache first
+    const cached = getCityById(value);
+    if (cached) {
+      setSelectedPlaceData(cached);
+      return;
+    }
+
+    // Fetch from database
+    const fetchPlace = async () => {
+      try {
+        const place = await getPlaceById(value);
+        if (place) {
+          setSelectedPlaceData(place);
+        }
+      } catch (error) {
+        console.error("Error fetching place:", error);
+      }
+    };
+
+    fetchPlace();
+  }, [value, selectedPlaceData]);
+
+  const searchResults = useMemo(() => {
+    return dbSearchResults.map((p) => ({ id: p.id, name: p.name }));
+  }, [dbSearchResults]);
 
   const showSuggestions = normalize(query).length === 0;
   const filteredSuggested = suggested.filter((c) => c.id !== value);
@@ -267,7 +336,26 @@ function CitySearchPill({
     }
   }, [isOpen]);
 
-  function handleSelectCity(cityId: string) {
+  async function handleSelectCity(cityId: string) {
+    // Try to get place data from search results first (we have full data there)
+    const foundInResults = dbSearchResults.find((r) => r.id === cityId);
+    if (foundInResults) {
+      setSelectedPlaceData(foundInResults);
+    } else {
+      // If not in search results (e.g., from suggested), try cache or fetch
+      let place = getCityById(cityId);
+      if (!place) {
+        try {
+          place = await getPlaceById(cityId);
+        } catch (error) {
+          console.error("Error fetching place:", error);
+        }
+      }
+      if (place) {
+        setSelectedPlaceData(place);
+      }
+    }
+    
     onSelect(cityId);
     setIsOpen(false);
     setQuery("");
