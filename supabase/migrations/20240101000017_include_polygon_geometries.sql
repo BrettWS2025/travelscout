@@ -2,8 +2,11 @@
 -- Include POLYGON geometries in places import
 -- ============================================================================
 -- Purpose: Update populate_places_from_linz() to include POLYGON geometries
--- (e.g., Islands) in addition to POINT geometries
+-- (e.g., Islands like Waiheke Island) in addition to POINT geometries
 -- POLYGON features will use their crd_latitude/crd_longitude to create POINT representations
+--
+-- This migration includes all necessary schema qualifications for use with
+-- SET search_path = '' to prevent search path injection attacks.
 
 -- Update the populate_places_from_linz function to include POLYGON geometries
 CREATE OR REPLACE FUNCTION populate_places_from_linz()
@@ -72,13 +75,13 @@ BEGIN
     updated_at
   )
   SELECT 
-    COALESCE(ep.id, public.uuid_generate_v4()::TEXT) AS id,
+    COALESCE(ep.id, extensions.uuid_generate_v4()::TEXT) AS id,
     ld.name_id AS source_id,
     ld.feat_id AS source_feat_id,
     ld.name,
     ld.lat,
     ld.lng,
-    ST_SetSRID(ST_MakePoint(ld.lng, ld.lat), 4326) AS geometry,
+    extensions.ST_SetSRID(extensions.ST_MakePoint(ld.lng::double precision, ld.lat::double precision), 4326) AS geometry,
     'other' AS category,
     ld.region,
     ld.status,
