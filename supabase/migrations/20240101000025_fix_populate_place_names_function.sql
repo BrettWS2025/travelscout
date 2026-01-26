@@ -34,26 +34,26 @@ BEGIN
   INSERT INTO public.place_names (place_id, name, name_type, is_primary)
   SELECT 
     id,
-    normalize_name(name),
+    public.normalize_name(name),
     'normalized',
     false
   FROM public.places
   WHERE name IS NOT NULL
     AND name != ''
-    AND normalize_name(name) != LOWER(name)
+    AND public.normalize_name(name) != LOWER(name)
   ON CONFLICT (place_id, name, name_type) DO NOTHING;
 
   -- Insert macronless names (NZ-important)
   INSERT INTO public.place_names (place_id, name, name_type, is_primary)
   SELECT 
     id,
-    remove_macrons(name),
+    public.remove_macrons(name),
     'macronless',
     false
   FROM public.places
   WHERE name IS NOT NULL
     AND name != ''
-    AND remove_macrons(name) != name
+    AND public.remove_macrons(name) != name
   ON CONFLICT (place_id, name, name_type) DO NOTHING;
 
   -- Insert Māori names if available
