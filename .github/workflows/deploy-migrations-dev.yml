@@ -57,6 +57,9 @@ jobs:
           echo "Linking to Supabase project $SUPABASE_PROJECT_ID..."
           supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
           
+          echo "Repairing migration history if needed..."
+          supabase migration repair --status reverted 20240101000018 20240101000019 20240101000020 || true
+          
           echo "Pushing database migrations..."
           supabase db push
 
