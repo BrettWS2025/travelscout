@@ -61,9 +61,9 @@ jobs:
           supabase migration list || true
           
           echo "Repairing migration history for deleted migrations..."
-          # Mark the deleted migrations (18, 19, 20) as reverted in the migration history
-          # This allows us to remove them from history since we consolidated them into migration 17
-          supabase migration repair --status reverted 20240101000018 20240101000019 20240101000020 2>&1 || echo "Note: Repair command completed (some migrations may not exist in history)"
+          # Mark the deleted migrations (18, 19, 20, 21) as reverted in the migration history
+          # This allows us to remove them from history since we consolidated them into migration 17 and replaced 21 with 22
+          supabase migration repair --status reverted 20240101000018 20240101000019 20240101000020 20240101000021 2>&1 || echo "Note: Repair command completed (some migrations may not exist in history)"
           
           echo "Pushing database migrations..."
           supabase db push --include-all || supabase db push
