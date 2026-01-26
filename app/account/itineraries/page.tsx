@@ -117,18 +117,18 @@ export default function AccountItinerariesPage() {
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
       {deleteError && <p className="mt-4 text-sm text-red-400">{deleteError}</p>}
-      {loading && <p className="mt-4 text-sm text-white/70">Loading…</p>}
+      {loading && <p className="mt-4 text-sm text-slate-600">Loading…</p>}
 
       <div className="mt-6 space-y-3">
         {rows.map((r) => {
           const summary = getItinerarySummary(r);
           return (
-            <div key={r.id} className="card p-4 hover:bg-white/5 transition">
+            <div key={r.id} className="card p-4 hover:bg-slate-50 transition">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="font-semibold text-lg mb-1">{r.title}</div>
+                  <div className="font-semibold text-lg mb-1 text-slate-900">{r.title}</div>
                   {summary && (
-                    <div className="space-y-1 text-sm text-white/70">
+                    <div className="space-y-1 text-sm text-slate-600">
                       <div>
                         <span className="font-medium">Route:</span> {summary.startCity} → {summary.endCity}
                       </div>
@@ -146,7 +146,7 @@ export default function AccountItinerariesPage() {
                       )}
                     </div>
                   )}
-                  <div className="text-xs text-white/50 mt-2">
+                  <div className="text-xs text-slate-500 mt-2">
                     Saved {new Date(r.created_at).toLocaleString()}
                   </div>
                 </div>
@@ -174,8 +174,8 @@ export default function AccountItinerariesPage() {
 
         {!loading && rows.length === 0 && (
           <div className="card p-8 text-center">
-            <p className="text-white/70">No itineraries saved yet.</p>
-            <p className="text-sm text-white/50 mt-2">
+            <p className="text-slate-600">No itineraries saved yet.</p>
+            <p className="text-sm text-slate-500 mt-2">
               Create an itinerary on the home page and save it to see it here.
             </p>
           </div>
