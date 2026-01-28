@@ -155,7 +155,7 @@ export async function GET(req: Request) {
 
     // Explicitly request images field
     // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height))
-    apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug))");
+    // apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug))");
 
     // Generate cache key from query parameters
     const cacheKey = `eventfinda:${crypto
