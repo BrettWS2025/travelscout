@@ -110,6 +110,9 @@ export function useTripPlanner() {
   const [legsLoading, setLegsLoading] = useState(false);
 
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
+  const [roadSectorDetails, setRoadSectorDetails] = useState<Record<number, import("@/lib/trip-planner/utils").RoadSectorDetail>>({});
+  const [startSectorType, setStartSectorType] = useState<import("@/lib/trip-planner/utils").StartEndSectorType>("road");
+  const [endSectorType, setEndSectorType] = useState<import("@/lib/trip-planner/utils").StartEndSectorType>("road");
 
   // UI state for "add stop after this"
   const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
@@ -766,6 +769,28 @@ export function useTripPlanner() {
 
       const totalDays = countDaysInclusive(startDate, endDate);
       const initialNights = allocateNightsForStops(stops.length, totalDays);
+      
+      // Handle special case: same start/end with no middle stops
+      // Start = road (0 nights), End = itinerary (at least 1 night)
+      if (stops.length === 2 && start.name === end.name) {
+        initialNights[0] = 0; // Start: road sector
+        initialNights[1] = Math.max(1, totalDays); // End: itinerary sector
+        setStartSectorType("road");
+        setEndSectorType("itinerary");
+      } else if (stops.length === 2) {
+        // Just start and end (different cities) - end should be itinerary by default
+        initialNights[0] = 0; // Start: road sector
+        initialNights[1] = Math.max(1, totalDays); // End: itinerary sector
+        setStartSectorType("road");
+        setEndSectorType("itinerary");
+      } else {
+        // Default: both start and end are road sectors (0 nights)
+        initialNights[0] = 0;
+        initialNights[initialNights.length - 1] = 0;
+        setStartSectorType("road");
+        setEndSectorType("road");
+      }
+      
       setNightsPerStop(initialNights);
 
       const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
@@ -1053,6 +1078,25 @@ export function useTripPlanner() {
     const newNightsPerStop = arrayMove(nightsPerStop, from, to);
     const newMapPoints = arrayMove(mapPoints, from, to);
 
+    // Reorder road sector details (keyed by destination stop index)
+    // When a stop moves, its road sector details (which are keyed by destination index) move with it
+    const newRoadSectorDetails: Record<number, import("@/lib/trip-planner/utils").RoadSectorDetail> = {};
+    for (let newIdx = 0; newIdx < newRouteStops.length; newIdx++) {
+      // Find which old index this new index corresponds to
+      let oldIdx: number;
+      if (newIdx === from) {
+        oldIdx = to; // The item that moved from 'to' is now at 'from'
+      } else if (newIdx === to) {
+        oldIdx = from; // The item that moved from 'from' is now at 'to'
+      } else {
+        oldIdx = newIdx; // Unchanged positions
+      }
+      if (roadSectorDetails[oldIdx]) {
+        newRoadSectorDetails[newIdx] = roadSectorDetails[oldIdx];
+      }
+    }
+    setRoadSectorDetails(newRoadSectorDetails);
+
     // preserve open state by stop name
     const nextOpenStops: Record<number, boolean> = {};
     for (let oldIdx = 0; oldIdx < routeStops.length; oldIdx++) {
@@ -1193,6 +1237,150 @@ export function useTripPlanner() {
         isOpen: prev[key]?.isOpen ?? true,
       },
     }));
+  }
+
+  function toggleRoadSectorOpen(destinationStopIndex: number) {
+    setRoadSectorDetails((prev) => {
+      const existing = prev[destinationStopIndex];
+      if (!existing) {
+        return { ...prev, [destinationStopIndex]: { activities: "", isOpen: true } };
+      }
+      return { ...prev, [destinationStopIndex]: { ...existing, isOpen: !existing.isOpen } };
+    });
+  }
+
+  function updateRoadSectorActivities(destinationStopIndex: number, activities: string) {
+    setRoadSectorDetails((prev) => ({
+      ...prev,
+      [destinationStopIndex]: {
+        activities,
+        isOpen: prev[destinationStopIndex]?.isOpen ?? true,
+      },
+    }));
+  }
+
+  function convertStartToItinerary() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    // Set start city to at least 1 night
+    if (newNightsPerStop[0] === 0) {
+      newNightsPerStop[0] = 1;
+    }
+    
+    setNightsPerStop(newNightsPerStop);
+    setStartSectorType("itinerary");
+    
+    // Initialize road sector detail for the first middle stop (if exists) or end (if no middle stops)
+    if (routeStops.length > 1) {
+      const targetIndex = routeStops.length > 2 ? 1 : routeStops.length - 1;
+      setRoadSectorDetails((prev) => {
+        if (!prev[targetIndex]) {
+          return { ...prev, [targetIndex]: { activities: "", isOpen: false } };
+        }
+        return prev;
+      });
+    }
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertStartToRoad() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    newNightsPerStop[0] = 0;
+    
+    setNightsPerStop(newNightsPerStop);
+    setStartSectorType("road");
+    
+    // Remove road sector detail for the first middle stop (if exists) or end (if no middle stops)
+    if (routeStops.length > 1) {
+      const targetIndex = routeStops.length > 2 ? 1 : routeStops.length - 1;
+      setRoadSectorDetails((prev) => {
+        const next = { ...prev };
+        delete next[targetIndex];
+        return next;
+      });
+    }
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertEndToItinerary() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    const endIndex = routeStops.length - 1;
+    // Set end city to at least 1 night
+    if (newNightsPerStop[endIndex] === 0) {
+      newNightsPerStop[endIndex] = 1;
+    }
+    
+    setNightsPerStop(newNightsPerStop);
+    setEndSectorType("itinerary");
+    
+    // Initialize road sector detail for the end stop
+    setRoadSectorDetails((prev) => {
+      if (!prev[endIndex]) {
+        return { ...prev, [endIndex]: { activities: "", isOpen: false } };
+      }
+      return prev;
+    });
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertEndToRoad() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    const endIndex = routeStops.length - 1;
+    newNightsPerStop[endIndex] = 0;
+    
+    setNightsPerStop(newNightsPerStop);
+    setEndSectorType("road");
+    
+    // Remove road sector detail for the end stop
+    setRoadSectorDetails((prev) => {
+      const next = { ...prev };
+      delete next[endIndex];
+      return next;
+    });
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    syncDayDetailsFromPlan(nextPlan);
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
   }
 
   function toggleStopOpen(stopIndex: number) {
@@ -1606,6 +1794,7 @@ export function useTripPlanner() {
     legs,
     legsLoading,
     dayDetails,
+    roadSectorDetails,
     addingStopAfterIndex,
     newStopCityId,
     openStops,
@@ -1667,6 +1856,14 @@ export function useTripPlanner() {
     toggleDayOpen,
     updateDayNotes,
     updateDayAccommodation,
+    toggleRoadSectorOpen,
+    updateRoadSectorActivities,
+    startSectorType,
+    endSectorType,
+    convertStartToItinerary,
+    convertStartToRoad,
+    convertEndToItinerary,
+    convertEndToRoad,
     toggleStopOpen,
     expandAllStops,
     collapseAllStops,

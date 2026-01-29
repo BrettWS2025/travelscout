@@ -14,6 +14,13 @@ export type DayDetail = {
   isOpen: boolean;
 };
 
+export type RoadSectorDetail = {
+  activities: string;
+  isOpen: boolean;
+};
+
+export type StartEndSectorType = "road" | "itinerary";
+
 export type DayStopMeta = {
   stopIndex: number;
   isFirstForStop: boolean;
