@@ -764,8 +764,21 @@ export function useTripPlanner() {
         setEndSectorType("itinerary");
       } else {
         // Default: both start and end are road sectors (0 nights)
+        // Allocate all nights to middle stops only
         initialNights[0] = 0;
         initialNights[initialNights.length - 1] = 0;
+        
+        // Redistribute all totalDays to middle stops (round-robin)
+        if (stops.length > 2 && totalDays > 0) {
+          const middleStopCount = stops.length - 2;
+          const baseNightsPerMiddle = Math.floor(totalDays / middleStopCount);
+          const extraNights = totalDays % middleStopCount;
+          
+          for (let i = 1; i < stops.length - 1; i++) {
+            initialNights[i] = baseNightsPerMiddle + (i - 1 < extraNights ? 1 : 0);
+          }
+        }
+        
         setStartSectorType("road");
         setEndSectorType("road");
       }
@@ -780,10 +793,7 @@ export function useTripPlanner() {
       // collapse stop groups by default for new plans
       setOpenStops({});
 
-      if (nextPlan.days.length > 0) {
-        const last = nextPlan.days[nextPlan.days.length - 1];
-        setEndDate(last.date);
-      }
+      // Don't update endDate - preserve user's original selection
 
       // Build map points from all selected places, not just matched stops
       // Create a map of place names to their coordinates for quick lookup
