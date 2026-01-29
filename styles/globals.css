@@ -144,6 +144,29 @@ input[type="date"].input-dark:focus-visible {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
+/* Mobile: Prevent iOS Safari zoom on input focus (font-size >= 16px) */
+@media (max-width: 767px) {
+  /* All text inputs in search components */
+  input[type="text"],
+  input[type="search"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Date inputs */
+  input[type="date"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Specific search inputs in trip planner components */
+  .rounded-2xl input[type="text"],
+  .rounded-full input[type="text"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+}
+
 /* Remove default up/down arrows from number inputs (for nights control) */
 .input-no-spinner[type="number"]::-webkit-outer-spin-button,
 .input-no-spinner[type="number"]::-webkit-inner-spin-button {

@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useRef, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import {
@@ -169,9 +170,48 @@ function WherePickerPanel({
   const query = isStart ? startQuery : endQuery;
   const setQuery = isStart ? setStartQuery : setEndQuery;
   const results = isStart ? startResults : endResults;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const showBrowseLists = normalize(query).length === 0;
   const startCity = getCityById(startCityId);
+
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -195,15 +235,23 @@ function WherePickerPanel({
       <div className="rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2">
         <Search className="w-4 h-4 text-slate-500" />
         <input
+          ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!mobileSheetOpen}
           placeholder="Search destinations"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800"
+          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
         />
       </div>
 
-      <div className="max-h-[52vh] overflow-auto pr-1">
+      <div 
+        ref={suggestionsRef}
+        className={`overflow-auto pr-1 ${
+          mobileSheetOpen 
+            ? "max-h-[calc(100dvh-280px)]" 
+            : "max-h-[52vh]"
+        }`}
+      >
         {!isStart && startCity && (
           <div className="mb-3">
             <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">

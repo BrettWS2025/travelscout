@@ -158,7 +158,7 @@ export default function CitySearchPill({
   }
 
   // Calculate dropdown position
-  const [dropdownStyle, setDropdownStyle] = useState<{ top?: string; left?: string; width?: string }>({});
+  const [dropdownStyle, setDropdownStyle] = useState<{ top?: string; left?: string; width?: string; maxHeight?: string }>({});
   
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
@@ -166,10 +166,15 @@ export default function CitySearchPill({
     function updatePosition() {
       if (!containerRef.current) return;
       const containerRect = containerRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth < 768;
+      const maxHeight = isMobile 
+        ? `calc(100dvh - ${containerRect.bottom + 8}px - env(safe-area-inset-bottom, 0px))`
+        : "16rem";
       setDropdownStyle({
         top: `${containerRect.bottom + 8}px`,
         left: `${containerRect.left}px`,
         width: `${containerRect.width}px`,
+        maxHeight,
       });
     }
 
@@ -183,6 +188,43 @@ export default function CitySearchPill({
     return () => {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen]);
+
+  // Blur input on dropdown scroll/touchmove
+  useEffect(() => {
+    const dropdownEl = dropdownRef.current;
+    if (!dropdownEl || !isOpen) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    dropdownEl.addEventListener("scroll", handleScroll);
+    dropdownEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      dropdownEl.removeEventListener("scroll", handleScroll);
+      dropdownEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
     };
   }, [isOpen]);
 
@@ -214,7 +256,7 @@ export default function CitySearchPill({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search places"
-                  className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800"
+                  className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Escape") {
                       setIsOpen(false);
@@ -251,7 +293,7 @@ export default function CitySearchPill({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="fixed z-[9999] rounded-2xl bg-white p-3 border border-slate-200 shadow-lg max-h-64 overflow-auto"
+          className="fixed z-[9999] rounded-2xl bg-white p-3 border border-slate-200 shadow-lg overflow-auto"
           style={dropdownStyle}
         >
           {showSuggestions ? (

@@ -22,6 +22,8 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
   const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const [placesSearchResults, setPlacesSearchResults] = useState<Array<{ id: string; name: string }>>([]);
 
   // Search places from database when user types
@@ -161,6 +163,43 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl || !open) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
+  }, [open]);
+
   return (
     <div className="space-y-2" ref={containerRef}>
       {/* Chip row */}
@@ -185,8 +224,9 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
       {/* Input + suggestions */}
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
-          className="input-dark w-full text-sm"
+          className="input-dark w-full text-sm md:text-sm"
           placeholder={placeholder}
           value={input}
           onChange={(e) => {
@@ -204,8 +244,12 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
 
         {open && filteredSuggestions.length > 0 && (
           <div
-            className="absolute left-0 right-0 mt-1 card max-h-64 overflow-auto z-50"
-            style={{ color: "var(--text)" }}
+            ref={suggestionsRef}
+            className="absolute left-0 right-0 mt-1 card overflow-auto z-50"
+            style={{ 
+              color: "var(--text)",
+              maxHeight: "calc(100dvh - 200px)"
+            }}
           >
             <ul className="divide-y divide-gray-200 text-sm">
               {filteredSuggestions.map((s, idx) => (
