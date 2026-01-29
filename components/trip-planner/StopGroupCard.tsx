@@ -79,19 +79,6 @@ export default function StopGroupCard({
         {/* Mobile: Stack layout */}
         <div className="md:hidden space-y-3">
           <div className="flex items-center gap-2 min-w-0">
-            {!isDragDisabledLocal && dragAttributes && dragListeners && (
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="p-1.5 -ml-1 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
-                aria-label="Reorder stop"
-                {...dragListeners}
-                {...dragAttributes}
-              >
-                <GripVertical className="w-4 h-4" />
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => onToggleStopOpen(g.stopIndex)}
@@ -120,6 +107,18 @@ export default function StopGroupCard({
                 </div>
               </div>
             </button>
+            {!isDragDisabledLocal && dragAttributes && dragListeners && (
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 -mr-1 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
+                aria-label="Reorder stop"
+                {...dragListeners}
+                {...dragAttributes}
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Nights stepper for mobile */}
@@ -154,19 +153,6 @@ export default function StopGroupCard({
         {/* Desktop: Horizontal layout */}
         <div className="hidden md:flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            {!isDragDisabledLocal && dragAttributes && dragListeners && (
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="p-2 -ml-2 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
-                aria-label="Reorder stop"
-                {...dragListeners}
-                {...dragAttributes}
-              >
-                <GripVertical className="w-4 h-4" />
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => onToggleStopOpen(g.stopIndex)}
@@ -223,6 +209,18 @@ export default function StopGroupCard({
                 +
               </button>
             </div>
+            {!isDragDisabledLocal && dragAttributes && dragListeners && (
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 -mr-2 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
+                aria-label="Reorder stop"
+                {...dragListeners}
+                {...dragAttributes}
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
