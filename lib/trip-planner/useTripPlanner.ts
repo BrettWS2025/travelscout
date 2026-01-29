@@ -38,15 +38,9 @@ import {
 } from "@/lib/trip-planner/utils";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-
-type ActivePill = "where" | "when" | null;
-
-function arrayMove<T>(arr: T[], from: number, to: number): T[] {
-  const copy = arr.slice();
-  const [item] = copy.splice(from, 1);
-  copy.splice(to, 0, item);
-  return copy;
-}
+import type { ActivePill } from "@/lib/trip-planner/useTripPlanner.types";
+import { arrayMove, syncDayDetailsFromPlan } from "@/lib/trip-planner/useTripPlanner.utils";
+import { fetchPlaceCoordinates, saveItineraryToSupabase } from "@/lib/trip-planner/useTripPlanner.api";
 
 export function useTripPlanner() {
   const [startCityId, setStartCityId] = useState("");
@@ -216,21 +210,6 @@ export function useTripPlanner() {
     };
   }, [mobileSheetOpen]);
 
-  function syncDayDetailsFromPlan(nextPlan: TripPlan) {
-    setDayDetails((prev) => {
-      const next: Record<string, DayDetail> = {};
-      for (const d of nextPlan.days) {
-        const key = makeDayKey(d.date, d.location);
-        next[key] =
-          prev[key] ?? {
-            notes: "",
-            accommodation: "",
-            isOpen: false,
-          };
-      }
-      return next;
-    });
-  }
 
   function handleDateRangeChange(range: DateRange | undefined) {
     setDateRange(range);
@@ -795,7 +774,7 @@ export function useTripPlanner() {
 
       const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
-      syncDayDetailsFromPlan(nextPlan);
+      setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
 
       // collapse stop groups by default for new plans
@@ -932,7 +911,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, next));
 
     if (nextPlan.days.length > 0) {
@@ -1035,7 +1014,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
 
@@ -1113,7 +1092,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
 
     if (nextPlan.days.length > 0) {
@@ -1183,7 +1162,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
 
@@ -1284,7 +1263,7 @@ export function useTripPlanner() {
     
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
     
     if (nextPlan.days.length > 0) {
@@ -1314,7 +1293,7 @@ export function useTripPlanner() {
     
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
     
     if (nextPlan.days.length > 0) {
@@ -1346,7 +1325,7 @@ export function useTripPlanner() {
     
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
     
     if (nextPlan.days.length > 0) {
@@ -1374,7 +1353,7 @@ export function useTripPlanner() {
     
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
     
     if (nextPlan.days.length > 0) {
@@ -1487,36 +1466,17 @@ export function useTripPlanner() {
         selectedThingIds,
       };
 
-      const itineraryData = {
-        title: title || `Trip from ${startCity.name} to ${endCity.name}`,
+      const result = await saveItineraryToSupabase(
+        user.id,
+        title || `Trip from ${startCity.name} to ${endCity.name}`,
         trip_input,
-        trip_plan: extended_trip_plan,
-      };
+        extended_trip_plan,
+        itineraryId
+      );
 
-      let error;
-      
-      if (itineraryId) {
-        // Update existing itinerary
-        const { error: updateError } = await supabase
-          .from("itineraries")
-          .update(itineraryData)
-          .eq("id", itineraryId)
-          .eq("user_id", user.id);
-        error = updateError;
-      } else {
-        // Insert new itinerary
-        const { error: insertError } = await supabase
-          .from("itineraries")
-          .insert({
-            user_id: user.id,
-            ...itineraryData,
-          });
-        error = insertError;
-      }
-
-      if (error) {
-        setSaveError(error.message);
-        return { success: false, error: error.message };
+      if (!result.success) {
+        setSaveError(result.error || "Failed to save itinerary");
+        return result;
       }
 
       setSaving(false);
@@ -1599,7 +1559,7 @@ export function useTripPlanner() {
       // Restore plan
       if (trip_plan.days && trip_plan.days.length > 0) {
         setPlan(trip_plan);
-        syncDayDetailsFromPlan(trip_plan);
+        setDayDetails((prev) => syncDayDetailsFromPlan(trip_plan, prev));
       }
 
       // Restore day details
@@ -1707,7 +1667,7 @@ export function useTripPlanner() {
       // Restore plan if it exists
       if (state.plan && state.plan.days && state.plan.days.length > 0) {
         setPlan(state.plan);
-        syncDayDetailsFromPlan(state.plan);
+        setDayDetails((prev) => syncDayDetailsFromPlan(state.plan, prev));
         
         // Restore extended plan data
         if (state.plan.dayDetails) {
