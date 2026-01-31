@@ -198,16 +198,13 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
     // Strategy: Query a range that includes:
     // 1. Events starting on the target date
     // 2. Events that span midnight (start on target date, end next day)
-    // 3. Events that are ongoing (start before target date, still active on target date)
     // 
     // The Eventfinda API's end_date is exclusive (events ending before this date)
-    // So to include events ending on Feb 6, we need end_date=Feb 7
-    // To include events starting on Feb 5, we use start_date=Feb 5
-    // To include ongoing events, we query from the day before
-    const dayBefore = getPreviousDay(date);
-    const dayAfterNext = getNextDay(getNextDay(date)); // Two days after to include events ending on the next day
-    params.append("start_date", dayBefore); // Include events that started the day before (ongoing events)
-    params.append("end_date", dayAfterNext); // Include events ending on the target date or next day (end_date is exclusive)
+    // So to include events ending on the target date, we need end_date=target date + 1 day
+    // To include events starting on the target date, we use start_date=target date
+    const nextDay = getNextDay(date); // One day after the target date
+    params.append("start_date", date); // Include events starting on the target date
+    params.append("end_date", nextDay); // Include events ending on the target date (end_date is exclusive)
     
     params.append("rows", "20"); // Eventfinda API max is 20 per request
     params.append("order", "date");

@@ -17,15 +17,14 @@ The event filtering system ensures that only events that actually occur on a req
 When fetching events for a specific target date, the system queries a date range to ensure we capture:
 1. Events starting on the target date
 2. Events that span midnight (start on target date, end next day)
-3. Events that are ongoing (start before target date, still active on target date)
 
 **Query Parameters:**
-- `start_date`: The day before the target date (to include ongoing events)
-- `end_date`: Two days after the target date (Eventfinda API's `end_date` is exclusive)
+- `start_date`: The target date itself
+- `end_date`: One day after the target date (Eventfinda API's `end_date` is exclusive)
 
 **Example:** For target date `2025-02-13`:
-- `start_date`: `2025-02-12`
-- `end_date`: `2025-02-15`
+- `start_date`: `2025-02-13`
+- `end_date`: `2025-02-14`
 
 ### Pagination
 
