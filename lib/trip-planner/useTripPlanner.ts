@@ -1396,7 +1396,11 @@ export function useTripPlanner() {
       : "Add dates";
 
   const whereSummary =
-    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
+    startCity && endCity 
+      ? `${startCity.name} → ${endCity.name}` 
+      : startCity 
+      ? "Select End City"
+      : "Select Start City";
 
   const selectedPlaces = useMemo(() => {
     return selectedPlaceIds.map((id) => {
@@ -1411,7 +1415,7 @@ export function useTripPlanner() {
 
   const placesSummary = selectedPlaces.length > 0 
     ? `${selectedPlaces.length} place${selectedPlaces.length > 1 ? 's' : ''} selected`
-    : "Add places";
+    : "Add trip stops";
 
   const thingsSummary = selectedThings.length > 0
     ? `${selectedThings.length} thing${selectedThings.length > 1 ? 's' : ''} selected`

@@ -174,7 +174,7 @@ export default function StartEndSectorCard({
                 onClick={onConvertToItinerary}
                 className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700 whitespace-nowrap"
               >
-                I&apos;m staying here
+                Stay in {stopName}
               </button>
             ) : (
               <div className="flex items-center gap-1.5">
@@ -282,7 +282,7 @@ export default function StartEndSectorCard({
               onClick={onConvertToItinerary}
               className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700 whitespace-nowrap"
             >
-              I&apos;m staying here
+              Stay in {stopName}
             </button>
           ) : (
             <div className="flex items-center gap-2">
