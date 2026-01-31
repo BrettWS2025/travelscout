@@ -60,6 +60,54 @@ function extractLocalDate(isoString: string): string {
 }
 
 /**
+ * Helper function to check if an event should be excluded based on irrelevant keywords
+ * Filters out events like business networking, weekly catchball, etc.
+ */
+function shouldExcludeEvent(event: { name?: string; description?: string }): boolean {
+  if (!event.name && !event.description) return false;
+  
+  const name = (event.name || "").toLowerCase();
+  const description = (event.description || "").toLowerCase();
+  
+  // List of exclusion patterns - events matching these will be filtered out
+  const exclusionPatterns = [
+    // Business networking events
+    "business networking",
+    "networking event",
+    "networking breakfast",
+    "networking lunch",
+    "networking evening",
+    "professional networking",
+    "business mixer",
+    
+    // Weekly recurring sports/activities
+    "weekly catchball",
+    "catchball",
+    "weekly basketball",
+    "weekly football",
+    "weekly soccer",
+    "weekly training",
+    
+    // Other irrelevant recurring events
+    "weekly meetup",
+    "weekly gathering",
+    "weekly session",
+    "weekly class",
+    "weekly workshop",
+    "class",
+    "course",
+    "welly night market",
+    
+    // Add more patterns as needed
+  ];
+  
+  // Check if any exclusion pattern matches
+  return exclusionPatterns.some(pattern => 
+    name.includes(pattern) || description.includes(pattern)
+  );
+}
+
+/**
  * Helper function to check if an event occurs on a specific date
  * Events are considered to occur on the target date if:
  * - The event starts on that date (in local timezone), OR
@@ -291,8 +339,15 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
         });
 
         // Filter events to only include those that actually occur on the target date
-        // Stage 1: Session-based exclusion - if event has sessions, only include if matching session found
+        // Stage 1: Keyword-based exclusion - filter out irrelevant events (business networking, weekly catchball, etc.)
+        // Stage 2: Session-based exclusion - if event has sessions, only include if matching session found
         const filteredEvents = transformedEvents.filter((event: any) => {
+          // First, check if event should be excluded based on keywords
+          if (shouldExcludeEvent(event)) {
+            console.log(`[useEvents] Event "${event.name}" filtered out: matches exclusion pattern`);
+            return false;
+          }
+          
           // Critical: If event has sessions but no matching session was found, exclude it
           // This prevents recurring events from showing on dates they don't actually occur
           if (event._hasSessions && !event._foundMatchingSession) {
