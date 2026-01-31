@@ -172,9 +172,9 @@ export async function GET(req: Request) {
       apiUrl.searchParams.append("end_date", endDate);
     }
 
-    // Explicitly request images, sessions, and datetime_summary fields
-    // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height),sessions:(id,datetime_start,datetime_end,datetime_summary))
-    apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,datetime_summary,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug),sessions:(id,datetime_start,datetime_end,datetime_summary,is_cancelled))");
+    // Explicitly request images, sessions, datetime_summary, and category fields
+    // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height),sessions:(id,datetime_start,datetime_end,datetime_summary),category:(id,name,url_slug,parent_id))
+    apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,datetime_summary,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug,parent_id),sessions:(id,datetime_start,datetime_end,datetime_summary,is_cancelled))");
 
     // Generate cache key from query parameters
     const cacheKey = `eventfinda:${crypto

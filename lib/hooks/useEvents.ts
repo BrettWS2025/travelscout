@@ -96,7 +96,7 @@ function shouldExcludeEvent(event: { name?: string; description?: string }): boo
     "weekly workshop",
     "class",
     "course",
-    "welly night market",
+    "seniors",
     
     // Add more patterns as needed
   ];
