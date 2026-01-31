@@ -10,6 +10,7 @@ export type Event = {
   imageUrl?: string;
   datetime_start: string;
   datetime_end?: string;
+  datetime_summary?: string;
 };
 
 type UseEventsResult = {
@@ -63,6 +64,9 @@ function extractLocalDate(isoString: string): string {
  * Events are considered to occur on the target date if:
  * - The event starts on that date (in local timezone), OR
  * - The event is ongoing (starts before target date and ends on/after target date)
+ * 
+ * For recurring events with wide date ranges, we only match if the event starts on the target date
+ * to avoid showing them on every date in their range.
  */
 function eventOccursOnDate(event: Event, targetDate: string): boolean {
   if (!event.datetime_start) return false;
@@ -82,8 +86,19 @@ function eventOccursOnDate(event: Event, targetDate: string): boolean {
     const eventStart = new Date(event.datetime_start);
     const eventEnd = new Date(event.datetime_end);
     
+    // Calculate the span of the event in days
+    const daysSpan = Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // For events with a very wide date range (more than 7 days), only match if they start on the target date
+    // This prevents recurring events from showing on every date in their range
+    // Recurring events should have sessions to indicate specific dates
+    if (daysSpan > 7) {
+      // Wide date range - only match if event starts on target date
+      return eventStartDate === targetDate;
+    }
+    
+    // For shorter events, check if they span the target date
     // Event is ongoing if it starts before or on target date and ends on or after target date
-    // We check both date strings and datetime objects for accuracy
     if (eventStartDate <= targetDate && eventEndDate >= targetDate) {
       return true;
     }
@@ -146,28 +161,53 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
     params.append("start_date", dayBefore); // Include events that started the day before (ongoing events)
     params.append("end_date", dayAfterNext); // Include events ending on the target date or next day (end_date is exclusive)
     
-    params.append("rows", "100"); // Maximum events per day (API supports up to 100)
+    params.append("rows", "20"); // Eventfinda API max is 20 per request
     params.append("order", "date");
 
-    fetch(`/api/events?${params.toString()}`, {
-      signal: abortController.signal,
-    })
-      .then(async (res) => {
-        if (isCancelled) return;
+    // Paginate through all results
+    const fetchAllEvents = async (): Promise<Event[]> => {
+      const allEvents: Event[] = [];
+      let offset = 0;
+      const rowsPerPage = 20;
+      let hasMore = true;
+
+      while (hasMore && !isCancelled) {
+        const paginatedParams = new URLSearchParams(params);
+        paginatedParams.set("offset", offset.toString());
+        
+        const res = await fetch(`/api/events?${paginatedParams.toString()}`, {
+          signal: abortController.signal,
+        });
         
         if (!res.ok) {
           throw new Error(`Failed to fetch events: ${res.statusText}`);
         }
-        const data = await res.json();
         
-        if (isCancelled) return;
+        const data = await res.json();
         
         if (data.error) {
           throw new Error(data.error);
         }
 
+        const events = data.events || [];
+        allEvents.push(...events);
+        
+        // Check if there are more results
+        const total = data.total || 0;
+        const fetched = offset + events.length;
+        hasMore = fetched < total && events.length === rowsPerPage;
+        offset += rowsPerPage;
+      }
+
+      return allEvents;
+    };
+
+    fetchAllEvents()
+      .then((allEvents) => {
+        if (isCancelled) return;
+
         // Transform Eventfinda events to our Event type
-        const transformedEvents: Event[] = (data.events || []).map((event: any) => {
+        const transformedEvents: Event[] = allEvents.map((event: any) => {
           // Extract image URL - handle different image formats
           let imageUrl: string | undefined;
           
@@ -187,36 +227,116 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
             }
           }
 
+          // Extract sessions and find the one matching the target date
+          let datetime_summary: string | undefined = event.datetime_summary;
+          let sessionDatetimeStart = event.datetime_start;
+          let sessionDatetimeEnd = event.datetime_end;
+          let hasSessions = false;
+          let foundMatchingSession = false;
+
+          if (event.sessions) {
+            hasSessions = true;
+            let sessions: any[] = [];
+            
+            // Handle different session formats
+            if (Array.isArray(event.sessions)) {
+              sessions = event.sessions;
+            } else if (event.sessions.sessions && Array.isArray(event.sessions.sessions)) {
+              sessions = event.sessions.sessions;
+            }
+
+            // Debug logging for events we're tracking
+            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+              console.log(`[useEvents] Event "${event.name}" has sessions:`, {
+                eventId: event.id,
+                sessionsCount: sessions.length,
+                sessionsStructure: event.sessions,
+                targetDate: date
+              });
+            }
+
+            // Find the session that matches the target date
+            const matchingSession = sessions.find((session: any) => {
+              if (!session.datetime_start || session.is_cancelled) return false;
+              const sessionDate = extractLocalDate(session.datetime_start);
+              return sessionDate === date;
+            });
+
+            if (matchingSession) {
+              // Use the matching session's datetime_summary and times
+              datetime_summary = matchingSession.datetime_summary || datetime_summary;
+              sessionDatetimeStart = matchingSession.datetime_start;
+              sessionDatetimeEnd = matchingSession.datetime_end;
+              foundMatchingSession = true;
+            } else {
+              // Event has sessions but no matching session - set datetime to null to ensure exclusion
+              // This prevents the parent event's date range from being used
+              sessionDatetimeStart = null as any;
+              sessionDatetimeEnd = null as any;
+            }
+          }
+
           return {
             id: event.id,
             name: event.name,
             url: event.url,
             description: event.description,
             imageUrl,
-            datetime_start: event.datetime_start,
-            datetime_end: event.datetime_end,
+            datetime_start: sessionDatetimeStart,
+            datetime_end: sessionDatetimeEnd,
+            datetime_summary,
+            _hasSessions: hasSessions,
+            _foundMatchingSession: foundMatchingSession,
           };
         });
 
         // Filter events to only include those that actually occur on the target date
-        // This handles timezone issues and events that span multiple days
-        const filteredEvents = transformedEvents.filter((event) => {
-          const matches = eventOccursOnDate(event, date);
-          if (!matches && (event.name?.toLowerCase().includes('hotspot') || event.name?.toLowerCase().includes('toby'))) {
-            // Debug logging for specific events we're looking for
-            console.log(`[useEvents] Event "${event.name}" filtered out:`, {
+        // Stage 1: Session-based exclusion - if event has sessions, only include if matching session found
+        const filteredEvents = transformedEvents.filter((event: any) => {
+          // Critical: If event has sessions but no matching session was found, exclude it
+          // This prevents recurring events from showing on dates they don't actually occur
+          if (event._hasSessions && !event._foundMatchingSession) {
+            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+              console.log(`[useEvents] Event "${event.name}" filtered out: has sessions but none match target date ${date}`, {
+                eventId: event.id,
+                targetDate: date,
+                hasSessions: event._hasSessions,
+                foundMatchingSession: event._foundMatchingSession,
+                datetime_start: event.datetime_start,
+                datetime_end: event.datetime_end
+              });
+            }
+            return false;
+          }
+
+          // If datetime_start is null (because we have sessions but no match), exclude it
+          if (!event.datetime_start) {
+            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+              console.log(`[useEvents] Event "${event.name}" filtered out: datetime_start is null`);
+            }
+            return false;
+          }
+
+          // Include the event - we rely on session matching for events with sessions,
+          // and for events without sessions, we trust the API's date filtering
+          if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+            console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}:`, {
               datetime_start: event.datetime_start,
               datetime_end: event.datetime_end,
-              targetDate: date,
-              startDate: extractLocalDate(event.datetime_start),
-              endDate: event.datetime_end ? extractLocalDate(event.datetime_end) : 'none'
+              datetime_summary: event.datetime_summary,
+              hasSessions: event._hasSessions,
+              foundMatchingSession: event._foundMatchingSession
             });
           }
-          return matches;
+          return true;
+        }).map((event: any) => {
+          // Remove internal flags before returning
+          const { _hasSessions, _foundMatchingSession, ...cleanEvent } = event;
+          return cleanEvent;
         });
 
         if (!isCancelled) {
-          console.log(`[useEvents] Fetched ${transformedEvents.length} events, filtered to ${filteredEvents.length} for date ${date}`);
+          console.log(`[useEvents] Fetched ${transformedEvents.length} events (paginated), filtered to ${filteredEvents.length} for date ${date}`);
           if (transformedEvents.length > 0 && filteredEvents.length === 0) {
             console.warn(`[useEvents] All events were filtered out! Sample event:`, {
               name: transformedEvents[0].name,

@@ -206,6 +206,11 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
                   {event.name}
                 </a>
               </h4>
+              {event.datetime_summary && (
+                <p className="text-xs text-slate-700 mb-1.5 font-medium">
+                  {event.datetime_summary}
+                </p>
+              )}
               {event.description && (
                 <p className="text-xs text-slate-800 line-clamp-3">
                   {event.description}

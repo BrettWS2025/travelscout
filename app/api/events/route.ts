@@ -7,6 +7,14 @@ export const dynamic = "force-dynamic";
 // Cache TTL: 1 hour (3600 seconds) - events data changes frequently but not too often
 const CACHE_TTL_SECONDS = 3600;
 
+interface EventfindaSession {
+  id: number;
+  datetime_start: string;
+  datetime_end?: string;
+  datetime_summary?: string;
+  is_cancelled?: boolean;
+}
+
 interface EventfindaEvent {
   id: number;
   url: string;
@@ -15,6 +23,7 @@ interface EventfindaEvent {
   description?: string;
   datetime_start: string;
   datetime_end?: string;
+  datetime_summary?: string;
   location?: {
     id: number;
     name: string;
@@ -60,6 +69,12 @@ interface EventfindaEvent {
     name: string;
     url_slug: string;
   };
+  sessions?: {
+    "@attributes"?: {
+      count: number;
+    };
+    sessions?: EventfindaSession[];
+  } | EventfindaSession[];
 }
 
 interface EventfindaResponse {
@@ -68,6 +83,9 @@ interface EventfindaResponse {
     total: number;
     offset: number;
     rows: number;
+  };
+  "@attributes"?: {
+    count: number;
   };
 }
 
@@ -78,7 +96,7 @@ interface EventfindaResponse {
  * - lat: latitude (required when using location-based search)
  * - lng: longitude (required when using location-based search)
  * - radius: search radius in kilometers (default: 30)
- * - rows: number of results to return (default: 20, max: 100)
+ * - rows: number of results to return (default: 20, max: 20 - Eventfinda API limit)
  * - offset: pagination offset (default: 0)
  * - order: sort order - "date" or "popularity" (default: "date")
  * - q: search query string (optional)
@@ -106,7 +124,8 @@ export async function GET(req: Request) {
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
     const radius = parseFloat(searchParams.get("radius") || "30");
-    const rows = Math.min(parseInt(searchParams.get("rows") || "20", 10), 100);
+    // Eventfinda API has a maximum of 20 rows per request. Values above 20 default to 10.
+    const rows = Math.min(parseInt(searchParams.get("rows") || "20", 10), 20);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
     const order = searchParams.get("order") || "date";
     const q = searchParams.get("q");
@@ -153,9 +172,9 @@ export async function GET(req: Request) {
       apiUrl.searchParams.append("end_date", endDate);
     }
 
-    // Explicitly request images field
-    // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height))
-    apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug))");
+    // Explicitly request images, sessions, and datetime_summary fields
+    // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height),sessions:(id,datetime_start,datetime_end,datetime_summary))
+    apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,datetime_summary,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug),sessions:(id,datetime_start,datetime_end,datetime_summary,is_cancelled))");
 
     // Generate cache key from query parameters
     const cacheKey = `eventfinda:${crypto
@@ -202,10 +221,13 @@ export async function GET(req: Request) {
 
     const data: EventfindaResponse = await response.json();
 
+    // Eventfinda API returns total count in @attributes.count, not meta.total
+    const totalCount = data["@attributes"]?.count || data.meta?.total || data.events?.length || 0;
+
     const responseData = {
       success: true,
       count: data.events?.length || 0,
-      total: data.meta?.total || data.events?.length || 0,
+      total: totalCount,
       offset: offset,
       rows: rows,
       events: data.events || [],

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test:eventfinda": "tsx scripts/test-eventfinda-api.ts",
     "test:redis": "tsx scripts/test-redis.ts",
+    "fetch:wellington-feb13": "tsx scripts/fetch-wellington-feb13.ts",
     "redis:start": "docker-compose up -d redis",
     "redis:stop": "docker-compose stop redis",
     "redis:down": "docker-compose down redis",
