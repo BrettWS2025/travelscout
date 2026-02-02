@@ -223,7 +223,7 @@ export function useTripPlanner() {
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
-      setCalendarMonth(range.from);
+      // Don't update calendarMonth - let it stay in place
       return;
     }
 
@@ -233,7 +233,7 @@ export function useTripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    setCalendarMonth(from);
+    // Don't update calendarMonth - let it stay in place
   }
 
   function pushRecent(city: CityLite) {
