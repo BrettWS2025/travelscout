@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
@@ -26,7 +26,7 @@ type TripPlannerProps = {
   initialItinerary?: ItineraryData | null;
 };
 
-export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
+function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();
   const { user } = useAuth();
   const router = useRouter();
@@ -415,5 +415,13 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
         suggested={tp.suggested}
       />
     </div>
+  );
+}
+
+export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
+  return (
+    <Suspense fallback={<div className="text-white/70">Loading...</div>}>
+      <TripPlannerContent initialItinerary={initialItinerary} />
+    </Suspense>
   );
 }
