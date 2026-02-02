@@ -420,7 +420,7 @@ export default function CitySelectionModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div className="flex-1 overflow-hidden pr-2">
           {step === "dates" ? (
             <div className="space-y-3 flex flex-col items-center">
               <div className={isMobile ? "p-2 w-full" : "p-4 w-fit"}>
@@ -442,15 +442,6 @@ export default function CitySelectionModal({
                     month: { width: isMobile ? "100%" : "320px" },
                   }}
                 />
-              </div>
-              <div className="flex justify-start w-full">
-                <button
-                  type="button"
-                  className="text-[11px] text-slate-600 hover:text-indigo-600 underline underline-offset-2"
-                  onClick={onClearDates}
-                >
-                  Clear dates
-                </button>
               </div>
             </div>
           ) : (
