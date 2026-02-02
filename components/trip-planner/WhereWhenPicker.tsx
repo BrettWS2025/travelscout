@@ -102,6 +102,9 @@ export type WhereWhenPickerProps = {
   setDateRange: (range: DateRange | undefined) => void;
   setCalendarMonth: (d: Date) => void;
   clearDates: () => void;
+
+  // Modal trigger
+  onOpenCityModal?: (step: "start" | "end" | "dates") => void;
 };
 
 function WhereListItem({
@@ -347,26 +350,78 @@ function WherePickerPanel({
 export default function WhereWhenPicker(props: WhereWhenPickerProps) {
   return (
     <>
-      {/* MOBILE: single pill */}
-      <div className="md:hidden">
-        <button
-          type="button"
-          onClick={props.openMobileSheet}
-          className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Search className="w-4 h-4 opacity-80" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium truncate">
-                Start your Journey
-              </div>
-              <div className="text-[11px] text-gray-400 truncate">
-                {props.whereSummary} · {props.whenLabel}
+      {/* MOBILE: two separate pills stacked */}
+      <div className="md:hidden space-y-3">
+        {/* WHERE pill */}
+        <div ref={props.whereRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              // Always open modal if onOpenCityModal is provided
+              if (props.onOpenCityModal) {
+                // Determine which step to open based on current state
+                if (props.whereSummary === "Select Start City") {
+                  props.onOpenCityModal("start");
+                } else if (props.whereSummary === "Select End City") {
+                  props.onOpenCityModal("end");
+                } else {
+                  // Both cities selected, open to start city step
+                  props.onOpenCityModal("start");
+                }
+              } else {
+                props.openMobileSheet();
+                props.setMobileActive("where");
+              }
+            }}
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <MapPin className="w-4 h-4 opacity-80" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                  Where
+                </div>
+                <div className="text-sm font-medium truncate">
+                  {props.whereSummary}
+                </div>
               </div>
             </div>
-          </div>
-          <ChevronDown className="w-4 h-4 opacity-70" />
-        </button>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+        </div>
+
+        {/* WHEN pill */}
+        <div ref={props.whenRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              // If modal is available and dates are already selected, open modal to dates step
+              if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                props.onOpenCityModal("dates");
+              } else if (props.onOpenCityModal) {
+                // Open modal to dates step
+                props.onOpenCityModal("dates");
+              } else {
+                props.openMobileSheet();
+                props.setMobileActive("when");
+              }
+            }}
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Calendar className="w-4 h-4 opacity-80" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                  When
+                </div>
+                <div className="text-sm font-medium truncate">
+                  {props.whenLabel}
+                </div>
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+        </div>
       </div>
 
       {/* DESKTOP: pills row */}
@@ -377,7 +432,22 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             <div ref={props.whereRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openWhereDesktop}
+                onClick={() => {
+                  // Always open modal if onOpenCityModal is provided
+                  if (props.onOpenCityModal) {
+                    // Determine which step to open based on current state
+                    if (props.whereSummary === "Select Start City") {
+                      props.onOpenCityModal("start");
+                    } else if (props.whereSummary === "Select End City") {
+                      props.onOpenCityModal("end");
+                    } else {
+                      // Both cities selected, open to start city step
+                      props.onOpenCityModal("start");
+                    }
+                  } else {
+                    props.openWhereDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
                   "hover:bg-slate-50 transition flex items-center justify-between gap-3",
@@ -448,7 +518,14 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             <div ref={props.whenRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openWhenDesktop}
+                onClick={() => {
+                  // If modal is available and dates are already selected, open modal to dates step
+                  if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                    props.onOpenCityModal("dates");
+                  } else {
+                    props.openWhenDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
                   "hover:bg-slate-50 transition flex items-center justify-between gap-3",
@@ -574,7 +651,15 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
 
                 <button
                   type="button"
-                  onClick={() => props.setMobileActive("when")}
+                  onClick={() => {
+                    // If modal is available and dates are already selected, open modal to dates step
+                    if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                      props.onOpenCityModal("dates");
+                      props.closeMobileSheet();
+                    } else {
+                      props.setMobileActive("when");
+                    }
+                  }}
                   className={[
                     "w-full px-4 py-3 flex items-center justify-between",
                     props.mobileActive === "when" ? "bg-slate-50" : "",

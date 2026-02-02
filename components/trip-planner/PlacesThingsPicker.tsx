@@ -534,7 +534,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openPlacesDesktop}
-            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <MapPin className="w-4 h-4 opacity-80" />
@@ -554,7 +554,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openThingsDesktop}
-            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Navigation className="w-4 h-4 opacity-80" />

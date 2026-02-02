@@ -488,17 +488,8 @@ export function useTripPlanner() {
     setEndQuery(c.name);
     pushRecent({ id: c.id, name: c.name });
 
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
-      }
-    }, 0);
+    // Don't automatically open calendar - let the modal handle the flow
+    // The user will click "Select dates" button in the modal to proceed
   }
 
   function selectReturnToStart() {

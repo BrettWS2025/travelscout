@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
@@ -9,6 +9,7 @@ import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
 import LoadingScreen from "@/components/trip-planner/LoadingScreen";
+import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
@@ -29,11 +30,16 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
   const tp = useTripPlanner();
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
+  
+  // City selection modal state
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates">("start");
 
   // Restore state from localStorage on mount (if not loading initialItinerary)
   useEffect(() => {
@@ -56,6 +62,52 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
       }
     }
   }, [initialItinerary, itineraryLoaded, tp]);
+
+  // Handle URL search params for deep linking (only sync URL -> state, not state -> URL)
+  useEffect(() => {
+    const setupParam = searchParams.get("setup");
+    if (setupParam === "start" || setupParam === "end" || setupParam === "dates") {
+      // Only open if not already open with the same step
+      if (!showCityModal || cityModalStep !== setupParam) {
+        setCityModalStep(setupParam as "start" | "end" | "dates");
+        setShowCityModal(true);
+      }
+    } else if (setupParam === null && showCityModal) {
+      // URL param was removed, close the modal
+      setShowCityModal(false);
+    }
+  }, [searchParams]);
+
+  // Update URL when modal state changes
+  const handleOpenCityModal = (step: "start" | "end" | "dates") => {
+    setCityModalStep(step);
+    setShowCityModal(true);
+    router.push(`/trip-planner?setup=${step}`, { scroll: false });
+  };
+
+  const handleCloseCityModal = () => {
+    // Close modal immediately
+    setShowCityModal(false);
+    // Remove setup param from URL (use replace to avoid adding to history)
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("setup");
+    const newUrl = params.toString() 
+      ? `/trip-planner?${params.toString()}` 
+      : "/trip-planner";
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const handleCityModalStepChange = (step: "start" | "end" | "dates") => {
+    setCityModalStep(step);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("setup", step);
+    router.push(`/trip-planner?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSelectDates = () => {
+    // This is called when "Select dates" button is clicked in the modal
+    // The modal will handle the step change internally
+  };
 
   const handleSaveClick = () => {
     if (!user) {
@@ -147,6 +199,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
             tp.setEndDate("");
             tp.setCalendarMonth(new Date());
           }}
+          onOpenCityModal={handleOpenCityModal}
         />
 
         <PlacesThingsPicker
@@ -335,6 +388,32 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
           </button>
         </div>
       )}
+
+      {/* City Selection Modal */}
+      <CitySelectionModal
+        isOpen={showCityModal}
+        onClose={handleCloseCityModal}
+        step={cityModalStep}
+        onStepChange={handleCityModalStepChange}
+        startCityId={tp.startCityId}
+        endCityId={tp.endCityId}
+        onSelectStartCity={tp.selectStartCity}
+        onSelectEndCity={tp.selectEndCity}
+        onSelectReturnToStart={tp.selectReturnToStart}
+        onSelectDates={handleSelectDates}
+        dateRange={tp.dateRange}
+        calendarMonth={tp.calendarMonth}
+        onDateRangeChange={tp.handleDateRangeChange}
+        onCalendarMonthChange={tp.setCalendarMonth}
+        onClearDates={() => {
+          tp.setDateRange(undefined);
+          tp.setStartDate("");
+          tp.setEndDate("");
+          tp.setCalendarMonth(new Date());
+        }}
+        recent={tp.recent}
+        suggested={tp.suggested}
+      />
     </div>
   );
 }
