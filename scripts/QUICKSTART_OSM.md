@@ -1,5 +1,7 @@
 # Quick Start: OSM Data Import
 
+> **For Production Import:** See [PRODUCTION_OSM_IMPORT.md](./PRODUCTION_OSM_IMPORT.md) for detailed instructions on importing to production, including required environment variables and safety checklist.
+
 ## Prerequisites
 
 ```bash
