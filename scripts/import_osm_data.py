@@ -121,7 +121,7 @@ def _insert_admin_areas_sql(supabase: Client, admin_areas: list):
     """Insert admin areas using raw SQL to handle PostGIS geometry"""
     # Build SQL statement for batch insert
     sql_parts = []
-        for area in admin_areas:
+    for area in admin_areas:
             geom_json_str = area['geometry']
             geom_json = json.loads(geom_json_str)
             geom_json_escaped = json.dumps(geom_json).replace("'", "''")
@@ -217,6 +217,15 @@ def _generate_sql_file(admin_areas: list):
             geom_json_escaped = json.dumps(geom_json).replace("'", "''")
             name_escaped = area['name'].replace("'", "''")
             
+            # Handle geometry type - convert Polygon to MultiPolygon if needed
+            geom_type = geom_json.get('type', '')
+            if geom_type == 'Polygon':
+                # Convert Polygon to MultiPolygon
+                geom_sql = f"ST_Multi(ST_GeomFromGeoJSON('{geom_json_escaped}'))"
+            else:
+                # MultiPolygon or other types - use as-is
+                geom_sql = f"ST_GeomFromGeoJSON('{geom_json_escaped}')"
+            
             f.write(f"""
 INSERT INTO nz_admin_areas (country_code, osm_type, osm_id, admin_level, name, geometry)
 VALUES (
@@ -225,7 +234,7 @@ VALUES (
   '{area['osm_id']}',
   '{area['admin_level']}',
   '{name_escaped}',
-  ST_GeomFromGeoJSON('{geom_json_escaped}')
+  {geom_sql}
 )
 ON CONFLICT (country_code, osm_type, osm_id) DO UPDATE SET
   admin_level = EXCLUDED.admin_level,
