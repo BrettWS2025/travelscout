@@ -26,10 +26,10 @@
 --   name = EXCLUDED.name,
 --   geometry = EXCLUDED.geometry,
 --   updated_at = NOW();
-
 -- For bulk import, use a script or tool that can:
 -- 1. Read the GeoJSON file
 -- 2. Convert each feature to an INSERT statement with ST_GeomFromGeoJSON
 -- 3. Execute the SQL
 
 -- Alternatively, use the Python import script: python scripts/import_osm_data.py
+
