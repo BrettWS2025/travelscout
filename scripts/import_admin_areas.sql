@@ -1,0 +1,35 @@
+-- ============================================================================
+-- Import Admin Areas from GeoJSON
+-- ============================================================================
+-- This script imports admin areas from the GeoJSON file.
+-- Run this after extract_admin_areas.py has generated nz_admin_areas.geojson
+--
+-- Usage:
+--   1. Use psql or Supabase SQL editor
+--   2. Or use: psql $DATABASE_URL -f scripts/import_admin_areas.sql
+--
+-- Note: You'll need to load the GeoJSON file and convert it to SQL INSERT statements
+-- For large files, consider using ogr2ogr or a Python script
+
+-- Example: Import a single admin area (replace with actual data from GeoJSON)
+-- INSERT INTO nz_admin_areas (country_code, osm_type, osm_id, admin_level, name, geometry)
+-- VALUES (
+--   'NZ',
+--   'relation',
+--   '12345',
+--   '4',
+--   'Auckland Region',
+--   ST_GeomFromGeoJSON('{"type":"Polygon","coordinates":[[[...]]]}')
+-- )
+-- ON CONFLICT (country_code, osm_type, osm_id) DO UPDATE SET
+--   admin_level = EXCLUDED.admin_level,
+--   name = EXCLUDED.name,
+--   geometry = EXCLUDED.geometry,
+--   updated_at = NOW();
+
+-- For bulk import, use a script or tool that can:
+-- 1. Read the GeoJSON file
+-- 2. Convert each feature to an INSERT statement with ST_GeomFromGeoJSON
+-- 3. Execute the SQL
+
+-- Alternatively, use the Python import script: python scripts/import_osm_data.py
