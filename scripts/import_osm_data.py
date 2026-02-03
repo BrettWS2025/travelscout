@@ -178,6 +178,16 @@ def rebuild_final_table(supabase: Client, country_code: str = 'NZ'):
 def main():
     import os
     
+    # Try to load from .env.local if python-dotenv is available
+    try:
+        from dotenv import load_dotenv
+        env_path = Path(__file__).parent.parent / '.env.local'
+        if env_path.exists():
+            load_dotenv(env_path)
+            print(f"Loaded environment variables from {env_path}")
+    except ImportError:
+        pass  # python-dotenv not installed, continue with system env vars
+    
     # Get Supabase credentials from environment
     # Check both NEXT_PUBLIC_ prefixed (for Next.js compatibility) and non-prefixed versions
     supabase_url = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
