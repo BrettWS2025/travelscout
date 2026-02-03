@@ -119,7 +119,90 @@ def import_admin_areas_geojson(supabase: Client, geojson_path: Path):
 
 def _insert_admin_areas_sql(supabase: Client, admin_areas: list):
     """Insert admin areas using raw SQL to handle PostGIS geometry"""
-    # Generate SQL file for manual execution or use psql
+    # Build SQL statement for batch insert
+    sql_parts = []
+        for area in admin_areas:
+            geom_json_str = area['geometry']
+            geom_json = json.loads(geom_json_str)
+            geom_json_escaped = json.dumps(geom_json).replace("'", "''")
+            name_escaped = area['name'].replace("'", "''")
+            
+            # Handle geometry type - convert Polygon to MultiPolygon if needed
+            geom_type = geom_json.get('type', '')
+            if geom_type == 'Polygon':
+                # Convert Polygon to MultiPolygon
+                geom_sql = f"ST_Multi(ST_GeomFromGeoJSON('{geom_json_escaped}'))"
+            else:
+                # MultiPolygon or other types - use as-is
+                geom_sql = f"ST_GeomFromGeoJSON('{geom_json_escaped}')"
+            
+            sql_parts.append(f"""(
+  '{area['country_code']}',
+  '{area['osm_type']}',
+  '{area['osm_id']}',
+  '{area['admin_level']}',
+  '{name_escaped}',
+  {geom_sql}
+)""")
+    
+    # Build single INSERT statement with multiple VALUES
+    sql = f"""
+INSERT INTO nz_admin_areas (country_code, osm_type, osm_id, admin_level, name, geometry)
+VALUES {','.join(sql_parts)}
+ON CONFLICT (country_code, osm_type, osm_id) DO UPDATE SET
+  admin_level = EXCLUDED.admin_level,
+  name = EXCLUDED.name,
+  geometry = EXCLUDED.geometry,
+  updated_at = NOW();
+"""
+    
+    # Execute SQL using postgrest client
+    try:
+        # Use the underlying postgrest client to execute raw SQL
+        # Note: This requires the service role key to bypass RLS
+        response = supabase.postgrest.session.post(
+            f"{supabase.table('nz_admin_areas').url}/rpc/exec_sql",
+            json={"query": sql},
+            headers=supabase.table('nz_admin_areas').headers
+        )
+        if response.status_code >= 400:
+            raise Exception(f"SQL execution failed: {response.text}")
+    except AttributeError:
+        # Fallback: Try using the REST API directly
+        try:
+            import requests
+            import os
+            supabase_url = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+            supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_ANON_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+            
+            # Use Supabase's REST API to execute SQL via a function
+            # Since direct SQL execution isn't available, we'll insert via the table API with geometry as text
+            # Actually, let's use a different approach - insert via upsert with geometry conversion
+            for area in admin_areas:
+                geom_json = json.loads(area['geometry'])
+                # Try to insert using the table API with geometry as GeoJSON
+                try:
+                    supabase.table('nz_admin_areas').upsert({
+                        'country_code': area['country_code'],
+                        'osm_type': area['osm_type'],
+                        'osm_id': area['osm_id'],
+                        'admin_level': area['admin_level'],
+                        'name': area['name'],
+                        'geometry': geom_json  # Pass as GeoJSON, PostGIS should handle it
+                    }, on_conflict='country_code,osm_type,osm_id').execute()
+                except Exception as e:
+                    # If that fails, fall back to generating SQL file
+                    print(f"  Warning: Could not insert via API, falling back to SQL file generation")
+                    _generate_sql_file(admin_areas)
+                    return
+        except Exception as e:
+            # Final fallback: generate SQL file
+            print(f"  Warning: Could not execute SQL directly ({e}), generating SQL file instead")
+            _generate_sql_file(admin_areas)
+
+
+def _generate_sql_file(admin_areas: list):
+    """Fallback: Generate SQL file for manual execution"""
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
     sql_file = project_root / 'out' / 'import_admin_areas_generated.sql'
@@ -153,7 +236,7 @@ ON CONFLICT (country_code, osm_type, osm_id) DO UPDATE SET
     
     print(f"  Generated SQL file: {sql_file}")
     print(f"  Run with: psql $DATABASE_URL -f {sql_file}")
-    print(f"  Or execute the SQL in your Supabase SQL editor")
+    print(f"  Or use Supabase CLI: supabase db execute -f {sql_file}")
 
 
 def rebuild_final_table(supabase: Client, country_code: str = 'NZ'):
