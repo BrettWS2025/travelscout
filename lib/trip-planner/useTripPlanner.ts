@@ -27,6 +27,7 @@ import {
   fromIsoDate,
   makeDayKey,
   normalize,
+  parseDisplayName,
   pickSuggestedCities,
   safeReadRecent,
   safeWriteRecent,
@@ -432,8 +433,9 @@ export function useTripPlanner() {
     // Store the city data in state so it's immediately available
     setStartCityData(c);
     setStartCityId(cityId);
-    setStartQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
+    // Use display_name for the query/search UI, but store name (without region) for itinerary
+    setStartQuery(c.display_name || c.name);
+    pushRecent({ id: c.id, name: c.display_name || c.name });
 
     setWhereStep("end");
   }
@@ -485,8 +487,9 @@ export function useTripPlanner() {
     // Store the city data in state so it's immediately available
     setEndCityData(c);
     setEndCityId(cityId);
-    setEndQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
+    // Use display_name for the query/search UI, but store name (without region) for itinerary
+    setEndQuery(c.display_name || c.name);
+    pushRecent({ id: c.id, name: c.display_name || c.name });
 
     // Don't automatically open calendar - let the modal handle the flow
     // The user will click "Select dates" button in the modal to proceed
@@ -525,7 +528,16 @@ export function useTripPlanner() {
       try {
         const results = await searchPlacesByName(startQuery, 20);
         setStartSearchResults(
-          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
         );
       } catch (error) {
         console.error("Error searching places for start city:", error);
@@ -549,7 +561,16 @@ export function useTripPlanner() {
       try {
         const results = await searchPlacesByName(endQuery, 20);
         setEndSearchResults(
-          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
         );
       } catch (error) {
         console.error("Error searching places for end city:", error);
@@ -573,7 +594,16 @@ export function useTripPlanner() {
       try {
         const results = await searchPlacesByName(placesQuery, 20);
         setPlacesSearchResults(
-          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
         );
       } catch (error) {
         console.error("Error searching places:", error);

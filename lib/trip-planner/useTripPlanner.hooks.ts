@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchPlacesByName } from "@/lib/nzCities";
 import type { CityLite } from "@/lib/trip-planner/utils";
+import { parseDisplayName } from "@/lib/trip-planner/utils";
 
 export function usePlaceSearch(query: string): CityLite[] {
   const [searchResults, setSearchResults] = useState<CityLite[]>([]);
@@ -14,11 +15,33 @@ export function usePlaceSearch(query: string): CityLite[] {
     const searchPlaces = async () => {
       try {
         const results = await searchPlacesByName(query, 20);
+        
+        // Debug logging for Wellington searches
+        if (query.toLowerCase().trim() === "wellington") {
+          console.log("[usePlaceSearch] Wellington search results:", {
+            totalResults: results.length,
+            firstFew: results.slice(0, 5).map(p => ({
+              id: p.id,
+              name: p.name,
+              display_name: p.display_name
+            }))
+          });
+        }
+        
         setSearchResults(
-          results.slice(0, 8).map((p) => ({ id: p.id, name: p.name }))
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName, // Keep full display_name for backward compatibility
+              cityName, // Parsed city name
+              district, // District name
+            };
+          })
         );
       } catch (error) {
-        console.error("Error searching places:", error);
+        console.error("[usePlaceSearch] Error searching places:", error);
         setSearchResults([]);
       }
     };

@@ -28,8 +28,27 @@ export type DayStopMeta = {
 
 export type CityLite = {
   id: string;
-  name: string;
+  name: string; // Full display name (e.g., "Lower Hutt, Lower Hutt City, Wellington")
+  cityName?: string; // Just the city name (e.g., "Lower Hutt")
+  district?: string; // District name (e.g., "Lower Hutt City")
 };
+
+/**
+ * Parse display_name into city name and district
+ * Format: "CityName, District, Region" -> { cityName: "CityName", district: "District" }
+ * If there's no comma, returns the full string as cityName
+ */
+export function parseDisplayName(displayName: string): { cityName: string; district?: string } {
+  if (!displayName) return { cityName: displayName };
+  
+  const parts = displayName.split(',').map(p => p.trim());
+  if (parts.length === 0) return { cityName: displayName };
+  
+  const cityName = parts[0];
+  const district = parts.length > 1 ? parts[1] : undefined;
+  
+  return { cityName, district };
+}
 
 export const RECENT_KEY = "travelscout_recent_city_searches_v1";
 

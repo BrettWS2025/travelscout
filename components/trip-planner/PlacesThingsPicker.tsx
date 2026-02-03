@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { NZ_CITIES, getCityById } from "@/lib/nzCities";
 import { NZ_STOPS, type NzStop } from "@/lib/nzStops";
-import { normalize, type CityLite } from "@/lib/trip-planner/utils";
+import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
 
 type ActivePlacesThingsPill = "places" | "things" | null;
 
@@ -224,21 +224,24 @@ function PlacesPickerPanel({
                   Recent searches
                 </div>
                 <div className="space-y-1">
-                  {filteredRecent.map((c) => (
-                    <PlacesThingsListItem
-                      key={`places-recent-${c.id}`}
-                      title={c.name}
-                      subtitle="Recently used place"
-                      iconVariant="recent"
-                      onClick={async () => {
-                        try {
-                          await onSelectCity(c.id);
-                        } catch (error) {
-                          console.error("Error selecting city:", error);
-                        }
-                      }}
-                    />
-                  ))}
+                  {filteredRecent.map((c) => {
+                    const { cityName, district } = parseDisplayName(c.name);
+                    return (
+                      <PlacesThingsListItem
+                        key={`places-recent-${c.id}`}
+                        title={cityName || c.name.split(',')[0].trim()}
+                        subtitle={district || undefined}
+                        iconVariant="recent"
+                        onClick={async () => {
+                          try {
+                            await onSelectCity(c.id);
+                          } catch (error) {
+                            console.error("Error selecting city:", error);
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -280,8 +283,8 @@ function PlacesPickerPanel({
                 {filteredResults.map((c) => (
                   <PlacesThingsListItem
                     key={`places-match-${c.id}`}
-                    title={c.name}
-                    subtitle="New Zealand"
+                    title={c.cityName || c.name.split(',')[0].trim()}
+                    subtitle={c.district || undefined}
                     iconVariant="suggested"
                     onClick={async () => {
                       try {

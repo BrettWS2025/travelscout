@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { NZ_CITIES, getCityById } from "@/lib/nzCities";
-import { normalize, type CityLite } from "@/lib/trip-planner/utils";
+import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
 
 type ActivePill = "where" | "when" | null;
 
@@ -278,21 +278,20 @@ function WherePickerPanel({
                   Recent searches
                 </div>
                 <div className="space-y-1">
-                  {recent.map((c) => (
-                    <WhereListItem
-                      key={`${step}-recent-${c.id}`}
-                      title={c.name}
-                      subtitle={
-                        isStart
-                          ? "Recently used start city"
-                          : "Recently used destination"
-                      }
-                      iconVariant="recent"
-                      onClick={() =>
-                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
-                      }
-                    />
-                  ))}
+                  {recent.map((c) => {
+                    const { cityName, district } = parseDisplayName(c.name);
+                    return (
+                      <WhereListItem
+                        key={`${step}-recent-${c.id}`}
+                        title={cityName || c.name.split(',')[0].trim()}
+                        subtitle={district || undefined}
+                        iconVariant="recent"
+                        onClick={() =>
+                          isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -330,8 +329,8 @@ function WherePickerPanel({
                 {results.map((c) => (
                   <WhereListItem
                     key={`${step}-match-${c.id}`}
-                    title={c.name}
-                    subtitle="New Zealand"
+                    title={c.cityName || c.name.split(',')[0].trim()}
+                    subtitle={c.district || undefined}
                     iconVariant="suggested"
                     onClick={() =>
                       isStart ? selectStartCity(c.id) : selectEndCity(c.id)

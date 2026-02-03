@@ -6,7 +6,7 @@ import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { X, Search, ArrowLeft, ArrowLeftRight, Clock, Navigation, MapPin, Calendar } from "lucide-react";
 import { getCityById } from "@/lib/nzCities";
-import { normalize, type CityLite } from "@/lib/trip-planner/utils";
+import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
 import { usePlaceSearch } from "@/lib/trip-planner/useTripPlanner.hooks";
 
 type CitySelectionModalProps = {
@@ -202,21 +202,20 @@ function CityPickerPanel({
                   Recent searches
                 </div>
                 <div className="space-y-1">
-                  {recent.map((c) => (
-                    <CityListItem
-                      key={`${step}-recent-${c.id}`}
-                      title={c.name}
-                      subtitle={
-                        isStart
-                          ? "Recently used start city"
-                          : "Recently used destination"
-                      }
-                      iconVariant="recent"
-                      onClick={() =>
-                        isStart ? onSelectStartCity(c.id) : onSelectEndCity(c.id)
-                      }
-                    />
-                  ))}
+                  {recent.map((c) => {
+                    const { cityName, district } = parseDisplayName(c.name);
+                    return (
+                      <CityListItem
+                        key={`${step}-recent-${c.id}`}
+                        title={cityName || c.name.split(',')[0].trim()}
+                        subtitle={district || undefined}
+                        iconVariant="recent"
+                        onClick={() =>
+                          isStart ? onSelectStartCity(c.id) : onSelectEndCity(c.id)
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -254,8 +253,8 @@ function CityPickerPanel({
                 {results.map((c) => (
                   <CityListItem
                     key={`${step}-match-${c.id}`}
-                    title={c.name}
-                    subtitle="New Zealand"
+                    title={c.cityName || c.name.split(',')[0].trim()}
+                    subtitle={c.district || undefined}
                     iconVariant="suggested"
                     onClick={() =>
                       isStart ? onSelectStartCity(c.id) : onSelectEndCity(c.id)

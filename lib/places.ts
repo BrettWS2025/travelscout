@@ -5,8 +5,9 @@
 import { supabase } from "@/lib/supabase/client";
 
 export type Place = {
-  id: string; // short code, typically IATA in lowercase (e.g. "akl")
-  name: string; // display name
+  id: string; // UUID from nz_places_final or short code from places table
+  name: string; // city name (without region info) - used in itinerary
+  display_name?: string; // full display name with region (e.g., "Auckland, Auckland, Auckland") - used in selection UI
   lat: number;
   lng: number;
   /**
@@ -62,7 +63,7 @@ export async function getAllPlaces(): Promise<Place[]> {
 
 /**
  * Get a place by its ID
- * First tries the cache, then queries the database directly if not found
+ * First tries the cache, then queries nz_places_final, then falls back to places table
  */
 export async function getPlaceById(id: string): Promise<Place | undefined> {
   // First try cache
@@ -70,7 +71,25 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
   const cached = places.find((p) => p.id === id);
   if (cached) return cached;
   
-  // If not in cache, query database directly (bypasses is_active filter)
+  // Try nz_places_final first (by UUID)
+  const { data: nzPlaceData, error: nzPlaceError } = await supabase
+    .from("nz_places_final")
+    .select("id, name, display_name, lat, lon, tags")
+    .eq("id", id)
+    .single();
+  
+  if (!nzPlaceError && nzPlaceData) {
+    return {
+      id: nzPlaceData.id.toString(),
+      name: nzPlaceData.name,
+      display_name: nzPlaceData.display_name,
+      lat: nzPlaceData.lat,
+      lng: nzPlaceData.lon,
+      rank: nzPlaceData.tags?.population ? parseInt(nzPlaceData.tags.population) : undefined,
+    };
+  }
+  
+  // Fallback to places table (by text ID)
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
@@ -132,12 +151,155 @@ export async function getSuggestedPlaces(count: number = 6): Promise<Place[]> {
 
 /**
  * Search places by name (case-insensitive partial match)
- * First tries active places, then searches all places if no results
+ * Uses nz_places_final table and orders by population to ensure larger cities appear first
  */
 export async function searchPlacesByName(query: string, limit: number = 20): Promise<Place[]> {
   if (!query.trim()) return [];
 
-  // Try using the database search function first (searches across all name variants)
+  // First, try searching nz_places_final (ordered by population)
+  // Note: We'll sort by population in JavaScript since Supabase doesn't support nullsLast in order()
+  const trimmedQuery = query.trim();
+  const queryPattern = `%${trimmedQuery}%`;
+  
+  // Strategy: Search name field first (most important), then expand if needed
+  // This ensures exact matches like "Wellington" are found
+  let { data: nzPlacesData, error: nzPlacesError } = await supabase
+    .from("nz_places_final")
+    .select("id, name, display_name, lat, lon, tags, name_norm")
+    .ilike("name", queryPattern)
+    .in("place_type", ["city", "town", "village", "hamlet"])
+    .limit(limit * 2);
+  
+  // If name search doesn't return enough results, also search display_name and name_norm
+  // But prioritize name matches
+  if (!nzPlacesError && nzPlacesData && nzPlacesData.length < limit) {
+    const { data: additionalData, error: additionalError } = await supabase
+      .from("nz_places_final")
+      .select("id, name, display_name, lat, lon, tags, name_norm")
+      .or(`display_name.ilike.${queryPattern},name_norm.ilike.${queryPattern}`)
+      .in("place_type", ["city", "town", "village", "hamlet"])
+      .limit(limit * 2);
+    
+    if (!additionalError && additionalData) {
+      // Merge results, avoiding duplicates
+      const existingIds = new Set(nzPlacesData.map(p => p.id));
+      const newResults = additionalData.filter(p => !existingIds.has(p.id));
+      nzPlacesData = [...nzPlacesData, ...newResults];
+    }
+  }
+  
+  // Enhanced logging for debugging
+  if (nzPlacesError) {
+    console.error("[searchPlacesByName] Error searching nz_places_final:", {
+      error: nzPlacesError,
+      query: trimmedQuery,
+      queryPattern
+    });
+  }
+  
+  // Debug logging for Wellington specifically
+  if (trimmedQuery.toLowerCase() === "wellington") {
+    const wellingtonFound = nzPlacesData?.find(p => p.name.toLowerCase() === "wellington");
+    console.log("[searchPlacesByName] Wellington search - RAW RESULTS:", {
+      hasError: !!nzPlacesError,
+      resultCount: nzPlacesData?.length || 0,
+      wellingtonFound: !!wellingtonFound,
+      wellingtonData: wellingtonFound ? {
+        id: wellingtonFound.id,
+        name: wellingtonFound.name,
+        display_name: wellingtonFound.display_name,
+        name_norm: wellingtonFound.name_norm,
+        population: wellingtonFound.tags?.population
+      } : null,
+      first10Results: nzPlacesData?.slice(0, 10).map(p => ({ 
+        name: p.name, 
+        display_name: p.display_name,
+        name_norm: p.name_norm
+      })) || []
+    });
+  }
+  
+  // Debug: log if no results found for common queries
+  if (!nzPlacesError && (!nzPlacesData || nzPlacesData.length === 0) && trimmedQuery.toLowerCase() === "wellington") {
+    console.warn("[searchPlacesByName] No results found for 'wellington' - this may indicate a query issue");
+  }
+
+  // If or() query failed, try a simpler name-only search as fallback
+  if (nzPlacesError) {
+    console.warn("[searchPlacesByName] or() query failed, trying name-only search", {
+      error: nzPlacesError,
+      query: trimmedQuery
+    });
+    
+    // Fallback: search just the name field
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("nz_places_final")
+      .select("id, name, display_name, lat, lon, tags, name_norm")
+      .ilike("name", queryPattern)
+      .in("place_type", ["city", "town", "village", "hamlet"])
+      .limit(limit * 2);
+    
+    if (!fallbackError && fallbackData) {
+      nzPlacesData = fallbackData;
+      nzPlacesError = null;
+      console.log("[searchPlacesByName] Fallback name-only search succeeded", {
+        resultCount: fallbackData.length
+      });
+    }
+  }
+
+  if (!nzPlacesError && nzPlacesData && nzPlacesData.length > 0) {
+    const queryLower = query.toLowerCase().trim();
+    
+    // Sort with priority: exact match > prefix match > contains match, then by population
+    const sorted = [...nzPlacesData].sort((a: any, b: any) => {
+      const nameALower = a.name.toLowerCase();
+      const nameBLower = b.name.toLowerCase();
+      const displayALower = a.display_name?.toLowerCase() || "";
+      
+      // Priority 1: Exact name match
+      const aExact = nameALower === queryLower;
+      const bExact = nameBLower === queryLower;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      
+      // Priority 2: Name starts with query
+      const aPrefix = nameALower.startsWith(queryLower);
+      const bPrefix = nameBLower.startsWith(queryLower);
+      if (aPrefix && !bPrefix) return -1;
+      if (!aPrefix && bPrefix) return 1;
+      
+      // Priority 3: Display name starts with query (but name doesn't)
+      const aDisplayPrefix = !aPrefix && displayALower.startsWith(queryLower);
+      const bDisplayPrefix = !bPrefix && (b.display_name?.toLowerCase() || "").startsWith(queryLower);
+      if (aDisplayPrefix && !bDisplayPrefix) return -1;
+      if (!aDisplayPrefix && bDisplayPrefix) return 1;
+      
+      // Priority 4: Population (largest first)
+      const popA = a.tags?.population ? parseInt(a.tags.population) : 0;
+      const popB = b.tags?.population ? parseInt(b.tags.population) : 0;
+      if (popA > 0 && popB > 0) {
+        return popB - popA;
+      }
+      if (popA > 0 && popB === 0) return -1;
+      if (popB > 0 && popA === 0) return 1;
+      
+      // Priority 5: Alphabetical by name
+      return a.name.localeCompare(b.name);
+    });
+    
+    // Map the search results to Place format and limit
+    return sorted.slice(0, limit).map((p: any) => ({
+      id: p.id.toString(), // Convert UUID to string
+      name: p.name, // Just the name (without region) - for itinerary display
+      display_name: p.display_name, // Full display name with region - for selection UI
+      lat: p.lat,
+      lng: p.lon, // Note: nz_places_final uses 'lon' not 'lng'
+      rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
+    }));
+  }
+
+  // Fallback to old places table search if nz_places_final doesn't have results
   const { data: searchData, error: searchError } = await supabase.rpc("search_places_by_name", {
     search_query: query,
     result_limit: limit,
@@ -154,7 +316,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     }));
   }
 
-  // Fallback to direct places table search - first try active places
+  // Final fallback to direct places table search
   const { data, error } = await supabase
     .from("places")
     .select("id, name, lat, lng, rank")
@@ -167,24 +329,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     return [];
   }
 
-  // If we found results, return them
-  if (data && data.length > 0) {
-    return (data || []) as Place[];
-  }
-
-  // If no active places found, search all places (including inactive) as fallback
-  const { data: allData, error: allError } = await supabase
-    .from("places")
-    .select("id, name, lat, lng, rank")
-    .ilike("name", `%${query}%`)
-    .limit(limit);
-
-  if (allError) {
-    console.error("Error searching all places:", allError);
-    return [];
-  }
-
-  return (allData || []) as Place[];
+  return (data || []) as Place[];
 }
 
 /**
