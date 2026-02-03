@@ -179,11 +179,19 @@ def main():
     import os
     
     # Get Supabase credentials from environment
-    supabase_url = os.getenv('SUPABASE_URL')
-    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_ANON_KEY')
+    # Check both NEXT_PUBLIC_ prefixed (for Next.js compatibility) and non-prefixed versions
+    supabase_url = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+    supabase_key = (
+        os.getenv('SUPABASE_SERVICE_ROLE_KEY') or 
+        os.getenv('SUPABASE_ANON_KEY') or 
+        os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    )
     
     if not supabase_url or not supabase_key:
-        print("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) must be set")
+        print("Error: Supabase credentials must be set")
+        print("Set one of the following:")
+        print("  - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY)")
+        print("  - NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY")
         print("Set them as environment variables or in a .env file")
         sys.exit(1)
     
