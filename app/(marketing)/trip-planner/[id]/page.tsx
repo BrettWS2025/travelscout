@@ -76,7 +76,10 @@ export default function EditItineraryPage() {
           <p className="text-red-400 mb-4">{error || "Itinerary not found"}</p>
           <button
             onClick={() => router.push("/account/itineraries")}
-            className="px-4 py-2 rounded bg-[var(--accent)] text-slate-900 font-medium"
+            className="px-4 py-2 rounded text-white font-medium transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+            style={{ 
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            }}
           >
             Back to Itineraries
           </button>

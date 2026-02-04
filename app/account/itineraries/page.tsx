@@ -155,7 +155,10 @@ export default function AccountItinerariesPage() {
                     onClick={() => {
                       router.push(`/trip-planner/${r.id}`);
                     }}
-                    className="px-3 py-1.5 rounded bg-[var(--accent)] text-slate-900 hover:brightness-110 text-sm font-medium transition"
+                    className="px-3 py-1.5 rounded text-white hover:brightness-110 text-sm font-medium transition shadow-lg hover:shadow-xl"
+                    style={{ 
+                      background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    }}
                   >
                     View & Edit
                   </button>

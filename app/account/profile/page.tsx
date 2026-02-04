@@ -133,14 +133,14 @@ export default function ProfilePage() {
   return (
     <main className="container max-w-xl py-10">
       <h1 className="text-3xl font-semibold">Profile</h1>
-      <p className="mt-2 text-sm text-white/70">
+      <p className="mt-2 text-sm text-slate-600">
         Manage your account details.
       </p>
 
       <div className="mt-6 card p-6 space-y-5">
         {/* Full name FIRST */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="fullName">
+          <label className="block text-sm font-medium text-slate-900" htmlFor="fullName">
             Full name
           </label>
           <input
@@ -148,14 +148,14 @@ export default function ProfilePage() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder=""
-            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           />
         </div>
 
         {/* Email (unchangeable) */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium">Email</label>
-          <div className="rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+          <label className="block text-sm font-medium text-slate-900">Email</label>
+          <div className="rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
             {profile?.email ?? user?.email ?? "—"}
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => router.push("/account/itineraries")}
-            className="rounded px-4 py-2 text-sm hover:bg-white/10"
+            className="rounded px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
             disabled={loading}
           >
             Back
@@ -177,27 +177,23 @@ export default function ProfilePage() {
             type="button"
             onClick={handleSaveProfile}
             disabled={loading || isLoading}
-            className="rounded bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+            className="rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+            style={{ 
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            }}
           >
             {loading ? "Saving…" : "Save"}
           </button>
         </div>
 
         {/* Password reset section */}
-        <div className="border-t border-white/10 pt-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="font-semibold">Password</div>
-              <div className="text-sm text-white/70">
-                Reset your password via email.
-              </div>
-            </div>
-
+        <div className="pt-5">
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={handleSendPasswordReset}
               disabled={resetLoading}
-              className="rounded px-4 py-2 text-sm hover:bg-white/10 disabled:opacity-60"
+              className="rounded bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-700 disabled:opacity-60 transition-colors"
             >
               {resetLoading ? "Sending…" : "Reset password"}
             </button>
