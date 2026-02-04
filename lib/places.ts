@@ -150,8 +150,25 @@ export async function getSuggestedPlaces(count: number = 6): Promise<Place[]> {
 }
 
 /**
+ * Helper function to normalize search query (strip macrons, lowercase, trim)
+ * This matches the normalization used in the name_search column
+ */
+function normalizeSearchQuery(query: string): string {
+  return query
+    .toLowerCase()
+    .trim()
+    .replace(/ā/g, 'a')
+    .replace(/ē/g, 'e')
+    .replace(/ī/g, 'i')
+    .replace(/ō/g, 'o')
+    .replace(/ū/g, 'u')
+    .replace(/\s+/g, ' ');
+}
+
+/**
  * Search places by name (case-insensitive partial match)
  * Uses nz_places_final table and orders by population to ensure larger cities appear first
+ * Now supports searching with or without macrons (e.g., "Otorohanga" will find "Ōtorohanga")
  */
 export async function searchPlacesByName(query: string, limit: number = 20): Promise<Place[]> {
   if (!query.trim()) return [];
@@ -159,23 +176,24 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
   // First, try searching nz_places_final (ordered by population)
   // Note: We'll sort by population in JavaScript since Supabase doesn't support nullsLast in order()
   const trimmedQuery = query.trim();
-  const queryPattern = `%${trimmedQuery}%`;
+  const normalizedQuery = normalizeSearchQuery(trimmedQuery);
+  const queryPattern = `%${normalizedQuery}%`;
   
-  // Strategy: Search name field first (most important), then expand if needed
-  // This ensures exact matches like "Wellington" are found
+  // Strategy: Search name_search field first (macron-stripped, for matching "Otorohanga" with "Ōtorohanga")
+  // This ensures users can search without macrons and still find places with macrons
   let { data: nzPlacesData, error: nzPlacesError } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags, name_norm")
-    .ilike("name", queryPattern)
+    .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+    .ilike("name_search", queryPattern)
     .in("place_type", ["city", "town", "village", "hamlet"])
     .limit(limit * 2);
   
-  // If name search doesn't return enough results, also search display_name and name_norm
-  // But prioritize name matches
+  // If name_search doesn't return enough results, also search display_name and name_norm
+  // But prioritize name_search matches
   if (!nzPlacesError && nzPlacesData && nzPlacesData.length < limit) {
     const { data: additionalData, error: additionalError } = await supabase
       .from("nz_places_final")
-      .select("id, name, display_name, lat, lon, tags, name_norm")
+      .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
       .or(`display_name.ilike.${queryPattern},name_norm.ilike.${queryPattern}`)
       .in("place_type", ["city", "town", "village", "hamlet"])
       .limit(limit * 2);
@@ -224,25 +242,25 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     console.warn("[searchPlacesByName] No results found for 'wellington' - this may indicate a query issue");
   }
 
-  // If or() query failed, try a simpler name-only search as fallback
+  // If or() query failed, try a simpler name_search-only search as fallback
   if (nzPlacesError) {
-    console.warn("[searchPlacesByName] or() query failed, trying name-only search", {
+    console.warn("[searchPlacesByName] or() query failed, trying name_search-only search", {
       error: nzPlacesError,
       query: trimmedQuery
     });
     
-    // Fallback: search just the name field
+    // Fallback: search just the name_search field
     const { data: fallbackData, error: fallbackError } = await supabase
       .from("nz_places_final")
-      .select("id, name, display_name, lat, lon, tags, name_norm")
-      .ilike("name", queryPattern)
+      .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+      .ilike("name_search", queryPattern)
       .in("place_type", ["city", "town", "village", "hamlet"])
       .limit(limit * 2);
     
     if (!fallbackError && fallbackData) {
       nzPlacesData = fallbackData;
       nzPlacesError = null;
-      console.log("[searchPlacesByName] Fallback name-only search succeeded", {
+      console.log("[searchPlacesByName] Fallback name_search-only search succeeded", {
         resultCount: fallbackData.length
       });
     }
