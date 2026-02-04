@@ -410,12 +410,40 @@ export function matchStopsFromInputs(inputs: string[]): NzStop[] {
 }
 
 /**
+ * Haversine distance between two lat/lng points in kilometres.
+ */
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
  * Order waypoint names in a logical route order between start & end.
  *
- * Rough approach:
- *  - Take the vector from start -> end in lat/lng space.
- *  - For each matched stop, project its position onto that vector.
- *  - Sort by "progress" along that direction.
+ * Uses a greedy nearest-neighbor algorithm:
+ *  - Start from the start city
+ *  - Always pick the nearest unvisited waypoint
+ *  - End at the end city
+ *
+ * This approach produces better routes than vector projection, especially
+ * when waypoints are close together or the route isn't a straight line.
  *
  * Returns:
  *  - orderedNames: waypoint names to feed into the itinerary logic.
@@ -427,7 +455,8 @@ export function matchStopsFromInputs(inputs: string[]): NzStop[] {
 export function orderWaypointNamesByRoute(
   startCity: NzCity,
   endCity: NzCity,
-  rawWaypointNames: string[]
+  rawWaypointNames: string[],
+  waypointCoordinates?: Map<string, { lat: number; lng: number }>
 ): {
   orderedNames: string[];
   matchedStopsInOrder: NzStop[];
@@ -438,45 +467,145 @@ export function orderWaypointNamesByRoute(
 
   // 1. Match inputs to known stops (deduped)
   const matchedStops = matchStopsFromInputs(rawWaypointNames);
-  if (matchedStops.length === 0) {
-    // Nothing we recognise; leave order as-is
-    return { orderedNames: rawWaypointNames, matchedStopsInOrder: [] };
+  
+  // 2. Build a map of waypoint names to their coordinates
+  //    Priority: waypointCoordinates > matchedStops > unknown (no coords)
+  const waypointCoords = new Map<string, { lat: number; lng: number; name: string; isStop: boolean }>();
+  
+  // Add coordinates from the provided map (cities with known coordinates)
+  if (waypointCoordinates) {
+    for (const [name, coords] of waypointCoordinates.entries()) {
+      if (coords.lat !== 0 || coords.lng !== 0) {
+        waypointCoords.set(name.toLowerCase(), { ...coords, name, isStop: false });
+      }
+    }
+  }
+  
+  // Add coordinates from matched stops
+  for (const stop of matchedStops) {
+    waypointCoords.set(stop.name.toLowerCase(), { 
+      lat: stop.lat, 
+      lng: stop.lng, 
+      name: stop.name,
+      isStop: true 
+    });
   }
 
-  // 2. Compute direction vector start -> end
-  const dx = endCity.lat - startCity.lat;
-  const dy = endCity.lng - startCity.lng;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const dirX = dx / len;
-  const dirY = dy / len;
+  // 3. Separate waypoints with coordinates from those without
+  const waypointsWithCoords: Array<{ name: string; lat: number; lng: number; isStop: boolean }> = [];
+  const waypointsWithoutCoords: string[] = [];
+  
+  for (const name of rawWaypointNames) {
+    const normalized = name.toLowerCase();
+    const coords = waypointCoords.get(normalized);
+    if (coords) {
+      waypointsWithCoords.push(coords);
+    } else {
+      waypointsWithoutCoords.push(name);
+    }
+  }
 
-  // 3. For each stop, compute "t" = progress along the start->end direction
-  const stopsWithProgress = matchedStops.map((stop) => {
-    const sx = stop.lat - startCity.lat;
-    const sy = stop.lng - startCity.lng;
-    const t = sx * dirX + sy * dirY; // projection length
-    return { stop, t };
+  // 4. If no waypoints have coordinates, fall back to original order
+  if (waypointsWithCoords.length === 0) {
+    return { 
+      orderedNames: rawWaypointNames, 
+      matchedStopsInOrder: matchedStops 
+    };
+  }
+
+  // 5. Optimize route by calculating total distance for each candidate path
+  // Strategy: For each candidate waypoint, simulate visiting it next, then visiting
+  // all remaining waypoints using nearest-neighbor, and calculate the total distance.
+  // Pick the candidate that minimizes the total distance.
+  const orderedWaypoints: Array<{ name: string; lat: number; lng: number; isStop: boolean }> = [];
+  const remaining = [...waypointsWithCoords];
+  let currentLat = startCity.lat;
+  let currentLng = startCity.lng;
+
+  while (remaining.length > 0) {
+    let bestIdx = -1;
+    let bestTotalDistance = Infinity;
+    
+    // For each candidate waypoint, calculate total distance of the full path
+    for (let i = 0; i < remaining.length; i++) {
+      const candidate = remaining[i];
+      
+      // Distance from current to this candidate
+      const distToCandidate = haversineKm(currentLat, currentLng, candidate.lat, candidate.lng);
+      
+      // Simulate visiting this candidate, then visiting all remaining waypoints optimally
+      const otherRemaining = remaining.filter((_, idx) => idx !== i);
+      let totalDistance = distToCandidate;
+      
+      if (otherRemaining.length === 0) {
+        // This is the last waypoint, just add distance to end
+        totalDistance += haversineKm(candidate.lat, candidate.lng, endCity.lat, endCity.lng);
+      } else {
+        // Visit remaining waypoints using nearest-neighbor from candidate
+        let simLat = candidate.lat;
+        let simLng = candidate.lng;
+        const simRemaining = [...otherRemaining];
+        
+        while (simRemaining.length > 0) {
+          // Find nearest remaining waypoint
+          let nearestIdx = 0;
+          let nearestDist = haversineKm(simLat, simLng, simRemaining[0].lat, simRemaining[0].lng);
+          
+          for (let j = 1; j < simRemaining.length; j++) {
+            const dist = haversineKm(simLat, simLng, simRemaining[j].lat, simRemaining[j].lng);
+            if (dist < nearestDist) {
+              nearestDist = dist;
+              nearestIdx = j;
+            }
+          }
+          
+          totalDistance += nearestDist;
+          const nearest = simRemaining.splice(nearestIdx, 1)[0];
+          simLat = nearest.lat;
+          simLng = nearest.lng;
+        }
+        
+        // Add distance from last waypoint to end
+        totalDistance += haversineKm(simLat, simLng, endCity.lat, endCity.lng);
+      }
+      
+      if (totalDistance < bestTotalDistance) {
+        bestTotalDistance = totalDistance;
+        bestIdx = i;
+      }
+    }
+    
+    // Move to the best waypoint
+    const best = remaining.splice(bestIdx, 1)[0];
+    orderedWaypoints.push(best);
+    currentLat = best.lat;
+    currentLng = best.lng;
+  }
+
+  // 6. Build orderedNames:
+  //    - Canonical names of ordered waypoints with coordinates
+  //    - Then any waypoints without coordinates, in their original input order
+  const orderedNames = [
+    ...orderedWaypoints.map((w) => w.name),
+    ...waypointsWithoutCoords
+  ];
+
+  // 7. Build matchedStopsInOrder (only stops, preserving the order from orderedWaypoints)
+  const orderedStopNames = new Set(orderedWaypoints.filter(w => w.isStop).map(w => w.name.toLowerCase()));
+  const matchedStopsInOrder = matchedStops.filter(stop => 
+    orderedStopNames.has(stop.name.toLowerCase())
+  );
+  
+  // Sort matched stops to match the order in orderedWaypoints
+  const nameToOrder = new Map(orderedWaypoints.map((w, idx) => [w.name.toLowerCase(), idx]));
+  matchedStopsInOrder.sort((a, b) => {
+    const orderA = nameToOrder.get(a.name.toLowerCase()) ?? Infinity;
+    const orderB = nameToOrder.get(b.name.toLowerCase()) ?? Infinity;
+    return orderA - orderB;
   });
-
-  // 4. Sort by progress (earlier along the route first)
-  stopsWithProgress.sort((a, b) => a.t - b.t);
-  const sortedStops = stopsWithProgress.map((entry) => entry.stop);
-
-  // 5. Build orderedNames:
-  //    - Canonical names of sorted known stops
-  //    - Then any unknown names that didn't map to stops, in input order
-  const sortedKnownNames = sortedStops.map((s) => s.name);
-  const sortedKnownIds = new Set(sortedStops.map((s) => s.id));
-
-  const unknownNames = rawWaypointNames.filter((name) => {
-    const stop = findStopByText(name);
-    return !stop || !sortedKnownIds.has(stop.id);
-  });
-
-  const orderedNames = [...sortedKnownNames, ...unknownNames];
 
   return {
     orderedNames,
-    matchedStopsInOrder: sortedStops,
+    matchedStopsInOrder,
   };
 }
