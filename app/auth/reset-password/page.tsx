@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
   if (!ready) {
     return (
       <main className="container max-w-md py-12">
-        <p className="text-sm text-white/70">Loading…</p>
+        <p className="text-sm text-slate-600">Loading…</p>
       </main>
     );
   }
@@ -76,13 +76,13 @@ export default function ResetPasswordPage() {
   return (
     <main className="container max-w-md py-12">
       <h1 className="text-3xl font-semibold mb-2">Set a new password</h1>
-      <p className="text-sm text-white/70 mb-6">
+      <p className="text-sm text-slate-600 mb-6">
         Enter a new password for your account.
       </p>
 
       <form onSubmit={handleSetPassword} className="space-y-4 card p-6">
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="password">
+          <label className="block text-sm font-medium text-slate-900" htmlFor="password">
             New password
           </label>
           <input
@@ -92,12 +92,12 @@ export default function ResetPasswordPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="confirm">
+          <label className="block text-sm font-medium text-slate-900" htmlFor="confirm">
             Confirm new password
           </label>
           <input
@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
             minLength={6}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           />
         </div>
 
@@ -117,7 +117,10 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+          className="w-full rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          style={{ 
+            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+          }}
         >
           {loading ? "Updating…" : "Update password"}
         </button>

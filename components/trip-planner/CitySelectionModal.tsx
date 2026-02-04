@@ -471,7 +471,10 @@ export default function CitySelectionModal({
             <button
               type="button"
               onClick={handleDoneDates}
-              className="px-4 py-2 rounded-lg bg-[var(--accent)] text-slate-900 text-sm font-medium hover:brightness-110 transition"
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium hover:brightness-110 transition shadow-lg hover:shadow-xl"
+              style={{ 
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              }}
             >
               Done
             </button>
@@ -480,7 +483,10 @@ export default function CitySelectionModal({
               type="button"
               onClick={handleSelectDatesClick}
               disabled={!endCitySelected}
-              className="px-4 py-2 rounded-lg bg-[var(--accent)] text-slate-900 text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              style={{ 
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              }}
             >
               Select dates
             </button>

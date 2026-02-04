@@ -241,7 +241,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
         <div className="flex justify-center md:justify-start">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition"
+            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
+            style={{ 
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            }}
           >
             Generate itinerary
           </button>
@@ -352,7 +355,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
                     type="button"
                     onClick={handleSaveConfirm}
                     disabled={tp.saving || !saveTitle.trim()}
-                    className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-slate-900 text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 rounded-lg text-white text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                    style={{ 
+                      background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    }}
                   >
                     {tp.saving ? (initialItinerary ? "Updating..." : "Saving...") : (initialItinerary ? "Update" : "Save")}
                   </button>
@@ -382,7 +388,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             type="button"
             onClick={handleSaveClick}
             disabled={tp.saving}
-            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            style={{ 
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            }}
           >
             {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
           </button>

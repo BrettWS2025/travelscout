@@ -48,12 +48,6 @@ export default function Home() {
             >
               Start Planning Your Trip
             </Link>
-            <Link
-              href="/guides"
-              className="px-8 py-4 rounded-full font-bold border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95"
-            >
-              Explore Destinations
-            </Link>
           </div>
         </div>
       </section>

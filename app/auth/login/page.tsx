@@ -79,7 +79,7 @@ export default function LoginPage() {
         }
 
         setInfo(
-          "Account created. If email confirmation is enabled, check your inbox to verify before signing in."
+          "Account created. Check your inbox to verify before signing in"
         );
 
         setMode("login");
@@ -213,7 +213,10 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+          className="w-full rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          style={{ 
+            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+          }}
         >
           {loading
             ? mode === "login"
