@@ -36,6 +36,7 @@ export function getPlacesCache(): Place[] | null {
 /**
  * Fetch all places from Supabase
  * Results are cached for 5 minutes
+ * Uses nz_places_final table only
  */
 export async function getAllPlaces(): Promise<Place[]> {
   // Return cached data if still valid
@@ -44,10 +45,9 @@ export async function getAllPlaces(): Promise<Place[]> {
   }
 
   const { data, error } = await supabase
-    .from("places")
-    .select("id, name, lat, lng, rank")
-    .eq("is_active", true) // Only get active places
-    .order("rank", { ascending: true, nullsFirst: false })
+    .from("nz_places_final")
+    .select("id, name, display_name, lat, lon, tags")
+    .in("place_type", ["city", "town", "village", "hamlet"])
     .order("name", { ascending: true });
 
   if (error) {
@@ -56,14 +56,23 @@ export async function getAllPlaces(): Promise<Place[]> {
     return [];
   }
 
-  placesCache = (data || []) as Place[];
+  // Map nz_places_final data to Place format
+  placesCache = (data || []).map((p: any) => ({
+    id: p.id.toString(),
+    name: p.name,
+    display_name: p.display_name,
+    lat: p.lat,
+    lng: p.lon, // Note: nz_places_final uses 'lon' not 'lng'
+    rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
+  })) as Place[];
+  
   cacheTimestamp = Date.now();
   return placesCache;
 }
 
 /**
  * Get a place by its ID
- * First tries the cache, then queries nz_places_final, then falls back to places table
+ * Uses nz_places_final table only
  */
 export async function getPlaceById(id: string): Promise<Place | undefined> {
   // First try cache
@@ -71,7 +80,7 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
   const cached = places.find((p) => p.id === id);
   if (cached) return cached;
   
-  // Try nz_places_final first (by UUID)
+  // Query nz_places_final (by UUID)
   const { data: nzPlaceData, error: nzPlaceError } = await supabase
     .from("nz_places_final")
     .select("id, name, display_name, lat, lon, tags")
@@ -79,7 +88,7 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
     .single();
   
   if (!nzPlaceError && nzPlaceData) {
-    return {
+    const place = {
       id: nzPlaceData.id.toString(),
       name: nzPlaceData.name,
       display_name: nzPlaceData.display_name,
@@ -87,37 +96,17 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
       lng: nzPlaceData.lon,
       rank: nzPlaceData.tags?.population ? parseInt(nzPlaceData.tags.population) : undefined,
     };
-  }
-  
-  // Fallback to places table (by text ID)
-  const { data, error } = await supabase
-    .from("places")
-    .select("id, name, lat, lng, rank")
-    .eq("id", id)
-    .single();
-  
-  if (error) {
-    // If single() fails, try without it (in case there are duplicates)
-    const { data: dataArray, error: arrayError } = await supabase
-      .from("places")
-      .select("id, name, lat, lng, rank")
-      .eq("id", id)
-      .limit(1);
     
-    if (arrayError || !dataArray || dataArray.length === 0) {
-      console.warn(`Place not found in database: ${id}`, error || arrayError);
-      return undefined;
-    }
-    
-    return dataArray[0] as Place;
-  }
-  
-  if (data) {
     // Update cache with this place so it's available next time
     if (placesCache) {
-      placesCache.push(data as Place);
+      placesCache.push(place);
     }
-    return data as Place;
+    
+    return place;
+  }
+  
+  if (nzPlaceError) {
+    console.warn(`Place not found in database: ${id}`, nzPlaceError);
   }
   
   return undefined;
@@ -317,41 +306,13 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     }));
   }
 
-  // Fallback to old places table search if nz_places_final doesn't have results
-  const { data: searchData, error: searchError } = await supabase.rpc("search_places_by_name", {
-    search_query: query,
-    result_limit: limit,
-  });
-
-  if (!searchError && searchData && searchData.length > 0) {
-    // Map the search results to Place format
-    return searchData.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      lat: p.lat,
-      lng: p.lng,
-      rank: p.rank,
-    }));
-  }
-
-  // Final fallback to direct places table search
-  const { data, error } = await supabase
-    .from("places")
-    .select("id, name, lat, lng, rank")
-    .eq("is_active", true)
-    .ilike("name", `%${query}%`)
-    .limit(limit);
-
-  if (error) {
-    console.error("Error searching places:", error);
-    return [];
-  }
-
-  return (data || []) as Place[];
+  // No results found in nz_places_final
+  return [];
 }
 
 /**
  * Find places within a radius (using PostGIS)
+ * Uses nz_places_final table only
  * @param centerLat Latitude of center point
  * @param centerLng Longitude of center point
  * @param radiusKm Radius in kilometers
@@ -361,25 +322,52 @@ export async function findPlacesNearby(
   centerLng: number,
   radiusKm: number = 50
 ): Promise<Place[]> {
-  // Convert radius from km to degrees (approximate: 1 degree ≈ 111 km)
-  // For more accurate results, we use PostGIS distance functions
-  const { data, error } = await supabase.rpc("find_places_within_radius", {
-    center_lat: centerLat,
-    center_lng: centerLng,
-    radius_km: radiusKm,
-  });
+  // Query nz_places_final and filter by distance using haversine formula
+  // Note: For better performance with large datasets, consider creating a database function using ST_DWithin
+  const { data, error } = await supabase
+    .from("nz_places_final")
+    .select("id, name, display_name, lat, lon, tags, geometry")
+    .in("place_type", ["city", "town", "village", "hamlet"])
+    .limit(50);
 
   if (error) {
     console.error("Error finding nearby places:", error);
-    // Fallback to simple distance calculation if RPC doesn't exist
+    // Fallback to simple distance calculation if query fails
     return findPlacesNearbyFallback(centerLat, centerLng, radiusKm);
   }
 
-  return (data || []) as Place[];
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Filter places within radius using haversine (since Supabase client doesn't support ST_DWithin directly)
+  // For better performance, we could create a database function, but this works for now
+  const nearbyPlaces = data.filter((place: any) => {
+    const distance = haversineDistance(centerLat, centerLng, place.lat, place.lon);
+    return distance <= radiusKm;
+  });
+
+  // Sort by distance
+  nearbyPlaces.sort((a: any, b: any) => {
+    const distA = haversineDistance(centerLat, centerLng, a.lat, a.lon);
+    const distB = haversineDistance(centerLat, centerLng, b.lat, b.lon);
+    return distA - distB;
+  });
+
+  // Map to Place format
+  return nearbyPlaces.map((p: any) => ({
+    id: p.id.toString(),
+    name: p.name,
+    display_name: p.display_name,
+    lat: p.lat,
+    lng: p.lon,
+    rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
+  }));
 }
 
 /**
- * Fallback function using haversine formula when PostGIS function isn't available
+ * Fallback function using haversine formula when PostGIS query fails
+ * Uses nz_places_final via getAllPlaces()
  */
 async function findPlacesNearbyFallback(
   centerLat: number,
@@ -388,10 +376,19 @@ async function findPlacesNearbyFallback(
 ): Promise<Place[]> {
   const places = await getAllPlaces();
   
-  return places.filter((place) => {
+  const nearby = places.filter((place) => {
     const distance = haversineDistance(centerLat, centerLng, place.lat, place.lng);
     return distance <= radiusKm;
   });
+  
+  // Sort by distance
+  nearby.sort((a, b) => {
+    const distA = haversineDistance(centerLat, centerLng, a.lat, a.lng);
+    const distB = haversineDistance(centerLat, centerLng, b.lat, b.lng);
+    return distA - distB;
+  });
+  
+  return nearby;
 }
 
 /**
