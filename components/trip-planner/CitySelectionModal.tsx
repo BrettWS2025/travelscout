@@ -171,13 +171,13 @@ function CityPickerPanel({
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
           placeholder="Search destinations"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
+          className="w-full bg-transparent outline-none text-base md:text-sm placeholder:text-slate-400 text-slate-800 no-zoom-mobile"
         />
       </div>
 
       <div
         ref={suggestionsRef}
-        className="overflow-auto pr-1 max-h-[50vh]"
+        className="pr-1"
       >
         {!isStart && startCity && (
           <div className="mb-3">
@@ -339,7 +339,8 @@ export default function CitySelectionModal({
 
   const handleSelectEndCity = async (cityId: string) => {
     await onSelectEndCity(cityId);
-    // Don't close modal yet - user can click "Select dates" button
+    // Automatically move to date selection
+    onStepChange("dates");
   };
 
   const handleSelectReturnToStart = async () => {
@@ -379,7 +380,7 @@ export default function CitySelectionModal({
         onClick={onClose}
       />
       <div
-        className={`relative z-10 w-full rounded-2xl bg-white border border-slate-200 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col ${
+        className={`relative z-10 w-full rounded-2xl bg-white border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col ${
           step === "dates" 
             ? isMobile 
               ? "p-3 max-w-full" 
@@ -419,7 +420,7 @@ export default function CitySelectionModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-hidden pr-2">
+        <div className="flex-1 pr-2">
           {step === "dates" ? (
             <div className="space-y-3 flex flex-col items-center">
               <div className={isMobile ? "p-2 w-full" : "p-4 w-fit"}>
@@ -481,14 +482,14 @@ export default function CitySelectionModal({
           ) : step === "end" ? (
             <button
               type="button"
-              onClick={handleSelectDatesClick}
+              onClick={onClose}
               disabled={!endCitySelected}
               className="px-4 py-2 rounded-lg text-white text-sm font-medium hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
               style={{ 
                 background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
               }}
             >
-              Select dates
+              Done
             </button>
           ) : null}
         </div>

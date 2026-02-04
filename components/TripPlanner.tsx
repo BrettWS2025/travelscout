@@ -10,6 +10,7 @@ import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
 import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
+import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
@@ -40,6 +41,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
   const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates">("start");
+
+  // Places/Things modal state
+  const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
+  const [placesThingsModalStep, setPlacesThingsModalStep] = useState<"places" | "things">("places");
 
   // Restore state from localStorage on mount (if not loading initialItinerary)
   useEffect(() => {
@@ -107,6 +112,19 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const handleSelectDates = () => {
     // This is called when "Select dates" button is clicked in the modal
     // The modal will handle the step change internally
+  };
+
+  const handleOpenPlacesThingsModal = (step: "places" | "things") => {
+    setPlacesThingsModalStep(step);
+    setShowPlacesThingsModal(true);
+  };
+
+  const handleClosePlacesThingsModal = () => {
+    setShowPlacesThingsModal(false);
+  };
+
+  const handlePlacesThingsModalStepChange = (step: "places" | "things") => {
+    setPlacesThingsModalStep(step);
   };
 
   const handleSaveClick = () => {
@@ -234,6 +252,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           selectThing={tp.selectThing}
           removePlace={tp.removePlace}
           removeThing={tp.removeThing}
+          onOpenModal={handleOpenPlacesThingsModal}
         />
 
         {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
@@ -422,6 +441,29 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
         }}
         recent={tp.recent}
         suggested={tp.suggested}
+      />
+
+      {/* Places/Things Selection Modal */}
+      <PlacesThingsModal
+        isOpen={showPlacesThingsModal}
+        onClose={handleClosePlacesThingsModal}
+        step={placesThingsModalStep}
+        onStepChange={handlePlacesThingsModalStepChange}
+        placesQuery={tp.placesQuery}
+        thingsQuery={tp.thingsQuery}
+        setPlacesQuery={tp.setPlacesQuery}
+        setThingsQuery={tp.setThingsQuery}
+        placesResults={tp.placesResults}
+        thingsResults={tp.thingsResults}
+        recent={tp.recent}
+        suggested={tp.suggested}
+        selectedPlaceIds={tp.selectedPlaceIds}
+        selectedPlaces={tp.selectedPlaces}
+        selectedThingIds={tp.selectedThingIds}
+        onSelectPlace={tp.selectPlace}
+        onSelectThing={tp.selectThing}
+        onRemovePlace={tp.removePlace}
+        onRemoveThing={tp.removeThing}
       />
     </div>
   );
