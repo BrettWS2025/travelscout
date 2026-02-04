@@ -476,6 +476,7 @@ export default function PlacesThingsModal({
 }: PlacesThingsModalProps) {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -502,6 +503,47 @@ export default function PlacesThingsModal({
     };
   }, [isOpen]);
 
+  // Blur input on modal scroll/touchmove (for mobile keyboard dismissal)
+  useEffect(() => {
+    const modalEl = modalRef.current;
+    if (!modalEl || !isOpen) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        // Find and blur the active input in the modal
+        const activeInput = modalEl.querySelector('input:focus') as HTMLInputElement;
+        if (activeInput) {
+          activeInput.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      // Find and blur the active input in the modal
+      const activeInput = modalEl.querySelector('input:focus') as HTMLInputElement;
+      if (activeInput) {
+        activeInput.blur();
+      }
+    };
+
+    modalEl.addEventListener("scroll", handleScroll);
+    modalEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      modalEl.removeEventListener("scroll", handleScroll);
+      modalEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
+  }, [isOpen]);
+
   const handleBack = () => {
     if (step === "things") {
       onStepChange("places");
@@ -519,6 +561,7 @@ export default function PlacesThingsModal({
         onClick={onClose}
       />
       <div
+        ref={modalRef}
         className={`relative z-10 w-full rounded-2xl bg-white border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col p-6 max-w-2xl`}
         onClick={(e) => e.stopPropagation()}
       >

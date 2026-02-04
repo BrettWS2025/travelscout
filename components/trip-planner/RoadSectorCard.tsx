@@ -27,13 +27,13 @@ export default function RoadSectorCard({
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
       {/* Road sector header - thinner than itinerary sectors */}
       <div className="px-3 md:px-4 py-2">
-        {/* Mobile: Just car icon and dropdown arrow */}
-        <div className="md:hidden flex items-center gap-2">
-          <Car className="w-4 h-4 text-slate-600 shrink-0" />
+        {/* Mobile: Car icon, route text, and dropdown arrow - aligned at top */}
+        <div className="md:hidden flex items-start gap-2">
+          <Car className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
           <button
             type="button"
             onClick={onToggleOpen}
-            className="flex items-center gap-2 min-w-0 flex-1 group"
+            className="flex items-start gap-2 min-w-0 flex-1 group"
           >
             <span
               className={[
@@ -49,6 +49,11 @@ export default function RoadSectorCard({
                 ].join(" ")}
               />
             </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-slate-800 break-words leading-tight">
+                {fromStopName} to {toStopName}
+              </div>
+            </div>
           </button>
         </div>
 
