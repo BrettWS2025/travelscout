@@ -290,7 +290,7 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-[1000]"
+      className="z-[1000] py-3"
       style={{
         background: "rgba(255, 255, 255, 0.8)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
@@ -301,7 +301,7 @@ export function Navbar() {
         boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
-      <div className="container navbar-responsive flex items-center justify-between py-0 md:py-0">
+      <div className="container navbar-responsive flex items-center justify-between">
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink py-0"
