@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
+import LoadingScreen from "@/components/trip-planner/LoadingScreen";
+import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
@@ -23,13 +26,30 @@ type TripPlannerProps = {
   initialItinerary?: ItineraryData | null;
 };
 
-export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
+function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
+  const [stateRestored, setStateRestored] = useState(false);
+  
+  // City selection modal state
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates">("start");
+
+  // Restore state from localStorage on mount (if not loading initialItinerary)
+  useEffect(() => {
+    if (!initialItinerary && !stateRestored) {
+      const restored = tp.restoreStateFromLocalStorage();
+      if (restored) {
+        setStateRestored(true);
+      }
+    }
+  }, [initialItinerary, stateRestored, tp]);
 
   // Load initial itinerary if provided
   useEffect(() => {
@@ -43,10 +63,60 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
     }
   }, [initialItinerary, itineraryLoaded, tp]);
 
+  // Handle URL search params for deep linking (only sync URL -> state, not state -> URL)
+  useEffect(() => {
+    const setupParam = searchParams.get("setup");
+    if (setupParam === "start" || setupParam === "end" || setupParam === "dates") {
+      // Only open if not already open with the same step
+      if (!showCityModal || cityModalStep !== setupParam) {
+        setCityModalStep(setupParam as "start" | "end" | "dates");
+        setShowCityModal(true);
+      }
+    } else if (setupParam === null && showCityModal) {
+      // URL param was removed, close the modal
+      setShowCityModal(false);
+    }
+  }, [searchParams]);
+
+  // Update URL when modal state changes
+  const handleOpenCityModal = (step: "start" | "end" | "dates") => {
+    setCityModalStep(step);
+    setShowCityModal(true);
+    router.push(`/trip-planner?setup=${step}`, { scroll: false });
+  };
+
+  const handleCloseCityModal = () => {
+    // Close modal immediately
+    setShowCityModal(false);
+    // Remove setup param from URL (use replace to avoid adding to history)
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("setup");
+    const newUrl = params.toString() 
+      ? `/trip-planner?${params.toString()}` 
+      : "/trip-planner";
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const handleCityModalStepChange = (step: "start" | "end" | "dates") => {
+    setCityModalStep(step);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("setup", step);
+    router.push(`/trip-planner?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSelectDates = () => {
+    // This is called when "Select dates" button is clicked in the modal
+    // The modal will handle the step change internally
+  };
+
   const handleSaveClick = () => {
     if (!user) {
-      // Could redirect to login, but for now just show dialog
-      alert("Please log in to save your itinerary");
+      // Save current state to localStorage before redirecting
+      tp.saveStateToLocalStorage();
+      
+      // Redirect to login with return URL
+      const returnUrl = encodeURIComponent("/trip-planner");
+      router.push(`/auth/login?returnTo=${returnUrl}`);
       return;
     }
     // Use existing title if editing, otherwise generate default
@@ -66,6 +136,8 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
     const result = await tp.saveItinerary(saveTitle.trim(), initialItinerary?.id);
     if (result.success) {
+      // Clear saved draft state after successful save
+      tp.clearSavedState();
       setSaveSuccess(true);
       setTimeout(() => {
         setShowSaveDialog(false);
@@ -77,6 +149,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
   return (
     <div className="space-y-8">
+      <LoadingScreen isLoading={tp.legsLoading} />
       <form
         onSubmit={tp.handleSubmit}
         className="card p-4 md:p-6 space-y-6"
@@ -126,6 +199,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
             tp.setEndDate("");
             tp.setCalendarMonth(new Date());
           }}
+          onOpenCityModal={handleOpenCityModal}
         />
 
         <PlacesThingsPicker
@@ -143,6 +217,7 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
           recent={tp.recent}
           suggested={tp.suggested}
           selectedPlaceIds={tp.selectedPlaceIds}
+          selectedPlaces={tp.selectedPlaces}
           selectedThingIds={tp.selectedThingIds}
           placesSummary={tp.placesSummary}
           thingsSummary={tp.thingsSummary}
@@ -182,29 +257,13 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
 
       {tp.plan && tp.plan.days.length > 0 && (
         <>
-          <div className="card p-4 md:p-6">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold">Your Itinerary</h2>
-              <button
-                type="button"
-                onClick={handleSaveClick}
-                disabled={tp.saving}
-                className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
-              </button>
-            </div>
-            {tp.saveError && (
-              <p className="mt-2 text-sm text-red-400">{tp.saveError}</p>
-            )}
-          </div>
-
           <DraftItinerary
             plan={tp.plan}
             routeStops={tp.routeStops}
             nightsPerStop={tp.nightsPerStop}
             dayStopMeta={tp.dayStopMeta}
             dayDetails={tp.dayDetails}
+            roadSectorDetails={tp.roadSectorDetails}
             openStops={tp.openStops}
             onToggleStopOpen={tp.toggleStopOpen}
             onExpandAllStops={tp.expandAllStops}
@@ -216,6 +275,14 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
             onToggleDayOpen={tp.toggleDayOpen}
             onUpdateDayNotes={tp.updateDayNotes}
             onUpdateDayAccommodation={tp.updateDayAccommodation}
+            onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
+            onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
+            startSectorType={tp.startSectorType}
+            endSectorType={tp.endSectorType}
+            onConvertStartToItinerary={tp.convertStartToItinerary}
+            onConvertStartToRoad={tp.convertStartToRoad}
+            onConvertEndToItinerary={tp.convertEndToItinerary}
+            onConvertEndToRoad={tp.convertEndToRoad}
             onStartAddStop={tp.handleStartAddStop}
             onConfirmAddStop={tp.handleConfirmAddStop}
             onCancelAddStop={tp.handleCancelAddStop}
@@ -305,6 +372,56 @@ export default function TripPlanner({ initialItinerary }: TripPlannerProps = {})
         startDate={tp.startDate}
         endDate={tp.endDate}
       />
+
+      {tp.plan && tp.plan.days.length > 0 && (
+        <div className="flex flex-col items-center gap-3 pt-4">
+          {tp.saveError && (
+            <p className="text-sm text-red-400">{tp.saveError}</p>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            disabled={tp.saving}
+            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {tp.saving ? "Saving..." : initialItinerary ? "Update Itinerary" : "Save Itinerary"}
+          </button>
+        </div>
+      )}
+
+      {/* City Selection Modal */}
+      <CitySelectionModal
+        isOpen={showCityModal}
+        onClose={handleCloseCityModal}
+        step={cityModalStep}
+        onStepChange={handleCityModalStepChange}
+        startCityId={tp.startCityId}
+        endCityId={tp.endCityId}
+        onSelectStartCity={tp.selectStartCity}
+        onSelectEndCity={tp.selectEndCity}
+        onSelectReturnToStart={tp.selectReturnToStart}
+        onSelectDates={handleSelectDates}
+        dateRange={tp.dateRange}
+        calendarMonth={tp.calendarMonth}
+        onDateRangeChange={tp.handleDateRangeChange}
+        onCalendarMonthChange={tp.setCalendarMonth}
+        onClearDates={() => {
+          tp.setDateRange(undefined);
+          tp.setStartDate("");
+          tp.setEndDate("");
+          tp.setCalendarMonth(new Date());
+        }}
+        recent={tp.recent}
+        suggested={tp.suggested}
+      />
     </div>
+  );
+}
+
+export default function TripPlanner({ initialItinerary }: TripPlannerProps = {}) {
+  return (
+    <Suspense fallback={<div className="text-white/70">Loading...</div>}>
+      <TripPlannerContent initialItinerary={initialItinerary} />
+    </Suspense>
   );
 }

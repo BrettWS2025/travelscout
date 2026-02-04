@@ -3,7 +3,7 @@
 
 import { useState, useMemo, KeyboardEvent, useRef, useEffect } from "react";
 import { NZ_STOPS } from "@/lib/nzStops";
-import { NZ_CITIES } from "@/lib/nzCities";
+import { searchPlacesByName } from "@/lib/nzCities";
 
 type Props = {
   value: string[];
@@ -22,40 +22,63 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
   const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const suggestionsRef = useRef<HTMLDivElement | null>(null);
+  const [placesSearchResults, setPlacesSearchResults] = useState<Array<{ id: string; name: string }>>([]);
 
-  // Build a suggestion list from cities + stops
-  const allSuggestions: Suggestion[] = useMemo(() => {
-    const citySuggestions: Suggestion[] = NZ_CITIES.map((c) => ({
-      id: `city-${c.id}`,
-      label: c.name,
-      type: "city" as const,
-    }));
-
-    const stopSuggestions: Suggestion[] = NZ_STOPS.map((s) => ({
-      id: `stop-${s.id}`,
-      label: s.name,
-      type: "stop" as const,
-    }));
-
-    // simple concat; later we could de-dupe on label if we ever double up
-    return [...citySuggestions, ...stopSuggestions];
-  }, []);
-
-  const filteredSuggestions = useMemo(() => {
-    const q = input.trim().toLowerCase();
-    if (!q) {
-      return allSuggestions
-        .filter((s) => !value.includes(s.label))
-        .slice(0, 8);
+  // Search places from database when user types
+  useEffect(() => {
+    if (!input.trim()) {
+      setPlacesSearchResults([]);
+      return;
     }
 
-    return allSuggestions
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(input, 20);
+        setPlacesSearchResults(
+          results.map((p) => ({ id: p.id, name: p.name }))
+        );
+      } catch (error) {
+        console.error("Error searching places:", error);
+        setPlacesSearchResults([]);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
+  }, [input]);
+
+  // Build suggestions from database search results + stops
+  const filteredSuggestions = useMemo(() => {
+    const q = input.trim().toLowerCase();
+    
+    // Build suggestions from places search results
+    const placeSuggestions: Suggestion[] = placesSearchResults
+      .filter((p) => !value.includes(p.name))
+      .map((p) => ({
+        id: `city-${p.id}`,
+        label: p.name,
+        type: "city" as const,
+      }));
+
+    // Build suggestions from stops (filter by query if provided)
+    const stopSuggestions: Suggestion[] = NZ_STOPS
       .filter((s) => {
-        if (value.includes(s.label)) return false;
-        return s.label.toLowerCase().includes(q);
+        if (value.includes(s.name)) return false;
+        if (!q) return true;
+        return s.name.toLowerCase().includes(q);
       })
-      .slice(0, 8);
-  }, [allSuggestions, input, value]);
+      .map((s) => ({
+        id: `stop-${s.id}`,
+        label: s.name,
+        type: "stop" as const,
+      }));
+
+    // Combine and limit results
+    return [...placeSuggestions, ...stopSuggestions].slice(0, 8);
+  }, [placesSearchResults, input, value]);
 
   function addWaypoint(label: string) {
     const cleaned = label.trim();
@@ -140,6 +163,43 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl || !open) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
+  }, [open]);
+
   return (
     <div className="space-y-2" ref={containerRef}>
       {/* Chip row */}
@@ -164,8 +224,9 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
       {/* Input + suggestions */}
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
-          className="input-dark w-full text-sm"
+          className="input-dark w-full text-sm md:text-sm"
           placeholder={placeholder}
           value={input}
           onChange={(e) => {
@@ -183,17 +244,21 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
 
         {open && filteredSuggestions.length > 0 && (
           <div
-            className="absolute left-0 right-0 mt-1 card max-h-64 overflow-auto z-50"
-            style={{ color: "var(--text)" }}
+            ref={suggestionsRef}
+            className="absolute left-0 right-0 mt-1 card overflow-auto z-50"
+            style={{ 
+              color: "var(--text)",
+              maxHeight: "calc(100dvh - 200px)"
+            }}
           >
-            <ul className="divide-y divide-white/5 text-sm">
+            <ul className="divide-y divide-gray-200 text-sm">
               {filteredSuggestions.map((s, idx) => (
                 <li key={s.id}>
                   <button
                     type="button"
                     onClick={() => handleSuggestionClick(s)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/10 ${
-                      idx === highlightIndex ? "bg-white/10" : ""
+                    className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-gray-100 ${
+                      idx === highlightIndex ? "bg-gray-100" : ""
                     }`}
                   >
                     <span>{s.label}</span>

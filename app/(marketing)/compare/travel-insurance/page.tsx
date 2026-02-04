@@ -1,10 +1,11 @@
 import InsuranceSlides from "@/components/InsuranceSlides";
 import { INSURANCE_SLIDES } from "@/lib/insurance-slides";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Travel Insurance — Compare",
   description:
-    "Compare travel insurance options across Basic, Comprehensive and Multi Trip plans.",
+    "Compare travel insurance options across Basic, Comprehensive and Multi Trip plans. Find the best travel insurance for your New Zealand journey.",
 };
 
 export default function Page() {

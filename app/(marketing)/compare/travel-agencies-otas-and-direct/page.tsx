@@ -1,10 +1,11 @@
 import ComparisonTable, { type ProductsColumn } from "@/components/ComparisonTable";
 import type { ProductOffer } from "@/lib/products";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Travel Agencies, OTAs and Direct — Compare",
   description:
-    "High-level comparison of travel agencies, online travel agencies (OTAs), and booking direct.",
+    "High-level comparison of travel agencies, online travel agencies (OTAs), and booking direct. Make informed decisions about how to book your travel.",
 };
 
 type ChannelRow = ProductOffer;

@@ -3,30 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --bg:   #16223A;
-  --card: #1E2C4B;
-  --text: #EEF3FF;
-  --muted:#A2ABBA;
-  --accent:#6EE7FF; /* cyan for links */
-  --brand:#44FF9A;  /* green for primary buttons */
+  --bg:   #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted:#64748b;
+  --accent:#6366f1; /* indigo for links */
+  --brand:#3b82f6;  /* blue for primary buttons */
 }
 
 html, body, #__next { min-height: 100%; height: auto; }
 
 body {
-  background: var(--bg);
+  background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-plus-jakarta, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  min-height: 100vh;
 }
 
 .container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
 
 .card {
   background: var(--card);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
 }
 
 .badge {
@@ -36,17 +38,32 @@ body {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.875rem;
-  background: rgba(255,255,255,0.10);
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .link {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 4px;
+  color: #6366f1;
 }
-.link:hover { color: var(--accent); }
+.link:hover { color: #4f46e5; }
 
 header.sticky.top-0 .container { padding-top: 2rem; padding-bottom: 2rem; }
+
+header.sticky.top-0 .container.navbar-responsive {
+  padding-top: 0.5rem; /* Slightly increased padding */
+  padding-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  header.sticky.top-0 .container.navbar-responsive {
+    padding-top: 0.75rem; /* Slightly increased padding */
+    padding-bottom: 0.75rem;
+  }
+}
 
 main, section, .overflow-x-auto { position: relative; z-index: 0; }
 
@@ -82,16 +99,16 @@ main, section, .overflow-x-auto { position: relative; z-index: 0; }
   box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
 }
 
-/* Dark themed input for Trip Planner etc. */
+/* Dark themed input for Trip Planner etc. - now light theme */
 .input-dark,
 select.input-dark,
 textarea.input-dark,
 input[type="date"].input-dark {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background-color: var(--card) !important;   /* lighter dark blue */
-  color: var(--text) !important;              /* light text */
-  border: 1px solid rgba(255,255,255,0.12);
+  background-color: #ffffff !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(148, 163, 184, 0.3);
   caret-color: var(--text);
   outline: none;
   transition:
@@ -111,7 +128,7 @@ input[type="date"].input-dark {
 select.input-dark:hover,
 textarea.input-dark:hover,
 input[type="date"].input-dark:hover {
-  border-color: rgba(255,255,255,0.25);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 /* Focus state for dark inputs */
@@ -124,7 +141,30 @@ textarea.input-dark:focus-visible,
 input[type="date"].input-dark:focus,
 input[type="date"].input-dark:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(110,231,255,0.28);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Mobile: Prevent iOS Safari zoom on input focus (font-size >= 16px) */
+@media (max-width: 767px) {
+  /* All text inputs in search components */
+  input[type="text"],
+  input[type="search"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Date inputs */
+  input[type="date"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Specific search inputs in trip planner components */
+  .rounded-2xl input[type="text"],
+  .rounded-full input[type="text"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
 }
 
 /* Remove default up/down arrows from number inputs (for nights control) */
@@ -192,16 +232,16 @@ input.input:-webkit-autofill:focus {
 
 .btn:active { transform: translateY(1px); }
 
-/* Solid brand-green button (matches front page) */
+/* Solid brand button (matches front page) */
 .btn-brand {
-  background: var(--brand);
-  color: #0b1b2f; /* dark text for contrast */
-  box-shadow: 0 6px 18px rgba(68, 255, 154, 0.22);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
 }
 
 .btn-brand:hover {
-  box-shadow: 0 8px 22px rgba(68, 255, 154, 0.32);
-  filter: saturate(110%);
+  box-shadow: 0 8px 22px rgba(59, 130, 246, 0.4);
+  filter: brightness(105%);
 }
 
 /* Hide native date picker icon; we use our own calendar button */
@@ -217,10 +257,10 @@ input[type="date"]::-ms-expand {
 
 .btn-brand:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(68, 255, 154, 0.45);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
 }
 
-/* Muted list text & bullets for dark sections */
+/* Muted list text & bullets */
 .list-muted { color: var(--muted); }
 .list-muted li::marker { color: var(--muted); }
 
@@ -231,25 +271,26 @@ input[type="date"]::-ms-expand {
 /* Override DayPicker CSS variables */
 .rdp,
 .rdp-root {
-  /* Selected day background (your green) */
-  --rdp-accent-color: var(--brand);
-  --rdp-accent-color-dark: var(--brand);
+  /* Selected day background (blue gradient) */
+  --rdp-accent-color: #3b82f6;
+  --rdp-accent-color-dark: #3b82f6;
 
-  /* Text colour for selected / range start / range end (black) */
-  --rdp-selected-color: #000000;
-  --rdp-range_start-color: #000000;
-  --rdp-range_end-color: #000000;
+  /* Text colour for selected / range start / range end (white) */
+  --rdp-selected-color: #ffffff;
+  --rdp-range_start-color: #ffffff;
+  --rdp-range_end-color: #ffffff;
 
-  /* Middle of the range: grey bar + white text */
-  --rdp-range_middle-background-color: #e5e7eb;
+  /* Middle of the range: light blue bar + dark text */
+  --rdp-range_middle-background-color: #e0e7ff;
   --rdp-range_middle-color: var(--text);
 }
 
-/* Base dark theme */
+/* Base theme */
 .rdp {
   color: var(--text);
-  background: transparent;
+  background: white;
   font-size: 0.875rem;
+  border-radius: 0.5rem;
 }
 
 .rdp-months {
@@ -259,7 +300,21 @@ input[type="date"]::-ms-expand {
 }
 
 .rdp-month {
-  background: transparent;
+  background: white;
+}
+
+/* Calendar navigation and headers */
+.rdp-caption {
+  color: var(--text);
+}
+
+.rdp-nav {
+  color: var(--text);
+}
+
+.rdp-head_cell {
+  color: var(--muted);
+  font-weight: 600;
 }
 
 /* Make the day button pill-shaped by default */
@@ -275,27 +330,27 @@ input[type="date"]::-ms-expand {
   background: transparent !important;
 }
 
-/* Default day text: white */
+/* Default day text: dark */
 .rdp-day {
   color: var(--text);
 }
 
-/* Start & end (and single selected) days: green circles with black text */
+/* Start & end (and single selected) days: blue circles with white text */
 .rdp-day_selected .rdp-day_button,
 .rdp-day_range_start .rdp-day_button,
 .rdp-day_range_end .rdp-day_button {
-  background: var(--brand) !important;
-  color: #000000 !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
 }
 
-/* Middle of the range: keep the grey bar and white, bold text */
+/* Middle of the range: keep the light blue bar and dark, bold text */
 .rdp-day_range_middle {
-  background: #e5e7eb !important;   /* light grey bar behind the numbers */
+  background: #e0e7ff !important;   /* light blue bar behind the numbers */
 }
 
 .rdp-day_range_middle .rdp-day_button {
   background: transparent !important; /* let the bar show */
-  color: var(--text) !important;      /* white text */
+  color: var(--text) !important;      /* dark text */
   font-weight: 600;
 }
 
@@ -313,4 +368,120 @@ input[type="date"]::-ms-expand {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+/* ----------------------------- */
+/* Loading Screen Animations     */
+/* ----------------------------- */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-10px);
+  }
+  75% {
+    transform: translateY(-30px) translateX(5px);
+  }
+}
+
+@keyframes progress {
+  0% {
+    width: 0%;
+    transform: translateX(0);
+  }
+  50% {
+    width: 70%;
+    transform: translateX(0);
+  }
+  100% {
+    width: 100%;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-progress {
+  animation: progress 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* ----------------------------- */
+/* Landing Page Styles (Light Theme) */
+/* ----------------------------- */
+
+/* Main container background */
+main {
+  background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+  min-height: calc(100vh - 160px);
+}
+
+.landing-page {
+  /* Ensure landing page content has proper spacing */
+  padding-bottom: 2rem;
+}
+
+.landing-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+.landing-section {
+  background: white;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+.landing-cta {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+/* Mapbox Popup Styling - Rounded and Aesthetic */
+.mapboxgl-popup-content {
+  border-radius: 16px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  padding: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 20px !important;
+  padding: 8px !important;
+  color: #64748b !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  opacity: 1 !important;
+  color: #1e293b !important;
 }

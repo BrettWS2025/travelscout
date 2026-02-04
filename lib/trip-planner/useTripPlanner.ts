@@ -13,6 +13,9 @@ import {
   DEFAULT_START_CITY_ID,
   DEFAULT_END_CITY_ID,
   getCityById,
+  getAllPlaces,
+  searchPlacesByName,
+  type Place,
 } from "@/lib/nzCities";
 import { orderWaypointNamesByRoute, NZ_STOPS, type NzStop } from "@/lib/nzStops";
 import {
@@ -24,6 +27,7 @@ import {
   fromIsoDate,
   makeDayKey,
   normalize,
+  parseDisplayName,
   pickSuggestedCities,
   safeReadRecent,
   safeWriteRecent,
@@ -35,15 +39,9 @@ import {
 } from "@/lib/trip-planner/utils";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-
-type ActivePill = "where" | "when" | null;
-
-function arrayMove<T>(arr: T[], from: number, to: number): T[] {
-  const copy = arr.slice();
-  const [item] = copy.splice(from, 1);
-  copy.splice(to, 0, item);
-  return copy;
-}
+import type { ActivePill } from "@/lib/trip-planner/useTripPlanner.types";
+import { arrayMove, syncDayDetailsFromPlan } from "@/lib/trip-planner/useTripPlanner.utils";
+import { fetchPlaceCoordinates, saveItineraryToSupabase } from "@/lib/trip-planner/useTripPlanner.api";
 
 export function useTripPlanner() {
   const [startCityId, setStartCityId] = useState("");
@@ -70,7 +68,7 @@ export function useTripPlanner() {
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
   const [recent, setRecent] = useState<CityLite[]>([]);
-  const suggested = useMemo(() => pickSuggestedCities(), []);
+  const [suggested, setSuggested] = useState<CityLite[]>(() => pickSuggestedCities());
 
   const whereRef = useRef<HTMLDivElement | null>(null);
   const whenRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +84,7 @@ export function useTripPlanner() {
   const [placesQuery, setPlacesQuery] = useState("");
   const [thingsQuery, setThingsQuery] = useState("");
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+  const [selectedPlaceData, setSelectedPlaceData] = useState<Map<string, Place>>(new Map());
   const [selectedThingIds, setSelectedThingIds] = useState<string[]>([]);
 
   const [plan, setPlan] = useState<TripPlan | null>(null);
@@ -106,6 +105,9 @@ export function useTripPlanner() {
   const [legsLoading, setLegsLoading] = useState(false);
 
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
+  const [roadSectorDetails, setRoadSectorDetails] = useState<Record<number, import("@/lib/trip-planner/utils").RoadSectorDetail>>({});
+  const [startSectorType, setStartSectorType] = useState<import("@/lib/trip-planner/utils").StartEndSectorType>("road");
+  const [endSectorType, setEndSectorType] = useState<import("@/lib/trip-planner/utils").StartEndSectorType>("road");
 
   // UI state for "add stop after this"
   const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
@@ -114,11 +116,45 @@ export function useTripPlanner() {
   // ✅ UI state for nested stop groups (collapsed by default)
   const [openStops, setOpenStops] = useState<Record<number, boolean>>({});
 
-  const startCity = getCityById(startCityId);
-  const endCity = getCityById(endCityId);
+  // Store selected city data directly to handle places not yet in cache
+  const [startCityData, setStartCityData] = useState<Place | null>(null);
+  const [endCityData, setEndCityData] = useState<Place | null>(null);
+
+  // Use stored data if available, otherwise fall back to cache lookup
+  const startCity = startCityData || getCityById(startCityId);
+  const endCity = endCityData || getCityById(endCityId);
+
+  // Sync stored city data with cache when it becomes available
+  useEffect(() => {
+    if (!startCityId) {
+      setStartCityData(null);
+    } else if (!startCityData || startCityData.id !== startCityId) {
+      const cached = getCityById(startCityId);
+      if (cached) {
+        setStartCityData(cached);
+      }
+    }
+  }, [startCityId, startCityData]);
+
+  useEffect(() => {
+    if (!endCityId) {
+      setEndCityData(null);
+    } else if (!endCityData || endCityData.id !== endCityId) {
+      const cached = getCityById(endCityId);
+      if (cached) {
+        setEndCityData(cached);
+      }
+    }
+  }, [endCityId, endCityData]);
 
   useEffect(() => {
     setRecent(safeReadRecent());
+    
+    // Load places from Supabase and update suggested cities when ready
+    getAllPlaces().then(() => {
+      // Places are now loaded, update suggested cities
+      setSuggested(pickSuggestedCities());
+    });
   }, []);
 
   // Close desktop popovers on outside click
@@ -175,21 +211,6 @@ export function useTripPlanner() {
     };
   }, [mobileSheetOpen]);
 
-  function syncDayDetailsFromPlan(nextPlan: TripPlan) {
-    setDayDetails((prev) => {
-      const next: Record<string, DayDetail> = {};
-      for (const d of nextPlan.days) {
-        const key = makeDayKey(d.date, d.location);
-        next[key] =
-          prev[key] ?? {
-            notes: "",
-            accommodation: "",
-            isOpen: false,
-          };
-      }
-      return next;
-    });
-  }
 
   function handleDateRangeChange(range: DateRange | undefined) {
     setDateRange(range);
@@ -203,7 +224,7 @@ export function useTripPlanner() {
     if (!range.to) {
       setStartDate(toIsoDate(range.from));
       setEndDate("");
-      setCalendarMonth(range.from);
+      // Don't update calendarMonth - let it stay in place
       return;
     }
 
@@ -213,7 +234,7 @@ export function useTripPlanner() {
 
     setStartDate(toIsoDate(from));
     setEndDate(toIsoDate(to));
-    setCalendarMonth(from);
+    // Don't update calendarMonth - let it stay in place
   }
 
   function pushRecent(city: CityLite) {
@@ -274,22 +295,63 @@ export function useTripPlanner() {
     setThingsMobileSheetOpen(false);
   }
 
-  function selectPlace(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
+  async function selectPlace(cityId: string) {
+    try {
+      // Try to get from cache first
+      let c = getCityById(cityId);
+      
+      // If not in cache, fetch from database
+      if (!c) {
+        const { getPlaceById } = await import("@/lib/nzCities");
+        c = await getPlaceById(cityId);
+      }
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = placesSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          const { getPlaceById } = await import("@/lib/nzCities");
+          c = await getPlaceById(found.id);
+        }
+      }
+      
+      if (!c) {
+        console.error(`Could not find place with ID: ${cityId}`);
+        return;
+      }
 
-    // Add to array if not already selected
-    if (!selectedPlaceIds.includes(cityId)) {
-      setSelectedPlaceIds([...selectedPlaceIds, cityId]);
+      // Validate coordinates - allow if they're in valid range (not just check for 0,0)
+      // Some places might legitimately be at 0,0 (though unlikely for NZ)
+      const hasValidCoords = (c.lat >= -90 && c.lat <= 90 && c.lng >= -180 && c.lng <= 180);
+      if (!hasValidCoords || (c.lat === 0 && c.lng === 0)) {
+        console.warn(`Place ${c.name} has invalid coordinates (lat=${c.lat}, lng=${c.lng}), but adding anyway - will try to fetch coordinates later`);
+        // Don't return - allow it to be added, we'll try to fetch coordinates when generating itinerary
+      }
+
+      // Add to array if not already selected
+      if (!selectedPlaceIds.includes(cityId)) {
+        setSelectedPlaceIds([...selectedPlaceIds, cityId]);
+        // Store the place data
+        setSelectedPlaceData((prev) => new Map(prev).set(cityId, c));
+        console.log(`Added place: ${c.name} (${cityId}) with coordinates: lat=${c.lat}, lng=${c.lng}`);
+      }
+      setPlacesQuery("");
+      pushRecent({ id: c.id, name: c.name });
+
+      // Keep popover open for multiple selections
+    } catch (error) {
+      console.error("Error selecting place:", error);
     }
-    setPlacesQuery("");
-    pushRecent({ id: c.id, name: c.name });
-
-    // Keep popover open for multiple selections
   }
 
   function removePlace(cityId: string) {
     setSelectedPlaceIds(selectedPlaceIds.filter((id) => id !== cityId));
+    setSelectedPlaceData((prev) => {
+      const next = new Map(prev);
+      next.delete(cityId);
+      return next;
+    });
   }
 
   function selectThing(stopId: string) {
@@ -324,36 +386,113 @@ export function useTripPlanner() {
     setMobileSheetOpen(false);
   }
 
-  function selectStartCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
+  async function selectStartCity(cityId: string) {
+    // Try to get from cache first
+    let c = getCityById(cityId);
+    
+    // If not in cache, fetch from database
+    if (!c) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      c = await getPlaceById(cityId);
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = startSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          c = await getPlaceById(found.id);
+        }
+      }
+    }
+    
+    if (!c) {
+      // Last resort: try querying database directly by name if we have search results
+      const found = startSearchResults.find((r) => r.id === cityId);
+      if (found) {
+        // Try one more direct database query by name as fallback
+        const { searchPlacesByName } = await import("@/lib/nzCities");
+        const searchResults = await searchPlacesByName(found.name, 1);
+        if (searchResults.length > 0 && searchResults[0].id === cityId) {
+          c = searchResults[0];
+        } else {
+          console.error(`Could not find place in database: ${found.name} (${cityId})`);
+          return;
+        }
+      } else {
+        console.error(`Could not find place: ${cityId}`);
+        return; // Can't find the city anywhere
+      }
+    }
 
+    // Validate coordinates before storing
+    if ((c.lat === 0 && c.lng === 0) || !c.lat || !c.lng) {
+      console.error(`Place ${c.name} (${cityId}) has invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
+      // Still store it, but log the error - we'll try to fetch coordinates when generating itinerary
+    }
+
+    // Store the city data in state so it's immediately available
+    setStartCityData(c);
     setStartCityId(cityId);
-    setStartQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
+    // Use display_name for the query/search UI, but store name (without region) for itinerary
+    setStartQuery(c.display_name || c.name);
+    pushRecent({ id: c.id, name: c.display_name || c.name });
 
     setWhereStep("end");
   }
 
-  function selectEndCity(cityId: string) {
-    const c = getCityById(cityId);
-    if (!c) return;
-
-    setEndCityId(cityId);
-    setEndQuery(c.name);
-    pushRecent({ id: c.id, name: c.name });
-
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
+  async function selectEndCity(cityId: string) {
+    // Try to get from cache first
+    let c = getCityById(cityId);
+    
+    // If not in cache, fetch from database
+    if (!c) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      c = await getPlaceById(cityId);
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = endSearchResults.find((r) => r.id === cityId);
+        if (found) {
+          // Fetch from database using the search result
+          c = await getPlaceById(found.id);
+        }
       }
-    }, 0);
+    }
+    
+    if (!c) {
+      // Last resort: try querying database directly by name if we have search results
+      const found = endSearchResults.find((r) => r.id === cityId);
+      if (found) {
+        // Try one more direct database query by name as fallback
+        const { searchPlacesByName } = await import("@/lib/nzCities");
+        const searchResults = await searchPlacesByName(found.name, 1);
+        if (searchResults.length > 0 && searchResults[0].id === cityId) {
+          c = searchResults[0];
+        } else {
+          console.error(`Could not find place in database: ${found.name} (${cityId})`);
+          return;
+        }
+      } else {
+        console.error(`Could not find place: ${cityId}`);
+        return; // Can't find the city anywhere
+      }
+    }
+
+    // Validate coordinates before storing
+    if ((c.lat === 0 && c.lng === 0) || !c.lat || !c.lng) {
+      console.error(`Place ${c.name} (${cityId}) has invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
+      // Still store it, but log the error - we'll try to fetch coordinates when generating itinerary
+    }
+
+    // Store the city data in state so it's immediately available
+    setEndCityData(c);
+    setEndCityId(cityId);
+    // Use display_name for the query/search UI, but store name (without region) for itinerary
+    setEndQuery(c.display_name || c.name);
+    pushRecent({ id: c.id, name: c.display_name || c.name });
+
+    // Don't automatically open calendar - let the modal handle the flow
+    // The user will click "Select dates" button in the modal to proceed
   }
 
   function selectReturnToStart() {
@@ -374,29 +513,120 @@ export function useTripPlanner() {
     }, 0);
   }
 
-  const startResults = useMemo(() => {
-    const q = normalize(startQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
+  const [startSearchResults, setStartSearchResults] = useState<CityLite[]>([]);
+  const [endSearchResults, setEndSearchResults] = useState<CityLite[]>([]);
+  const [placesSearchResults, setPlacesSearchResults] = useState<CityLite[]>([]);
+  
+  // Search places for start city using database (searches across all name variants)
+  useEffect(() => {
+    if (!startQuery.trim()) {
+      setStartSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(startQuery, 20);
+        setStartSearchResults(
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error searching places for start city:", error);
+        setStartSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
   }, [startQuery]);
 
-  const endResults = useMemo(() => {
-    const q = normalize(endQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
+  // Search places for end city using database (searches across all name variants)
+  useEffect(() => {
+    if (!endQuery.trim()) {
+      setEndSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(endQuery, 20);
+        setEndSearchResults(
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error searching places for end city:", error);
+        setEndSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
   }, [endQuery]);
 
-  const placesResults = useMemo(() => {
-    const q = normalize(placesQuery);
-    if (!q) return [];
-    return NZ_CITIES.filter((c) => normalize(c.name).includes(q))
-      .slice(0, 8)
-      .map((c) => ({ id: c.id, name: c.name }));
+  // Search places using database (searches across all name variants)
+  useEffect(() => {
+    if (!placesQuery.trim()) {
+      setPlacesSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(placesQuery, 20);
+        setPlacesSearchResults(
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error searching places:", error);
+        setPlacesSearchResults([]);
+      }
+    };
+    
+    // Debounce search
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
   }, [placesQuery]);
+
+  const startResults = useMemo(() => {
+    return startSearchResults;
+  }, [startSearchResults]);
+
+  const endResults = useMemo(() => {
+    return endSearchResults;
+  }, [endSearchResults]);
+  
+  const placesResults = useMemo(() => {
+    return placesSearchResults;
+  }, [placesSearchResults]);
 
   const thingsResults = useMemo(() => {
     const q = normalize(thingsQuery);
@@ -412,8 +642,9 @@ export function useTripPlanner() {
     setHasSubmitted(true);
     setError(null);
 
-    const start = getCityById(startCityId);
-    const end = getCityById(endCityId);
+    // Use the computed startCity and endCity which include stored data
+    const start = startCity;
+    const end = endCity;
 
     if (!start || !end) {
       setPlan(null);
@@ -432,11 +663,82 @@ export function useTripPlanner() {
     }
 
     try {
+      // Get selected places using stored data (includes places not in cache)
+      // Also fetch any missing coordinates from database
+      const selectedPlacesDataPromises = selectedPlaceIds.map(async (id) => {
+        // Try stored data first, then cache lookup
+        let place = selectedPlaceData.get(id) || getCityById(id);
+        
+        // If not found or has invalid coordinates, try fetching from database
+        if (!place || (place.lat === 0 && place.lng === 0) || !place.lat || !place.lng) {
+          console.log(`Fetching coordinates for place ID: ${id}`);
+          const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+          
+          // First try by ID
+          let fetched = await getPlaceById(id);
+          
+          // If still not found or invalid coords, try searching by name if we have it
+          if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && place?.name) {
+            console.log(`Trying to find ${place.name} by name search`);
+            const searchResults = await searchPlacesByName(place.name, 5);
+            const placeName = place.name.toLowerCase();
+            const exactMatch = searchResults.find(p => p.id === id || p.name.toLowerCase() === placeName);
+            if (exactMatch && (exactMatch.lat !== 0 || exactMatch.lng !== 0)) {
+              fetched = exactMatch;
+            }
+          }
+          
+          if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+            place = fetched;
+            // Update stored data
+            setSelectedPlaceData((prev) => new Map(prev).set(id, fetched));
+            console.log(`Found coordinates for ${fetched.name}: lat=${fetched.lat}, lng=${fetched.lng}`);
+          } else {
+            console.error(`Could not fetch valid coordinates for place ID: ${id}, name: ${place?.name}`);
+          }
+        }
+        
+        return place;
+      });
+      
+      const selectedPlacesData = (await Promise.all(selectedPlacesDataPromises))
+        .filter((c): c is Place => c !== undefined);
+      
+      // Also ensure start and end cities have valid coordinates
+      if ((start.lat === 0 && start.lng === 0) || !start.lat || !start.lng) {
+        console.log(`Fetching coordinates for start city: ${start.name} (${startCityId})`);
+        const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+        let fetched = await getPlaceById(startCityId);
+        if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && start.name) {
+          const searchResults = await searchPlacesByName(start.name, 5);
+          const exactMatch = searchResults.find(p => p.id === startCityId || p.name.toLowerCase() === start.name.toLowerCase());
+          if (exactMatch) fetched = exactMatch;
+        }
+        if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+          setStartCityData(fetched);
+          Object.assign(start, { lat: fetched.lat, lng: fetched.lng });
+          console.log(`Updated start city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+        }
+      }
+      
+      if ((end.lat === 0 && end.lng === 0) || !end.lat || !end.lng) {
+        console.log(`Fetching coordinates for end city: ${end.name} (${endCityId})`);
+        const { getPlaceById, searchPlacesByName } = await import("@/lib/nzCities");
+        let fetched = await getPlaceById(endCityId);
+        if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && end.name) {
+          const searchResults = await searchPlacesByName(end.name, 5);
+          const exactMatch = searchResults.find(p => p.id === endCityId || p.name.toLowerCase() === end.name.toLowerCase());
+          if (exactMatch) fetched = exactMatch;
+        }
+        if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+          setEndCityData(fetched);
+          Object.assign(end, { lat: fetched.lat, lng: fetched.lng });
+          console.log(`Updated end city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+        }
+      }
+
       // Combine selected places (city names) and things (stop names) into waypoint names
-      const placeNames = selectedPlaceIds.map((id) => {
-        const city = getCityById(id);
-        return city?.name ?? "";
-      }).filter(Boolean);
+      const placeNames = selectedPlacesData.map((city) => city.name);
       
       const thingNames = selectedThingIds.map((id) => {
         const stop = NZ_STOPS.find((s) => s.id === id);
@@ -451,31 +753,109 @@ export function useTripPlanner() {
         rawWaypointNames
       );
 
+      // Debug logging
+      console.log("Waypoint processing:", {
+        selectedPlaceIds,
+        selectedPlacesData: selectedPlacesData.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })),
+        placeNames,
+        rawWaypointNames,
+        orderedNames,
+        start: start.name,
+        end: end.name
+      });
+
       const stops: string[] = [start.name, ...orderedNames, end.name];
       setRouteStops(stops);
 
       const totalDays = countDaysInclusive(startDate, endDate);
       const initialNights = allocateNightsForStops(stops.length, totalDays);
+      
+      // Handle special case: same start/end with no middle stops
+      // Start = road (0 nights), End = itinerary (at least 1 night)
+      if (stops.length === 2 && start.name === end.name) {
+        initialNights[0] = 0; // Start: road sector
+        initialNights[1] = Math.max(1, totalDays); // End: itinerary sector
+        setStartSectorType("road");
+        setEndSectorType("itinerary");
+      } else if (stops.length === 2) {
+        // Just start and end (different cities) - end should be itinerary by default
+        initialNights[0] = 0; // Start: road sector
+        initialNights[1] = Math.max(1, totalDays); // End: itinerary sector
+        setStartSectorType("road");
+        setEndSectorType("itinerary");
+      } else {
+        // Default: both start and end are road sectors (0 nights)
+        // Allocate all nights to middle stops only
+        initialNights[0] = 0;
+        initialNights[initialNights.length - 1] = 0;
+        
+        // Redistribute all totalDays to middle stops (round-robin)
+        if (stops.length > 2 && totalDays > 0) {
+          const middleStopCount = stops.length - 2;
+          const baseNightsPerMiddle = Math.floor(totalDays / middleStopCount);
+          const extraNights = totalDays % middleStopCount;
+          
+          for (let i = 1; i < stops.length - 1; i++) {
+            initialNights[i] = baseNightsPerMiddle + (i - 1 < extraNights ? 1 : 0);
+          }
+        }
+        
+        setStartSectorType("road");
+        setEndSectorType("road");
+      }
+      
       setNightsPerStop(initialNights);
 
       const nextPlan = buildTripPlanFromStopsAndNights(stops, initialNights, startDate);
       setPlan(nextPlan);
-      syncDayDetailsFromPlan(nextPlan);
+      setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
 
       // collapse stop groups by default for new plans
       setOpenStops({});
 
-      if (nextPlan.days.length > 0) {
-        const last = nextPlan.days[nextPlan.days.length - 1];
-        setEndDate(last.date);
-      }
+      // Don't update endDate - preserve user's original selection
 
-      const waypointPoints: MapPoint[] = matchedStopsInOrder.map((stop) => ({
-        lat: stop.lat,
-        lng: stop.lng,
-        name: stop.name,
-      }));
+      // Build map points from all selected places, not just matched stops
+      // Create a map of place names to their coordinates for quick lookup
+      const placeCoordsMap = new Map<string, { lat: number; lng: number; name: string }>();
+      
+      // Add selected places coordinates (case-insensitive lookup)
+      selectedPlacesData.forEach((place) => {
+        const key = place.name.toLowerCase();
+        placeCoordsMap.set(key, { lat: place.lat, lng: place.lng, name: place.name });
+      });
+      
+      // Add matched stops coordinates (for things/stops)
+      matchedStopsInOrder.forEach((stop) => {
+        const key = stop.name.toLowerCase();
+        if (!placeCoordsMap.has(key)) {
+          placeCoordsMap.set(key, { lat: stop.lat, lng: stop.lng, name: stop.name });
+        }
+      });
+
+      // Build waypoint points in the order they appear in orderedNames
+      const waypointPoints: MapPoint[] = orderedNames.map((name) => {
+        // Try case-insensitive lookup first
+        const key = name.toLowerCase();
+        const coords = placeCoordsMap.get(key);
+        if (coords) {
+          return { lat: coords.lat, lng: coords.lng, name: coords.name };
+        }
+        // Fallback: try exact match in selected places
+        const place = selectedPlacesData.find((p) => p.name.toLowerCase() === key);
+        if (place) {
+          return { lat: place.lat, lng: place.lng, name: place.name };
+        }
+        // Fallback: try exact match in matched stops
+        const stop = matchedStopsInOrder.find((s) => s.name.toLowerCase() === key);
+        if (stop) {
+          return { lat: stop.lat, lng: stop.lng, name: stop.name };
+        }
+        // Last resort: log warning and return with 0,0 (shouldn't happen)
+        console.warn(`Could not find coordinates for waypoint: ${name}`);
+        return { lat: 0, lng: 0, name };
+      }).filter((p) => p.lat !== 0 || p.lng !== 0); // Filter out invalid coordinates
 
       const points: MapPoint[] = [
         { lat: start.lat, lng: start.lng, name: start.name },
@@ -483,15 +863,61 @@ export function useTripPlanner() {
         { lat: end.lat, lng: end.lng, name: end.name },
       ];
 
-      setMapPoints(points);
+      // Validate all points have valid coordinates
+      const validPoints = points.filter((p) => {
+        const isValid = p.lat !== 0 && p.lng !== 0 && 
+                       p.lat >= -90 && p.lat <= 90 && 
+                       p.lng >= -180 && p.lng <= 180;
+        if (!isValid) {
+          console.warn(`Invalid coordinates for ${p.name}: lat=${p.lat}, lng=${p.lng}`);
+        }
+        return isValid;
+      });
+
+      console.log("Map points validation:", {
+        total: points.length,
+        valid: validPoints.length,
+        points: points.map(p => ({ name: p.name, lat: p.lat, lng: p.lng }))
+      });
+
+      // Need at least start and end cities with valid coordinates
+      if (validPoints.length < 2) {
+        console.error("Not enough valid map points:", validPoints);
+        // Try to provide more helpful error message
+        const missingPlaces = points
+          .filter(p => {
+            const isValid = p.lat !== 0 && p.lng !== 0 && 
+                           p.lat >= -90 && p.lat <= 90 && 
+                           p.lng >= -180 && p.lng <= 180;
+            return !isValid;
+          })
+          .map(p => p.name);
+        
+        if (missingPlaces.length > 0) {
+          setError(`Could not generate map: missing valid coordinates for: ${missingPlaces.join(", ")}. Please try selecting these places again.`);
+        } else {
+          setError("Could not generate map: missing valid coordinates for selected places.");
+        }
+        // Still set the valid points we have (at least start/end if valid)
+        setMapPoints(validPoints);
+        return;
+      }
+
+      setMapPoints(validPoints);
 
       setLegsLoading(true);
       try {
-        const roadLegs = await fetchRoadLegs(points);
-        setLegs(roadLegs);
+        // Only fetch legs if we have valid points
+        if (validPoints.length >= 2) {
+          const roadLegs = await fetchRoadLegs(validPoints);
+          setLegs(roadLegs);
+        } else {
+          console.warn("Not enough valid points for routing, using fallback");
+          setLegs(buildFallbackLegs(validPoints));
+        }
       } catch (routingErr) {
         console.error("Road routing failed, falling back:", routingErr);
-        setLegs(buildFallbackLegs(points));
+        setLegs(buildFallbackLegs(validPoints));
       } finally {
         setLegsLoading(false);
       }
@@ -516,7 +942,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(routeStops, next, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, next));
 
     if (nextPlan.days.length > 0) {
@@ -619,7 +1045,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
 
@@ -662,6 +1088,25 @@ export function useTripPlanner() {
     const newNightsPerStop = arrayMove(nightsPerStop, from, to);
     const newMapPoints = arrayMove(mapPoints, from, to);
 
+    // Reorder road sector details (keyed by destination stop index)
+    // When a stop moves, its road sector details (which are keyed by destination index) move with it
+    const newRoadSectorDetails: Record<number, import("@/lib/trip-planner/utils").RoadSectorDetail> = {};
+    for (let newIdx = 0; newIdx < newRouteStops.length; newIdx++) {
+      // Find which old index this new index corresponds to
+      let oldIdx: number;
+      if (newIdx === from) {
+        oldIdx = to; // The item that moved from 'to' is now at 'from'
+      } else if (newIdx === to) {
+        oldIdx = from; // The item that moved from 'from' is now at 'to'
+      } else {
+        oldIdx = newIdx; // Unchanged positions
+      }
+      if (roadSectorDetails[oldIdx]) {
+        newRoadSectorDetails[newIdx] = roadSectorDetails[oldIdx];
+      }
+    }
+    setRoadSectorDetails(newRoadSectorDetails);
+
     // preserve open state by stop name
     const nextOpenStops: Record<number, boolean> = {};
     for (let oldIdx = 0; oldIdx < routeStops.length; oldIdx++) {
@@ -678,7 +1123,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
 
     if (nextPlan.days.length > 0) {
@@ -702,17 +1147,25 @@ export function useTripPlanner() {
 
   function handleStartAddStop(afterIndex: number) {
     setAddingStopAfterIndex(afterIndex);
-    if (!newStopCityId && NZ_CITIES.length > 0) setNewStopCityId(NZ_CITIES[0].id);
+    setNewStopCityId(null);
   }
 
   function handleCancelAddStop() {
     setAddingStopAfterIndex(null);
   }
 
-  function handleConfirmAddStop() {
+  async function handleConfirmAddStop() {
     if (addingStopAfterIndex === null || !newStopCityId) return;
 
-    const city = getCityById(newStopCityId);
+    // Try to get from cache first
+    let city = getCityById(newStopCityId);
+    
+    // If not in cache, fetch from database
+    if (!city) {
+      const { getPlaceById } = await import("@/lib/nzCities");
+      city = await getPlaceById(newStopCityId);
+    }
+    
     if (!city) {
       alert("Please select a valid stop.");
       return;
@@ -740,7 +1193,7 @@ export function useTripPlanner() {
 
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
-    syncDayDetailsFromPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
 
@@ -796,6 +1249,150 @@ export function useTripPlanner() {
     }));
   }
 
+  function toggleRoadSectorOpen(destinationStopIndex: number) {
+    setRoadSectorDetails((prev) => {
+      const existing = prev[destinationStopIndex];
+      if (!existing) {
+        return { ...prev, [destinationStopIndex]: { activities: "", isOpen: true } };
+      }
+      return { ...prev, [destinationStopIndex]: { ...existing, isOpen: !existing.isOpen } };
+    });
+  }
+
+  function updateRoadSectorActivities(destinationStopIndex: number, activities: string) {
+    setRoadSectorDetails((prev) => ({
+      ...prev,
+      [destinationStopIndex]: {
+        activities,
+        isOpen: prev[destinationStopIndex]?.isOpen ?? true,
+      },
+    }));
+  }
+
+  function convertStartToItinerary() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    // Set start city to at least 1 night
+    if (newNightsPerStop[0] === 0) {
+      newNightsPerStop[0] = 1;
+    }
+    
+    setNightsPerStop(newNightsPerStop);
+    setStartSectorType("itinerary");
+    
+    // Initialize road sector detail for the first middle stop (if exists) or end (if no middle stops)
+    if (routeStops.length > 1) {
+      const targetIndex = routeStops.length > 2 ? 1 : routeStops.length - 1;
+      setRoadSectorDetails((prev) => {
+        if (!prev[targetIndex]) {
+          return { ...prev, [targetIndex]: { activities: "", isOpen: false } };
+        }
+        return prev;
+      });
+    }
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertStartToRoad() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    newNightsPerStop[0] = 0;
+    
+    setNightsPerStop(newNightsPerStop);
+    setStartSectorType("road");
+    
+    // Remove road sector detail for the first middle stop (if exists) or end (if no middle stops)
+    if (routeStops.length > 1) {
+      const targetIndex = routeStops.length > 2 ? 1 : routeStops.length - 1;
+      setRoadSectorDetails((prev) => {
+        const next = { ...prev };
+        delete next[targetIndex];
+        return next;
+      });
+    }
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertEndToItinerary() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    const endIndex = routeStops.length - 1;
+    // Set end city to at least 1 night
+    if (newNightsPerStop[endIndex] === 0) {
+      newNightsPerStop[endIndex] = 1;
+    }
+    
+    setNightsPerStop(newNightsPerStop);
+    setEndSectorType("itinerary");
+    
+    // Initialize road sector detail for the end stop
+    setRoadSectorDetails((prev) => {
+      if (!prev[endIndex]) {
+        return { ...prev, [endIndex]: { activities: "", isOpen: false } };
+      }
+      return prev;
+    });
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
+  function convertEndToRoad() {
+    if (!startDate || routeStops.length === 0) return;
+    
+    const newNightsPerStop = [...nightsPerStop];
+    const endIndex = routeStops.length - 1;
+    newNightsPerStop[endIndex] = 0;
+    
+    setNightsPerStop(newNightsPerStop);
+    setEndSectorType("road");
+    
+    // Remove road sector detail for the end stop
+    setRoadSectorDetails((prev) => {
+      const next = { ...prev };
+      delete next[endIndex];
+      return next;
+    });
+    
+    const nextPlan = buildTripPlanFromStopsAndNights(routeStops, newNightsPerStop, startDate);
+    setPlan(nextPlan);
+    setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
+    setDayStopMeta(buildDayStopMeta(routeStops, newNightsPerStop));
+    
+    if (nextPlan.days.length > 0) {
+      const last = nextPlan.days[nextPlan.days.length - 1];
+      setEndDate(last.date);
+    }
+  }
+
   function toggleStopOpen(stopIndex: number) {
     setOpenStops((prev) => ({ ...prev, [stopIndex]: !(prev[stopIndex] ?? false) }));
   }
@@ -820,11 +1417,18 @@ export function useTripPlanner() {
       : "Add dates";
 
   const whereSummary =
-    startCity && endCity ? `${startCity.name} → ${endCity.name}` : "Add destinations";
+    startCity && endCity 
+      ? `${startCity.name} → ${endCity.name}` 
+      : startCity 
+      ? "Select End City"
+      : "Select Start City";
 
   const selectedPlaces = useMemo(() => {
-    return selectedPlaceIds.map((id) => getCityById(id)).filter((c): c is NonNullable<typeof c> => c !== undefined);
-  }, [selectedPlaceIds]);
+    return selectedPlaceIds.map((id) => {
+      // First try stored data, then cache lookup
+      return selectedPlaceData.get(id) || getCityById(id);
+    }).filter((c): c is NonNullable<typeof c> => c !== undefined);
+  }, [selectedPlaceIds, selectedPlaceData]);
 
   const selectedThings = useMemo(() => {
     return selectedThingIds.map((id) => NZ_STOPS.find((s) => s.id === id)).filter((s): s is NonNullable<typeof s> => s !== undefined);
@@ -832,7 +1436,7 @@ export function useTripPlanner() {
 
   const placesSummary = selectedPlaces.length > 0 
     ? `${selectedPlaces.length} place${selectedPlaces.length > 1 ? 's' : ''} selected`
-    : "Add places";
+    : "Add trip stops";
 
   const thingsSummary = selectedThings.length > 0
     ? `${selectedThings.length} thing${selectedThings.length > 1 ? 's' : ''} selected`
@@ -897,36 +1501,17 @@ export function useTripPlanner() {
         selectedThingIds,
       };
 
-      const itineraryData = {
-        title: title || `Trip from ${startCity.name} to ${endCity.name}`,
+      const result = await saveItineraryToSupabase(
+        user.id,
+        title || `Trip from ${startCity.name} to ${endCity.name}`,
         trip_input,
-        trip_plan: extended_trip_plan,
-      };
+        extended_trip_plan,
+        itineraryId
+      );
 
-      let error;
-      
-      if (itineraryId) {
-        // Update existing itinerary
-        const { error: updateError } = await supabase
-          .from("itineraries")
-          .update(itineraryData)
-          .eq("id", itineraryId)
-          .eq("user_id", user.id);
-        error = updateError;
-      } else {
-        // Insert new itinerary
-        const { error: insertError } = await supabase
-          .from("itineraries")
-          .insert({
-            user_id: user.id,
-            ...itineraryData,
-          });
-        error = insertError;
-      }
-
-      if (error) {
-        setSaveError(error.message);
-        return { success: false, error: error.message };
+      if (!result.success) {
+        setSaveError(result.error || "Failed to save itinerary");
+        return result;
       }
 
       setSaving(false);
@@ -1009,7 +1594,7 @@ export function useTripPlanner() {
       // Restore plan
       if (trip_plan.days && trip_plan.days.length > 0) {
         setPlan(trip_plan);
-        syncDayDetailsFromPlan(trip_plan);
+        setDayDetails((prev) => syncDayDetailsFromPlan(trip_plan, prev));
       }
 
       // Restore day details
@@ -1035,6 +1620,117 @@ export function useTripPlanner() {
       const errorMessage = err instanceof Error ? err.message : "Failed to load itinerary";
       setError(errorMessage);
       return { success: false, error: errorMessage };
+    }
+  }
+
+  // Save current state to localStorage for persistence across navigation
+  function saveStateToLocalStorage(): void {
+    try {
+      if (!startCity || !endCity || !startDate || !endDate) {
+        return; // Don't save incomplete state
+      }
+
+      const state = {
+        startCityId,
+        endCityId,
+        startDate,
+        endDate,
+        selectedPlaceIds,
+        selectedThingIds,
+        routeStops,
+        nightsPerStop,
+        plan: plan ? {
+          ...plan,
+          routeStops,
+          nightsPerStop,
+          dayStopMeta,
+          dayDetails,
+          mapPoints,
+          legs,
+          selectedPlaceIds,
+          selectedThingIds,
+        } : null,
+      };
+
+      localStorage.setItem("tripPlanner_draft", JSON.stringify(state));
+    } catch (err) {
+      console.error("Failed to save trip planner state:", err);
+    }
+  }
+
+  // Restore state from localStorage
+  function restoreStateFromLocalStorage(): boolean {
+    try {
+      const saved = localStorage.getItem("tripPlanner_draft");
+      if (!saved) return false;
+
+      const state = JSON.parse(saved);
+      
+      if (!state.startCityId || !state.endCityId || !state.startDate || !state.endDate) {
+        return false;
+      }
+
+      // Restore basic trip input
+      setStartCityId(state.startCityId);
+      setEndCityId(state.endCityId);
+      setStartDate(state.startDate);
+      setEndDate(state.endDate);
+
+      // Restore date range
+      const start = fromIsoDate(state.startDate);
+      const end = fromIsoDate(state.endDate);
+      if (start && end) {
+        setDateRange({ from: start, to: end });
+        setCalendarMonth(start);
+      }
+
+      // Restore selected places and things
+      if (state.selectedPlaceIds) {
+        setSelectedPlaceIds(state.selectedPlaceIds);
+      }
+      if (state.selectedThingIds) {
+        setSelectedThingIds(state.selectedThingIds);
+      }
+
+      // Restore route stops and nights
+      if (state.routeStops && state.nightsPerStop) {
+        setRouteStops(state.routeStops);
+        setNightsPerStop(state.nightsPerStop);
+        setDayStopMeta(buildDayStopMeta(state.routeStops, state.nightsPerStop));
+      }
+
+      // Restore plan if it exists
+      if (state.plan && state.plan.days && state.plan.days.length > 0) {
+        setPlan(state.plan);
+        setDayDetails((prev) => syncDayDetailsFromPlan(state.plan, prev));
+        
+        // Restore extended plan data
+        if (state.plan.dayDetails) {
+          setDayDetails(state.plan.dayDetails);
+        }
+        if (state.plan.mapPoints) {
+          setMapPoints(state.plan.mapPoints);
+        }
+        if (state.plan.legs) {
+          setLegs(state.plan.legs);
+        }
+        
+        setHasSubmitted(true);
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Failed to restore trip planner state:", err);
+      return false;
+    }
+  }
+
+  // Clear saved state from localStorage
+  function clearSavedState(): void {
+    try {
+      localStorage.removeItem("tripPlanner_draft");
+    } catch (err) {
+      console.error("Failed to clear saved state:", err);
     }
   }
 
@@ -1093,6 +1789,7 @@ export function useTripPlanner() {
     legs,
     legsLoading,
     dayDetails,
+    roadSectorDetails,
     addingStopAfterIndex,
     newStopCityId,
     openStops,
@@ -1154,11 +1851,22 @@ export function useTripPlanner() {
     toggleDayOpen,
     updateDayNotes,
     updateDayAccommodation,
+    toggleRoadSectorOpen,
+    updateRoadSectorActivities,
+    startSectorType,
+    endSectorType,
+    convertStartToItinerary,
+    convertStartToRoad,
+    convertEndToItinerary,
+    convertEndToRoad,
     toggleStopOpen,
     expandAllStops,
     collapseAllStops,
     saveItinerary,
     loadItinerary,
+    saveStateToLocalStorage,
+    restoreStateFromLocalStorage,
+    clearSavedState,
     // results
     startResults,
     endResults,

@@ -1,17 +1,8 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
-import { ChevronDown, GripVertical } from "lucide-react";
-import { NZ_CITIES } from "@/lib/nzCities";
+import { useMemo } from "react";
 import type { TripPlan } from "@/lib/itinerary";
-import {
-  formatShortRangeDate,
-  makeDayKey,
-  type DayDetail,
-  type DayStopMeta,
-} from "@/lib/trip-planner/utils";
-import DayCard from "@/components/trip-planner/DayCard";
-
+import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
 import {
   DndContext,
   closestCenter,
@@ -23,52 +14,14 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import StartEndSectorCard from "@/components/trip-planner/StartEndSectorCard";
+import RoadSectorCard from "@/components/trip-planner/RoadSectorCard";
+import StopGroupWithRoadSector from "@/components/trip-planner/StopGroupWithRoadSector";
+import type { DraftItineraryProps, Group } from "@/components/trip-planner/DraftItinerary.types";
 
-type Props = {
-  plan: TripPlan;
-  routeStops: string[];
-  nightsPerStop: number[];
-  dayStopMeta: DayStopMeta[];
-  dayDetails: Record<string, DayDetail>;
-
-  addingStopAfterIndex: number | null;
-  newStopCityId: string | null;
-  setNewStopCityId: (v: string) => void;
-
-  openStops: Record<number, boolean>;
-  onToggleStopOpen: (stopIndex: number) => void;
-  onExpandAllStops: () => void;
-  onCollapseAllStops: () => void;
-
-  onChangeNights: (stopIndex: number, newValue: number) => void;
-  onToggleDayOpen: (date: string, location: string) => void;
-  onUpdateDayNotes: (date: string, location: string, notes: string) => void;
-  onUpdateDayAccommodation: (
-    date: string,
-    location: string,
-    accommodation: string
-  ) => void;
-
-  onStartAddStop: (stopIndex: number) => void;
-  onConfirmAddStop: () => void;
-  onCancelAddStop: () => void;
-  onRemoveStop: (stopIndex: number) => void;
-
-  // ✅ new
-  onReorderStops: (fromIndex: number, toIndex: number) => void;
-};
-
-type Group = {
-  stopIndex: number;
-  stopName: string;
-  dayIndices: number[];
-  startDate: string;
-  endDate: string;
-};
+type Props = DraftItineraryProps;
 
 export default function DraftItinerary({
   plan,
@@ -87,6 +40,15 @@ export default function DraftItinerary({
   onToggleDayOpen,
   onUpdateDayNotes,
   onUpdateDayAccommodation,
+  roadSectorDetails,
+  onToggleRoadSectorOpen,
+  onUpdateRoadSectorActivities,
+  startSectorType,
+  endSectorType,
+  onConvertStartToItinerary,
+  onConvertStartToRoad,
+  onConvertEndToItinerary,
+  onConvertEndToRoad,
   onStartAddStop,
   onConfirmAddStop,
   onCancelAddStop,
@@ -103,6 +65,8 @@ export default function DraftItinerary({
       const meta = dayStopMeta[i];
       const stopIndex = meta?.stopIndex ?? -1;
       if (stopIndex < 0) continue;
+      // Exclude start (0) and end (routeStops.length - 1) - they're rendered separately
+      if (stopIndex === 0 || stopIndex === routeStops.length - 1) continue;
       if (seen.has(stopIndex)) continue;
 
       const indices: number[] = [];
@@ -147,11 +111,11 @@ export default function DraftItinerary({
   }
 
   return (
-    <div className="card p-4 md:p-6 space-y-4">
+    <div className="card p-4 md:p-6 space-y-4" style={{ borderColor: "rgba(148, 163, 184, 0.3)" }}>
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Your draft itinerary</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <h2 className="text-lg font-semibold">Your Itinerary</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Expand a location to see its days. Drag the grip to reorder stops.
           </p>
         </div>
@@ -160,14 +124,14 @@ export default function DraftItinerary({
           <button
             type="button"
             onClick={onExpandAllStops}
-            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10 active:bg-white/15 transition"
+            className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700"
           >
             Expand all
           </button>
           <button
             type="button"
             onClick={onCollapseAllStops}
-            className="px-3 py-1.5 rounded-full border border-white/15 text-xs hover:bg-white/10 active:bg-white/15 transition"
+            className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700"
           >
             Collapse all
           </button>
@@ -175,409 +139,190 @@ export default function DraftItinerary({
       </div>
 
       <div className="space-y-3">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={stopGroups.map((g) => g.stopIndex)} strategy={verticalListSortingStrategy}>
-            {stopGroups.map((g) => (
-              <StopGroupCard
-                key={`stop-${g.stopIndex}-${g.stopName}`}
-                group={g}
-                routeStops={routeStops}
-                nightsPerStop={nightsPerStop}
-                plan={plan}
-                dayDetails={dayDetails}
-                dayStopMeta={dayStopMeta}
-                openStops={openStops}
-                addingStopAfterIndex={addingStopAfterIndex}
-                newStopCityId={newStopCityId}
-                setNewStopCityId={setNewStopCityId}
-                onToggleStopOpen={onToggleStopOpen}
-                onChangeNights={onChangeNights}
-                onToggleDayOpen={onToggleDayOpen}
-                onUpdateDayNotes={onUpdateDayNotes}
-                onUpdateDayAccommodation={onUpdateDayAccommodation}
-                onStartAddStop={onStartAddStop}
-                onConfirmAddStop={onConfirmAddStop}
-                onCancelAddStop={onCancelAddStop}
-                onRemoveStop={onRemoveStop}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-      </div>
-    </div>
-  );
-}
+        {/* Helper to get group data for a stop index */}
+        {(() => {
+          const getGroupForStop = (stopIdx: number): Group | null => {
+            if (!plan || plan.days.length === 0) return null;
+            
+            const indices: number[] = [];
+            for (let j = 0; j < plan.days.length; j++) {
+              if ((dayStopMeta[j]?.stopIndex ?? -1) === stopIdx) indices.push(j);
+            }
+            if (indices.length === 0) {
+              // No days for this stop, return minimal group
+              return {
+                stopIndex: stopIdx,
+                stopName: routeStops[stopIdx] ?? "",
+                dayIndices: [],
+                startDate: "",
+                endDate: "",
+              };
+            }
 
-function StopGroupCard({
-  group: g,
-  routeStops,
-  nightsPerStop,
-  plan,
-  dayDetails,
-  openStops,
-  addingStopAfterIndex,
-  newStopCityId,
-  setNewStopCityId,
-  onToggleStopOpen,
-  onChangeNights,
-  onToggleDayOpen,
-  onUpdateDayNotes,
-  onUpdateDayAccommodation,
-  onStartAddStop,
-  onConfirmAddStop,
-  onCancelAddStop,
-  onRemoveStop,
-}: {
-  group: Group;
-  routeStops: string[];
-  nightsPerStop: number[];
-  plan: TripPlan;
-  dayDetails: Record<string, DayDetail>;
-  dayStopMeta: DayStopMeta[];
-  openStops: Record<number, boolean>;
-  addingStopAfterIndex: number | null;
-  newStopCityId: string | null;
-  setNewStopCityId: (v: string) => void;
-  onToggleStopOpen: (stopIndex: number) => void;
-  onChangeNights: (stopIndex: number, newValue: number) => void;
-  onToggleDayOpen: (date: string, location: string) => void;
-  onUpdateDayNotes: (date: string, location: string, notes: string) => void;
-  onUpdateDayAccommodation: (
-    date: string,
-    location: string,
-    accommodation: string
-  ) => void;
-  onStartAddStop: (stopIndex: number) => void;
-  onConfirmAddStop: () => void;
-  onCancelAddStop: () => void;
-  onRemoveStop: (stopIndex: number) => void;
-}) {
-  const isStopOpen = openStops[g.stopIndex] ?? false;
-  const dayCount = g.dayIndices.length;
-  const nightsHere = nightsPerStop[g.stopIndex] ?? 1;
+            const first = plan.days[indices[0]];
+            const last = plan.days[indices[indices.length - 1]];
 
-  const isDragDisabled = g.stopIndex === 0 || g.stopIndex === routeStops.length - 1;
+            return {
+              stopIndex: stopIdx,
+              stopName: routeStops[stopIdx] ?? first.location,
+              dayIndices: indices,
+              startDate: first.date,
+              endDate: last.date,
+            };
+          };
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: g.stopIndex,
-    disabled: isDragDisabled,
-  });
+          const startGroup = routeStops.length > 0 ? getGroupForStop(0) : null;
+          const endGroup = routeStops.length > 1 ? getGroupForStop(routeStops.length - 1) : null;
+          const startNights = routeStops.length > 0 ? (nightsPerStop[0] ?? 0) : 0;
+          const endNights = routeStops.length > 1 ? (nightsPerStop[routeStops.length - 1] ?? 0) : 0;
 
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={[
-        "rounded-2xl border border-white/10 bg-white/5 overflow-hidden",
-        isDragging ? "opacity-80" : "",
-      ].join(" ")}
-    >
-      {/* Stop header */}
-      <div className="px-3 md:px-4 py-3">
-        {/* Mobile: Stack layout */}
-        <div className="md:hidden space-y-3">
-          <div className="flex items-center gap-2 min-w-0">
-            {!isDragDisabled && (
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="p-1.5 -ml-1 rounded-full border border-white/15 text-gray-300 hover:bg-white/10 active:bg-white/15 touch-none cursor-grab"
-                aria-label="Reorder stop"
-                {...listeners}
-                {...attributes}
-              >
-                <GripVertical className="w-4 h-4" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => onToggleStopOpen(g.stopIndex)}
-              className="flex items-center gap-2.5 min-w-0 flex-1 group"
-            >
-              <span
-                className={[
-                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                  "border border-white/10 bg-white/5 group-hover:bg-white/10 transition",
-                ].join(" ")}
-                aria-hidden
-              >
-                <ChevronDown
-                  className={[
-                    "w-3.5 h-3.5 opacity-80 transition-transform duration-200",
-                    isStopOpen ? "rotate-0" : "-rotate-90",
-                  ].join(" ")}
+          return (
+            <>
+              {/* Start sector */}
+              {startGroup && (
+                <StartEndSectorCard
+                  stopIndex={0}
+                  stopName={startGroup.stopName}
+                  sectorType={startSectorType}
+                  nightsHere={startNights}
+                  isOpen={openStops[0] ?? false}
+                  dayIndices={startGroup.dayIndices}
+                  plan={plan}
+                  dayDetails={dayDetails}
+                  dayStopMeta={dayStopMeta}
+                  routeStops={routeStops}
+                  nightsPerStop={nightsPerStop}
+                  addingStopAfterIndex={addingStopAfterIndex}
+                  newStopCityId={newStopCityId}
+                  setNewStopCityId={setNewStopCityId}
+                  onToggleOpen={() => onToggleStopOpen(0)}
+                  onChangeNights={onChangeNights}
+                  onToggleDayOpen={onToggleDayOpen}
+                  onUpdateDayNotes={onUpdateDayNotes}
+                  onUpdateDayAccommodation={onUpdateDayAccommodation}
+                  onConvertToItinerary={onConvertStartToItinerary}
+                  onConvertToRoad={onConvertStartToRoad}
+                  roadSectorDetails={roadSectorDetails}
+                  onToggleRoadSectorOpen={onToggleRoadSectorOpen}
+                  onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
+                  onStartAddStop={onStartAddStop}
+                  onConfirmAddStop={onConfirmAddStop}
+                  onCancelAddStop={onCancelAddStop}
                 />
-              </span>
+              )}
 
-              <div className="min-w-0 flex-1">
-                <div className="text-base font-semibold text-white break-words">{g.stopName}</div>
-                <div className="text-[11px] text-gray-300 mt-0.5">
-                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
-                  {dayCount === 1 ? "" : "s"}
-                </div>
-              </div>
-            </button>
-          </div>
-
-          {/* Nights stepper for mobile */}
-          <div className="flex items-center gap-2 pl-9">
-            <span className="text-[11px] text-gray-400">Nights:</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
-                className="w-8 h-8 rounded-lg border border-white/20 text-sm hover:bg-white/10 active:bg-white/15 flex items-center justify-center"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                min={1}
-                value={nightsHere}
-                onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
-                className="w-12 text-center input-dark input-no-spinner text-sm py-1.5 px-1"
-              />
-              <button
-                type="button"
-                onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
-                className="w-8 h-8 rounded-lg border border-white/20 text-sm hover:bg-white/10 active:bg-white/15 flex items-center justify-center"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop: Horizontal layout */}
-        <div className="hidden md:flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            {!isDragDisabled && (
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="p-2 -ml-2 rounded-full border border-white/15 text-gray-300 hover:bg-white/10 active:bg-white/15 touch-none cursor-grab"
-                aria-label="Reorder stop"
-                {...listeners}
-                {...attributes}
-              >
-                <GripVertical className="w-4 h-4" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => onToggleStopOpen(g.stopIndex)}
-              className="flex items-center gap-3 min-w-0 group"
-            >
-              <span
-                className={[
-                  "w-8 h-8 rounded-xl flex items-center justify-center",
-                  "border border-white/10 bg-white/5 group-hover:bg-white/10 transition",
-                ].join(" ")}
-                aria-hidden
-              >
-                <ChevronDown
-                  className={[
-                    "w-4 h-4 opacity-80 transition-transform duration-200",
-                    isStopOpen ? "rotate-0" : "-rotate-90",
-                  ].join(" ")}
+              {/* Road sector from start to first middle stop - only show if start is itinerary sector */}
+              {startGroup && stopGroups.length > 0 && startSectorType === "itinerary" && (
+                <RoadSectorCard
+                  fromStopIndex={0}
+                  toStopIndex={stopGroups[0].stopIndex}
+                  fromStopName={startGroup.stopName}
+                  toStopName={stopGroups[0].stopName}
+                  isOpen={roadSectorDetails[stopGroups[0].stopIndex]?.isOpen ?? false}
+                  activities={roadSectorDetails[stopGroups[0].stopIndex]?.activities ?? ""}
+                  onToggleOpen={() => onToggleRoadSectorOpen(stopGroups[0].stopIndex)}
+                  onUpdateActivities={(activities) => onUpdateRoadSectorActivities(stopGroups[0].stopIndex, activities)}
                 />
-              </span>
+              )}
 
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white truncate">{g.stopName}</div>
-                <div className="text-[11px] text-gray-300 truncate">
-                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
-                  {dayCount === 1 ? "" : "s"}
-                </div>
-              </div>
-            </button>
-          </div>
+              {/* Road sector from start to end when both are itinerary sectors and no middle stops */}
+              {startGroup && endGroup && stopGroups.length === 0 && startSectorType === "itinerary" && endSectorType === "itinerary" && (
+                <RoadSectorCard
+                  fromStopIndex={0}
+                  toStopIndex={routeStops.length - 1}
+                  fromStopName={startGroup.stopName}
+                  toStopName={endGroup.stopName}
+                  isOpen={roadSectorDetails[routeStops.length - 1]?.isOpen ?? false}
+                  activities={roadSectorDetails[routeStops.length - 1]?.activities ?? ""}
+                  onToggleOpen={() => onToggleRoadSectorOpen(routeStops.length - 1)}
+                  onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
+                />
+              )}
 
-          {/* Nights stepper for desktop */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-gray-400 mr-1">Nights</span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
-                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                min={1}
-                value={nightsHere}
-                onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
-                className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
-              />
-              <button
-                type="button"
-                onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
-                className="px-2 py-1 rounded-full border border-white/20 text-xs hover:bg-white/10"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              {/* Middle stops */}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={stopGroups.map((g) => g.stopIndex)} strategy={verticalListSortingStrategy}>
+                  {stopGroups.map((g, idx) => (
+                    <StopGroupWithRoadSector
+                      key={`stop-wrapper-${g.stopIndex}`}
+                      group={g}
+                      idx={idx}
+                      stopGroups={stopGroups}
+                      routeStops={routeStops}
+                      nightsPerStop={nightsPerStop}
+                      plan={plan}
+                      dayDetails={dayDetails}
+                      dayStopMeta={dayStopMeta}
+                      roadSectorDetails={roadSectorDetails}
+                      openStops={openStops}
+                      addingStopAfterIndex={addingStopAfterIndex}
+                      newStopCityId={newStopCityId}
+                      setNewStopCityId={setNewStopCityId}
+                      onToggleStopOpen={onToggleStopOpen}
+                      onChangeNights={onChangeNights}
+                      onToggleDayOpen={onToggleDayOpen}
+                      onUpdateDayNotes={onUpdateDayNotes}
+                      onUpdateDayAccommodation={onUpdateDayAccommodation}
+                      onToggleRoadSectorOpen={onToggleRoadSectorOpen}
+                      onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
+                      onStartAddStop={onStartAddStop}
+                      onConfirmAddStop={onConfirmAddStop}
+                      onCancelAddStop={onCancelAddStop}
+                      onRemoveStop={onRemoveStop}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
 
-      {/* Stop content (animated collapse) */}
-      <div
-        className={[
-          "grid transition-[grid-template-rows] duration-250 ease-out",
-          isStopOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        ].join(" ")}
-      >
-        <div className="overflow-hidden">
-          <div className="px-3 md:px-4 pb-4">
-            <div className="pl-2 md:pl-3 border-l border-white/10 space-y-2">
-              {g.dayIndices.map((dayIdx, localIdx) => {
-                const d = plan.days[dayIdx];
-                const key = makeDayKey(d.date, d.location);
-                const detail = dayDetails[key];
-                const isOpen = detail?.isOpen ?? false;
+              {/* Road sector from last middle stop to end - only show if end is itinerary sector */}
+              {stopGroups.length > 0 && endGroup && endSectorType === "itinerary" && (
+                <RoadSectorCard
+                  fromStopIndex={stopGroups[stopGroups.length - 1].stopIndex}
+                  toStopIndex={routeStops.length - 1}
+                  fromStopName={stopGroups[stopGroups.length - 1].stopName}
+                  toStopName={endGroup.stopName}
+                  isOpen={roadSectorDetails[routeStops.length - 1]?.isOpen ?? false}
+                  activities={roadSectorDetails[routeStops.length - 1]?.activities ?? ""}
+                  onToggleOpen={() => onToggleRoadSectorOpen(routeStops.length - 1)}
+                  onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
+                />
+              )}
 
-                const isFirstForStop = localIdx === 0;
-
-                return (
-                  <DayCard
-                    key={`day-${d.dayNumber}-${key}`}
-                    day={d}
-                    isOpen={isOpen}
-                    detail={detail}
-                    onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
-                    onUpdateNotes={(notes) => onUpdateDayNotes(d.date, d.location, notes)}
-                    onUpdateAccommodation={(accommodation) =>
-                      onUpdateDayAccommodation(d.date, d.location, accommodation)
-                    }
-                  />
-                );
-              })}
-            </div>
-
-            {/* Stop options - only visible when expanded */}
-            <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-white/10">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
-                {/* Mobile: Stack layout */}
-                <div className="md:hidden space-y-3">
-                  {addingStopAfterIndex === g.stopIndex ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={newStopCityId ?? ""}
-                        onChange={(e) => setNewStopCityId(e.target.value)}
-                        className="input-dark text-xs flex-1 min-w-[200px]"
-                      >
-                        {NZ_CITIES.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={onConfirmAddStop}
-                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
-                      >
-                        Add stop
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onCancelAddStop}
-                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-3">
-                      {g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onStartAddStop(g.stopIndex)}
-                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                        >
-                          + Add stop after this
-                        </button>
-                      )}
-                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onRemoveStop(g.stopIndex)}
-                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                        >
-                          Remove this stop from trip
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Desktop: Horizontal layout, aligned right */}
-                <div className="hidden md:flex items-center gap-3">
-                  {addingStopAfterIndex === g.stopIndex ? (
-                    <>
-                      <select
-                        value={newStopCityId ?? ""}
-                        onChange={(e) => setNewStopCityId(e.target.value)}
-                        className="input-dark text-xs w-56"
-                      >
-                        {NZ_CITIES.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={onConfirmAddStop}
-                        className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-[var(--accent)] text-slate-900 hover:brightness-110"
-                      >
-                        Add stop
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onCancelAddStop}
-                        className="text-[11px] text-gray-300 hover:underline underline-offset-2"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onStartAddStop(g.stopIndex)}
-                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                        >
-                          + Add stop after this
-                        </button>
-                      )}
-                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onRemoveStop(g.stopIndex)}
-                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                        >
-                          Remove this stop from trip
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              {/* End sector */}
+              {endGroup && (
+                <StartEndSectorCard
+                  stopIndex={routeStops.length - 1}
+                  stopName={endGroup.stopName}
+                  sectorType={endSectorType}
+                  nightsHere={endNights}
+                  isOpen={openStops[routeStops.length - 1] ?? false}
+                  dayIndices={endGroup.dayIndices}
+                  plan={plan}
+                  dayDetails={dayDetails}
+                  dayStopMeta={dayStopMeta}
+                  routeStops={routeStops}
+                  nightsPerStop={nightsPerStop}
+                  addingStopAfterIndex={addingStopAfterIndex}
+                  newStopCityId={newStopCityId}
+                  setNewStopCityId={setNewStopCityId}
+                  onToggleOpen={() => onToggleStopOpen(routeStops.length - 1)}
+                  onChangeNights={onChangeNights}
+                  onToggleDayOpen={onToggleDayOpen}
+                  onUpdateDayNotes={onUpdateDayNotes}
+                  onUpdateDayAccommodation={onUpdateDayAccommodation}
+                  onConvertToItinerary={onConvertEndToItinerary}
+                  onConvertToRoad={onConvertEndToRoad}
+                  roadSectorDetails={roadSectorDetails}
+                  onToggleRoadSectorOpen={onToggleRoadSectorOpen}
+                  onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
+                  onStartAddStop={onStartAddStop}
+                  onConfirmAddStop={onConfirmAddStop}
+                  onCancelAddStop={onCancelAddStop}
+                />
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

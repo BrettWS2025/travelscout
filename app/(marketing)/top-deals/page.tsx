@@ -1,5 +1,10 @@
 import { TopDealsTable } from "@/components/TopDealsTable";
-export const metadata = { title: "Top Deals" };
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Top Deals",
+  description: "Hand-picked fares and promos with the key caveats. Always check bags, change fees, and travel dates. Find the best travel deals for your New Zealand adventure.",
+};
 
 export default function Page() {
   return (

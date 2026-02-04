@@ -26,8 +26,8 @@ export default function TripSummary({
       <ul className="space-y-1 text-sm">
         {routeStops.map((stopName, idx) => (
           <li key={`${stopName}-${idx}`} className="flex justify-between">
-            <span>{stopName}</span>
-            <span className="text-gray-300">
+            <span className="text-slate-800">{stopName}</span>
+            <span className="text-slate-800">
               {nightsPerStop[idx] ?? 1} night{(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
             </span>
           </li>
@@ -35,7 +35,7 @@ export default function TripSummary({
       </ul>
 
       {totalTripDays > 0 && startDate && endDate && (
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-slate-800 mt-2">
           Total days: <strong>{totalTripDays}</strong> ({formatDisplayDate(startDate)} –{" "}
           {formatDisplayDate(endDate)}).
         </p>

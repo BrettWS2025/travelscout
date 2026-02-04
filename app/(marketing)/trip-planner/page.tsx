@@ -15,7 +15,7 @@ export default function TripPlannerPage() {
       </h1>
 
       <p className="mb-6 text-sm text-gray-500">
-        Start with your dates and key stops. We’ll help you sketch a
+        Start with your dates and key stops. We'll help you sketch a
         day-by-day itinerary.
       </p>
 

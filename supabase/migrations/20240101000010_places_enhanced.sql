@@ -1,0 +1,163 @@
+-- ============================================================================
+-- STEP 2: ENHANCE PLACES TABLE (Canonical Place Entities)
+-- ============================================================================
+-- Purpose: This is your product truth, not LINZ's format
+-- - Internal ID vs source ID separation
+-- - Product-friendly fields
+-- - PostGIS geometry
+
+-- Add new columns to existing places table
+ALTER TABLE places
+  ADD COLUMN IF NOT EXISTS source_id TEXT UNIQUE, -- LINZ name_id (for tracking source)
+  ADD COLUMN IF NOT EXISTS source_feat_id TEXT,   -- LINZ feat_id
+  ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'other', -- Mapped from feat_type
+  ADD COLUMN IF NOT EXISTS region TEXT,           -- NZ region
+  ADD COLUMN IF NOT EXISTS status TEXT,           -- Official Approved, Unofficial Recorded, etc.
+  ADD COLUMN IF NOT EXISTS maori_name TEXT,       -- Māori name if available
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true; -- For filtering active places
+
+-- Create index on source_id for lookups
+CREATE INDEX IF NOT EXISTS idx_places_source_id ON places(source_id) WHERE source_id IS NOT NULL;
+
+-- Create index on category for filtering
+CREATE INDEX IF NOT EXISTS idx_places_category ON places(category);
+
+-- Create index on region for filtering
+CREATE INDEX IF NOT EXISTS idx_places_region ON places(region);
+
+-- Create index on is_active for filtering
+CREATE INDEX IF NOT EXISTS idx_places_is_active ON places(is_active);
+
+-- Create index on status for filtering
+CREATE INDEX IF NOT EXISTS idx_places_status ON places(status);
+
+-- ============================================================================
+-- STEP 4: POPULATE PLACES FROM LINZ (Data Transform Step)
+-- ============================================================================
+-- Purpose: Create canonical entities from raw rows
+-- Pattern: INSERT ... SELECT (deterministic, rerunnable)
+
+-- Function to populate places from linz_gazetteer_raw
+-- This will be called after CSV is loaded
+CREATE OR REPLACE FUNCTION populate_places_from_linz()
+RETURNS TABLE (
+  inserted_count BIGINT,
+  updated_count BIGINT,
+  skipped_count BIGINT
+) AS $$
+DECLARE
+  v_inserted BIGINT := 0;
+  v_updated BIGINT := 0;
+  v_skipped BIGINT := 0;
+  v_before_count BIGINT;
+  v_after_count BIGINT;
+BEGIN
+  -- Count existing places
+  SELECT COUNT(*) INTO v_before_count FROM places WHERE source_id IS NOT NULL;
+
+  -- Insert/update places from LINZ data
+  -- Only process POINT geometries (skip LINE, POLYGON, etc.)
+  -- Include all POINT places regardless of status
+  -- Only process records with valid coordinates
+  WITH linz_data AS (
+    SELECT DISTINCT ON (name_id)
+      name_id,
+      name,
+      feat_id,
+      feat_type,
+      crd_latitude::DOUBLE PRECISION AS lat,
+      crd_longitude::DOUBLE PRECISION AS lng,
+      status,
+      region,
+      maori_name,
+      geom_type
+    FROM linz_gazetteer_raw
+    WHERE geom_type = 'POINT'
+      AND crd_latitude IS NOT NULL
+      AND crd_longitude IS NOT NULL
+      AND crd_latitude != ''
+      AND crd_longitude != ''
+      AND crd_latitude::DOUBLE PRECISION BETWEEN -90 AND 90
+      AND crd_longitude::DOUBLE PRECISION BETWEEN -180 AND 180
+    ORDER BY name_id
+  ),
+  existing_places AS (
+    SELECT id, source_id FROM places WHERE source_id IS NOT NULL
+  )
+  INSERT INTO places (
+    id,                    -- Use existing id if source_id exists, otherwise generate UUID
+    source_id,             -- LINZ name_id
+    source_feat_id,        -- LINZ feat_id
+    name,                  -- Display name
+    lat,
+    lng,
+    geometry,              -- Will be auto-populated by trigger
+    category,              -- Will be mapped later via feature_type_map
+    region,
+    status,
+    maori_name,
+    is_active,
+    created_at,
+    updated_at
+  )
+  SELECT 
+    COALESCE(ep.id, uuid_generate_v4()::TEXT) AS id,
+    ld.name_id AS source_id,
+    ld.feat_id AS source_feat_id,
+    ld.name,
+    ld.lat,
+    ld.lng,
+    ST_SetSRID(ST_MakePoint(ld.lng, ld.lat), 4326) AS geometry,
+    'other' AS category,  -- Default, will be updated by feature_type_map
+    ld.region,
+    ld.status,
+      NULLIF(ld.maori_name, '') AS maori_name,
+      true AS is_active,  -- Include all POINT places regardless of status
+    COALESCE(
+      (SELECT created_at FROM places WHERE source_id = ld.name_id),
+      NOW()
+    ) AS created_at,
+    NOW() AS updated_at
+  FROM linz_data ld
+  LEFT JOIN existing_places ep ON ep.source_id = ld.name_id
+  ON CONFLICT (source_id) DO UPDATE SET
+    name = EXCLUDED.name,
+    source_feat_id = EXCLUDED.source_feat_id,
+    lat = EXCLUDED.lat,
+    lng = EXCLUDED.lng,
+    geometry = EXCLUDED.geometry,
+    region = EXCLUDED.region,
+    status = EXCLUDED.status,
+    maori_name = EXCLUDED.maori_name,
+    updated_at = NOW();
+
+  -- Count inserted (new source_ids)
+  SELECT COUNT(*) INTO v_inserted
+  FROM places
+  WHERE source_id IS NOT NULL
+    AND created_at >= NOW() - INTERVAL '1 minute';
+
+  -- Count updated (existing source_ids that were updated)
+  SELECT COUNT(*) INTO v_updated
+  FROM places
+  WHERE source_id IS NOT NULL
+    AND updated_at >= NOW() - INTERVAL '1 minute'
+    AND updated_at > created_at;
+
+  -- Count skipped (invalid data)
+  SELECT COUNT(*) INTO v_skipped
+  FROM linz_gazetteer_raw
+  WHERE geom_type != 'POINT'
+     OR crd_latitude IS NULL
+     OR crd_longitude IS NULL
+     OR crd_latitude = ''
+     OR crd_longitude = ''
+     OR crd_latitude::DOUBLE PRECISION NOT BETWEEN -90 AND 90
+     OR crd_longitude::DOUBLE PRECISION NOT BETWEEN -180 AND 180;
+
+  RETURN QUERY SELECT v_inserted, v_updated, v_skipped;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Note: This function should be called manually after CSV is loaded:
+-- SELECT * FROM populate_places_from_linz();

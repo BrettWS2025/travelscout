@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   MapPin,
   ChevronDown,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { NZ_CITIES, getCityById } from "@/lib/nzCities";
 import { NZ_STOPS, type NzStop } from "@/lib/nzStops";
-import { normalize, type CityLite } from "@/lib/trip-planner/utils";
+import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
 
 type ActivePlacesThingsPill = "places" | "things" | null;
 
@@ -59,13 +59,13 @@ function PlacesThingsListItem({
         e.stopPropagation();
         onClick();
       }}
-      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition"
+      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition"
     >
       <CityIcon variant={iconVariant} />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-white truncate">{title}</div>
+        <div className="text-sm font-medium text-slate-800 truncate">{title}</div>
         {subtitle ? (
-          <div className="text-[12px] text-gray-300 truncate">{subtitle}</div>
+          <div className="text-[12px] text-slate-600 truncate">{subtitle}</div>
         ) : null}
       </div>
     </button>
@@ -79,6 +79,7 @@ function PlacesPickerPanel({
   recent,
   suggested,
   selectedCityIds,
+  selectedPlaces,
   onSelectCity,
   onRemoveCity,
   mobileSheetOpen = false,
@@ -89,11 +90,14 @@ function PlacesPickerPanel({
   recent: CityLite[];
   suggested: CityLite[];
   selectedCityIds: string[];
+  selectedPlaces?: Array<{ id: string; name: string }>;
   onSelectCity: (cityId: string) => void;
   onRemoveCity: (cityId: string) => void;
   mobileSheetOpen?: boolean;
 }) {
   const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -102,6 +106,43 @@ function PlacesPickerPanel({
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
   }, []);
 
   const showBrowseLists = normalize(query).length === 0;
@@ -113,29 +154,30 @@ function PlacesPickerPanel({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <div className="text-base font-semibold text-white">
+          <div className="text-base font-semibold text-slate-800">
             Places to go
           </div>
-          <div className="text-[11px] text-gray-300">
+          <div className="text-[11px] text-slate-600">
             Type to search, or pick a suggestion.
           </div>
         </div>
       </div>
 
       {selectedCityIds.length > 0 && (
-        <div className="rounded-xl bg-white/5 border border-white/10 p-2 space-y-1">
-          <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2">
+        <div className="rounded-xl bg-slate-50 border border-slate-200 p-2 space-y-1">
+          <div className="text-[11px] text-slate-600 uppercase tracking-wide px-2">
             Selected places
           </div>
           {selectedCityIds.map((cityId) => {
-            const city = getCityById(cityId);
+            // Try to get from selectedPlaces first, then fall back to getCityById
+            const city = selectedPlaces?.find((p) => p.id === cityId) || getCityById(cityId);
             if (!city) return null;
             return (
               <div
                 key={cityId}
-                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/5"
+                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-100"
               >
-                <span className="text-sm text-white">{city.name}</span>
+                <span className="text-sm text-slate-800">{city.name}</span>
                 <button
                   type="button"
                   onMouseDown={(e) => e.stopPropagation()}
@@ -144,9 +186,9 @@ function PlacesPickerPanel({
                     e.stopPropagation();
                     onRemoveCity(cityId);
                   }}
-                  className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center"
+                  className="w-5 h-5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                 >
-                  <X className="w-3 h-3 text-gray-300" />
+                  <X className="w-3 h-3 text-slate-600" />
                 </button>
               </div>
             );
@@ -157,32 +199,49 @@ function PlacesPickerPanel({
       <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2">
         <Search className="w-4 h-4 text-gray-300" />
         <input
+          ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search places"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
+          className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400 md:text-sm"
         />
       </div>
 
-      <div className="max-h-[52vh] overflow-auto pr-1">
+      <div 
+        ref={suggestionsRef}
+        className={`overflow-auto pr-1 ${
+          mobileSheetOpen 
+            ? "max-h-[calc(100dvh-280px)]" 
+            : "max-h-[52vh]"
+        }`}
+      >
         {showBrowseLists ? (
           <>
             {filteredRecent.length > 0 && (
               <div className="mb-3">
-                <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                <div className="text-[11px] text-slate-600 uppercase tracking-wide px-2 mb-1">
                   Recent searches
                 </div>
                 <div className="space-y-1">
-                  {filteredRecent.map((c) => (
-                    <PlacesThingsListItem
-                      key={`places-recent-${c.id}`}
-                      title={c.name}
-                      subtitle="Recently used place"
-                      iconVariant="recent"
-                      onClick={() => onSelectCity(c.id)}
-                    />
-                  ))}
+                  {filteredRecent.map((c) => {
+                    const { cityName, district } = parseDisplayName(c.name);
+                    return (
+                      <PlacesThingsListItem
+                        key={`places-recent-${c.id}`}
+                        title={cityName || c.name.split(',')[0].trim()}
+                        subtitle={district || undefined}
+                        iconVariant="recent"
+                        onClick={async () => {
+                          try {
+                            await onSelectCity(c.id);
+                          } catch (error) {
+                            console.error("Error selecting city:", error);
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -198,7 +257,13 @@ function PlacesPickerPanel({
                     title={c.name}
                     subtitle="Top destination"
                     iconVariant="suggested"
-                    onClick={() => onSelectCity(c.id)}
+                    onClick={async () => {
+                      try {
+                        await onSelectCity(c.id);
+                      } catch (error) {
+                        console.error("Error selecting city:", error);
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -218,10 +283,16 @@ function PlacesPickerPanel({
                 {filteredResults.map((c) => (
                   <PlacesThingsListItem
                     key={`places-match-${c.id}`}
-                    title={c.name}
-                    subtitle="New Zealand"
+                    title={c.cityName || c.name.split(',')[0].trim()}
+                    subtitle={c.district || undefined}
                     iconVariant="suggested"
-                    onClick={() => onSelectCity(c.id)}
+                    onClick={async () => {
+                      try {
+                        await onSelectCity(c.id);
+                      } catch (error) {
+                        console.error("Error selecting city:", error);
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -251,6 +322,8 @@ function ThingsPickerPanel({
   mobileSheetOpen?: boolean;
 }) {
   const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -259,6 +332,43 @@ function ThingsPickerPanel({
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
   }, []);
 
   const showBrowseLists = normalize(query).length === 0;
@@ -279,8 +389,8 @@ function ThingsPickerPanel({
       </div>
 
       {selectedStopIds.length > 0 && (
-        <div className="rounded-xl bg-white/5 border border-white/10 p-2 space-y-1">
-          <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2">
+        <div className="rounded-xl bg-slate-50 border border-slate-200 p-2 space-y-1">
+          <div className="text-[11px] text-slate-600 uppercase tracking-wide px-2">
             Selected things
           </div>
           {selectedStopIds.map((stopId) => {
@@ -289,9 +399,9 @@ function ThingsPickerPanel({
             return (
               <div
                 key={stopId}
-                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/5"
+                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-100"
               >
-                <span className="text-sm text-white">{stop.name}</span>
+                <span className="text-sm text-slate-800">{stop.name}</span>
                 <button
                   type="button"
                   onMouseDown={(e) => e.stopPropagation()}
@@ -300,9 +410,9 @@ function ThingsPickerPanel({
                     e.stopPropagation();
                     onRemoveStop(stopId);
                   }}
-                  className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center"
+                  className="w-5 h-5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                 >
-                  <X className="w-3 h-3 text-gray-300" />
+                  <X className="w-3 h-3 text-slate-600" />
                 </button>
               </div>
             );
@@ -310,18 +420,26 @@ function ThingsPickerPanel({
         </div>
       )}
 
-      <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2">
-        <Search className="w-4 h-4 text-gray-300" />
+      <div className="rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2">
+        <Search className="w-4 h-4 text-slate-500" />
         <input
+          ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search things to do"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
+          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
         />
       </div>
 
-      <div className="max-h-[52vh] overflow-auto pr-1">
+      <div 
+        ref={suggestionsRef}
+        className={`overflow-auto pr-1 ${
+          mobileSheetOpen 
+            ? "max-h-[calc(100dvh-280px)]" 
+            : "max-h-[52vh]"
+        }`}
+      >
         {showBrowseLists ? (
           <div className="mb-2">
             <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
@@ -388,6 +506,7 @@ export type PlacesThingsPickerProps = {
   suggested: CityLite[];
 
   selectedPlaceIds: string[];
+  selectedPlaces?: Array<{ id: string; name: string }>;
   selectedThingIds: string[];
 
   placesSummary: string;
@@ -402,7 +521,7 @@ export type PlacesThingsPickerProps = {
   openThingsDesktop: () => void;
   closePlacesMobileSheet: () => void;
   closeThingsMobileSheet: () => void;
-  selectPlace: (cityId: string) => void;
+  selectPlace: (cityId: string) => void | Promise<void>;
   selectThing: (stopId: string) => void;
   removePlace: (cityId: string) => void;
   removeThing: (stopId: string) => void;
@@ -418,7 +537,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openPlacesDesktop}
-            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <MapPin className="w-4 h-4 opacity-80" />
@@ -438,7 +557,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
           <button
             type="button"
             onClick={props.openThingsDesktop}
-            className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 hover:bg-white/5 transition flex items-center justify-between gap-3"
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Navigation className="w-4 h-4 opacity-80" />
@@ -456,7 +575,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
 
       {/* DESKTOP: pills row */}
       <div className="relative hidden md:block">
-        <div className="w-full rounded-full bg-[var(--card)] border border-white/15 shadow-sm">
+        <div className="w-full rounded-full bg-[var(--card)] border border-slate-200 shadow-sm">
           <div className="flex">
             {/* PLACES pill */}
             <div ref={props.placesRef} className="relative flex-1">
@@ -465,8 +584,8 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                 onClick={props.openPlacesDesktop}
                 className={[
                   "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
-                  "hover:bg-white/5 transition flex items-center justify-between gap-3",
-                  props.activePill === "places" ? "bg-white/5" : "",
+                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
+                  props.activePill === "places" ? "bg-slate-50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -482,7 +601,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
               </button>
 
               {props.showPlacesPopover && (
-                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg">
+                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 border border-slate-200 shadow-lg">
                   <PlacesPickerPanel
                     query={props.placesQuery}
                     setQuery={props.setPlacesQuery}
@@ -490,6 +609,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                     recent={props.recent}
                     suggested={props.suggested}
                     selectedCityIds={props.selectedPlaceIds}
+                    selectedPlaces={props.selectedPlaces}
                     onSelectCity={props.selectPlace}
                     onRemoveCity={props.removePlace}
                     mobileSheetOpen={false}
@@ -498,7 +618,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
               )}
             </div>
 
-            <div className="w-px bg-white/10" />
+            <div className="w-px bg-slate-200" />
 
             {/* THINGS pill */}
             <div ref={props.thingsRef} className="relative flex-1">
@@ -507,8 +627,8 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                 onClick={props.openThingsDesktop}
                 className={[
                   "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
-                  "hover:bg-white/5 transition flex items-center justify-between gap-3",
-                  props.activePill === "things" ? "bg-white/5" : "",
+                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
+                  props.activePill === "things" ? "bg-slate-50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -524,7 +644,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
               </button>
 
               {props.showThingsPopover && (
-                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg">
+                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 border border-slate-200 shadow-lg">
                   <ThingsPickerPanel
                     query={props.thingsQuery}
                     setQuery={props.setThingsQuery}
@@ -550,7 +670,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             onClick={props.closePlacesMobileSheet}
           />
           <div 
-            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl"
+            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
@@ -577,6 +697,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
                   recent={props.recent}
                   suggested={props.suggested}
                   selectedCityIds={props.selectedPlaceIds}
+                  selectedPlaces={props.selectedPlaces}
                   onSelectCity={props.selectPlace}
                   onRemoveCity={props.removePlace}
                   mobileSheetOpen={true}
@@ -605,7 +726,7 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             onClick={props.closeThingsMobileSheet}
           />
           <div 
-            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl"
+            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}

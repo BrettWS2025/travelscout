@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useRef, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import {
@@ -14,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { NZ_CITIES, getCityById } from "@/lib/nzCities";
-import { normalize, type CityLite } from "@/lib/trip-planner/utils";
+import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
 
 type ActivePill = "where" | "when" | null;
 
@@ -101,6 +102,9 @@ export type WhereWhenPickerProps = {
   setDateRange: (range: DateRange | undefined) => void;
   setCalendarMonth: (d: Date) => void;
   clearDates: () => void;
+
+  // Modal trigger
+  onOpenCityModal?: (step: "start" | "end" | "dates") => void;
 };
 
 function WhereListItem({
@@ -120,16 +124,16 @@ function WhereListItem({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition"
+      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition"
     >
       <CityIcon variant={iconVariant} />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-white truncate">{title}</div>
+        <div className="text-sm font-medium text-slate-800 truncate">{title}</div>
         {subtitle ? (
-          <div className="text-[12px] text-gray-300 truncate">{subtitle}</div>
+          <div className="text-[12px] text-slate-600 truncate">{subtitle}</div>
         ) : null}
       </div>
-      {right ? <div className="text-[12px] text-gray-300">{right}</div> : null}
+      {right ? <div className="text-[12px] text-slate-600">{right}</div> : null}
     </button>
   );
 }
@@ -169,9 +173,48 @@ function WherePickerPanel({
   const query = isStart ? startQuery : endQuery;
   const setQuery = isStart ? setStartQuery : setEndQuery;
   const results = isStart ? startResults : endResults;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const showBrowseLists = normalize(query).length === 0;
   const startCity = getCityById(startCityId);
+
+  // Blur input on suggestions list scroll/touchmove
+  useEffect(() => {
+    const suggestionsEl = suggestionsRef.current;
+    if (!suggestionsEl) return;
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    };
+
+    const handleTouchMove = () => {
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    };
+
+    suggestionsEl.addEventListener("scroll", handleScroll);
+    suggestionsEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      suggestionsEl.removeEventListener("scroll", handleScroll);
+      suggestionsEl.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -192,18 +235,26 @@ function WherePickerPanel({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2">
-        <Search className="w-4 h-4 text-gray-300" />
+      <div className="rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2">
+        <Search className="w-4 h-4 text-slate-500" />
         <input
+          ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!mobileSheetOpen}
           placeholder="Search destinations"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
+          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
         />
       </div>
 
-      <div className="max-h-[52vh] overflow-auto pr-1">
+      <div 
+        ref={suggestionsRef}
+        className={`overflow-auto pr-1 ${
+          mobileSheetOpen 
+            ? "max-h-[calc(100dvh-280px)]" 
+            : "max-h-[52vh]"
+        }`}
+      >
         {!isStart && startCity && (
           <div className="mb-3">
             <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
@@ -227,21 +278,20 @@ function WherePickerPanel({
                   Recent searches
                 </div>
                 <div className="space-y-1">
-                  {recent.map((c) => (
-                    <WhereListItem
-                      key={`${step}-recent-${c.id}`}
-                      title={c.name}
-                      subtitle={
-                        isStart
-                          ? "Recently used start city"
-                          : "Recently used destination"
-                      }
-                      iconVariant="recent"
-                      onClick={() =>
-                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
-                      }
-                    />
-                  ))}
+                  {recent.map((c) => {
+                    const { cityName, district } = parseDisplayName(c.name);
+                    return (
+                      <WhereListItem
+                        key={`${step}-recent-${c.id}`}
+                        title={cityName || c.name.split(',')[0].trim()}
+                        subtitle={district || undefined}
+                        iconVariant="recent"
+                        onClick={() =>
+                          isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -279,8 +329,8 @@ function WherePickerPanel({
                 {results.map((c) => (
                   <WhereListItem
                     key={`${step}-match-${c.id}`}
-                    title={c.name}
-                    subtitle="New Zealand"
+                    title={c.cityName || c.name.split(',')[0].trim()}
+                    subtitle={c.district || undefined}
                     iconVariant="suggested"
                     onClick={() =>
                       isStart ? selectStartCity(c.id) : selectEndCity(c.id)
@@ -299,41 +349,108 @@ function WherePickerPanel({
 export default function WhereWhenPicker(props: WhereWhenPickerProps) {
   return (
     <>
-      {/* MOBILE: single pill */}
-      <div className="md:hidden">
-        <button
-          type="button"
-          onClick={props.openMobileSheet}
-          className="w-full rounded-full bg-[var(--card)] border border-white/15 px-4 py-3 flex items-center justify-between hover:bg-white/5 transition"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Search className="w-4 h-4 opacity-80" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium truncate">
-                Start your Journey
-              </div>
-              <div className="text-[11px] text-gray-400 truncate">
-                {props.whereSummary} · {props.whenLabel}
+      {/* MOBILE: two separate pills stacked */}
+      <div className="md:hidden space-y-3">
+        {/* WHERE pill */}
+        <div ref={props.whereRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              // Always open modal if onOpenCityModal is provided
+              if (props.onOpenCityModal) {
+                // Determine which step to open based on current state
+                if (props.whereSummary === "Select Start City") {
+                  props.onOpenCityModal("start");
+                } else if (props.whereSummary === "Select End City") {
+                  props.onOpenCityModal("end");
+                } else {
+                  // Both cities selected, open to start city step
+                  props.onOpenCityModal("start");
+                }
+              } else {
+                props.openMobileSheet();
+                props.setMobileActive("where");
+              }
+            }}
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <MapPin className="w-4 h-4 opacity-80" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                  Where
+                </div>
+                <div className="text-sm font-medium truncate">
+                  {props.whereSummary}
+                </div>
               </div>
             </div>
-          </div>
-          <ChevronDown className="w-4 h-4 opacity-70" />
-        </button>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+        </div>
+
+        {/* WHEN pill */}
+        <div ref={props.whenRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              // If modal is available and dates are already selected, open modal to dates step
+              if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                props.onOpenCityModal("dates");
+              } else if (props.onOpenCityModal) {
+                // Open modal to dates step
+                props.onOpenCityModal("dates");
+              } else {
+                props.openMobileSheet();
+                props.setMobileActive("when");
+              }
+            }}
+            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Calendar className="w-4 h-4 opacity-80" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
+                  When
+                </div>
+                <div className="text-sm font-medium truncate">
+                  {props.whenLabel}
+                </div>
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+        </div>
       </div>
 
       {/* DESKTOP: pills row */}
       <div className="relative hidden md:block">
-        <div className="w-full rounded-full bg-[var(--card)] border border-white/15 shadow-sm">
+        <div className="w-full rounded-full bg-[var(--card)] border border-slate-200 shadow-sm">
           <div className="flex">
             {/* WHERE pill */}
             <div ref={props.whereRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openWhereDesktop}
+                onClick={() => {
+                  // Always open modal if onOpenCityModal is provided
+                  if (props.onOpenCityModal) {
+                    // Determine which step to open based on current state
+                    if (props.whereSummary === "Select Start City") {
+                      props.onOpenCityModal("start");
+                    } else if (props.whereSummary === "Select End City") {
+                      props.onOpenCityModal("end");
+                    } else {
+                      // Both cities selected, open to start city step
+                      props.onOpenCityModal("start");
+                    }
+                  } else {
+                    props.openWhereDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
-                  "hover:bg-white/5 transition flex items-center justify-between gap-3",
-                  props.activePill === "where" ? "bg-white/5" : "",
+                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
+                  props.activePill === "where" ? "bg-slate-50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -349,7 +466,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               </button>
 
               {props.showWherePopover && (
-                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] p-4 border border-white/10 shadow-lg">
+                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 border border-slate-200 shadow-lg">
                   {props.whereStep === "start" ? (
                     <WherePickerPanel
                       step="start"
@@ -386,7 +503,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                     />
                   )}
 
-                  <div className="mt-3 text-[11px] text-gray-400">
+                  <div className="mt-3 text-[11px] text-slate-500">
                     Cities are mapped with latitude &amp; longitude, so we can
                     factor in realistic driving legs later.
                   </div>
@@ -394,17 +511,24 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               )}
             </div>
 
-            <div className="w-px bg-white/10" />
+            <div className="w-px bg-slate-200" />
 
             {/* WHEN pill */}
             <div ref={props.whenRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openWhenDesktop}
+                onClick={() => {
+                  // If modal is available and dates are already selected, open modal to dates step
+                  if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                    props.onOpenCityModal("dates");
+                  } else {
+                    props.openWhenDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
-                  "hover:bg-white/5 transition flex items-center justify-between gap-3",
-                  props.activePill === "when" ? "bg-white/5" : "",
+                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
+                  props.activePill === "when" ? "bg-slate-50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -419,12 +543,12 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               {props.showCalendar && (
                 <div
                   className={[
-                    "absolute left-0 mt-3 z-30 rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg",
+                    "absolute left-0 mt-3 z-30 rounded-2xl bg-white border border-slate-200 shadow-lg",
                     "overflow-hidden w-[720px] p-3",
                   ].join(" ")}
                 >
                   <div className="px-2 pb-2">
-                    <p className="text-[11px] text-gray-300">
+                    <p className="text-[11px] text-slate-600">
                       Pick a start date, then an end date.
                     </p>
                   </div>
@@ -453,7 +577,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   <div className="flex justify-between items-center mt-2 px-2">
                     <button
                       type="button"
-                      className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                      className="text-[11px] text-slate-600 hover:text-indigo-600 underline underline-offset-2"
                       onClick={props.clearDates}
                     >
                       Clear
@@ -461,7 +585,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
 
                     <button
                       type="button"
-                      className="text-[11px] text-gray-300 hover:text-white underline underline-offset-2"
+                      className="text-[11px] text-slate-600 hover:text-indigo-600 underline underline-offset-2"
                       onClick={() => {
                         props.setShowCalendar(false);
                         props.setActivePill(null);
@@ -491,58 +615,66 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             className="absolute inset-0 bg-black/55"
             onClick={props.closeMobileSheet}
           />
-          <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-[#1E2C4B] border-t border-white/10 shadow-2xl">
+          <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl">
             <div className="p-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-semibold text-slate-800">
                   Start your Journey
                 </div>
                 <button
                   type="button"
                   onClick={props.closeMobileSheet}
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
+                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
                 >
-                  <X className="w-4 h-4 text-white" />
+                  <X className="w-4 h-4 text-slate-700" />
                 </button>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+              <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => props.setMobileActive("where")}
                   className={[
                     "w-full px-4 py-3 flex items-center justify-between",
-                    props.mobileActive === "where" ? "bg-white/5" : "",
+                    props.mobileActive === "where" ? "bg-slate-50" : "",
                   ].join(" ")}
                 >
                   <div className="text-left">
-                    <div className="text-[11px] text-gray-300">Where</div>
-                    <div className="text-sm text-white">{props.whereSummary}</div>
+                    <div className="text-[11px] text-slate-600">Where</div>
+                    <div className="text-sm text-slate-800">{props.whereSummary}</div>
                   </div>
-                  <MapPin className="w-4 h-4 text-gray-200" />
+                  <MapPin className="w-4 h-4 text-slate-500" />
                 </button>
 
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-slate-200" />
 
                 <button
                   type="button"
-                  onClick={() => props.setMobileActive("when")}
+                  onClick={() => {
+                    // If modal is available and dates are already selected, open modal to dates step
+                    if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                      props.onOpenCityModal("dates");
+                      props.closeMobileSheet();
+                    } else {
+                      props.setMobileActive("when");
+                    }
+                  }}
                   className={[
                     "w-full px-4 py-3 flex items-center justify-between",
-                    props.mobileActive === "when" ? "bg-white/5" : "",
+                    props.mobileActive === "when" ? "bg-slate-50" : "",
                   ].join(" ")}
                 >
                   <div className="text-left">
-                    <div className="text-[11px] text-gray-300">When</div>
-                    <div className="text-sm text-white">{props.whenLabel}</div>
+                    <div className="text-[11px] text-slate-600">When</div>
+                    <div className="text-sm text-slate-800">{props.whenLabel}</div>
                   </div>
-                  <Calendar className="w-4 h-4 text-gray-200" />
+                  <Calendar className="w-4 h-4 text-slate-500" />
                 </button>
               </div>
 
               <div className="mt-4">
                 {props.mobileActive === "where" ? (
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                     {props.whereStep === "start" ? (
                       <WherePickerPanel
                         step="start"
@@ -580,7 +712,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-lg overflow-hidden">
+                  <div className="rounded-2xl bg-white border border-slate-200 shadow-lg overflow-hidden">
                     <div className="p-2">
                       <DayPicker
                         mode="range"

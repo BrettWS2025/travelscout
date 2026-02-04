@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [redirectTo, setRedirectTo] = useState("/account/itineraries");
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
@@ -26,7 +27,16 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = "/account/itineraries";
+  // Get return URL from query params on client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo");
+      if (returnTo) {
+        setRedirectTo(decodeURIComponent(returnTo));
+      }
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +52,10 @@ export default function LoginPage() {
         });
         if (error) throw error;
 
-        router.push(redirectTo);
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          router.push(redirectTo);
+        }, 100);
       } else {
         const name = fullName.trim();
         if (!name) throw new Error("Please enter your full name.");
@@ -120,7 +133,7 @@ export default function LoginPage() {
       <h1 className="text-3xl font-semibold mb-2">
         {mode === "login" ? "Sign in" : "Create an account"}
       </h1>
-      <p className="text-sm text-white/70 mb-6">
+      <p className="text-sm text-slate-600 mb-6">
         {mode === "login"
           ? "Use your email and password to sign in."
           : "Create an account with your name, email and password."}
@@ -138,7 +151,7 @@ export default function LoginPage() {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
               placeholder="e.g. John Smith"
             />
           </div>
@@ -154,7 +167,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           />
         </div>
 
@@ -169,7 +182,7 @@ export default function LoginPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
           />
         </div>
 
@@ -188,7 +201,7 @@ export default function LoginPage() {
             </button>
 
             {/* Optional: keep layout balanced */}
-            <span className="text-xs text-white/60">
+            <span className="text-xs text-slate-500">
               {/* Could put a hint here if you want */}
             </span>
           </div>
@@ -217,8 +230,8 @@ export default function LoginPage() {
         <div className="mt-4 card p-6 space-y-3">
           <div>
             <div className="font-semibold">Reset your password</div>
-            <p className="text-sm text-white/70">
-              We’ll email you a link to set a new password.
+            <p className="text-sm text-slate-600">
+              We'll email you a link to set a new password.
             </p>
           </div>
 
@@ -229,10 +242,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={forgotLoading}
-              className="w-full rounded px-4 py-2 text-sm font-semibold hover:bg-white/10 disabled:opacity-60"
-              style={{
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
+              className="w-full rounded bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-700 disabled:opacity-60 transition-colors"
             >
               {forgotLoading ? "Sending…" : "Send reset email"}
             </button>
@@ -244,7 +254,7 @@ export default function LoginPage() {
                 setForgotMsg(null);
                 setForgotError(null);
               }}
-              className="w-full rounded px-4 py-2 text-sm hover:bg-white/10"
+              className="w-full rounded px-4 py-2 text-sm border border-slate-300 hover:bg-slate-50 text-slate-700"
             >
               Close
             </button>
