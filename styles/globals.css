@@ -146,22 +146,60 @@ input[type="date"].input-dark:focus-visible {
 
 /* Mobile: Prevent iOS Safari zoom on input focus (font-size >= 16px) */
 @media (max-width: 767px) {
-  /* All text inputs in search components */
+  /* All text inputs - prevent zoom on focus */
   input[type="text"],
-  input[type="search"] {
+  input[type="search"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="url"] {
     font-size: 16px !important;
     line-height: 1.5 !important;
   }
   
   /* Date inputs */
-  input[type="date"] {
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="time"],
+  input[type="week"] {
     font-size: 16px !important;
     line-height: 1.5 !important;
   }
   
-  /* Specific search inputs in trip planner components */
+  /* Select elements */
+  select {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Textarea elements */
+  textarea {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Specific search inputs in trip planner components - more specific selectors */
   .rounded-2xl input[type="text"],
-  .rounded-full input[type="text"] {
+  .rounded-full input[type="text"],
+  .rounded-2xl input[type="search"],
+  .rounded-full input[type="search"],
+  div.rounded-2xl input,
+  div.rounded-full input {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Inputs inside modals and sheets */
+  [class*="modal"] input,
+  [class*="Modal"] input,
+  [class*="sheet"] input,
+  [class*="Sheet"] input {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Utility class for explicit no-zoom inputs */
+  .no-zoom-mobile {
     font-size: 16px !important;
     line-height: 1.5 !important;
   }

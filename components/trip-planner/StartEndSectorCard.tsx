@@ -101,14 +101,14 @@ export default function StartEndSectorCard({
       <div className="px-3 md:px-4 py-3">
         {/* Mobile: Stack layout */}
         <div className="md:hidden space-y-3">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className={`flex ${sectorType === "road" ? "items-start" : "items-center"} gap-2 min-w-0`}>
             {sectorType === "road" ? (
               <>
-                <Car className="w-4 h-4 text-slate-600 shrink-0" />
+                <Car className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
                 <button
                   type="button"
                   onClick={() => onToggleRoadSectorOpen(stopIndex)}
-                  className="flex items-center gap-2.5 min-w-0 flex-1 group"
+                  className="flex items-start gap-2.5 min-w-0 flex-1 group"
                 >
                   <span
                     className={[
@@ -125,9 +125,9 @@ export default function StartEndSectorCard({
                     />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-base font-semibold text-slate-800 break-words">{displayName}</div>
+                    <div className="text-xs font-semibold text-slate-800 break-words leading-tight">{displayName}</div>
                     {firstDay && lastDay && (
-                      <div className="text-[11px] text-slate-600 mt-0.5">
+                      <div className="text-[10px] text-slate-600 mt-0.5">
                         {formatShortRangeDate(firstDay.date)} – {formatShortRangeDate(lastDay.date)} · {dayCount} day
                         {dayCount === 1 ? "" : "s"}
                       </div>
@@ -166,9 +166,10 @@ export default function StartEndSectorCard({
                 </div>
               </button>
             )}
+          </div>
 
-
-            {sectorType === "road" ? (
+          {sectorType === "road" ? (
+            <div className="flex justify-center">
               <button
                 type="button"
                 onClick={onConvertToItinerary}
@@ -176,35 +177,35 @@ export default function StartEndSectorCard({
               >
                 Stay in {stopName}
               </button>
-            ) : (
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-slate-600">Nights:</span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-slate-600">Nights:</span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => onChangeNights(stopIndex, nightsHere - 1)}
-                    className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={nightsHere}
-                    onChange={(e) => onChangeNights(stopIndex, Number(e.target.value))}
-                    className="w-12 text-center input-dark input-no-spinner text-sm py-1.5 px-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onChangeNights(stopIndex, nightsHere + 1)}
-                    className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
-                  >
-                    +
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onChangeNights(stopIndex, nightsHere - 1)}
+                  className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={nightsHere}
+                  onChange={(e) => onChangeNights(stopIndex, Number(e.target.value))}
+                  className="w-12 text-center input-dark input-no-spinner text-sm py-1.5 px-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => onChangeNights(stopIndex, nightsHere + 1)}
+                  className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
+                >
+                  +
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop: Horizontal layout */}

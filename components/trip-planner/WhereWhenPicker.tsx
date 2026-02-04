@@ -243,7 +243,7 @@ function WherePickerPanel({
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!mobileSheetOpen}
           placeholder="Search destinations"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
+          className="w-full bg-transparent outline-none text-base md:text-sm placeholder:text-slate-400 text-slate-800 no-zoom-mobile"
         />
       </div>
 
@@ -518,8 +518,8 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               <button
                 type="button"
                 onClick={() => {
-                  // If modal is available and dates are already selected, open modal to dates step
-                  if (props.onOpenCityModal && props.dateRange?.from && props.dateRange?.to) {
+                  // Always open modal if onOpenCityModal is provided
+                  if (props.onOpenCityModal) {
                     props.onOpenCityModal("dates");
                   } else {
                     props.openWhenDesktop();

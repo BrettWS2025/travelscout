@@ -204,7 +204,7 @@ function PlacesPickerPanel({
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search places"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400 md:text-sm"
+          className="w-full bg-transparent outline-none text-base md:text-sm placeholder:text-gray-400 no-zoom-mobile"
         />
       </div>
 
@@ -428,7 +428,7 @@ function ThingsPickerPanel({
           onChange={(e) => setQuery(e.target.value)}
           autoFocus={!isMobile && !mobileSheetOpen}
           placeholder="Search things to do"
-          className="w-full bg-transparent outline-none text-sm placeholder:text-slate-400 text-slate-800 md:text-sm"
+          className="w-full bg-transparent outline-none text-base md:text-sm placeholder:text-slate-400 text-slate-800 no-zoom-mobile"
         />
       </div>
 
@@ -525,6 +525,9 @@ export type PlacesThingsPickerProps = {
   selectThing: (stopId: string) => void;
   removePlace: (cityId: string) => void;
   removeThing: (stopId: string) => void;
+
+  // Modal trigger
+  onOpenModal?: (step: "places" | "things") => void;
 };
 
 export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
@@ -536,7 +539,13 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
         <div ref={props.placesRef} className="relative">
           <button
             type="button"
-            onClick={props.openPlacesDesktop}
+            onClick={() => {
+              if (props.onOpenModal) {
+                props.onOpenModal("places");
+              } else {
+                props.openPlacesDesktop();
+              }
+            }}
             className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -556,7 +565,13 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
         <div ref={props.thingsRef} className="relative">
           <button
             type="button"
-            onClick={props.openThingsDesktop}
+            onClick={() => {
+              if (props.onOpenModal) {
+                props.onOpenModal("things");
+              } else {
+                props.openThingsDesktop();
+              }
+            }}
             className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -581,7 +596,13 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             <div ref={props.placesRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openPlacesDesktop}
+                onClick={() => {
+                  if (props.onOpenModal) {
+                    props.onOpenModal("places");
+                  } else {
+                    props.openPlacesDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
                   "hover:bg-slate-50 transition flex items-center justify-between gap-3",
@@ -624,7 +645,13 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             <div ref={props.thingsRef} className="relative flex-1">
               <button
                 type="button"
-                onClick={props.openThingsDesktop}
+                onClick={() => {
+                  if (props.onOpenModal) {
+                    props.onOpenModal("things");
+                  } else {
+                    props.openThingsDesktop();
+                  }
+                }}
                 className={[
                   "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
                   "hover:bg-slate-50 transition flex items-center justify-between gap-3",

@@ -226,7 +226,7 @@ export default function WaypointInput({ value, onChange, placeholder }: Props) {
         <input
           ref={inputRef}
           type="text"
-          className="input-dark w-full text-sm md:text-sm"
+          className="input-dark w-full text-base md:text-sm no-zoom-mobile"
           placeholder={placeholder}
           value={input}
           onChange={(e) => {
