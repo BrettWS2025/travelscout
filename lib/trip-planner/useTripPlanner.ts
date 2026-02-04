@@ -747,10 +747,19 @@ export function useTripPlanner() {
       
       const rawWaypointNames = [...placeNames, ...thingNames];
 
+      // Build a map of waypoint names to their coordinates for better routing
+      const waypointCoordinates = new Map<string, { lat: number; lng: number }>();
+      for (const city of selectedPlacesData) {
+        if (city.lat !== 0 || city.lng !== 0) {
+          waypointCoordinates.set(city.name, { lat: city.lat, lng: city.lng });
+        }
+      }
+
       const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
         start,
         end,
-        rawWaypointNames
+        rawWaypointNames,
+        waypointCoordinates
       );
 
       // Debug logging
