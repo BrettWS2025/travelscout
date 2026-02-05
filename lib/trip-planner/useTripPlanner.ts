@@ -238,7 +238,7 @@ export function useTripPlanner() {
   }
 
   function pushRecent(city: CityLite) {
-    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 8);
+    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 5);
     setRecent(next);
     safeWriteRecent(next);
   }
@@ -499,18 +499,7 @@ export function useTripPlanner() {
     if (!startCity) return;
     setEndCityId(startCity.id);
     setEndQuery("Return to start city");
-
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
-      }
-    }, 0);
+    // Calendar popover removed - modal handles date selection
   }
 
   const [startSearchResults, setStartSearchResults] = useState<CityLite[]>([]);

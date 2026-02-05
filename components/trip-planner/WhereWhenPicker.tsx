@@ -176,7 +176,8 @@ function WherePickerPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const showBrowseLists = normalize(query).length === 0;
+  // Show browse lists (recent/suggested) when query is empty OR when there are no results yet
+  const showBrowseLists = normalize(query).length === 0 || results.length === 0;
   const startCity = getCityById(startCityId);
 
   // Blur input on suggestions list scroll/touchmove
@@ -317,27 +318,25 @@ function WherePickerPanel({
           </>
         ) : (
           <>
-            <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
-              Matches
-            </div>
-            {results.length === 0 ? (
-              <div className="px-2 py-3 text-sm text-gray-300">
-                No matches. Try a different spelling.
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {results.map((c) => (
-                  <WhereListItem
-                    key={`${step}-match-${c.id}`}
-                    title={c.cityName || c.name.split(',')[0].trim()}
-                    subtitle={c.district || undefined}
-                    iconVariant="suggested"
-                    onClick={() =>
-                      isStart ? selectStartCity(c.id) : selectEndCity(c.id)
-                    }
-                  />
-                ))}
-              </div>
+            {results.length > 0 && (
+              <>
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                  Matches
+                </div>
+                <div className="space-y-1">
+                  {results.map((c) => (
+                    <WhereListItem
+                      key={`${step}-match-${c.id}`}
+                      title={c.cityName || c.name.split(',')[0].trim()}
+                      subtitle={c.district || undefined}
+                      iconVariant="suggested"
+                      onClick={() =>
+                        isStart ? selectStartCity(c.id) : selectEndCity(c.id)
+                      }
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}

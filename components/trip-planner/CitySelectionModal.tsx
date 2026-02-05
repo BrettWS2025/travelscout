@@ -110,7 +110,8 @@ function CityPickerPanel({
   const isStart = step === "start";
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const showBrowseLists = normalize(query).length === 0;
+  // Show browse lists (recent/suggested) when query is empty OR when there are no results yet
+  const showBrowseLists = normalize(query).length === 0 || results.length === 0;
   const startCity = getCityById(startCityId);
 
   // Blur input on suggestions list scroll/touchmove
@@ -241,27 +242,25 @@ function CityPickerPanel({
           </>
         ) : (
           <>
-            <div className="text-[11px] text-slate-500 uppercase tracking-wide px-2 mb-1">
-              Matches
-            </div>
-            {results.length === 0 ? (
-              <div className="px-2 py-3 text-sm text-slate-600">
-                No matches. Try a different spelling.
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {results.map((c) => (
-                  <CityListItem
-                    key={`${step}-match-${c.id}`}
-                    title={c.cityName || c.name.split(',')[0].trim()}
-                    subtitle={c.district || undefined}
-                    iconVariant="suggested"
-                    onClick={() =>
-                      isStart ? onSelectStartCity(c.id) : onSelectEndCity(c.id)
-                    }
-                  />
-                ))}
-              </div>
+            {results.length > 0 && (
+              <>
+                <div className="text-[11px] text-slate-500 uppercase tracking-wide px-2 mb-1">
+                  Matches
+                </div>
+                <div className="space-y-1">
+                  {results.map((c) => (
+                    <CityListItem
+                      key={`${step}-match-${c.id}`}
+                      title={c.cityName || c.name.split(',')[0].trim()}
+                      subtitle={c.district || undefined}
+                      iconVariant="suggested"
+                      onClick={() =>
+                        isStart ? onSelectStartCity(c.id) : onSelectEndCity(c.id)
+                      }
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}
@@ -345,7 +344,8 @@ export default function CitySelectionModal({
 
   const handleSelectReturnToStart = async () => {
     await onSelectReturnToStart();
-    // Don't close modal yet - user can click "Select dates" button
+    // Automatically move to date selection
+    onStepChange("dates");
   };
 
   const handleBack = () => {

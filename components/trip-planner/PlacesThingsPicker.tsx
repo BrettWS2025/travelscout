@@ -145,7 +145,8 @@ function PlacesPickerPanel({
     };
   }, []);
 
-  const showBrowseLists = normalize(query).length === 0;
+  // Show browse lists (recent/suggested) when query is empty OR when there are no results yet
+  const showBrowseLists = normalize(query).length === 0 || results.length === 0;
   const filteredRecent = recent.filter((c) => !selectedCityIds.includes(c.id));
   const filteredSuggested = suggested.filter((c) => !selectedCityIds.includes(c.id));
   const filteredResults = results.filter((c) => !selectedCityIds.includes(c.id));
@@ -271,31 +272,29 @@ function PlacesPickerPanel({
           </>
         ) : (
           <>
-            <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
-              Matches
-            </div>
-            {filteredResults.length === 0 ? (
-              <div className="px-2 py-3 text-sm text-gray-300">
-                No matches. Try a different spelling.
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {filteredResults.map((c) => (
-                  <PlacesThingsListItem
-                    key={`places-match-${c.id}`}
-                    title={c.cityName || c.name.split(',')[0].trim()}
-                    subtitle={c.district || undefined}
-                    iconVariant="suggested"
-                    onClick={async () => {
-                      try {
-                        await onSelectCity(c.id);
-                      } catch (error) {
-                        console.error("Error selecting city:", error);
-                      }
-                    }}
-                  />
-                ))}
-              </div>
+            {filteredResults.length > 0 && (
+              <>
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                  Matches
+                </div>
+                <div className="space-y-1">
+                  {filteredResults.map((c) => (
+                    <PlacesThingsListItem
+                      key={`places-match-${c.id}`}
+                      title={c.cityName || c.name.split(',')[0].trim()}
+                      subtitle={c.district || undefined}
+                      iconVariant="suggested"
+                      onClick={async () => {
+                        try {
+                          await onSelectCity(c.id);
+                        } catch (error) {
+                          console.error("Error selecting city:", error);
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}
@@ -371,7 +370,8 @@ function ThingsPickerPanel({
     };
   }, []);
 
-  const showBrowseLists = normalize(query).length === 0;
+  // Show browse lists when query is empty OR when there are no results yet
+  const showBrowseLists = normalize(query).length === 0 || results.length === 0;
   const browseStops = NZ_STOPS.slice(0, 20).filter((s) => !selectedStopIds.includes(s.id));
   const filteredResults = results.filter((s) => !selectedStopIds.includes(s.id));
 
@@ -459,25 +459,23 @@ function ThingsPickerPanel({
           </div>
         ) : (
           <>
-            <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
-              Matches
-            </div>
-            {filteredResults.length === 0 ? (
-              <div className="px-2 py-3 text-sm text-gray-300">
-                No matches. Try a different spelling.
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {filteredResults.map((stop) => (
-                  <PlacesThingsListItem
-                    key={`things-match-${stop.id}`}
-                    title={stop.name}
-                    subtitle="New Zealand"
-                    iconVariant="suggested"
-                    onClick={() => onSelectStop(stop.id)}
-                  />
-                ))}
-              </div>
+            {filteredResults.length > 0 && (
+              <>
+                <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 mb-1">
+                  Matches
+                </div>
+                <div className="space-y-1">
+                  {filteredResults.map((stop) => (
+                    <PlacesThingsListItem
+                      key={`things-match-${stop.id}`}
+                      title={stop.name}
+                      subtitle="New Zealand"
+                      iconVariant="suggested"
+                      onClick={() => onSelectStop(stop.id)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}

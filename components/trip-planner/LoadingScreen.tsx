@@ -42,7 +42,7 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-[#0B1B2F] via-[#1E2C4B] to-[#0B1B2F] transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#f8fafc] transition-opacity duration-500 ${
         isExiting ? "opacity-0" : "opacity-100"
       }`}
     >
@@ -51,7 +51,7 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
         {particles.map((particle) => (
           <div
             key={particle.id}
-            className="absolute rounded-full bg-[var(--accent)] opacity-20 animate-float"
+            className="absolute rounded-full bg-[var(--accent)] opacity-10 animate-float"
             style={{
               width: `${particle.size}px`,
               height: `${particle.size}px`,
@@ -70,12 +70,12 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
         <div className="relative">
           <div className="relative w-24 h-24">
             {/* Outer rotating ring */}
-            <div className="absolute inset-0 border-4 border-[var(--accent)]/30 rounded-full animate-spin-slow">
+            <div className="absolute inset-0 border-4 border-[var(--accent)]/20 rounded-full animate-spin-slow">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-[var(--accent)] rounded-full" />
             </div>
             
             {/* Middle pulsing ring */}
-            <div className="absolute inset-2 border-2 border-[var(--accent)]/50 rounded-full animate-pulse" />
+            <div className="absolute inset-2 border-2 border-[var(--accent)]/40 rounded-full animate-pulse" />
             
             {/* Inner compass */}
             <div className="absolute inset-4 flex items-center justify-center">
@@ -97,7 +97,7 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
 
         {/* Loading text with typing effect */}
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-[var(--text)] mb-2">
             Planning your journey
           </h2>
           <div className="flex items-center gap-2 justify-center">
@@ -122,8 +122,8 @@ export default function LoadingScreen({ isLoading }: LoadingScreenProps) {
         </div>
 
         {/* Progress bar */}
-        <div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-[var(--accent)] to-[#6EE7FF] rounded-full animate-progress" />
+        <div className="w-64 h-1 bg-[var(--muted)]/20 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-[var(--accent)] via-[var(--brand)] to-[var(--accent)] rounded-full animate-progress" />
         </div>
       </div>
     </div>
