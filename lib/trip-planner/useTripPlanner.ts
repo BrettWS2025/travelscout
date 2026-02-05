@@ -238,7 +238,7 @@ export function useTripPlanner() {
   }
 
   function pushRecent(city: CityLite) {
-    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 8);
+    const next = [city, ...recent.filter((r) => r.id !== city.id)].slice(0, 5);
     setRecent(next);
     safeWriteRecent(next);
   }

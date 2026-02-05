@@ -211,7 +211,7 @@ export function safeReadRecent(): CityLite[] {
 
 export function safeWriteRecent(items: CityLite[]) {
   try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 8)));
+    localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 5)));
   } catch {
     // ignore
   }

@@ -104,7 +104,8 @@ export default function CitySearchPill({
     return dbSearchResults.map((p) => ({ id: p.id, name: p.name }));
   }, [dbSearchResults]);
 
-  const showSuggestions = normalize(query).length === 0;
+  // Show suggestions when query is empty OR when there are no results yet
+  const showSuggestions = normalize(query).length === 0 || searchResults.length === 0;
   const filteredSuggested = suggested.filter((c) => c.id !== value);
   const filteredResults = searchResults.filter((c) => c.id !== value);
 
@@ -326,32 +327,30 @@ export default function CitySearchPill({
             </>
           ) : (
             <>
-              <div className="text-[11px] text-slate-600 uppercase tracking-wide px-2 mb-1">
-                Matches
-              </div>
-              {filteredResults.length === 0 ? (
-                <div className="px-2 py-3 text-sm text-slate-600">
-                  No matches. Try a different spelling.
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredResults.map((c) => (
-                    <button
-                      key={`result-${c.id}`}
-                      type="button"
-                      onClick={() => handleSelectCity(c.id)}
-                      className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition"
-                    >
-                      <div className="w-8 h-8 rounded-xl bg-[#F6F1EA] flex items-center justify-center border border-black/5">
-                        <MapPin className="w-4 h-4 text-amber-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-800 truncate">{c.name}</div>
-                        <div className="text-[12px] text-slate-600 truncate">New Zealand</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              {filteredResults.length > 0 && (
+                <>
+                  <div className="text-[11px] text-slate-600 uppercase tracking-wide px-2 mb-1">
+                    Matches
+                  </div>
+                  <div className="space-y-1">
+                    {filteredResults.map((c) => (
+                      <button
+                        key={`result-${c.id}`}
+                        type="button"
+                        onClick={() => handleSelectCity(c.id)}
+                        className="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-[#F6F1EA] flex items-center justify-center border border-black/5">
+                          <MapPin className="w-4 h-4 text-amber-700" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-slate-800 truncate">{c.name}</div>
+                          <div className="text-[12px] text-slate-600 truncate">New Zealand</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </>
           )}
