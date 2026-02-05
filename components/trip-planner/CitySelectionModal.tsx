@@ -345,7 +345,8 @@ export default function CitySelectionModal({
 
   const handleSelectReturnToStart = async () => {
     await onSelectReturnToStart();
-    // Don't close modal yet - user can click "Select dates" button
+    // Automatically move to date selection
+    onStepChange("dates");
   };
 
   const handleBack = () => {

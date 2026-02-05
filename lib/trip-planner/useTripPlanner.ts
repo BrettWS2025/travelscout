@@ -499,18 +499,7 @@ export function useTripPlanner() {
     if (!startCity) return;
     setEndCityId(startCity.id);
     setEndQuery("Return to start city");
-
-    setTimeout(() => {
-      if (mobileSheetOpen) {
-        setMobileActive("when");
-      } else {
-        setShowWherePopover(false);
-        setActivePill("when");
-        setShowCalendar(true);
-        const anchor = fromIsoDate(startDate) ?? new Date();
-        setCalendarMonth(anchor);
-      }
-    }, 0);
+    // Calendar popover removed - modal handles date selection
   }
 
   const [startSearchResults, setStartSearchResults] = useState<CityLite[]>([]);
