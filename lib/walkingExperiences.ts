@@ -111,20 +111,17 @@ export async function getWalkingExperiencesNearPoint(
  * Get walking experiences near a route (for road sectors)
  * Uses the get_walking_experiences_near_route database function
  * 
- * @param routeGeometry - PostGIS LINESTRING geometry as WKT or GeoJSON
+ * @param routeGeometryWkt - PostGIS LINESTRING geometry as WKT string (e.g., "LINESTRING(lng lat, lng lat, ...)")
  * @param bufferKm - Buffer distance in kilometers (default 20km)
  * @param limit - Maximum number of results (default 50)
  */
 export async function getWalkingExperiencesNearRoute(
-  routeGeometry: string, // WKT format like "LINESTRING(lng lat, lng lat, ...)"
+  routeGeometryWkt: string, // WKT format like "LINESTRING(lng lat, lng lat, ...)"
   bufferKm: number = 20.0,
   limit: number = 50
 ): Promise<WalkingExperience[]> {
-  // Convert WKT string to PostGIS geometry
-  // The function expects a GEOMETRY type, so we'll pass it as a WKT string
-  // and let PostGIS handle the conversion
   const { data, error } = await supabase.rpc("get_walking_experiences_near_route", {
-    route_geometry: routeGeometry,
+    route_geometry_wkt: routeGeometryWkt,
     buffer_km: bufferKm,
     result_limit: limit,
   });

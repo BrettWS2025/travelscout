@@ -112,16 +112,16 @@ BEGIN
         wep.district_name,
         wep.district_osm_id,
         -- Calculate distance in km using PostGIS geography
-        ST_Distance(
-            ST_SetSRID(ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
-            ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography
+        extensions.ST_Distance(
+            extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
+            extensions.ST_SetSRID(extensions.ST_MakePoint(center_lng, center_lat), 4326)::geography
         ) / 1000.0 AS distance_km
     FROM public.walking_experiences_processed wep
     WHERE wep.latitude IS NOT NULL
         AND wep.longitude IS NOT NULL
-        AND ST_DWithin(
-            ST_SetSRID(ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
-            ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography,
+        AND extensions.ST_DWithin(
+            extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
+            extensions.ST_SetSRID(extensions.ST_MakePoint(center_lng, center_lat), 4326)::geography,
             radius_km * 1000.0
         )
     ORDER BY distance_km ASC
@@ -130,9 +130,9 @@ END;
 $$;
 
 -- Function to get walking experiences near a route (for road sectors)
--- Takes a route geometry (LINESTRING) and finds experiences within buffer
+-- Takes a route geometry as WKT text (LINESTRING) and finds experiences within buffer
 CREATE OR REPLACE FUNCTION get_walking_experiences_near_route(
-    route_geometry GEOMETRY,
+    route_geometry_wkt TEXT,
     buffer_km DOUBLE PRECISION DEFAULT 20.0,
     result_limit INTEGER DEFAULT 50
 )
@@ -160,13 +160,18 @@ LANGUAGE plpgsql
 STABLE
 SET search_path = ''
 AS $$
-DECLARE
-    route_buffer GEOMETRY;
 BEGIN
-    -- Create buffer around route (convert km to meters)
-    route_buffer := ST_Buffer(route_geometry::geography, buffer_km * 1000.0)::geometry;
-    
+    -- Convert WKT text to geometry and create buffer in a single CTE
     RETURN QUERY
+    WITH route_data AS (
+        SELECT 
+            extensions.ST_GeomFromText(route_geometry_wkt, 4326) AS route_geom,
+            extensions.ST_Buffer(
+                extensions.ST_GeomFromText(route_geometry_wkt, 4326)::geography, 
+                buffer_km * 1000.0
+            )::geometry AS route_buffer
+    )
+    
     SELECT 
         wep.id,
         wep.track_name,
@@ -186,16 +191,17 @@ BEGIN
         wep.district_name,
         wep.district_osm_id,
         -- Calculate distance to nearest point on route
-        ST_Distance(
-            ST_SetSRID(ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
-            route_geometry::geography
+        extensions.ST_Distance(
+            extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326)::geography,
+            rd.route_geom::geography
         ) / 1000.0 AS distance_km
     FROM public.walking_experiences_processed wep
+    CROSS JOIN route_data rd
     WHERE wep.latitude IS NOT NULL
         AND wep.longitude IS NOT NULL
-        AND ST_Within(
-            ST_SetSRID(ST_MakePoint(wep.longitude, wep.latitude), 4326),
-            route_buffer
+        AND extensions.ST_Within(
+            extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326),
+            rd.route_buffer
         )
     ORDER BY distance_km ASC
     LIMIT result_limit;
@@ -266,8 +272,8 @@ GRANT EXECUTE ON FUNCTION get_walking_experiences_by_district(TEXT, INTEGER) TO 
 GRANT EXECUTE ON FUNCTION get_walking_experiences_near_point(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_walking_experiences_near_point(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, INTEGER) TO anon;
 
-GRANT EXECUTE ON FUNCTION get_walking_experiences_near_route(GEOMETRY, DOUBLE PRECISION, INTEGER) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_walking_experiences_near_route(GEOMETRY, DOUBLE PRECISION, INTEGER) TO anon;
+GRANT EXECUTE ON FUNCTION get_walking_experiences_near_route(TEXT, DOUBLE PRECISION, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_walking_experiences_near_route(TEXT, DOUBLE PRECISION, INTEGER) TO anon;
 
 GRANT EXECUTE ON FUNCTION get_walking_experiences_by_districts(TEXT[], INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_walking_experiences_by_districts(TEXT[], INTEGER) TO anon;
