@@ -73,6 +73,13 @@ export async function getWalkingExperiencesNearPoint(
   radiusKm: number = 20.0,
   limit: number = 50
 ): Promise<WalkingExperience[]> {
+  console.log("[getWalkingExperiencesNearPoint] Calling function with:", {
+    centerLat,
+    centerLng,
+    radiusKm,
+    limit
+  });
+  
   const { data, error } = await supabase.rpc("get_walking_experiences_near_point", {
     center_lat: centerLat,
     center_lng: centerLng,
@@ -84,6 +91,8 @@ export async function getWalkingExperiencesNearPoint(
     console.error("Error fetching walking experiences near point:", error);
     return [];
   }
+  
+  console.log("[getWalkingExperiencesNearPoint] Results:", data?.length || 0, "experiences found");
 
   return (data || []).map((item: any) => ({
     id: item.id,

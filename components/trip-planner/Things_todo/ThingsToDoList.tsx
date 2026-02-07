@@ -150,14 +150,22 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
             const places = await searchPlacesByName(cityName || location, 1);
             
             if (places.length > 0 && places[0].lat && places[0].lng) {
+              console.log("[ThingsToDoList] Itinerary fallback - searching near point:", {
+                location,
+                cityName,
+                place: { name: places[0].name, lat: places[0].lat, lng: places[0].lng },
+                radius: 60.0
+              });
               const results = await getWalkingExperiencesNearPoint(
                 places[0].lat,
                 places[0].lng,
-                20.0, // 20km radius
-                20
+                60.0, // 60km radius
+                50
               );
+              console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
               setExperiences(results);
             } else {
+              console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
               setExperiences([]);
             }
           }
