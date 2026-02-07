@@ -41,7 +41,7 @@ export function useTripPlannerPlaces(
   async function selectPlace(cityId: string) {
     try {
       // Try to get from cache first
-      let c = getCityById(cityId);
+      let c: Place | null | undefined = getCityById(cityId);
       
       // If not in cache, fetch from database
       if (!c) {
