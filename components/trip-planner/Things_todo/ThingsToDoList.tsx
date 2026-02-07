@@ -5,6 +5,9 @@ import {
   getWalkingExperiencesByDistrict,
   getWalkingExperiencesNearPoint,
   getWalkingExperiencesByDistricts,
+  getDistrictsAlongRoute,
+  createStraightLineRoute,
+  routeToWKT,
   type WalkingExperience,
 } from "@/lib/walkingExperiences";
 import { searchPlacesByName, getPlaceDistrictByName } from "@/lib/places";
@@ -29,32 +32,73 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
         const isRoadSector = location.includes(" to ");
         
         if (isRoadSector) {
-          // Road sector: try to get experiences from both endpoints
+          // Road sector: get experiences along the entire route
           const [fromCity, toCity] = location.split(" to ").map(s => s.trim());
           
-          // Try to find districts for both cities
-          const fromDistrict = await getPlaceDistrictByName(fromCity);
-          const toDistrict = await getPlaceDistrictByName(toCity);
+          // Get coordinates for both cities
+          const fromPlace = await searchPlacesByName(fromCity, 1);
+          const toPlace = await searchPlacesByName(toCity, 1);
           
-          const districts = [fromDistrict, toDistrict].filter((d): d is string => d !== null);
-          
-          if (districts.length > 0) {
-            // Query by districts
-            const results = await getWalkingExperiencesByDistricts(districts, 20);
-            setExperiences(results);
-          } else {
-            // Fallback: try to get coordinates and query by radius
-            const fromPlace = await searchPlacesByName(fromCity, 1);
-            const toPlace = await searchPlacesByName(toCity, 1);
+          if (fromPlace.length > 0 && toPlace.length > 0 && 
+              fromPlace[0].lat && fromPlace[0].lng && 
+              toPlace[0].lat && toPlace[0].lng) {
             
-            if (fromPlace.length > 0 && fromPlace[0].lat && fromPlace[0].lng) {
-              // Query near the starting point
-              const results = await getWalkingExperiencesNearPoint(
-                fromPlace[0].lat,
-                fromPlace[0].lng,
-                30.0, // 30km radius
-                20
+            // Create a route with intermediate waypoints
+            const routeCoordinates = createStraightLineRoute(
+              fromPlace[0].lat,
+              fromPlace[0].lng,
+              toPlace[0].lat,
+              toPlace[0].lng,
+              8 // 8 intermediate waypoints for better coverage
+            );
+            
+            // Convert to WKT
+            const routeWkt = routeToWKT(routeCoordinates);
+            
+            // Get districts along the route
+            const districts = await getDistrictsAlongRoute(routeWkt, 15);
+            
+            // Also include districts from start and end cities (in case they're not caught by sampling)
+            const fromDistrict = await getPlaceDistrictByName(fromCity);
+            const toDistrict = await getPlaceDistrictByName(toCity);
+            
+            // Combine all districts and remove duplicates
+            const allDistricts = Array.from(new Set([
+              ...districts,
+              ...(fromDistrict ? [fromDistrict] : []),
+              ...(toDistrict ? [toDistrict] : []),
+            ]));
+            
+            if (allDistricts.length > 0) {
+              // Query by all districts along the route
+              const results = await getWalkingExperiencesByDistricts(allDistricts, 30);
+              setExperiences(results);
+            } else {
+              // Fallback: query by radius from midpoint
+              const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
+              const midLng = (fromPlace[0].lng + toPlace[0].lng) / 2;
+              const distance = Math.sqrt(
+                Math.pow((toPlace[0].lat - fromPlace[0].lat) * 111, 2) +
+                Math.pow((toPlace[0].lng - fromPlace[0].lng) * 111 * Math.cos(midLat * Math.PI / 180), 2)
               );
+              
+              const results = await getWalkingExperiencesNearPoint(
+                midLat,
+                midLng,
+                Math.max(distance / 2, 50.0), // At least 50km radius
+                30
+              );
+              setExperiences(results);
+            }
+          } else {
+            // Fallback: try to find districts by name only
+            const fromDistrict = await getPlaceDistrictByName(fromCity);
+            const toDistrict = await getPlaceDistrictByName(toCity);
+            
+            const districts = [fromDistrict, toDistrict].filter((d): d is string => d !== null);
+            
+            if (districts.length > 0) {
+              const results = await getWalkingExperiencesByDistricts(districts, 20);
               setExperiences(results);
             } else {
               setExperiences([]);

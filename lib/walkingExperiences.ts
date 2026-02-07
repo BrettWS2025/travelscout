@@ -203,3 +203,51 @@ export function routeToWKT(coordinates: [number, number][]): string {
   const points = coordinates.map(([lng, lat]) => `${lng} ${lat}`).join(", ");
   return `LINESTRING(${points})`;
 }
+
+/**
+ * Get districts along a route by sampling points
+ * Uses the get_districts_along_route database function
+ */
+export async function getDistrictsAlongRoute(
+  routeWkt: string,
+  samplePoints: number = 10
+): Promise<string[]> {
+  const { data, error } = await supabase.rpc("get_districts_along_route", {
+    route_geometry_wkt: routeWkt,
+    sample_points: samplePoints,
+  });
+
+  if (error) {
+    console.error("Error fetching districts along route:", error);
+    return [];
+  }
+
+  return (data || [])
+    .map((item: any) => item.district_name)
+    .filter((name: string | null): name is string => name !== null);
+}
+
+/**
+ * Create a simple straight-line route between two points with intermediate waypoints
+ * This is used when we don't have actual route geometry
+ */
+export function createStraightLineRoute(
+  startLat: number,
+  startLng: number,
+  endLat: number,
+  endLng: number,
+  waypoints: number = 5
+): [number, number][] {
+  const coordinates: [number, number][] = [[startLng, startLat]];
+  
+  // Add intermediate waypoints
+  for (let i = 1; i < waypoints; i++) {
+    const t = i / waypoints;
+    const lat = startLat + (endLat - startLat) * t;
+    const lng = startLng + (endLng - startLng) * t;
+    coordinates.push([lng, lat]);
+  }
+  
+  coordinates.push([endLng, endLat]);
+  return coordinates;
+}
