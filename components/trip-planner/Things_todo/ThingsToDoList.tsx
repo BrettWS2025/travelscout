@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   getWalkingExperiencesByDistrict,
   getWalkingExperiencesNearPoint,
@@ -18,10 +19,14 @@ type ThingsToDoListProps = {
   location: string;
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ThingsToDoList({ location }: ThingsToDoListProps) {
   const [experiences, setExperiences] = useState<WalkingExperience[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchExperiences() {
@@ -65,7 +70,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
             console.log("[ThingsToDoList] Route WKT created, length:", routeCoordinates.length, "points");
             
             // Try using route buffer approach first (more reliable)
-            const routeResults = await getWalkingExperiencesNearRoute(routeWkt, 30.0, 50); // 30km buffer
+            const routeResults = await getWalkingExperiencesNearRoute(routeWkt, 30.0, 500); // 30km buffer, increased limit
             
             console.log("[ThingsToDoList] Route buffer results:", routeResults.length);
             
@@ -92,7 +97,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
               
               if (allDistricts.length > 0) {
                 // Query by all districts along the route
-                const results = await getWalkingExperiencesByDistricts(allDistricts, 50);
+                const results = await getWalkingExperiencesByDistricts(allDistricts, 500);
                 console.log("[ThingsToDoList] District query results:", results.length);
                 setExperiences(results);
               } else {
@@ -109,7 +114,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
                   midLat,
                   midLng,
                   Math.max(distance / 2, 50.0), // At least 50km radius
-                  50
+                  500
                 );
                 console.log("[ThingsToDoList] Midpoint query results:", results.length);
                 setExperiences(results);
@@ -123,7 +128,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
             const districts = [fromDistrict, toDistrict].filter((d): d is string => d !== null);
             
             if (districts.length > 0) {
-              const results = await getWalkingExperiencesByDistricts(districts, 20);
+              const results = await getWalkingExperiencesByDistricts(districts, 500);
               setExperiences(results);
             } else {
               setExperiences([]);
@@ -143,7 +148,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
           
           if (districtName) {
             // Query by district (fastest)
-            const results = await getWalkingExperiencesByDistrict(districtName, 20);
+            const results = await getWalkingExperiencesByDistrict(districtName, 500);
             setExperiences(results);
           } else {
             // Fallback: try to get coordinates and query by radius
@@ -160,7 +165,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
                 places[0].lat,
                 places[0].lng,
                 60.0, // 60km radius
-                50
+                500
               );
               console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
               setExperiences(results);
@@ -180,7 +185,36 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
     }
 
     fetchExperiences();
+    setCurrentPage(1); // Reset to first page when location changes
   }, [location]);
+
+  // Sort experiences alphabetically by track name
+  const sortedExperiences = useMemo(() => {
+    return [...experiences].sort((a, b) => 
+      a.track_name.localeCompare(b.track_name)
+    );
+  }, [experiences]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedExperiences.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentPageExperiences = sortedExperiences.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [currentPage]);
 
   if (loading) {
     return (
@@ -198,7 +232,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
     );
   }
 
-  if (experiences.length === 0) {
+  if (sortedExperiences.length === 0) {
     return (
       <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
         <div className="text-xs text-slate-500 text-center py-4">
@@ -209,9 +243,13 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
   }
 
   return (
-    <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
-      <div className="space-y-3">
-        {experiences.map((experience) => (
+    <div className="space-y-3">
+      <div 
+        ref={scrollContainerRef}
+        className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2"
+      >
+        <div className="space-y-3">
+          {currentPageExperiences.map((experience) => (
           <a
             key={experience.id}
             href={experience.url_to_webpage}
@@ -271,8 +309,46 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
               </div>
             </div>
           </a>
-        ))}
+          ))}
+        </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className={[
+              "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
+              currentPage === 1
+                ? "text-slate-400 cursor-not-allowed bg-slate-100"
+                : "text-slate-700 bg-slate-100 hover:bg-slate-200"
+            ].join(" ")}
+          >
+            <ChevronLeft className="w-3 h-3" />
+            Previous
+          </button>
+          
+          <div className="text-xs text-slate-600">
+            Page {currentPage} of {totalPages} ({sortedExperiences.length} total)
+          </div>
+          
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className={[
+              "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
+              currentPage === totalPages
+                ? "text-slate-400 cursor-not-allowed bg-slate-100"
+                : "text-slate-700 bg-slate-100 hover:bg-slate-200"
+            ].join(" ")}
+          >
+            Next
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
