@@ -160,7 +160,7 @@ export default function AccountItinerariesPage() {
                       background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
                     }}
                   >
-                    View & Edit
+                    View & Update
                   </button>
                   <button
                     onClick={() => handleDeleteItinerary(r.id)}

@@ -91,7 +91,7 @@ export default function EditItineraryPage() {
   return (
     <main className="mx-auto max-w-5xl p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Edit: {itinerary.title}</h1>
+        <h1 className="text-3xl font-bold mb-2">{itinerary.title}</h1>
         <p className="text-sm text-gray-500">
           Saved {new Date(itinerary.created_at).toLocaleString()}
         </p>
