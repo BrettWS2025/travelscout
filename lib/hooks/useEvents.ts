@@ -94,17 +94,26 @@ function shouldExcludeEvent(event: { name?: string; description?: string }): boo
     "weekly session",
     "weekly class",
     "weekly workshop",
-    "class",
-    "course",
+    // Note: "class" and "course" removed - too broad, would filter legitimate events
+    // If needed, use more specific patterns like "fitness class", "yoga class", etc.
     "seniors",
     
     // Add more patterns as needed
   ];
   
   // Check if any exclusion pattern matches
-  return exclusionPatterns.some(pattern => 
-    name.includes(pattern) || description.includes(pattern)
-  );
+  for (const pattern of exclusionPatterns) {
+    if (name.includes(pattern) || description.includes(pattern)) {
+      // Log which pattern matched for debugging
+      if (name.includes(pattern)) {
+        console.log(`[useEvents] Exclusion pattern "${pattern}" matched in name: "${event.name}"`);
+      } else if (description.includes(pattern)) {
+        console.log(`[useEvents] Exclusion pattern "${pattern}" matched in description for event: "${event.name}"`);
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -174,6 +183,15 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
     if (!date || !locationName) {
       setEvents([]);
       setLoading(false);
+      setError(null);
+      return;
+    }
+
+    // Don't fetch if we don't have coordinates yet (they're being loaded asynchronously)
+    if (lat === undefined || lng === undefined) {
+      setEvents([]);
+      setLoading(true); // Still loading coordinates
+      setError(null);
       return;
     }
 
@@ -187,12 +205,10 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
     // Build query parameters
     const params = new URLSearchParams();
     
-    // Use lat/lng if provided, otherwise we'll need to find location by name
-    if (lat !== undefined && lng !== undefined) {
-      params.append("lat", lat.toString());
-      params.append("lng", lng.toString());
-      params.append("radius", "30"); // 30km radius
-    }
+    // Use lat/lng - we know they're defined at this point
+    params.append("lat", lat.toString());
+    params.append("lng", lng.toString());
+    params.append("radius", "30"); // 30km radius
     
     // Add date filtering - query for events that occur on the target date
     // Strategy: Query a range that includes:
@@ -225,13 +241,28 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
         });
         
         if (!res.ok) {
-          throw new Error(`Failed to fetch events: ${res.statusText}`);
+          // Try to get more detailed error information
+          let errorMessage = `Failed to fetch events: ${res.statusText}`;
+          try {
+            const errorData = await res.json();
+            if (errorData.error) {
+              errorMessage = errorData.error;
+              if (errorData.details) {
+                errorMessage += ` - ${errorData.details}`;
+              }
+            } else if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+          } catch {
+            // If JSON parsing fails, use the status text
+          }
+          throw new Error(errorMessage);
         }
         
         const data = await res.json();
         
         if (data.error) {
-          throw new Error(data.error);
+          throw new Error(`Failed to fetch events: ${data.error}${data.details ? ` - ${data.details}` : ''}`);
         }
 
         const events = data.events || [];

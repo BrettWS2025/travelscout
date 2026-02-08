@@ -123,6 +123,18 @@ export async function GET(req: Request) {
     // Parse query parameters
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
+    
+    // Validate that lat/lng are provided (required for Eventfinda API)
+    if (!lat || !lng) {
+      return NextResponse.json(
+        { 
+          error: "Location coordinates (lat, lng) are required",
+          message: "Please provide latitude and longitude coordinates to search for events"
+        },
+        { status: 400 }
+      );
+    }
+    
     const radius = parseFloat(searchParams.get("radius") || "30");
     // Eventfinda API has a maximum of 20 rows per request. Values above 20 default to 10.
     const rows = Math.min(parseInt(searchParams.get("rows") || "20", 10), 20);
@@ -137,11 +149,9 @@ export async function GET(req: Request) {
     // Build API URL
     const apiUrl = new URL("https://api.eventfinda.co.nz/v2/events.json");
     
-    // Add point parameter if lat/lng provided
-    if (lat && lng) {
-      apiUrl.searchParams.append("point", `${lat},${lng}`);
-      apiUrl.searchParams.append("radius", radius.toString());
-    }
+    // Add point parameter (we know lat/lng are defined due to validation above)
+    apiUrl.searchParams.append("point", `${lat},${lng}`);
+    apiUrl.searchParams.append("radius", radius.toString());
 
     // Add other parameters
     apiUrl.searchParams.append("rows", rows.toString());
