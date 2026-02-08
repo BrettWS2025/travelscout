@@ -219,7 +219,7 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
   if (loading) {
     return (
       <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
-        <div className="text-xs text-slate-500 text-center py-4">Loading walking tracks...</div>
+        <div className="text-xs text-slate-500 text-center py-4">Searching for things to do</div>
       </div>
     );
   }

@@ -87,6 +87,9 @@ function shouldExcludeEvent(event: { name?: string; description?: string }): boo
     "weekly football",
     "weekly soccer",
     "weekly training",
+    "volleyball",
+    "course",
+    "Class",
     
     // Other irrelevant recurring events
     "weekly meetup",

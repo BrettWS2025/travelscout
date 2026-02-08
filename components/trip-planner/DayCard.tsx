@@ -32,18 +32,18 @@ function getEventDurationNights(event: Event): number | null {
 }
 
 /**
- * Check if an event is a "featured event" (1-3 nights)
+ * Check if an event is a "featured event" (single day only, no date range)
  */
 function isFeaturedEvent(event: Event): boolean {
   const nights = getEventDurationNights(event);
-  return nights !== null && nights >= 1 && nights <= 3;
+  return nights !== null && nights === 0;
 }
 
 /**
  * Sort events by priority:
- * 1. 1 night events first
- * 2. 2 night events second
- * 3. 3 night events third
+ * 1. 1 day only events first (0 nights)
+ * 2. 2 day only events second (1 night)
+ * 3. 3 day only events third (2 nights)
  * 4. Then alphabetical by name
  */
 function sortEventsByPriority(events: Event[]): Event[] {
@@ -51,13 +51,13 @@ function sortEventsByPriority(events: Event[]): Event[] {
     const nightsA = getEventDurationNights(a);
     const nightsB = getEventDurationNights(b);
     
-    // Priority: 1 night > 2 night > 3 night > others
+    // Priority: 0 nights (1 day) > 1 night (2 days) > 2 nights (3 days) > others
+    if (nightsA === 0 && nightsB !== 0) return -1;
+    if (nightsA !== 0 && nightsB === 0) return 1;
     if (nightsA === 1 && nightsB !== 1) return -1;
     if (nightsA !== 1 && nightsB === 1) return 1;
     if (nightsA === 2 && nightsB !== 2) return -1;
     if (nightsA !== 2 && nightsB === 2) return 1;
-    if (nightsA === 3 && nightsB !== 3) return -1;
-    if (nightsA !== 3 && nightsB === 3) return 1;
     
     // For same priority or non-featured events, sort alphabetically
     const nameA = (a.name || '').toLowerCase();
@@ -135,27 +135,16 @@ export default function DayCard({
     return sortEventsByPriority(events);
   }, [events]);
 
-  // Get featured events (1-3 nights) for preview when collapsed
-  // Priority: 1 night first, then 2 night, then 3 night
+  // Get featured events (single day only, no date range) for preview when collapsed
   // Mobile: 1 event, Desktop: 2 events
   const featuredEvents = useMemo(() => {
     const featured = sortedEvents.filter(isFeaturedEvent);
-    // Prioritize: 1 night first, then 2 night, then 3 night
-    const oneNight = featured.filter(e => getEventDurationNights(e) === 1);
-    const twoNight = featured.filter(e => getEventDurationNights(e) === 2);
-    const threeNight = featured.filter(e => getEventDurationNights(e) === 3);
-    const prioritized = [...oneNight, ...twoNight, ...threeNight];
-    return prioritized.slice(0, 2);
+    return featured.slice(0, 2);
   }, [sortedEvents]);
   
   const featuredEventsMobile = useMemo(() => {
     const featured = sortedEvents.filter(isFeaturedEvent);
-    // Prioritize: 1 night first, then 2 night, then 3 night
-    const oneNight = featured.filter(e => getEventDurationNights(e) === 1);
-    const twoNight = featured.filter(e => getEventDurationNights(e) === 2);
-    const threeNight = featured.filter(e => getEventDurationNights(e) === 3);
-    const prioritized = [...oneNight, ...twoNight, ...threeNight];
-    return prioritized.slice(0, 1);
+    return featured.slice(0, 1);
   }, [sortedEvents]);
 
   return (
