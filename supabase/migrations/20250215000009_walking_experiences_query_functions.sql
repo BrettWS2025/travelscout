@@ -169,7 +169,7 @@ BEGIN
             extensions.ST_Buffer(
                 extensions.ST_GeomFromText(route_geometry_wkt, 4326)::geography, 
                 buffer_km * 1000.0
-            )::geometry AS route_buffer
+            ) AS route_buffer
     )
     
     SELECT 

@@ -59,8 +59,8 @@ BEGIN
         wep.shape_length,
         wep.district_name,
         wep.district_osm_id,
-        -- Calculate distance in km using ST_Distance_Sphere (works with geometry, gives accurate results)
-        extensions.ST_Distance_Sphere(
+        -- Calculate distance in km using st_distancesphere (works with geometry, gives accurate results)
+        extensions.st_distancesphere(
             extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326),
             cp.center_geom
         ) / 1000.0 AS distance_km
@@ -68,8 +68,8 @@ BEGIN
     CROSS JOIN center_point cp
     WHERE wep.latitude IS NOT NULL
         AND wep.longitude IS NOT NULL
-        -- Use ST_Distance_Sphere for accurate distance filtering (works with geometry)
-        AND extensions.ST_Distance_Sphere(
+        -- Use st_distancesphere for accurate distance filtering (works with geometry)
+        AND extensions.st_distancesphere(
             extensions.ST_SetSRID(extensions.ST_MakePoint(wep.longitude, wep.latitude), 4326),
             cp.center_geom
         ) <= (radius_km * 1000.0)  -- radius_km in meters

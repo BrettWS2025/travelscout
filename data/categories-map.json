@@ -1,0 +1,164 @@
+{
+  "fetchedAt": "2026-01-31T19:23:27.113Z",
+  "totalCategories": 10,
+  "categories": [
+    {
+      "id": 246,
+      "name": "All Events",
+      "url_slug": "whatson",
+      "parent_id": null,
+      "children": []
+    },
+    {
+      "id": 6,
+      "name": "Concerts & Gig Guide",
+      "url_slug": "concerts-gig-guide",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 1,
+      "name": "Performing Arts",
+      "url_slug": "arts",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 21,
+      "name": "Theatre",
+      "url_slug": "theatre",
+      "parent_id": 1,
+      "children": []
+    },
+    {
+      "id": 7,
+      "name": "Sports & Outdoors",
+      "url_slug": "sports",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 190,
+      "name": "Festivals & Lifestyle",
+      "url_slug": "lifestyle",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 22,
+      "name": "Dance",
+      "url_slug": "dance",
+      "parent_id": 1,
+      "children": []
+    },
+    {
+      "id": 11,
+      "name": "Exhibitions",
+      "url_slug": "exhibitions",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 3,
+      "name": "Workshops, Conferences & Classes",
+      "url_slug": "workshops-conferences-classes",
+      "parent_id": 246,
+      "children": []
+    },
+    {
+      "id": 23,
+      "name": "Musicals",
+      "url_slug": "arts-culture-musicals",
+      "parent_id": 1,
+      "children": []
+    }
+  ],
+  "topLevelCategories": [
+    {
+      "id": 246,
+      "name": "All Events",
+      "url_slug": "whatson",
+      "parent_id": null,
+      "children": []
+    }
+  ],
+  "parentCategories": [
+    {
+      "id": 246,
+      "name": "All Events",
+      "url_slug": "whatson",
+      "children": [
+        {
+          "id": 6,
+          "name": "Concerts & Gig Guide",
+          "url_slug": "concerts-gig-guide",
+          "parent_id": 246,
+          "children": []
+        },
+        {
+          "id": 1,
+          "name": "Performing Arts",
+          "url_slug": "arts",
+          "parent_id": 246,
+          "children": []
+        },
+        {
+          "id": 7,
+          "name": "Sports & Outdoors",
+          "url_slug": "sports",
+          "parent_id": 246,
+          "children": []
+        },
+        {
+          "id": 190,
+          "name": "Festivals & Lifestyle",
+          "url_slug": "lifestyle",
+          "parent_id": 246,
+          "children": []
+        },
+        {
+          "id": 11,
+          "name": "Exhibitions",
+          "url_slug": "exhibitions",
+          "parent_id": 246,
+          "children": []
+        },
+        {
+          "id": 3,
+          "name": "Workshops, Conferences & Classes",
+          "url_slug": "workshops-conferences-classes",
+          "parent_id": 246,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Performing Arts",
+      "url_slug": "arts",
+      "children": [
+        {
+          "id": 21,
+          "name": "Theatre",
+          "url_slug": "theatre",
+          "parent_id": 1,
+          "children": []
+        },
+        {
+          "id": 22,
+          "name": "Dance",
+          "url_slug": "dance",
+          "parent_id": 1,
+          "children": []
+        },
+        {
+          "id": 23,
+          "name": "Musicals",
+          "url_slug": "arts-culture-musicals",
+          "parent_id": 1,
+          "children": []
+        }
+      ]
+    }
+  ]
+}

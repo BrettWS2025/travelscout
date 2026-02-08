@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, Car } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/lib/trip-planner/utils";
 import DayCard from "@/components/trip-planner/DayCard";
 import CitySearchPill from "@/components/trip-planner/CitySearchPill";
+import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
+import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 
 type StartEndSectorCardProps = {
   stopIndex: number;
@@ -78,6 +80,9 @@ export default function StartEndSectorCard({
   const dayCount = dayIndices.length;
   const firstDay = dayIndices.length > 0 ? plan.days[dayIndices[0]] : null;
   const lastDay = dayIndices.length > 0 ? plan.days[dayIndices[dayIndices.length - 1]] : null;
+  
+  // State for view toggle (itinerary/road trip vs things to do)
+  const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
   
   // For road sectors, show route instead of just city name
   const displayName = useMemo(() => {
@@ -326,20 +331,29 @@ export default function StartEndSectorCard({
         >
           <div className="overflow-hidden">
             <div className="px-3 md:px-4 pb-3">
-              <div className="rounded-xl bg-white border border-slate-200 p-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-900">
-                    Activities
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="input-dark w-full text-xs"
-                    placeholder="e.g. Stop at lookout point, visit winery, lunch break..."
-                    value={roadActivities}
-                    onChange={(e) => onUpdateRoadSectorActivities(stopIndex, e.target.value)}
-                  />
+              <ViewToggle
+                view={view}
+                onViewChange={setView}
+                sectorType="road"
+              />
+              {view === "itinerary" ? (
+                <div className="rounded-xl bg-white border border-slate-200 p-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-900">
+                      Activities
+                    </label>
+                    <textarea
+                      rows={3}
+                      className="input-dark w-full text-xs"
+                      placeholder="e.g. Stop at lookout point, visit winery, lunch break..."
+                      value={roadActivities}
+                      onChange={(e) => onUpdateRoadSectorActivities(stopIndex, e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <ThingsToDoList location={displayName} />
+              )}
             </div>
           </div>
         </div>
@@ -354,31 +368,38 @@ export default function StartEndSectorCard({
         >
           <div className="overflow-hidden">
             <div className="px-3 md:px-4 pb-4">
-              <div className="pl-2 md:pl-3 border-l border-slate-200 space-y-2">
-                {dayIndices.map((dayIdx, localIdx) => {
-                  const d = plan.days[dayIdx];
-                  const key = makeDayKey(d.date, d.location);
-                  const detail = dayDetails[key];
-                  const isDayOpen = detail?.isOpen ?? false;
+              <ViewToggle
+                view={view}
+                onViewChange={setView}
+                sectorType="itinerary"
+              />
+              {view === "itinerary" ? (
+                <>
+                  <div className="pl-2 md:pl-3 border-l border-slate-200 space-y-2">
+                    {dayIndices.map((dayIdx, localIdx) => {
+                      const d = plan.days[dayIdx];
+                      const key = makeDayKey(d.date, d.location);
+                      const detail = dayDetails[key];
+                      const isDayOpen = detail?.isOpen ?? false;
 
-                  return (
-                    <DayCard
-                      key={`day-${d.dayNumber}-${key}`}
-                      day={d}
-                      isOpen={isDayOpen}
-                      detail={detail}
-                      onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
-                      onUpdateNotes={(notes) => onUpdateDayNotes(d.date, d.location, notes)}
-                      onUpdateAccommodation={(accommodation) =>
-                        onUpdateDayAccommodation(d.date, d.location, accommodation)
-                      }
-                    />
-                  );
-                })}
-              </div>
+                      return (
+                        <DayCard
+                          key={`day-${d.dayNumber}-${key}`}
+                          day={d}
+                          isOpen={isDayOpen}
+                          detail={detail}
+                          onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
+                          onUpdateNotes={(notes) => onUpdateDayNotes(d.date, d.location, notes)}
+                          onUpdateAccommodation={(accommodation) =>
+                            onUpdateDayAccommodation(d.date, d.location, accommodation)
+                          }
+                        />
+                      );
+                    })}
+                  </div>
 
-              {/* Stop options */}
-              <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-slate-200">
+                  {/* Stop options */}
+                  <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-slate-200">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div className="md:hidden space-y-3">
                     {addingStopAfterIndex === stopIndex ? (
@@ -441,6 +462,10 @@ export default function StartEndSectorCard({
                   </div>
                 </div>
               </div>
+                </>
+              ) : (
+                <ThingsToDoList location={stopName} />
+              )}
             </div>
           </div>
         </div>

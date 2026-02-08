@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronDown, GripVertical } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import {
@@ -11,6 +12,8 @@ import {
 import DayCard from "@/components/trip-planner/DayCard";
 import CitySearchPill from "@/components/trip-planner/CitySearchPill";
 import type { Group } from "@/components/trip-planner/DraftItinerary.types";
+import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
+import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 
 type StopGroupCardProps = {
   group: Group;
@@ -69,6 +72,9 @@ export default function StopGroupCard({
   const nightsHere = nightsPerStop[g.stopIndex] ?? 1;
 
   const isDragDisabledLocal = isDragDisabled ?? (g.stopIndex === 0 || g.stopIndex === routeStops.length - 1);
+  
+  // State for view toggle (itinerary vs things to do)
+  const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
 
   return (
     <div
@@ -234,101 +240,112 @@ export default function StopGroupCard({
       >
         <div className="overflow-hidden">
           <div className="px-3 md:px-4 pb-4">
-            <div className="pl-2 md:pl-3 border-l border-slate-200 space-y-2">
-              {g.dayIndices.map((dayIdx, localIdx) => {
-                const d = plan.days[dayIdx];
-                const key = makeDayKey(d.date, d.location);
-                const detail = dayDetails[key];
-                const isOpen = detail?.isOpen ?? false;
+            <ViewToggle
+              view={view}
+              onViewChange={setView}
+              sectorType="itinerary"
+            />
+            {view === "itinerary" ? (
+              <>
+                <div className="pl-2 md:pl-3 border-l border-slate-200 space-y-2">
+                  {g.dayIndices.map((dayIdx, localIdx) => {
+                    const d = plan.days[dayIdx];
+                    const key = makeDayKey(d.date, d.location);
+                    const detail = dayDetails[key];
+                    const isOpen = detail?.isOpen ?? false;
 
-                const isFirstForStop = localIdx === 0;
+                    const isFirstForStop = localIdx === 0;
 
-                return (
-                  <DayCard
-                    key={`day-${d.dayNumber}-${key}`}
-                    day={d}
-                    isOpen={isOpen}
-                    detail={detail}
-                    onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
-                    onUpdateNotes={(notes) => onUpdateDayNotes(d.date, d.location, notes)}
-                    onUpdateAccommodation={(accommodation) =>
-                      onUpdateDayAccommodation(d.date, d.location, accommodation)
-                    }
-                  />
-                );
-              })}
-            </div>
+                    return (
+                      <DayCard
+                        key={`day-${d.dayNumber}-${key}`}
+                        day={d}
+                        isOpen={isOpen}
+                        detail={detail}
+                        onToggleOpen={() => onToggleDayOpen(d.date, d.location)}
+                        onUpdateNotes={(notes) => onUpdateDayNotes(d.date, d.location, notes)}
+                        onUpdateAccommodation={(accommodation) =>
+                          onUpdateDayAccommodation(d.date, d.location, accommodation)
+                        }
+                      />
+                    );
+                  })}
+                </div>
 
-            {/* Stop options - only visible when expanded */}
-            <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-slate-200">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
-                {/* Mobile: Stack layout */}
-                <div className="md:hidden space-y-3">
-                  {addingStopAfterIndex === g.stopIndex ? (
-                    <CitySearchPill
-                      value={newStopCityId}
-                      onSelect={setNewStopCityId}
-                      onCancel={onCancelAddStop}
-                      onConfirm={onConfirmAddStop}
-                    />
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-3">
-                      {g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onStartAddStop(g.stopIndex)}
-                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                        >
-                          + Add stop after this
-                        </button>
-                      )}
-                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onRemoveStop(g.stopIndex)}
-                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                        >
-                          Remove this stop from trip
-                        </button>
+                {/* Stop options - only visible when expanded */}
+                <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-slate-200">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
+                    {/* Mobile: Stack layout */}
+                    <div className="md:hidden space-y-3">
+                      {addingStopAfterIndex === g.stopIndex ? (
+                        <CitySearchPill
+                          value={newStopCityId}
+                          onSelect={setNewStopCityId}
+                          onCancel={onCancelAddStop}
+                          onConfirm={onConfirmAddStop}
+                        />
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-3">
+                          {g.stopIndex < routeStops.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => onStartAddStop(g.stopIndex)}
+                              className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                            >
+                              + Add stop after this
+                            </button>
+                          )}
+                          {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => onRemoveStop(g.stopIndex)}
+                              className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                            >
+                              Remove this stop from trip
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                {/* Desktop: Horizontal layout, aligned right */}
-                <div className="hidden md:flex items-center gap-3">
-                  {addingStopAfterIndex === g.stopIndex ? (
-                    <CitySearchPill
-                      value={newStopCityId}
-                      onSelect={setNewStopCityId}
-                      onCancel={onCancelAddStop}
-                      onConfirm={onConfirmAddStop}
-                    />
-                  ) : (
-                    <>
-                      {g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onStartAddStop(g.stopIndex)}
-                          className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
-                        >
-                          + Add stop after this
-                        </button>
+                    {/* Desktop: Horizontal layout, aligned right */}
+                    <div className="hidden md:flex items-center gap-3">
+                      {addingStopAfterIndex === g.stopIndex ? (
+                        <CitySearchPill
+                          value={newStopCityId}
+                          onSelect={setNewStopCityId}
+                          onCancel={onCancelAddStop}
+                          onConfirm={onConfirmAddStop}
+                        />
+                      ) : (
+                        <>
+                          {g.stopIndex < routeStops.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => onStartAddStop(g.stopIndex)}
+                              className="text-[11px] text-[var(--accent)] hover:underline underline-offset-2"
+                            >
+                              + Add stop after this
+                            </button>
+                          )}
+                          {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => onRemoveStop(g.stopIndex)}
+                              className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
+                            >
+                              Remove this stop from trip
+                            </button>
+                          )}
+                        </>
                       )}
-                      {g.stopIndex > 0 && g.stopIndex < routeStops.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onRemoveStop(g.stopIndex)}
-                          className="text-[11px] text-red-300 hover:text-red-200 hover:underline underline-offset-2"
-                        >
-                          Remove this stop from trip
-                        </button>
-                      )}
-                    </>
-                  )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <ThingsToDoList location={g.stopName} />
+            )}
           </div>
         </div>
       </div>

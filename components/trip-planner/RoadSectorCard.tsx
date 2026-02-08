@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronDown, Car } from "lucide-react";
+import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
+import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 
 type RoadSectorCardProps = {
   fromStopIndex: number;
@@ -23,6 +26,10 @@ export default function RoadSectorCard({
   onToggleOpen,
   onUpdateActivities,
 }: RoadSectorCardProps) {
+  // State for view toggle (road trip vs things to do)
+  const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
+  const routeName = `${fromStopName} to ${toStopName}`;
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
       {/* Road sector header - thinner than itinerary sectors */}
@@ -97,20 +104,29 @@ export default function RoadSectorCard({
       >
         <div className="overflow-hidden">
           <div className="px-3 md:px-4 pb-3">
-            <div className="rounded-xl bg-white border border-slate-200 p-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-900">
-                  Activities
-                </label>
-                <textarea
-                  rows={3}
-                  className="input-dark w-full text-xs"
-                  placeholder="e.g. Stop at lookout point, visit winery, lunch break..."
-                  value={activities}
-                  onChange={(e) => onUpdateActivities(e.target.value)}
-                />
+            <ViewToggle
+              view={view}
+              onViewChange={setView}
+              sectorType="road"
+            />
+            {view === "itinerary" ? (
+              <div className="rounded-xl bg-white border border-slate-200 p-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-900">
+                    Activities
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="input-dark w-full text-xs"
+                    placeholder="e.g. Stop at lookout point, visit winery, lunch break..."
+                    value={activities}
+                    onChange={(e) => onUpdateActivities(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            ) : (
+              <ThingsToDoList location={routeName} />
+            )}
           </div>
         </div>
       </div>
