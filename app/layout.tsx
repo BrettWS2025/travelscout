@@ -113,6 +113,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={plusJakartaSans.variable}>
       <head>
+        <meta name="impact-site-verification" content="321bf81b-5895-4010-9e67-52c4f2342cc0" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
