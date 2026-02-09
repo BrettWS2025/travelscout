@@ -358,7 +358,7 @@ export default function StopGroupCard({
                 </div>
               </>
               ) : (
-                <ThingsToDoList location={g.stopName} onAddToItinerary={onAddToItinerary ? (exp) => onAddToItinerary(exp, g.stopName) : undefined} />
+                <ThingsToDoList location={g.stopName} onAddToItinerary={onAddToItinerary} />
               )}
           </div>
         </div>

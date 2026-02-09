@@ -200,15 +200,9 @@ export default function StartEndSectorCard({
                     <div className="text-xs font-semibold text-slate-800 break-words leading-tight">
                       {displayName}
                     </div>
-                    {sectorType === "road" && roadSectorDate && (
+                    {roadSectorDate && (
                       <div className="text-[10px] text-slate-600 mt-0.5">
                         {formatShortRangeDate(roadSectorDate)}
-                      </div>
-                    )}
-                    {sectorType === "itinerary" && arrivalDate && departureDate && (
-                      <div className="text-[10px] text-slate-600 mt-0.5">
-                        Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
-                        {nightsHere === 1 ? "" : "s"}
                       </div>
                     )}
                   </div>
@@ -316,15 +310,9 @@ export default function StartEndSectorCard({
                     <div className="text-sm font-semibold text-slate-800 truncate">
                       {displayName}
                     </div>
-                    {sectorType === "road" && roadSectorDate && (
+                    {roadSectorDate && (
                       <div className="text-[11px] text-slate-600 truncate">
                         {formatShortRangeDate(roadSectorDate)}
-                      </div>
-                    )}
-                    {sectorType === "itinerary" && arrivalDate && departureDate && (
-                      <div className="text-[11px] text-slate-600 truncate">
-                        Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
-                        {nightsHere === 1 ? "" : "s"}
                       </div>
                     )}
                   </div>
@@ -338,27 +326,27 @@ export default function StartEndSectorCard({
               >
                 <span
                   className={[
-                    "w-8 h-8 rounded-xl flex items-center justify-center",
+                    "w-6 h-6 rounded-lg flex items-center justify-center shrink-0",
                     "border border-slate-200 bg-slate-50 group-hover:bg-slate-100 transition",
                   ].join(" ")}
                   aria-hidden
                 >
                   <ChevronDown
                     className={[
-                      "w-4 h-4 text-slate-600 transition-transform duration-200",
+                      "w-3 h-3 text-slate-600 transition-transform duration-200",
                       isOpen ? "rotate-0" : "-rotate-90",
                     ].join(" ")}
                   />
                 </span>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-800 truncate">{stopName}</div>
-                {arrivalDate && departureDate && (
-                  <div className="text-[11px] text-slate-600 truncate">
-                    Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
-                    {nightsHere === 1 ? "" : "s"}
-                  </div>
-                )}
-              </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-slate-900 truncate">{stopName}</div>
+                  {arrivalDate && departureDate && (
+                    <div className="text-[11px] text-slate-600 truncate">
+                      Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
+                      {nightsHere === 1 ? "" : "s"}
+                    </div>
+                  )}
+                </div>
               </button>
             )}
           </div>
@@ -451,7 +439,7 @@ export default function StartEndSectorCard({
                   )}
                 </div>
               ) : (
-                <ThingsToDoList location={displayName} onAddToItinerary={onAddToItinerary ? (exp) => onAddToItinerary(exp, displayName) : undefined} />
+                <ThingsToDoList location={displayName} onAddToItinerary={onAddToItinerary} />
               )}
             </div>
           </div>
@@ -564,7 +552,7 @@ export default function StartEndSectorCard({
               </div>
                 </>
               ) : (
-                <ThingsToDoList location={stopName} onAddToItinerary={onAddToItinerary ? (exp) => onAddToItinerary(exp, stopName) : undefined} />
+                <ThingsToDoList location={stopName} onAddToItinerary={onAddToItinerary} />
               )}
             </div>
           </div>

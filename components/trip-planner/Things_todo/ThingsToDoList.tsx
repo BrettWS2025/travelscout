@@ -17,11 +17,12 @@ import { parseDisplayName } from "@/lib/trip-planner/utils";
 
 type ThingsToDoListProps = {
   location: string;
+  onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
 };
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ThingsToDoList({ location }: ThingsToDoListProps) {
+export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToDoListProps) {
   const [experiences, setExperiences] = useState<WalkingExperience[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -250,11 +251,8 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
       >
         <div className="space-y-3">
           {currentPageExperiences.map((experience) => (
-          <a
+          <div
             key={experience.id}
-            href={experience.url_to_webpage}
-            target="_blank"
-            rel="noopener noreferrer"
             className="block rounded-xl bg-slate-50 border border-slate-200 p-3 hover:bg-slate-100 transition-colors"
           >
             <div className="flex items-start gap-3">
@@ -279,7 +277,15 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h4 className="text-sm font-semibold text-slate-900 line-clamp-1">
-                    {experience.track_name}
+                    <a
+                      href={experience.url_to_webpage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-indigo-600 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {experience.track_name}
+                    </a>
                   </h4>
                   {experience.difficulty && (
                     <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
@@ -305,10 +311,59 @@ export default function ThingsToDoList({ location }: ThingsToDoListProps) {
                   {experience.district_name && (
                     <span>📍 {experience.district_name}</span>
                   )}
+                  {/* Action Pills - Desktop: inline with details */}
+                  <span className="hidden md:inline-flex items-center gap-2 ml-1">
+                    <a
+                      href={experience.url_to_webpage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      More Detail
+                    </a>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onAddToItinerary) {
+                          onAddToItinerary(experience, location);
+                        }
+                      }}
+                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                    >
+                      Add to itinerary
+                    </button>
+                  </span>
                 </div>
               </div>
             </div>
-          </a>
+            
+            {/* Action Pills - Mobile: separate section below */}
+            <div className="flex items-center gap-2 flex-wrap md:hidden mt-3">
+              <a
+                href={experience.url_to_webpage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                More Detail
+              </a>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onAddToItinerary) {
+                    onAddToItinerary(experience, location);
+                  }
+                }}
+                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              >
+                Add to itinerary
+              </button>
+            </div>
+          </div>
           ))}
         </div>
       </div>

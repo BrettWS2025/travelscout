@@ -255,7 +255,7 @@ export default function RoadSectorCard({
                 )}
               </div>
             ) : (
-              <ThingsToDoList location={routeName} onAddToItinerary={onAddToItinerary ? (exp) => onAddToItinerary(exp, routeName) : undefined} />
+              <ThingsToDoList location={routeName} onAddToItinerary={onAddToItinerary} />
             )}
           </div>
         </div>
