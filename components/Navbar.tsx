@@ -189,7 +189,11 @@ function ProfileMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative" onMouseLeave={() => setOpen(false)}>
+    <div 
+      className="relative" 
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       {!isLoggedIn ? (
         <Link
           href="/auth/login"
@@ -203,7 +207,6 @@ function ProfileMenu({
         <>
           <button
             type="button"
-            onMouseEnter={() => setOpen(true)}
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
             style={{ color: "var(--text)" }}
@@ -219,11 +222,13 @@ function ProfileMenu({
 
           {open && (
             <div
-              className="absolute right-0 top-full -mt-px w-48 card p-2 z-50"
+              className="absolute right-0 top-full pt-1 w-48 z-[9999]"
               role="menu"
               aria-label="Account menu"
-              style={{ color: "var(--text)" }}
+              onMouseEnter={() => setOpen(true)}
+              onMouseLeave={() => setOpen(false)}
             >
+              <div className="card p-2" style={{ color: "var(--text)" }}>
               <ul className="space-y-1 text-sm">
                 <li>
                   <Link
@@ -255,6 +260,7 @@ function ProfileMenu({
                   </button>
                 </li>
               </ul>
+              </div>
             </div>
           )}
         </>
@@ -290,18 +296,17 @@ export function Navbar() {
 
   return (
     <header
-      className="z-[1000] py-3"
+      className="relative z-[1000] py-3 overflow-visible"
       style={{
         background: "rgba(255, 255, 255, 0.8)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
         backdropFilter: "saturate(180%) blur(20px)",
         borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
         color: "var(--text)",
-        isolation: "isolate",
         boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
-      <div className="container navbar-responsive flex items-center justify-between">
+      <div className="container navbar-responsive flex items-center justify-between overflow-visible">
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink py-0"
@@ -319,7 +324,7 @@ export function Navbar() {
           <span className="sr-only">TravelScout</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6 overflow-visible">
           {VISIBLE_MENU.map((section) => {
             // Trip Planner should be a simple link, not a dropdown
             if (section.key === "trip-planner") {

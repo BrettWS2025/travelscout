@@ -171,8 +171,8 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
               "md:w-[calc((100%-1.5rem)/3)]",
             ].join(" ")}
           >
-            <div className="rounded-xl bg-slate-300 border border-slate-400 p-4 h-full">
-              <div className="aspect-video bg-slate-400 rounded-lg mb-3 overflow-hidden">
+            <div className="rounded-xl bg-slate-300 border border-slate-400 p-2.5">
+              <div className="aspect-video bg-slate-400 rounded-lg mb-2 overflow-hidden">
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
@@ -193,10 +193,10 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
                     event.imageUrl ? "hidden" : "",
                   ].join(" ")}
                 >
-                  <span className="text-xs text-slate-700">No image</span>
+                  <span className="text-[10px] text-slate-500">No image</span>
                 </div>
               </div>
-              <h4 className="text-sm font-semibold text-slate-900 mb-1">
+              <h4 className="text-xs font-semibold text-slate-900 mb-0.5">
                 <a
                   href={event.url}
                   target="_blank"
@@ -207,12 +207,12 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
                 </a>
               </h4>
               {event.datetime_summary && (
-                <p className="text-xs text-slate-700 mb-1.5 font-medium">
+                <p className="text-[10px] text-slate-700 mb-1 font-medium">
                   {event.datetime_summary}
                 </p>
               )}
               {event.description && (
-                <p className="text-xs text-slate-800 line-clamp-3">
+                <p className="text-[10px] text-slate-800 line-clamp-2">
                   {event.description}
                 </p>
               )}

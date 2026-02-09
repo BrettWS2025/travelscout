@@ -11,9 +11,11 @@ import TripSummary from "@/components/trip-planner/TripSummary";
 import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
+import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
+import type { WalkingExperience } from "@/lib/walkingExperiences";
 
 type ItineraryData = {
   id: string;
@@ -45,6 +47,11 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Places/Things modal state
   const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
   const [placesThingsModalStep, setPlacesThingsModalStep] = useState<"places" | "things">("places");
+
+  // Add to itinerary modal state
+  const [showAddToItineraryModal, setShowAddToItineraryModal] = useState(false);
+  const [selectedExperience, setSelectedExperience] = useState<WalkingExperience | null>(null);
+  const [selectedExperienceLocation, setSelectedExperienceLocation] = useState<string>("");
 
   // Restore state from localStorage on mount (if not loading initialItinerary)
   useEffect(() => {
@@ -125,6 +132,29 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   const handlePlacesThingsModalStepChange = (step: "places" | "things") => {
     setPlacesThingsModalStep(step);
+  };
+
+  // Handle adding experience to itinerary
+  const handleAddToItinerary = (experience: WalkingExperience, location: string) => {
+    setSelectedExperience(experience);
+    setSelectedExperienceLocation(location);
+    setShowAddToItineraryModal(true);
+  };
+
+  const handleCloseAddToItineraryModal = () => {
+    setShowAddToItineraryModal(false);
+    setSelectedExperience(null);
+    setSelectedExperienceLocation("");
+  };
+
+  // Add experience to day
+  const handleAddToDay = (date: string, location: string, experience: WalkingExperience) => {
+    tp.addExperienceToDay(date, location, experience);
+  };
+
+  // Add experience to road sector
+  const handleAddToRoadSector = (destinationStopIndex: number, experience: WalkingExperience) => {
+    tp.addExperienceToRoadSector(destinationStopIndex, experience);
   };
 
   const handleSaveClick = () => {
@@ -297,8 +327,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onToggleDayOpen={tp.toggleDayOpen}
             onUpdateDayNotes={tp.updateDayNotes}
             onUpdateDayAccommodation={tp.updateDayAccommodation}
+            onRemoveExperienceFromDay={tp.removeExperienceFromDay}
             onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
             onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
+            onRemoveExperienceFromRoadSector={tp.removeExperienceFromRoadSector}
             startSectorType={tp.startSectorType}
             endSectorType={tp.endSectorType}
             onConvertStartToItinerary={tp.convertStartToItinerary}
@@ -310,8 +342,29 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onCancelAddStop={tp.handleCancelAddStop}
             onRemoveStop={tp.handleRemoveStop}
             onReorderStops={tp.handleReorderStops}
+            onAddToItinerary={handleAddToItinerary}
           />
         </>
+      )}
+
+      {/* Add to Itinerary Modal */}
+      {showAddToItineraryModal && selectedExperience && tp.plan && (
+        <AddToItineraryModal
+          isOpen={showAddToItineraryModal}
+          onClose={handleCloseAddToItineraryModal}
+          experience={selectedExperience}
+          location={selectedExperienceLocation}
+          plan={tp.plan}
+          routeStops={tp.routeStops}
+          nightsPerStop={tp.nightsPerStop}
+          dayStopMeta={tp.dayStopMeta}
+          dayDetails={tp.dayDetails}
+          roadSectorDetails={tp.roadSectorDetails}
+          startSectorType={tp.startSectorType}
+          endSectorType={tp.endSectorType}
+          onAddToDay={handleAddToDay}
+          onAddToRoadSector={handleAddToRoadSector}
+        />
       )}
 
       {/* Save Dialog */}

@@ -1,81 +1,76 @@
 // app/api/trips/route.ts
 //
-// Temporary in-memory API for trips.
-// This gives us a real HTTP contract (GET/POST /api/trips)
-// using the domain types from lib/domain.ts,
-// but does NOT persist anything yet.
-//
-// Later, we'll replace the in-memory store with Supabase.
+// API for trips using Supabase for persistence.
+// Uses domain types from lib/domain.ts and persists to Supabase.
 
 import { NextResponse } from "next/server";
-import type { TripWithDetails, TripId, UserId } from "@/lib/domain";
+import type { TripWithDetails, TripId } from "@/lib/domain";
+import { getServerUser } from "@/lib/supabase/server";
+import { getTripsForUser, saveTrip } from "@/lib/supabase/trips";
 
 export const runtime = "nodejs"; // ensure we're on Node, not edge
-
-// --- Temporary "database" in memory ----------------------------------------
-
-// Map<userId, TripWithDetails[]>
-const tripsStore = new Map<UserId, TripWithDetails[]>();
-
-// For now, we just hard-code a single demo user.
-// Once auth is wired up (Supabase Auth or similar), we'll derive this
-// from the session / JWT instead.
-const DEMO_USER_ID: UserId = "demo-user";
-
-// --- Helpers ----------------------------------------------------------------
-
-function getTripsForUser(userId: UserId): TripWithDetails[] {
-  return tripsStore.get(userId) ?? [];
-}
-
-function saveTripForUser(userId: UserId, trip: TripWithDetails): TripWithDetails {
-  const existing = tripsStore.get(userId) ?? [];
-
-  // If a trip with the same id exists, replace it; otherwise append.
-  const idx = existing.findIndex((t) => t.trip.id === trip.trip.id);
-  let next: TripWithDetails[];
-  if (idx === -1) {
-    next = [...existing, trip];
-  } else {
-    next = [...existing];
-    next[idx] = trip;
-  }
-
-  tripsStore.set(userId, next);
-  return trip;
-}
 
 // --- Route handlers ---------------------------------------------------------
 
 /**
  * GET /api/trips
  *
- * For now:
- *  - returns all trips for the DEMO_USER_ID in memory.
+ * Returns all trips for the authenticated user.
+ * For anonymous users, returns empty array (they can build itineraries client-side).
+ * Only authenticated users can retrieve saved trips.
  */
-export async function GET() {
-  const trips = getTripsForUser(DEMO_USER_ID);
-  return NextResponse.json({ trips });
+export async function GET(req: Request) {
+  try {
+    // Try to get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const user = await getServerUser(authHeader || undefined);
+
+    // Allow anonymous users - return empty array
+    // They can build itineraries client-side without API calls
+    if (!user) {
+      return NextResponse.json({ trips: [] });
+    }
+
+    const trips = await getTripsForUser(user.id);
+    return NextResponse.json({ trips });
+  } catch (err) {
+    console.error("Error in GET /api/trips:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch trips.";
+    return NextResponse.json(
+      { error: "Failed to fetch trips.", message: errorMessage },
+      { status: 500 }
+    );
+  }
 }
 
 /**
  * POST /api/trips
  *
- * For now:
- *  - expects a TripWithDetails in the request body
- *  - overwrites trip.userId with DEMO_USER_ID
- *  - stores it in memory
+ * Creates or updates a trip for the authenticated user.
+ * Requires authentication - returns 401 if not authenticated.
  *
- * Later:
- *  - we'll validate input more strictly
- *  - use Supabase inserts/updates instead of the in-memory map
- *  - derive userId from auth
+ * Request body should include a TripWithDetails object.
+ * The trip.userId will be set to the authenticated user's ID.
  */
 export async function POST(req: Request) {
   try {
+    // Try to get auth token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const user = await getServerUser(authHeader || undefined);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in to save trips." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
+
     const body = await req.json();
 
-    // Very light validation for now
+    // Validate request body
     if (!body || typeof body !== "object" || !body.trip) {
       return NextResponse.json(
         { error: "Request body must include a 'trip' object." },
@@ -85,20 +80,20 @@ export async function POST(req: Request) {
 
     const incoming = body as TripWithDetails;
 
-    // Ensure the trip has an id; in future this will come from the client-side
-    // helper createTripDraft() or directly from Supabase.
+    // Ensure the trip has an id; generate one if not provided
     const tripId: TripId =
       incoming.trip.id ||
       (crypto.randomUUID?.() ?? `trip_${Math.random().toString(36).slice(2)}`);
 
     const now = new Date().toISOString();
 
+    // Normalize the trip data
     const normalised: TripWithDetails = {
       ...incoming,
       trip: {
         ...incoming.trip,
         id: tripId,
-        userId: DEMO_USER_ID,
+        userId: userId, // Use authenticated user's ID
         createdAt: incoming.trip.createdAt || now,
         updatedAt: now,
       },
@@ -112,13 +107,17 @@ export async function POST(req: Request) {
       })),
     };
 
-    const saved = saveTripForUser(DEMO_USER_ID, normalised);
+    // Save to Supabase
+    const saved = await saveTrip(userId, normalised);
 
     return NextResponse.json({ trip: saved }, { status: 201 });
   } catch (err) {
     console.error("Error in POST /api/trips:", err);
     return NextResponse.json(
-      { error: "Failed to save trip." },
+      {
+        error: "Failed to save trip.",
+        message: err instanceof Error ? err.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

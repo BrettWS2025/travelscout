@@ -71,6 +71,43 @@ export async function getAllPlaces(): Promise<Place[]> {
 }
 
 /**
+ * Get district name for a place by its ID
+ * Returns the district_name from nz_places_final
+ */
+export async function getPlaceDistrict(id: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("nz_places_final")
+    .select("district_name")
+    .eq("id", id)
+    .single();
+  
+  if (error || !data) {
+    return null;
+  }
+  
+  return data.district_name || null;
+}
+
+/**
+ * Get district name for a place by searching by name
+ * Returns the district_name from nz_places_final
+ */
+export async function getPlaceDistrictByName(placeName: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("nz_places_final")
+    .select("district_name")
+    .ilike("name", placeName)
+    .in("place_type", ["city", "town", "village", "hamlet"])
+    .limit(1);
+  
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+  
+  return data[0].district_name || null;
+}
+
+/**
  * Get a place by its ID
  * Uses nz_places_final table only
  */

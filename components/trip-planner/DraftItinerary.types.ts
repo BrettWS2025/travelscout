@@ -25,10 +25,12 @@ export type DraftItineraryProps = {
     location: string,
     accommodation: string
   ) => void;
+  onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
 
   roadSectorDetails: Record<number, RoadSectorDetail>;
   onToggleRoadSectorOpen: (destinationStopIndex: number) => void;
   onUpdateRoadSectorActivities: (destinationStopIndex: number, activities: string) => void;
+  onRemoveExperienceFromRoadSector?: (destinationStopIndex: number, experienceId: string) => void;
   startSectorType: "road" | "itinerary";
   endSectorType: "road" | "itinerary";
   onConvertStartToItinerary: () => void;
@@ -42,6 +44,8 @@ export type DraftItineraryProps = {
   onRemoveStop: (stopIndex: number) => void;
 
   onReorderStops: (fromIndex: number, toIndex: number) => void;
+
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
 };
 
 export type Group = {

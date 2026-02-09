@@ -40,9 +40,11 @@ export default function DraftItinerary({
   onToggleDayOpen,
   onUpdateDayNotes,
   onUpdateDayAccommodation,
+  onRemoveExperienceFromDay,
   roadSectorDetails,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
+  onRemoveExperienceFromRoadSector,
   startSectorType,
   endSectorType,
   onConvertStartToItinerary,
@@ -54,6 +56,7 @@ export default function DraftItinerary({
   onCancelAddStop,
   onRemoveStop,
   onReorderStops,
+  onAddToItinerary,
 }: Props) {
   const stopGroups = useMemo(() => {
     if (!plan || plan.days.length === 0) return [];
@@ -200,14 +203,17 @@ export default function DraftItinerary({
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}
                   onUpdateDayAccommodation={onUpdateDayAccommodation}
+                  onRemoveExperienceFromDay={onRemoveExperienceFromDay}
                   onConvertToItinerary={onConvertStartToItinerary}
                   onConvertToRoad={onConvertStartToRoad}
                   roadSectorDetails={roadSectorDetails}
                   onToggleRoadSectorOpen={onToggleRoadSectorOpen}
                   onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
+                  onRemoveExperienceFromRoadSector={onRemoveExperienceFromRoadSector}
                   onStartAddStop={onStartAddStop}
                   onConfirmAddStop={onConfirmAddStop}
                   onCancelAddStop={onCancelAddStop}
+                  onAddToItinerary={onAddToItinerary}
                 />
               )}
 
@@ -220,8 +226,16 @@ export default function DraftItinerary({
                   toStopName={stopGroups[0].stopName}
                   isOpen={roadSectorDetails[stopGroups[0].stopIndex]?.isOpen ?? false}
                   activities={roadSectorDetails[stopGroups[0].stopIndex]?.activities ?? ""}
+                  experiences={roadSectorDetails[stopGroups[0].stopIndex]?.experiences}
+                  plan={plan}
+                  nightsPerStop={nightsPerStop}
+                  startDate={plan?.days[0]?.date ?? ""}
+                  dayStopMeta={dayStopMeta}
+                  routeStops={routeStops}
                   onToggleOpen={() => onToggleRoadSectorOpen(stopGroups[0].stopIndex)}
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(stopGroups[0].stopIndex, activities)}
+                  onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(stopGroups[0].stopIndex, experienceId) : undefined}
+                  onAddToItinerary={onAddToItinerary}
                 />
               )}
 
@@ -234,8 +248,16 @@ export default function DraftItinerary({
                   toStopName={endGroup.stopName}
                   isOpen={roadSectorDetails[routeStops.length - 1]?.isOpen ?? false}
                   activities={roadSectorDetails[routeStops.length - 1]?.activities ?? ""}
+                  experiences={roadSectorDetails[routeStops.length - 1]?.experiences}
+                  plan={plan}
+                  nightsPerStop={nightsPerStop}
+                  startDate={plan?.days[0]?.date ?? ""}
+                  dayStopMeta={dayStopMeta}
+                  routeStops={routeStops}
                   onToggleOpen={() => onToggleRoadSectorOpen(routeStops.length - 1)}
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
+                  onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
+                  onAddToItinerary={onAddToItinerary}
                 />
               )}
 
@@ -269,6 +291,7 @@ export default function DraftItinerary({
                       onConfirmAddStop={onConfirmAddStop}
                       onCancelAddStop={onCancelAddStop}
                       onRemoveStop={onRemoveStop}
+                      onAddToItinerary={onAddToItinerary}
                     />
                   ))}
                 </SortableContext>
@@ -283,8 +306,16 @@ export default function DraftItinerary({
                   toStopName={endGroup.stopName}
                   isOpen={roadSectorDetails[routeStops.length - 1]?.isOpen ?? false}
                   activities={roadSectorDetails[routeStops.length - 1]?.activities ?? ""}
+                  experiences={roadSectorDetails[routeStops.length - 1]?.experiences}
+                  plan={plan}
+                  nightsPerStop={nightsPerStop}
+                  startDate={plan?.days[0]?.date ?? ""}
+                  dayStopMeta={dayStopMeta}
+                  routeStops={routeStops}
                   onToggleOpen={() => onToggleRoadSectorOpen(routeStops.length - 1)}
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
+                  onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
+                  onAddToItinerary={onAddToItinerary}
                 />
               )}
 
@@ -310,14 +341,17 @@ export default function DraftItinerary({
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}
                   onUpdateDayAccommodation={onUpdateDayAccommodation}
+                  onRemoveExperienceFromDay={onRemoveExperienceFromDay}
                   onConvertToItinerary={onConvertEndToItinerary}
                   onConvertToRoad={onConvertEndToRoad}
                   roadSectorDetails={roadSectorDetails}
                   onToggleRoadSectorOpen={onToggleRoadSectorOpen}
                   onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
+                  onRemoveExperienceFromRoadSector={onRemoveExperienceFromRoadSector}
                   onStartAddStop={onStartAddStop}
                   onConfirmAddStop={onConfirmAddStop}
                   onCancelAddStop={onCancelAddStop}
+                  onAddToItinerary={onAddToItinerary}
                 />
               )}
             </>

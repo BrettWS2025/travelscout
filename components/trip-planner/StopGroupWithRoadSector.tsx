@@ -28,12 +28,15 @@ type StopGroupWithRoadSectorProps = {
   onToggleDayOpen: (date: string, location: string) => void;
   onUpdateDayNotes: (date: string, location: string, notes: string) => void;
   onUpdateDayAccommodation: (date: string, location: string, accommodation: string) => void;
+  onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
   onToggleRoadSectorOpen: (destinationStopIndex: number) => void;
   onUpdateRoadSectorActivities: (destinationStopIndex: number, activities: string) => void;
+  onRemoveExperienceFromRoadSector?: (destinationStopIndex: number, experienceId: string) => void;
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
   onRemoveStop: (stopIndex: number) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
 };
 
 export default function StopGroupWithRoadSector({
@@ -55,12 +58,15 @@ export default function StopGroupWithRoadSector({
   onToggleDayOpen,
   onUpdateDayNotes,
   onUpdateDayAccommodation,
+  onRemoveExperienceFromDay,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
+  onRemoveExperienceFromRoadSector,
   onStartAddStop,
   onConfirmAddStop,
   onCancelAddStop,
   onRemoveStop,
+  onAddToItinerary,
 }: StopGroupWithRoadSectorProps) {
   const isDragDisabled = group.stopIndex === 0 || group.stopIndex === routeStops.length - 1;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -96,8 +102,16 @@ export default function StopGroupWithRoadSector({
           toStopName={group.stopName}
           isOpen={roadSectorDetail?.isOpen ?? false}
           activities={roadSectorDetail?.activities ?? ""}
+          experiences={roadSectorDetail?.experiences}
+          plan={plan}
+          nightsPerStop={nightsPerStop}
+          startDate={plan?.days[0]?.date ?? ""}
+          dayStopMeta={dayStopMeta}
+          routeStops={routeStops}
           onToggleOpen={() => onToggleRoadSectorOpen(group.stopIndex)}
           onUpdateActivities={(activities) => onUpdateRoadSectorActivities(group.stopIndex, activities)}
+          onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(group.stopIndex, experienceId) : undefined}
+          onAddToItinerary={onAddToItinerary}
         />
       )}
       <StopGroupCard
@@ -116,6 +130,7 @@ export default function StopGroupWithRoadSector({
         onToggleDayOpen={onToggleDayOpen}
         onUpdateDayNotes={onUpdateDayNotes}
         onUpdateDayAccommodation={onUpdateDayAccommodation}
+        onRemoveExperienceFromDay={onRemoveExperienceFromDay}
         onStartAddStop={onStartAddStop}
         onConfirmAddStop={onConfirmAddStop}
         onCancelAddStop={onCancelAddStop}
@@ -123,6 +138,7 @@ export default function StopGroupWithRoadSector({
         dragAttributes={attributes}
         dragListeners={listeners}
         isDragDisabled={isDragDisabled}
+        onAddToItinerary={onAddToItinerary}
       />
     </div>
   );
