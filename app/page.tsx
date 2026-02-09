@@ -33,6 +33,7 @@ export default function Home() {
           </h1>
           
           <p className="text-lg md:text-xl text-slate-700 max-w-2xl mx-auto font-medium">
+            <span style={{ display: 'none' }}>Impact-Site-Verification: 321bf81b-5895-4010-9e67-52c4f2342cc0</span>
             Plan your journey across Aotearoa with our intelligent trip planner. 
             Book events and attractions along the way, and create the perfect itinerary 
             tailored to your travel style.
