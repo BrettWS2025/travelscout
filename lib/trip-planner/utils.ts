@@ -1,6 +1,7 @@
 import { buildLegsFromPoints, type TripLeg } from "@/lib/itinerary";
 import { NZ_CITIES } from "@/lib/nzCities";
 import { getPlacesCache } from "@/lib/places";
+import type { WalkingExperience } from "@/lib/walkingExperiences";
 
 export type MapPoint = {
   lat: number;
@@ -12,11 +13,13 @@ export type DayDetail = {
   notes: string;
   accommodation: string;
   isOpen: boolean;
+  experiences?: WalkingExperience[];
 };
 
 export type RoadSectorDetail = {
   activities: string;
   isOpen: boolean;
+  experiences?: WalkingExperience[];
 };
 
 export type StartEndSectorType = "road" | "itinerary";
@@ -103,6 +106,14 @@ export function fromIsoDate(s: string): Date | null {
   const d = new Date(s + "T00:00:00");
   if (Number.isNaN(d.getTime())) return null;
   return d;
+}
+
+export function addDaysToIsoDate(dateStr: string, days: number): string {
+  const date = fromIsoDate(dateStr);
+  if (!date) return dateStr;
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + days);
+  return toIsoDate(newDate);
 }
 
 export async function fetchRoadLegs(points: MapPoint[]): Promise<TripLeg[]> {

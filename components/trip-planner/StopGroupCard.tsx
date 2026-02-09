@@ -6,6 +6,7 @@ import type { TripPlan } from "@/lib/itinerary";
 import {
   formatShortRangeDate,
   makeDayKey,
+  addDaysToIsoDate,
   type DayDetail,
   type DayStopMeta,
 } from "@/lib/trip-planner/utils";
@@ -35,6 +36,7 @@ type StopGroupCardProps = {
     location: string,
     accommodation: string
   ) => void;
+  onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
@@ -42,6 +44,7 @@ type StopGroupCardProps = {
   dragAttributes?: any;
   dragListeners?: any;
   isDragDisabled?: boolean;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
 };
 
 export default function StopGroupCard({
@@ -59,6 +62,7 @@ export default function StopGroupCard({
   onToggleDayOpen,
   onUpdateDayNotes,
   onUpdateDayAccommodation,
+  onRemoveExperienceFromDay,
   onStartAddStop,
   onConfirmAddStop,
   onCancelAddStop,
@@ -66,10 +70,15 @@ export default function StopGroupCard({
   dragAttributes,
   dragListeners,
   isDragDisabled,
+  onAddToItinerary,
 }: StopGroupCardProps) {
   const isStopOpen = openStops[g.stopIndex] ?? false;
   const dayCount = g.dayIndices.length;
   const nightsHere = nightsPerStop[g.stopIndex] ?? 1;
+  
+  // Calculate arrival and departure dates
+  const arrivalDate = g.startDate;
+  const departureDate = arrivalDate ? addDaysToIsoDate(arrivalDate, nightsHere) : "";
 
   const isDragDisabledLocal = isDragDisabled ?? (g.stopIndex === 0 || g.stopIndex === routeStops.length - 1);
   
@@ -107,10 +116,12 @@ export default function StopGroupCard({
 
               <div className="min-w-0 flex-1">
                 <div className="text-base font-semibold text-slate-800 break-words">{g.stopName}</div>
-                <div className="text-[11px] text-slate-600 mt-0.5">
-                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
-                  {dayCount === 1 ? "" : "s"}
-                </div>
+                {arrivalDate && departureDate && (
+                  <div className="text-[11px] text-slate-600 mt-0.5">
+                    Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
+                    {nightsHere === 1 ? "" : "s"}
+                  </div>
+                )}
               </div>
             </button>
             {!isDragDisabledLocal && dragAttributes && dragListeners && (
@@ -181,10 +192,12 @@ export default function StopGroupCard({
 
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-slate-800 truncate">{g.stopName}</div>
-                <div className="text-[11px] text-slate-600 truncate">
-                  {formatShortRangeDate(g.startDate)} – {formatShortRangeDate(g.endDate)} · {dayCount} day
-                  {dayCount === 1 ? "" : "s"}
-                </div>
+                {arrivalDate && departureDate && (
+                  <div className="text-[11px] text-slate-600 truncate">
+                    Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
+                    {nightsHere === 1 ? "" : "s"}
+                  </div>
+                )}
               </div>
             </button>
           </div>
@@ -267,6 +280,7 @@ export default function StopGroupCard({
                         onUpdateAccommodation={(accommodation) =>
                           onUpdateDayAccommodation(d.date, d.location, accommodation)
                         }
+                        onRemoveExperience={onRemoveExperienceFromDay ? (experienceId) => onRemoveExperienceFromDay(d.date, d.location, experienceId) : undefined}
                       />
                     );
                   })}
@@ -343,9 +357,9 @@ export default function StopGroupCard({
                   </div>
                 </div>
               </>
-            ) : (
-              <ThingsToDoList location={g.stopName} />
-            )}
+              ) : (
+                <ThingsToDoList location={g.stopName} onAddToItinerary={onAddToItinerary ? (exp) => onAddToItinerary(exp, g.stopName) : undefined} />
+              )}
           </div>
         </div>
       </div>

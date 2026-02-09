@@ -23,6 +23,7 @@ export function syncDayDetailsFromPlan(
         notes: "",
         accommodation: "",
         isOpen: false,
+        experiences: [],
       };
   }
   return next;

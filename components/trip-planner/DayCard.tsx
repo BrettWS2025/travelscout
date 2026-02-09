@@ -7,6 +7,7 @@ import { formatDisplayDate, type DayDetail } from "@/lib/trip-planner/utils";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
+import ExperienceCard from "@/components/trip-planner/ExperienceCard";
 
 type TripDay = TripPlan["days"][number];
 
@@ -74,6 +75,7 @@ type Props = {
   onToggleOpen: () => void;
   onUpdateNotes: (notes: string) => void;
   onUpdateAccommodation: (accommodation: string) => void;
+  onRemoveExperience?: (experienceId: string) => void;
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
   children?: ReactNode;
@@ -86,6 +88,7 @@ export default function DayCard({
   onToggleOpen,
   onUpdateNotes,
   onUpdateAccommodation,
+  onRemoveExperience,
   children,
 }: Props) {
   // Find location coordinates by matching location name
@@ -171,6 +174,19 @@ export default function DayCard({
             </div>
           </div>
 
+          {/* Experience Cards - shown when collapsed */}
+          {!isOpen && detail?.experiences && detail.experiences.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {detail.experiences.map((experience) => (
+                <ExperienceCard
+                  key={experience.id}
+                  experience={experience}
+                  onRemove={onRemoveExperience ? () => onRemoveExperience(experience.id) : undefined}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Featured events preview when collapsed - Mobile: 1 event */}
           {!isOpen && !loading && featuredEventsMobile.length > 0 && (
             <div className="space-y-2">
@@ -253,6 +269,19 @@ export default function DayCard({
                 </span>
               )}
             </div>
+
+            {/* Experience Cards - shown when collapsed */}
+            {!isOpen && detail?.experiences && detail.experiences.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {detail.experiences.map((experience) => (
+                  <ExperienceCard
+                    key={experience.id}
+                    experience={experience}
+                    onRemove={onRemoveExperience ? () => onRemoveExperience(experience.id) : undefined}
+                  />
+                ))}
+              </div>
+            )}
             
             {/* Featured events preview when collapsed (desktop) - Side by side */}
             {!isOpen && !loading && featuredEvents.length > 0 && (
@@ -346,6 +375,24 @@ export default function DayCard({
                 />
               </div>
             </div>
+
+            {/* Experience Cards */}
+            {detail?.experiences && detail.experiences.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-900">
+                  Added Experiences
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {detail.experiences.map((experience) => (
+                    <ExperienceCard
+                      key={experience.id}
+                      experience={experience}
+                      onRemove={onRemoveExperience ? () => onRemoveExperience(experience.id) : undefined}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Events and Attractions - only show if there are events */}
             {events.length > 0 && (

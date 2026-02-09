@@ -634,7 +634,7 @@ export function useTripPlannerPlan(
     setDayDetails((prev) => {
       const existing = prev[key];
       if (!existing) {
-        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true } };
+        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true, experiences: [] } };
       }
       return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
     });
@@ -648,6 +648,7 @@ export function useTripPlannerPlan(
         notes,
         accommodation: prev[key]?.accommodation ?? "",
         isOpen: prev[key]?.isOpen ?? true,
+        experiences: prev[key]?.experiences ?? [],
       },
     }));
   }
@@ -660,8 +661,46 @@ export function useTripPlannerPlan(
         notes: prev[key]?.notes ?? "",
         accommodation,
         isOpen: prev[key]?.isOpen ?? true,
+        experiences: prev[key]?.experiences ?? [],
       },
     }));
+  }
+
+  function addExperienceToDay(date: string, location: string, experience: import("@/lib/walkingExperiences").WalkingExperience) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const currentExperiences = existing?.experiences ?? [];
+      // Check if experience already exists (by id)
+      if (currentExperiences.some((e) => e.id === experience.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [key]: {
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: [...currentExperiences, experience],
+        },
+      };
+    });
+  }
+
+  function removeExperienceFromDay(date: string, location: string, experienceId: string) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const filteredExperiences = (existing.experiences ?? []).filter((e) => e.id !== experienceId);
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          experiences: filteredExperiences,
+        },
+      };
+    });
   }
 
   /**
@@ -671,7 +710,7 @@ export function useTripPlannerPlan(
     setRoadSectorDetails((prev) => {
       const existing = prev[destinationStopIndex];
       if (!existing) {
-        return { ...prev, [destinationStopIndex]: { activities: "", isOpen: true } };
+        return { ...prev, [destinationStopIndex]: { activities: "", isOpen: true, experiences: [] } };
       }
       return { ...prev, [destinationStopIndex]: { ...existing, isOpen: !existing.isOpen } };
     });
@@ -683,8 +722,43 @@ export function useTripPlannerPlan(
       [destinationStopIndex]: {
         activities,
         isOpen: prev[destinationStopIndex]?.isOpen ?? true,
+        experiences: prev[destinationStopIndex]?.experiences ?? [],
       },
     }));
+  }
+
+  function addExperienceToRoadSector(destinationStopIndex: number, experience: import("@/lib/walkingExperiences").WalkingExperience) {
+    setRoadSectorDetails((prev) => {
+      const existing = prev[destinationStopIndex];
+      const currentExperiences = existing?.experiences ?? [];
+      // Check if experience already exists (by id)
+      if (currentExperiences.some((e) => e.id === experience.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [destinationStopIndex]: {
+          activities: existing?.activities ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: [...currentExperiences, experience],
+        },
+      };
+    });
+  }
+
+  function removeExperienceFromRoadSector(destinationStopIndex: number, experienceId: string) {
+    setRoadSectorDetails((prev) => {
+      const existing = prev[destinationStopIndex];
+      if (!existing) return prev;
+      const filteredExperiences = (existing.experiences ?? []).filter((e) => e.id !== experienceId);
+      return {
+        ...prev,
+        [destinationStopIndex]: {
+          ...existing,
+          experiences: filteredExperiences,
+        },
+      };
+    });
   }
 
   /**
@@ -836,8 +910,12 @@ export function useTripPlannerPlan(
     toggleDayOpen,
     updateDayNotes,
     updateDayAccommodation,
+    addExperienceToDay,
+    removeExperienceFromDay,
     toggleRoadSectorOpen,
     updateRoadSectorActivities,
+    addExperienceToRoadSector,
+    removeExperienceFromRoadSector,
     convertStartToItinerary,
     convertStartToRoad,
     convertEndToItinerary,
