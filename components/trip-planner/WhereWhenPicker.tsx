@@ -79,7 +79,7 @@ export type WhereWhenPickerProps = {
   clearDates: () => void;
 
   // Modal trigger
-  onOpenCityModal?: (step: "start" | "destinations" | "dates") => void;
+  onOpenCityModal?: (step: "start" | "end" | "destinations" | "dates" | "return") => void;
   // Return question trigger
   onOpenReturnQuestion?: () => void;
 };
