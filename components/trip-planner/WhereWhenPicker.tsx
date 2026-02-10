@@ -214,8 +214,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 onClick={() => {
                   if (props.onOpenCityModal) {
                     props.onOpenCityModal("start");
-                  } else {
-                    setShowStartModal(true);
                   }
                 }}
                 className="text-sm text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
@@ -244,8 +242,6 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 onClick={() => {
                   if (props.onOpenCityModal) {
                     props.onOpenCityModal("start");
-                  } else {
-                    setShowStartModal(true);
                   }
                 }}
                 className="text-sm text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
