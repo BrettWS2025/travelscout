@@ -98,7 +98,7 @@ function CityPickerPanel({
   onSelectReturnToStart,
   onClose,
 }: {
-  step: "start" | "end";
+  step: "start" | "end" | "destinations" | "return";
   query: string;
   setQuery: (v: string) => void;
   results: CityLite[];
