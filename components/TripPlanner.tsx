@@ -248,7 +248,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           selectReturnToStart={tp.selectReturnToStart}
           selectDestination={tp.selectDestination}
           removeDestination={tp.removeDestination}
-          clearEndCity={() => tp.setEndCityId("")}
+          clearEndCity={tp.clearEndCity}
           handleDateRangeChange={tp.handleDateRangeChange}
           setDateRange={tp.setDateRange}
           setCalendarMonth={tp.setCalendarMonth}
