@@ -46,14 +46,14 @@ export function useTripPlanner() {
       
       // If not in cache, fetch from database
       if (!c) {
-        c = await fetchPlaceCoordinates(cityId);
+        c = (await fetchPlaceCoordinates(cityId)) || undefined;
       }
       
       // If still not found, try search results as fallback
       if (!c) {
         const found = search.destinationsResults.find((r) => r.id === cityId);
         if (found) {
-          c = await fetchPlaceCoordinates(found.id, found.name);
+          c = (await fetchPlaceCoordinates(found.id, found.name)) || undefined;
         }
       }
       
