@@ -12,13 +12,14 @@ import { usePlaceSearch } from "@/lib/trip-planner/useTripPlanner.hooks";
 type CitySelectionModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  step: "start" | "end" | "dates";
-  onStepChange: (step: "start" | "end" | "dates") => void;
+  step: "start" | "end" | "dates" | "return";
+  onStepChange: (step: "start" | "end" | "dates" | "return") => void;
   startCityId: string;
   endCityId: string;
   onSelectStartCity: (cityId: string) => void;
   onSelectEndCity: (cityId: string) => void;
   onSelectReturnToStart: () => void;
+  onClearEndCity?: () => void;
   onSelectDates: () => void;
   dateRange: DateRange | undefined;
   calendarMonth: Date;
@@ -95,6 +96,7 @@ function CityPickerPanel({
   onSelectStartCity,
   onSelectEndCity,
   onSelectReturnToStart,
+  onClose,
 }: {
   step: "start" | "end";
   query: string;
@@ -106,6 +108,7 @@ function CityPickerPanel({
   onSelectStartCity: (id: string) => void;
   onSelectEndCity: (id: string) => void;
   onSelectReturnToStart: () => void;
+  onClose: () => void;
 }) {
   const isStart = step === "start";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -156,7 +159,7 @@ function CityPickerPanel({
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-base font-semibold text-slate-800">
-            {isStart ? "Where are you starting?" : "Where are you finishing?"}
+            {isStart ? "Start Journey" : "Where are you finishing?"}
           </div>
           <div className="text-[11px] text-slate-600">
             Type to search, or pick a suggestion.
@@ -279,6 +282,7 @@ export default function CitySelectionModal({
   onSelectStartCity,
   onSelectEndCity,
   onSelectReturnToStart,
+  onClearEndCity,
   onSelectDates,
   dateRange,
   calendarMonth,
@@ -292,6 +296,8 @@ export default function CitySelectionModal({
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [showReturnQuestion, setShowReturnQuestion] = useState(false);
+  const [pendingStartCityId, setPendingStartCityId] = useState<string | null>(null);
   const startResults = usePlaceSearch(startQuery);
   const endResults = usePlaceSearch(endQuery);
 
@@ -327,13 +333,44 @@ export default function CitySelectionModal({
       const endCity = getCityById(endCityId);
       setStartQuery(startCity?.name ?? "");
       setEndQuery(endCity?.name ?? "");
+      
+      // If step is "return", show the return question immediately
+      if (step === "return") {
+        setPendingStartCityId(startCityId);
+        setShowReturnQuestion(true);
+      } else {
+        setShowReturnQuestion(false);
+        setPendingStartCityId(null);
+      }
     }
-  }, [isOpen, startCityId, endCityId]);
+  }, [isOpen, startCityId, endCityId, step]);
 
   const handleSelectStartCity = async (cityId: string) => {
     await onSelectStartCity(cityId);
-    // Automatically move to end city selection
-    onStepChange("end");
+    // Show return question instead of automatically setting end city
+    setPendingStartCityId(cityId);
+    setShowReturnQuestion(true);
+  };
+
+  const handleReturnYes = async () => {
+    // Use pendingStartCityId if set, otherwise use current startCityId (when opened from refresh icon)
+    const cityIdToUse = pendingStartCityId || startCityId;
+    if (cityIdToUse) {
+      await onSelectEndCity(cityIdToUse);
+    }
+    setShowReturnQuestion(false);
+    setPendingStartCityId(null);
+    onClose();
+  };
+
+  const handleReturnNo = () => {
+    // Clear end city when user selects No
+    if (onClearEndCity) {
+      onClearEndCity();
+    }
+    setShowReturnQuestion(false);
+    setPendingStartCityId(null);
+    onClose();
   };
 
   const handleSelectEndCity = async (cityId: string) => {
@@ -402,9 +439,11 @@ export default function CitySelectionModal({
             )}
             <h2 className="text-lg font-semibold text-slate-800">
               {step === "start" 
-                ? "Select Start City" 
+                ? "Start Journey" 
                 : step === "end" 
                 ? "Select End City" 
+                : step === "return"
+                ? "Return to Start"
                 : "Select Dates"}
             </h2>
           </div>
@@ -421,7 +460,34 @@ export default function CitySelectionModal({
         </div>
 
         <div className="flex-1 pr-2">
-          {step === "dates" ? (
+          {showReturnQuestion ? (
+            <div className="space-y-4 py-4">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                  Will you be returning to this location?
+                </h3>
+                <p className="text-sm text-slate-600 mb-6">
+                  {pendingStartCityId ? getCityById(pendingStartCityId)?.name : getCityById(startCityId)?.name}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleReturnYes}
+                    className="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReturnNo}
+                    className="px-6 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : step === "dates" ? (
             <div className="space-y-3 flex flex-col items-center">
               <div className={isMobile ? "p-2 w-full" : "p-4 w-fit"}>
                 <DayPicker
@@ -456,6 +522,7 @@ export default function CitySelectionModal({
               onSelectStartCity={handleSelectStartCity}
               onSelectEndCity={handleSelectEndCity}
               onSelectReturnToStart={handleSelectReturnToStart}
+              onClose={onClose}
             />
           )}
         </div>

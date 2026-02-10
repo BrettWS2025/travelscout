@@ -40,6 +40,8 @@ export function useTripPlannerPlan(
   selectedPlaceIds: string[],
   selectedPlaceData: Map<string, Place>,
   selectedThingIds: string[],
+  destinationIds: string[],
+  destinationData: Map<string, Place>,
   routeStops: string[],
   nightsPerStop: number[],
   mapPoints: MapPoint[],
@@ -63,7 +65,8 @@ export function useTripPlannerPlan(
   setEndDate: (date: string) => void,
   setStartCityData: (city: Place | null) => void,
   setEndCityData: (city: Place | null) => void,
-  setSelectedPlaceData: React.Dispatch<React.SetStateAction<Map<string, Place>>>
+  setSelectedPlaceData: React.Dispatch<React.SetStateAction<Map<string, Place>>>,
+  setDestinationData: React.Dispatch<React.SetStateAction<Map<string, Place>>>
 ) {
   /**
    * Main form submission handler
@@ -77,11 +80,11 @@ export function useTripPlannerPlan(
     const start = startCity;
     const end = endCity;
 
-    if (!start || !end) {
+    if (!start) {
       setPlan(null);
       setMapPoints([]);
       setLegs([]);
-      setError("Please select both a start city and an end city.");
+      setError("Please select a start city.");
       return;
     }
 
@@ -134,8 +137,49 @@ export function useTripPlannerPlan(
       
       const selectedPlacesData = (await Promise.all(selectedPlacesDataPromises))
         .filter((c): c is Place => c !== undefined && c !== null);
+
+      // Get destinations using stored data (includes destinations not in cache)
+      // Also fetch any missing coordinates from database
+      const destinationsDataPromises = destinationIds.map(async (id) => {
+        // Try stored data first, then cache lookup
+        let place = destinationData.get(id) || getCityById(id);
+        
+        // If not found or has invalid coordinates, try fetching from database
+        if (!place || (place.lat === 0 && place.lng === 0) || !place.lat || !place.lng) {
+          console.log(`Fetching coordinates for destination ID: ${id}`);
+          const { getPlaceById } = await import("@/lib/nzCities");
+          
+          // First try by ID
+          let fetched = await getPlaceById(id);
+          
+          // If still not found or invalid coords, try searching by name if we have it
+          if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && place?.name) {
+            console.log(`Trying to find ${place.name} by name search`);
+            const searchResults = await searchPlacesByName(place.name, 5);
+            const placeName = place.name.toLowerCase();
+            const exactMatch = searchResults.find(p => p.id === id || p.name.toLowerCase() === placeName);
+            if (exactMatch && (exactMatch.lat !== 0 || exactMatch.lng !== 0)) {
+              fetched = exactMatch;
+            }
+          }
+          
+          if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+            place = fetched;
+            // Update stored data
+            setDestinationData((prev) => new Map(prev).set(id, fetched));
+            console.log(`Found coordinates for destination ${fetched.name}: lat=${fetched.lat}, lng=${fetched.lng}`);
+          } else {
+            console.error(`Could not fetch valid coordinates for destination ID: ${id}, name: ${place?.name}`);
+          }
+        }
+        
+        return place;
+      });
       
-      // Also ensure start and end cities have valid coordinates
+      const destinationsData = (await Promise.all(destinationsDataPromises))
+        .filter((c): c is Place => c !== undefined && c !== null);
+      
+      // Also ensure start city has valid coordinates
       if ((start.lat === 0 && start.lng === 0) || !start.lat || !start.lng) {
         console.log(`Fetching coordinates for start city: ${start.name} (${startCityId})`);
         const { getPlaceById } = await import("@/lib/nzCities");
@@ -152,23 +196,27 @@ export function useTripPlannerPlan(
         }
       }
       
-      if ((end.lat === 0 && end.lng === 0) || !end.lat || !end.lng) {
-        console.log(`Fetching coordinates for end city: ${end.name} (${endCityId})`);
-        const { getPlaceById } = await import("@/lib/nzCities");
-        let fetched = await getPlaceById(endCityId);
-        if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && end.name) {
-          const searchResults = await searchPlacesByName(end.name, 5);
-          const exactMatch = searchResults.find(p => p.id === endCityId || p.name.toLowerCase() === end.name.toLowerCase());
-          if (exactMatch) fetched = exactMatch;
-        }
-        if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
-          setEndCityData(fetched);
-          Object.assign(end, { lat: fetched.lat, lng: fetched.lng });
-          console.log(`Updated end city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+      // Only fetch end city coordinates if end city exists
+      if (end) {
+        if ((end.lat === 0 && end.lng === 0) || !end.lat || !end.lng) {
+          console.log(`Fetching coordinates for end city: ${end.name} (${endCityId})`);
+          const { getPlaceById } = await import("@/lib/nzCities");
+          let fetched = await getPlaceById(endCityId);
+          if ((!fetched || (fetched.lat === 0 && fetched.lng === 0)) && end.name) {
+            const searchResults = await searchPlacesByName(end.name, 5);
+            const exactMatch = searchResults.find(p => p.id === endCityId || p.name.toLowerCase() === end.name.toLowerCase());
+            if (exactMatch) fetched = exactMatch;
+          }
+          if (fetched && (fetched.lat !== 0 || fetched.lng !== 0) && fetched.lat && fetched.lng) {
+            setEndCityData(fetched);
+            Object.assign(end, { lat: fetched.lat, lng: fetched.lng });
+            console.log(`Updated end city coordinates: ${fetched.name} lat=${fetched.lat}, lng=${fetched.lng}`);
+          }
         }
       }
 
-      // Combine selected places (city names) and things (stop names) into waypoint names
+      // Combine destinations, selected places (city names) and things (stop names) into waypoint names
+      const destinationNames = destinationsData.map((city) => city.name);
       const placeNames = selectedPlacesData.map((city) => city.name);
       
       const thingNames = selectedThingIds.map((id) => {
@@ -176,11 +224,11 @@ export function useTripPlannerPlan(
         return stop?.name ?? "";
       }).filter(Boolean);
       
-      const rawWaypointNames = [...placeNames, ...thingNames];
+      const rawWaypointNames = [...destinationNames, ...placeNames, ...thingNames];
 
       // Build a map of waypoint names to their coordinates for better routing
       const waypointCoordinates = new Map<string, { lat: number; lng: number }>();
-      for (const city of selectedPlacesData) {
+      for (const city of [...destinationsData, ...selectedPlacesData]) {
         if (city.lat !== 0 || city.lng !== 0) {
           waypointCoordinates.set(city.name, { lat: city.lat, lng: city.lng });
         }
@@ -188,33 +236,59 @@ export function useTripPlannerPlan(
 
       const { orderedNames, matchedStopsInOrder } = orderWaypointNamesByRoute(
         start,
-        end,
+        end || null,
         rawWaypointNames,
         waypointCoordinates
       );
 
       console.log("Waypoint processing:", {
+        destinationIds,
+        destinationsData: destinationsData.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })),
         selectedPlaceIds,
         selectedPlacesData: selectedPlacesData.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })),
+        destinationNames,
         placeNames,
         rawWaypointNames,
         orderedNames,
         start: start.name,
-        end: end.name
+        end: end?.name || "none"
       });
 
-      const stops: string[] = [start.name, ...orderedNames, end.name];
+      // Build stops array: start + ordered waypoints + end (if exists)
+      const stops: string[] = [start.name, ...orderedNames];
+      if (end) {
+        stops.push(end.name);
+      }
       setRouteStops(stops);
 
+      // Calculate total days
       const totalDays = countDaysInclusive(startDate, endDate);
       const initialNights = allocateNightsForStops(stops.length, totalDays);
       
-      // Handle special case: same start/end with no middle stops
-      if (stops.length === 2 && start.name === end.name) {
+      if (!end) {
+        // No end city - all stops are destinations (itinerary sectors)
+        // Start is a road sector (0 nights), all destinations get nights
         initialNights[0] = 0;
-        initialNights[1] = Math.max(1, totalDays);
+        
+        if (stops.length > 1 && totalDays > 0) {
+          const destinationCount = stops.length - 1;
+          const baseNightsPerDestination = Math.floor(totalDays / destinationCount);
+          const extraNights = totalDays % destinationCount;
+          
+          for (let i = 1; i < stops.length; i++) {
+            initialNights[i] = baseNightsPerDestination + (i - 1 < extraNights ? 1 : 0);
+          }
+        }
+        
         setStartSectorType("road");
+        // Last destination is an itinerary sector
         setEndSectorType("itinerary");
+      } else if (stops.length === 2 && start.name === end.name) {
+        // Same start/end with no middle stops - end is a road sector (return trip)
+        initialNights[0] = 0;
+        initialNights[1] = 0; // End is road sector, no nights
+        setStartSectorType("road");
+        setEndSectorType("road");
       } else if (stops.length === 2) {
         // Just start and end (different cities) - end should be itinerary by default
         initialNights[0] = 0;
@@ -222,23 +296,24 @@ export function useTripPlannerPlan(
         setStartSectorType("road");
         setEndSectorType("itinerary");
       } else {
-        // Default: both start and end are road sectors (0 nights)
+        // Has end city - all destinations (including end) are itinerary sectors
+        // Start is a road sector (0 nights), all destinations get nights
         initialNights[0] = 0;
-        initialNights[initialNights.length - 1] = 0;
         
-        // Redistribute all totalDays to middle stops (round-robin)
-        if (stops.length > 2 && totalDays > 0) {
-          const middleStopCount = stops.length - 2;
-          const baseNightsPerMiddle = Math.floor(totalDays / middleStopCount);
-          const extraNights = totalDays % middleStopCount;
+        // Allocate all nights to destinations (middle stops + end)
+        if (stops.length > 1 && totalDays > 0) {
+          const destinationCount = stops.length - 1; // All stops except start
+          const baseNightsPerDestination = Math.floor(totalDays / destinationCount);
+          const extraNights = totalDays % destinationCount;
           
-          for (let i = 1; i < stops.length - 1; i++) {
-            initialNights[i] = baseNightsPerMiddle + (i - 1 < extraNights ? 1 : 0);
+          for (let i = 1; i < stops.length; i++) {
+            initialNights[i] = baseNightsPerDestination + (i - 1 < extraNights ? 1 : 0);
           }
         }
         
         setStartSectorType("road");
-        setEndSectorType("road");
+        // End is an itinerary sector
+        setEndSectorType("itinerary");
       }
       
       setNightsPerStop(initialNights);
@@ -285,8 +360,11 @@ export function useTripPlannerPlan(
       const points: MapPoint[] = [
         { lat: start.lat, lng: start.lng, name: start.name },
         ...waypointPoints,
-        { lat: end.lat, lng: end.lng, name: end.name },
       ];
+      // Only add end city if it exists
+      if (end) {
+        points.push({ lat: end.lat, lng: end.lng, name: end.name });
+      }
 
       // Validate all points have valid coordinates
       const validPoints = points.filter((p) => {
@@ -863,6 +941,7 @@ export function useTripPlannerPlan(
     newNightsPerStop[endIndex] = 0;
     
     setNightsPerStop(newNightsPerStop);
+    // Note: End is now default itinerary, but user can convert to road if needed
     setEndSectorType("road");
     
     setRoadSectorDetails((prev) => {

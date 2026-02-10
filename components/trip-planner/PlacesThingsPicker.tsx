@@ -531,34 +531,8 @@ export type PlacesThingsPickerProps = {
 export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
   return (
     <>
-      {/* MOBILE: two separate pills stacked */}
+      {/* MOBILE: single pill */}
       <div className="md:hidden space-y-3">
-        {/* PLACES pill */}
-        <div ref={props.placesRef} className="relative">
-          <button
-            type="button"
-            onClick={() => {
-              if (props.onOpenModal) {
-                props.onOpenModal("places");
-              } else {
-                props.openPlacesDesktop();
-              }
-            }}
-            className="w-full rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 px-4 py-3 hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-200 flex items-center justify-between gap-3"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <MapPin className="w-4 h-4 opacity-80" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] text-gray-400 uppercase tracking-wide">
-                  Places to go
-                </div>
-                <div className="text-sm font-medium truncate">{props.placesSummary}</div>
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4 opacity-70" />
-          </button>
-        </div>
-
         {/* THINGS pill */}
         <div ref={props.thingsRef} className="relative">
           <button
@@ -586,76 +560,26 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
         </div>
       </div>
 
-      {/* DESKTOP: pills row */}
+      {/* DESKTOP: single pill */}
       <div className="relative hidden md:block">
         <div className="w-full rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 overflow-hidden">
-          <div className="flex">
-            {/* PLACES pill */}
-            <div ref={props.placesRef} className="relative flex-1">
-              <button
-                type="button"
-                onClick={() => {
-                  if (props.onOpenModal) {
-                    props.onOpenModal("places");
-                  } else {
-                    props.openPlacesDesktop();
-                  }
-                }}
-                className={[
-                  "w-full rounded-l-2xl rounded-r-none px-4 py-3 text-left",
-                  "hover:bg-slate-50/50 transition-all duration-200 flex items-center justify-between gap-3",
-                  props.activePill === "places" ? "bg-slate-50/50" : "",
-                ].join(" ")}
-              >
-                <div className="min-w-0">
-                  <div className="text-[11px] text-gray-400 uppercase tracking-wide">
-                    Places to go
-                  </div>
-                  <div className="text-sm truncate">{props.placesSummary}</div>
-                </div>
-                <div className="flex items-center gap-2 opacity-80">
-                  <MapPin className="w-4 h-4" />
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </button>
-
-              {props.showPlacesPopover && (
-                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-slate-100/50">
-                  <PlacesPickerPanel
-                    query={props.placesQuery}
-                    setQuery={props.setPlacesQuery}
-                    results={props.placesResults}
-                    recent={props.recent}
-                    suggested={props.suggested}
-                    selectedCityIds={props.selectedPlaceIds}
-                    selectedPlaces={props.selectedPlaces}
-                    onSelectCity={props.selectPlace}
-                    onRemoveCity={props.removePlace}
-                    mobileSheetOpen={false}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="w-px bg-slate-200/50" />
-
-            {/* THINGS pill */}
-            <div ref={props.thingsRef} className="relative flex-1">
-              <button
-                type="button"
-                onClick={() => {
-                  if (props.onOpenModal) {
-                    props.onOpenModal("things");
-                  } else {
-                    props.openThingsDesktop();
-                  }
-                }}
-                className={[
-                  "w-full rounded-r-2xl rounded-l-none px-4 py-3 text-left",
-                  "hover:bg-slate-50/50 transition-all duration-200 flex items-center justify-between gap-3",
-                  props.activePill === "things" ? "bg-slate-50/50" : "",
-                ].join(" ")}
-              >
+          {/* THINGS pill */}
+          <div ref={props.thingsRef} className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                if (props.onOpenModal) {
+                  props.onOpenModal("things");
+                } else {
+                  props.openThingsDesktop();
+                }
+              }}
+              className={[
+                "w-full rounded-2xl px-4 py-3 text-left",
+                "hover:bg-slate-50/50 transition-all duration-200 flex items-center justify-between gap-3",
+                props.activePill === "things" ? "bg-slate-50/50" : "",
+              ].join(" ")}
+            >
                 <div className="min-w-0">
                   <div className="text-[11px] text-gray-400 uppercase tracking-wide">
                     Things to do
@@ -684,65 +608,8 @@ export default function PlacesThingsPicker(props: PlacesThingsPickerProps) {
             </div>
           </div>
         </div>
-      </div>
 
       {/* MOBILE SHEETS */}
-      {/* Places Mobile Sheet */}
-      {props.placesMobileSheetOpen && (
-        <div className="fixed inset-0 z-[60] md:hidden">
-          <div
-            className="absolute inset-0 bg-black/55"
-            onClick={props.closePlacesMobileSheet}
-          />
-          <div 
-            className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-100/50 shadow-[0_-4px_24px_rgba(0,0,0,0.15)]"
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-white">
-                  Places to go
-                </div>
-                <button
-                  type="button"
-                  onClick={props.closePlacesMobileSheet}
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4">
-                <PlacesPickerPanel
-                  query={props.placesQuery}
-                  setQuery={props.setPlacesQuery}
-                  results={props.placesResults}
-                  recent={props.recent}
-                  suggested={props.suggested}
-                  selectedCityIds={props.selectedPlaceIds}
-                  selectedPlaces={props.selectedPlaces}
-                  onSelectCity={props.selectPlace}
-                  onRemoveCity={props.removePlace}
-                  mobileSheetOpen={true}
-                />
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={props.closePlacesMobileSheet}
-                  className="text-sm text-gray-300 hover:text-white underline underline-offset-2"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Things Mobile Sheet */}
       {props.thingsMobileSheetOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">

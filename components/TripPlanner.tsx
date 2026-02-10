@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
-import PlacesThingsPicker from "@/components/trip-planner/PlacesThingsPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
@@ -42,7 +41,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
-  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates">("start");
+  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates" | "return">("start");
 
   // Places/Things modal state
   const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
@@ -91,10 +90,17 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   }, [searchParams]);
 
   // Update URL when modal state changes
-  const handleOpenCityModal = (step: "start" | "end" | "dates") => {
+  const handleOpenCityModal = (step: "start" | "end" | "dates" | "return") => {
     setCityModalStep(step);
     setShowCityModal(true);
-    router.push(`/trip-planner?setup=${step}`, { scroll: false });
+    if (step !== "return") {
+      router.push(`/trip-planner?setup=${step}`, { scroll: false });
+    }
+  };
+
+  const handleOpenReturnQuestion = () => {
+    setCityModalStep("return");
+    setShowCityModal(true);
   };
 
   const handleCloseCityModal = () => {
@@ -211,25 +217,28 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           showCalendar={tp.showCalendar}
           mobileSheetOpen={tp.mobileSheetOpen}
           mobileActive={tp.mobileActive}
-          whereStep={tp.whereStep}
           startQuery={tp.startQuery}
           endQuery={tp.endQuery}
+          destinationsQuery={tp.destinationsQuery}
+          destinationsResults={tp.destinationsResults}
           recent={tp.recent}
           suggested={tp.suggested}
           startResults={tp.startResults}
           endResults={tp.endResults}
           startCityId={tp.startCityId}
           endCityId={tp.endCityId}
+          destinationIds={tp.destinationIds}
           dateRange={tp.dateRange}
           calendarMonth={tp.calendarMonth}
-          whereSummary={tp.whereSummary}
+          startSummary={tp.whereSummary}
+          destinationsSummary={tp.destinationsSummary}
           whenLabel={tp.whenLabel}
-          totalTripDays={tp.totalTripDays}
           setMobileActive={tp.setMobileActive}
           setShowCalendar={tp.setShowCalendar}
           setActivePill={tp.setActivePill}
           setStartQuery={tp.setStartQuery}
           setEndQuery={tp.setEndQuery}
+          setDestinationsQuery={tp.setDestinationsQuery}
           openMobileSheet={tp.openMobileSheet}
           closeMobileSheet={tp.closeMobileSheet}
           openWhereDesktop={tp.openWhereDesktop}
@@ -237,7 +246,9 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           selectStartCity={tp.selectStartCity}
           selectEndCity={tp.selectEndCity}
           selectReturnToStart={tp.selectReturnToStart}
-          setWhereStep={tp.setWhereStep}
+          selectDestination={tp.selectDestination}
+          removeDestination={tp.removeDestination}
+          clearEndCity={() => tp.setEndCityId("")}
           handleDateRangeChange={tp.handleDateRangeChange}
           setDateRange={tp.setDateRange}
           setCalendarMonth={tp.setCalendarMonth}
@@ -248,42 +259,9 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             tp.setCalendarMonth(new Date());
           }}
           onOpenCityModal={handleOpenCityModal}
+          onOpenReturnQuestion={handleOpenReturnQuestion}
         />
 
-        <PlacesThingsPicker
-          placesRef={tp.placesRef}
-          thingsRef={tp.thingsRef}
-          activePill={tp.activePlacesThingsPill}
-          showPlacesPopover={tp.showPlacesPopover}
-          showThingsPopover={tp.showThingsPopover}
-          placesMobileSheetOpen={tp.placesMobileSheetOpen}
-          thingsMobileSheetOpen={tp.thingsMobileSheetOpen}
-          placesQuery={tp.placesQuery}
-          thingsQuery={tp.thingsQuery}
-          placesResults={tp.placesResults}
-          thingsResults={tp.thingsResults}
-          recent={tp.recent}
-          suggested={tp.suggested}
-          selectedPlaceIds={tp.selectedPlaceIds}
-          selectedPlaces={tp.selectedPlaces}
-          selectedThingIds={tp.selectedThingIds}
-          placesSummary={tp.placesSummary}
-          thingsSummary={tp.thingsSummary}
-          setPlacesQuery={tp.setPlacesQuery}
-          setThingsQuery={tp.setThingsQuery}
-          setActivePill={tp.setActivePlacesThingsPill}
-          setShowPlacesPopover={tp.setShowPlacesPopover}
-          setShowThingsPopover={tp.setShowThingsPopover}
-          openPlacesDesktop={tp.openPlacesDesktop}
-          openThingsDesktop={tp.openThingsDesktop}
-          closePlacesMobileSheet={tp.closePlacesMobileSheet}
-          closeThingsMobileSheet={tp.closeThingsMobileSheet}
-          selectPlace={tp.selectPlace}
-          selectThing={tp.selectThing}
-          removePlace={tp.removePlace}
-          removeThing={tp.removeThing}
-          onOpenModal={handleOpenPlacesThingsModal}
-        />
 
         {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
 
@@ -481,6 +459,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
         onSelectStartCity={tp.selectStartCity}
         onSelectEndCity={tp.selectEndCity}
         onSelectReturnToStart={tp.selectReturnToStart}
+        onClearEndCity={tp.clearEndCity}
         onSelectDates={handleSelectDates}
         dateRange={tp.dateRange}
         calendarMonth={tp.calendarMonth}

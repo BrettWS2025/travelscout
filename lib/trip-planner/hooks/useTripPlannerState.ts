@@ -24,9 +24,11 @@ import type { TripLeg } from "@/lib/itinerary";
 export function useTripPlannerState() {
   // City selection state
   const [startCityId, setStartCityId] = useState("");
-  const [endCityId, setEndCityId] = useState("");
+  const [endCityId, setEndCityId] = useState(""); // Kept for backward compatibility, but optional now
+  const [destinationIds, setDestinationIds] = useState<string[]>([]); // Multiple destinations
   const [startCityData, setStartCityData] = useState<Place | null>(null);
   const [endCityData, setEndCityData] = useState<Place | null>(null);
+  const [destinationData, setDestinationData] = useState<Map<string, Place>>(new Map());
 
   // Date state
   const [startDate, setStartDate] = useState("");
@@ -53,7 +55,7 @@ export function useTripPlannerState() {
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
   const [roadSectorDetails, setRoadSectorDetails] = useState<Record<number, RoadSectorDetail>>({});
   const [startSectorType, setStartSectorType] = useState<StartEndSectorType>("road");
-  const [endSectorType, setEndSectorType] = useState<StartEndSectorType>("road");
+  const [endSectorType, setEndSectorType] = useState<StartEndSectorType>("itinerary");
 
   // UI state for "add stop after this"
   const [addingStopAfterIndex, setAddingStopAfterIndex] = useState<number | null>(null);
@@ -110,10 +112,14 @@ export function useTripPlannerState() {
     setStartCityId,
     endCityId,
     setEndCityId,
+    destinationIds,
+    setDestinationIds,
     startCityData,
     setStartCityData,
     endCityData,
     setEndCityData,
+    destinationData,
+    setDestinationData,
     startCity,
     endCity,
 
