@@ -140,7 +140,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
   }, [nearestPlace, props.startCityId, isGeolocating, props.selectStartCity, props.selectEndCity]);
   // Use destinationIds if available, otherwise use endCityId as single destination
   const destinationIds = props.destinationIds || (props.endCityId ? [props.endCityId] : []);
-  const selectedDestinations = destinationIds.map((id) => getCityById(id)).filter(Boolean);
+  const selectedDestinations = destinationIds.map((id) => getCityById(id)).filter((city): city is NonNullable<typeof city> => city !== null && city !== undefined);
   const destinationsQuery = props.destinationsQuery || props.endQuery || "";
   const destinationsResults = props.destinationsResults || props.endResults || [];
   const showBrowseLists = normalize(destinationsQuery).length === 0 || destinationsResults.length === 0;
