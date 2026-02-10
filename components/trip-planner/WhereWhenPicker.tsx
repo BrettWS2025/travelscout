@@ -264,7 +264,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
           {/* Selected destinations */}
           {selectedDestinations.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {selectedDestinations.filter(Boolean).map((city) => (
+              {selectedDestinations.map((city) => (
                 <div
                   key={city.id}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 text-sm text-indigo-900 border border-indigo-200"
