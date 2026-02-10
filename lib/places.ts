@@ -93,18 +93,65 @@ export async function getPlaceDistrict(id: string): Promise<string | null> {
  * Returns the district_name from nz_places_final
  */
 export async function getPlaceDistrictByName(placeName: string): Promise<string | null> {
+  const trimmedQuery = placeName.trim();
+  if (!trimmedQuery) return null;
+
+  const normalizedQuery = normalizeSearchQuery(trimmedQuery);
+  const queryPattern = `%${normalizedQuery}%`;
+
+  // Fetch a small set of candidates – we'll sort them in JS to pick the "best" one.
   const { data, error } = await supabase
     .from("nz_places_final")
-    .select("district_name")
-    .ilike("name", placeName)
+    .select("name, display_name, district_name, tags, name_norm, name_search")
+    .ilike("name_search", queryPattern)
     .in("place_type", ["city", "town", "village", "hamlet"])
-    .limit(1);
-  
+    .limit(20);
+
   if (error || !data || data.length === 0) {
     return null;
   }
-  
-  return data[0].district_name || null;
+
+  const queryLower = trimmedQuery.toLowerCase();
+
+  // Reuse the same prioritisation as searchPlacesByName so we consistently
+  // pick the "main" town/city when there are multiple matches (e.g. Whanganui).
+  const sorted = [...data].sort((a: any, b: any) => {
+    const nameALower = a.name.toLowerCase();
+    const nameBLower = b.name.toLowerCase();
+    const displayALower = a.display_name?.toLowerCase() || "";
+    const displayBLower = b.display_name?.toLowerCase() || "";
+
+    // 1) Exact name match
+    const aExact = nameALower === queryLower;
+    const bExact = nameBLower === queryLower;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+
+    // 2) Name starts with query
+    const aPrefix = nameALower.startsWith(queryLower);
+    const bPrefix = nameBLower.startsWith(queryLower);
+    if (aPrefix && !bPrefix) return -1;
+    if (!aPrefix && bPrefix) return 1;
+
+    // 3) Display name starts with query
+    const aDisplayPrefix = !aPrefix && displayALower.startsWith(queryLower);
+    const bDisplayPrefix = !bPrefix && displayBLower.startsWith(queryLower);
+    if (aDisplayPrefix && !bDisplayPrefix) return -1;
+    if (!aDisplayPrefix && bDisplayPrefix) return 1;
+
+    // 4) Population (largest first)
+    const popA = a.tags?.population ? parseInt(a.tags.population) : 0;
+    const popB = b.tags?.population ? parseInt(b.tags.population) : 0;
+    if (popA > 0 && popB > 0) return popB - popA;
+    if (popA > 0 && popB === 0) return -1;
+    if (popB > 0 && popA === 0) return 1;
+
+    // 5) Alphabetical by name
+    return a.name.localeCompare(b.name);
+  });
+
+  const best = sorted[0];
+  return best?.district_name || null;
 }
 
 /**

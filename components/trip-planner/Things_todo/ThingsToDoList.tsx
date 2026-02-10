@@ -163,32 +163,49 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
           }
           
           if (districtName) {
-            // Query by district (fastest)
+            // Query by district (fastest / preferred)
             const results = await getWalkingExperiencesByDistrict(districtName, 500);
+            console.log("[ThingsToDoList] Itinerary district results:", {
+              location,
+              cityName,
+              districtName,
+              count: results.length,
+            });
+
+            if (results.length > 0) {
+              setExperiences(results);
+              return;
+            }
+
+            // Some cities (e.g. Napier) can have a district name that doesn't
+            // exactly match the DOC walking_experiences.district_name values.
+            // If the district query returns no results, fall back to a
+            // coordinate-based radius search around the city so we still
+            // surface nearby tracks.
+            console.log("[ThingsToDoList] Itinerary district query empty, falling back to radius search");
+          }
+
+          // Fallback: try to get coordinates and query by radius
+          const places = await searchPlacesByName(cityName || location, 1);
+          
+          if (places.length > 0 && places[0].lat && places[0].lng) {
+            console.log("[ThingsToDoList] Itinerary fallback - searching near point:", {
+              location,
+              cityName,
+              place: { name: places[0].name, lat: places[0].lat, lng: places[0].lng },
+              radius: 60.0
+            });
+            const results = await getWalkingExperiencesNearPoint(
+              places[0].lat,
+              places[0].lng,
+              60.0, // 60km radius
+              500
+            );
+            console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
             setExperiences(results);
           } else {
-            // Fallback: try to get coordinates and query by radius
-            const places = await searchPlacesByName(cityName || location, 1);
-            
-            if (places.length > 0 && places[0].lat && places[0].lng) {
-              console.log("[ThingsToDoList] Itinerary fallback - searching near point:", {
-                location,
-                cityName,
-                place: { name: places[0].name, lat: places[0].lat, lng: places[0].lng },
-                radius: 60.0
-              });
-              const results = await getWalkingExperiencesNearPoint(
-                places[0].lat,
-                places[0].lng,
-                60.0, // 60km radius
-                500
-              );
-              console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
-              setExperiences(results);
-            } else {
-              console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
-              setExperiences([]);
-            }
+            console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
+            setExperiences([]);
           }
         }
       } catch (err) {
