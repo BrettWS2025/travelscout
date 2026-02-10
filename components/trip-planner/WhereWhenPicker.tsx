@@ -300,7 +300,11 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 type="button"
                 onClick={() => {
                   setDestinationInput("");
-                  props.setDestinationsQuery("");
+                  if (props.setDestinationsQuery) {
+                    props.setDestinationsQuery("");
+                  } else {
+                    props.setEndQuery("");
+                  }
                 }}
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
               >
