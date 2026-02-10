@@ -90,10 +90,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   }, [searchParams]);
 
   // Update URL when modal state changes
-  const handleOpenCityModal = (step: "start" | "end" | "dates" | "return") => {
+  const handleOpenCityModal = (step: "start" | "end" | "destinations" | "dates" | "return") => {
     setCityModalStep(step);
     setShowCityModal(true);
-    if (step !== "return") {
+    if (step !== "return" && step !== "destinations") {
       router.push(`/trip-planner?setup=${step}`, { scroll: false });
     }
   };
