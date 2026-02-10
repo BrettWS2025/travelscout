@@ -12,8 +12,8 @@ import { usePlaceSearch } from "@/lib/trip-planner/useTripPlanner.hooks";
 type CitySelectionModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  step: "start" | "end" | "dates" | "return";
-  onStepChange: (step: "start" | "end" | "dates" | "return") => void;
+  step: "start" | "end" | "destinations" | "dates" | "return";
+  onStepChange: (step: "start" | "end" | "destinations" | "dates" | "return") => void;
   startCityId: string;
   endCityId: string;
   onSelectStartCity: (cityId: string) => void;
