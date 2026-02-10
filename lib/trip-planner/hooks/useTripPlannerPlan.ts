@@ -324,14 +324,26 @@ export function useTripPlannerPlan(
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
       setOpenStops({});
 
-      // Build map points from all selected places
+      // Build map points from all selected places, destinations, and matched stops
       const placeCoordsMap = new Map<string, { lat: number; lng: number; name: string }>();
       
-      selectedPlacesData.forEach((place) => {
+      // Add destinations first (they take priority)
+      destinationsData.forEach((place) => {
         const key = place.name.toLowerCase();
-        placeCoordsMap.set(key, { lat: place.lat, lng: place.lng, name: place.name });
+        if (place.lat !== 0 || place.lng !== 0) {
+          placeCoordsMap.set(key, { lat: place.lat, lng: place.lng, name: place.name });
+        }
       });
       
+      // Add selected places
+      selectedPlacesData.forEach((place) => {
+        const key = place.name.toLowerCase();
+        if (!placeCoordsMap.has(key) && (place.lat !== 0 || place.lng !== 0)) {
+          placeCoordsMap.set(key, { lat: place.lat, lng: place.lng, name: place.name });
+        }
+      });
+      
+      // Add matched stops
       matchedStopsInOrder.forEach((stop) => {
         const key = stop.name.toLowerCase();
         if (!placeCoordsMap.has(key)) {
@@ -345,8 +357,13 @@ export function useTripPlannerPlan(
         if (coords) {
           return { lat: coords.lat, lng: coords.lng, name: coords.name };
         }
+        // Fallback checks
+        const destination = destinationsData.find((p) => p.name.toLowerCase() === key);
+        if (destination && (destination.lat !== 0 || destination.lng !== 0)) {
+          return { lat: destination.lat, lng: destination.lng, name: destination.name };
+        }
         const place = selectedPlacesData.find((p) => p.name.toLowerCase() === key);
-        if (place) {
+        if (place && (place.lat !== 0 || place.lng !== 0)) {
           return { lat: place.lat, lng: place.lng, name: place.name };
         }
         const stop = matchedStopsInOrder.find((s) => s.name.toLowerCase() === key);
