@@ -62,6 +62,7 @@ vi.mock('../hooks/useTripPlannerCitySelection', () => ({
     selectStartCity: vi.fn(),
     selectEndCity: vi.fn(),
     selectReturnToStart: vi.fn(),
+    clearEndCity: vi.fn(),
   })),
 }));
 vi.mock('../hooks/useTripPlannerPlaces', () => ({
@@ -255,5 +256,124 @@ describe('useTripPlanner (composed hook)', () => {
     expect(result.current).toHaveProperty('handleChangeNights');
     expect(result.current).toHaveProperty('handleRemoveStop');
     expect(result.current).toHaveProperty('saveItinerary');
+  });
+
+  it('should provide selectDestination function', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.selectDestination).toBeDefined();
+    expect(typeof result.current.selectDestination).toBe('function');
+  });
+
+  it('should provide removeDestination function', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.removeDestination).toBeDefined();
+    expect(typeof result.current.removeDestination).toBe('function');
+  });
+
+  it('should provide clearEndCity function', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.clearEndCity).toBeDefined();
+    expect(typeof result.current.clearEndCity).toBe('function');
+  });
+
+  it('should provide destinationIds state', () => {
+    const mockStateValue = {
+      startCityId: '',
+      setStartCityId: vi.fn(),
+      endCityId: '',
+      setEndCityId: vi.fn(),
+      destinationIds: ['akl', 'wlg'],
+      setDestinationIds: vi.fn(),
+      startCityData: null,
+      setStartCityData: vi.fn(),
+      endCityData: null,
+      setEndCityData: vi.fn(),
+      destinationData: new Map(),
+      setDestinationData: vi.fn(),
+      startCity: undefined,
+      endCity: undefined,
+      startDate: '',
+      setStartDate: vi.fn(),
+      endDate: '',
+      setEndDate: vi.fn(),
+      dateRange: undefined,
+      setDateRange: vi.fn(),
+      calendarMonth: new Date(),
+      setCalendarMonth: vi.fn(),
+      plan: null,
+      setPlan: vi.fn(),
+      error: null,
+      setError: vi.fn(),
+      hasSubmitted: false,
+      setHasSubmitted: vi.fn(),
+      routeStops: [],
+      setRouteStops: vi.fn(),
+      nightsPerStop: [],
+      setNightsPerStop: vi.fn(),
+      dayStopMeta: [],
+      setDayStopMeta: vi.fn(),
+      mapPoints: [],
+      setMapPoints: vi.fn(),
+      legs: [],
+      setLegs: vi.fn(),
+      legsLoading: false,
+      setLegsLoading: vi.fn(),
+      dayDetails: {},
+      setDayDetails: vi.fn(),
+      roadSectorDetails: {},
+      setRoadSectorDetails: vi.fn(),
+      startSectorType: 'road',
+      setStartSectorType: vi.fn(),
+      endSectorType: 'itinerary',
+      setEndSectorType: vi.fn(),
+      addingStopAfterIndex: null,
+      setAddingStopAfterIndex: vi.fn(),
+      newStopCityId: null,
+      setNewStopCityId: vi.fn(),
+      openStops: {},
+      setOpenStops: vi.fn(),
+      recent: [],
+      setRecent: vi.fn(),
+      suggested: [],
+      setSuggested: vi.fn(),
+    };
+    
+    vi.mocked(hooks.useTripPlannerState).mockReturnValue(mockStateValue as any);
+
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.destinationIds).toEqual(['akl', 'wlg']);
+  });
+
+  it('should provide setDestinationIds function', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.setDestinationIds).toBeDefined();
+    expect(typeof result.current.setDestinationIds).toBe('function');
+  });
+
+  it('should provide destinationsQuery and setDestinationsQuery', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.destinationsQuery).toBeDefined();
+    expect(result.current.setDestinationsQuery).toBeDefined();
+    expect(typeof result.current.setDestinationsQuery).toBe('function');
+  });
+
+  it('should provide destinationsResults', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.destinationsResults).toBeDefined();
+    expect(Array.isArray(result.current.destinationsResults)).toBe(true);
+  });
+
+  it('should provide destinationsSummary', () => {
+    const { result } = renderHook(() => useTripPlanner());
+
+    expect(result.current.destinationsSummary).toBeDefined();
+    expect(typeof result.current.destinationsSummary).toBe('string');
   });
 });
