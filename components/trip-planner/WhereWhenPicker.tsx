@@ -236,7 +236,7 @@ function WherePickerPanel({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2">
+      <div className="rounded-xl bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-slate-100/50 px-3 py-2 flex items-center gap-2">
         <Search className="w-4 h-4 text-slate-500" />
         <input
           ref={inputRef}
@@ -371,7 +371,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 props.setMobileActive("where");
               }
             }}
-            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+            className="w-full rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 px-4 py-3 hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-200 flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <MapPin className="w-4 h-4 opacity-80" />
@@ -404,7 +404,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 props.setMobileActive("when");
               }
             }}
-            className="w-full rounded-full bg-[var(--card)] border border-slate-200 px-4 py-3 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+            className="w-full rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 px-4 py-3 hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-200 flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Calendar className="w-4 h-4 opacity-80" />
@@ -424,7 +424,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
 
       {/* DESKTOP: pills row */}
       <div className="relative hidden md:block">
-        <div className="w-full rounded-full bg-[var(--card)] border border-slate-200 shadow-sm">
+        <div className="w-full rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 overflow-hidden">
           <div className="flex">
             {/* WHERE pill */}
             <div ref={props.whereRef} className="relative flex-1">
@@ -447,9 +447,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   }
                 }}
                 className={[
-                  "w-full rounded-l-full rounded-r-none px-4 py-3 text-left",
-                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
-                  props.activePill === "where" ? "bg-slate-50" : "",
+                  "w-full rounded-l-2xl rounded-r-none px-4 py-3 text-left",
+                  "hover:bg-slate-50/50 transition-all duration-200 flex items-center justify-between gap-3",
+                  props.activePill === "where" ? "bg-slate-50/50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -465,7 +465,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               </button>
 
               {props.showWherePopover && (
-                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 border border-slate-200 shadow-lg">
+                <div className="absolute left-0 right-0 mt-3 z-30 rounded-2xl bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-slate-100/50">
                   {props.whereStep === "start" ? (
                     <WherePickerPanel
                       step="start"
@@ -510,7 +510,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               )}
             </div>
 
-            <div className="w-px bg-slate-200" />
+            <div className="w-px bg-slate-200/50" />
 
             {/* WHEN pill */}
             <div ref={props.whenRef} className="relative flex-1">
@@ -525,9 +525,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   }
                 }}
                 className={[
-                  "w-full rounded-r-full rounded-l-none px-4 py-3 text-left",
-                  "hover:bg-slate-50 transition flex items-center justify-between gap-3",
-                  props.activePill === "when" ? "bg-slate-50" : "",
+                  "w-full rounded-r-2xl rounded-l-none px-4 py-3 text-left",
+                  "hover:bg-slate-50/50 transition-all duration-200 flex items-center justify-between gap-3",
+                  props.activePill === "when" ? "bg-slate-50/50" : "",
                 ].join(" ")}
               >
                 <div className="min-w-0">
@@ -542,7 +542,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               {props.showCalendar && (
                 <div
                   className={[
-                    "absolute left-0 mt-3 z-30 rounded-2xl bg-white border border-slate-200 shadow-lg",
+                    "absolute left-0 mt-3 z-30 rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-slate-100/50",
                     "overflow-hidden w-[720px] p-3",
                   ].join(" ")}
                 >
@@ -600,9 +600,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
         </div>
 
         {props.totalTripDays > 0 && (
-          <p className="text-[11px] text-gray-400 mt-2">
+          <p className="text-xs text-slate-500 mt-2 font-normal">
             Total days in itinerary (inclusive):{" "}
-            <strong>{props.totalTripDays}</strong>
+            <span className="font-medium">{props.totalTripDays}</span>
           </p>
         )}
       </div>
@@ -614,7 +614,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             className="absolute inset-0 bg-black/55"
             onClick={props.closeMobileSheet}
           />
-          <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl">
+          <div className="absolute left-0 right-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-100/50 shadow-[0_-4px_24px_rgba(0,0,0,0.15)]">
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-slate-800">
@@ -629,7 +629,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 </button>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden">
+              <div className="mt-4 rounded-2xl bg-slate-50/50 border border-slate-100/50 shadow-sm overflow-hidden">
                 <button
                   type="button"
                   onClick={() => props.setMobileActive("where")}

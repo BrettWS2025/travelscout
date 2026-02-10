@@ -200,7 +200,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       <LoadingScreen isLoading={tp.legsLoading} />
       <form
         onSubmit={tp.handleSubmit}
-        className="card p-4 md:p-6 space-y-6"
+        className="p-4 md:p-6 space-y-6"
         style={{ color: "var(--text)" }}
       >
         <WhereWhenPicker
@@ -295,7 +295,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
               background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
             }}
           >
-            Generate itinerary
+            Create itinerary
           </button>
         </div>
       </form>
@@ -303,7 +303,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       {/* Results */}
       {tp.hasSubmitted && !tp.plan && !tp.error && (
         <p className="text-sm text-gray-400">
-          Fill in your trip details and click &quot;Generate itinerary&quot;.
+          Fill in your trip details and click &quot;Create itinerary&quot;.
         </p>
       )}
 

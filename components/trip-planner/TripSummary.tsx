@@ -20,14 +20,14 @@ export default function TripSummary({
   if (!routeStops.length || nightsPerStop.length !== routeStops.length) return null;
 
   return (
-    <div className="card p-4 md:p-6 space-y-3">
-      <h2 className="text-lg font-semibold">Trip summary</h2>
+    <div className="p-4 md:p-6 space-y-3">
+      <h2 className="text-lg font-semibold text-slate-900">Trip summary</h2>
 
-      <ul className="space-y-1 text-sm">
+      <ul className="space-y-2 text-sm">
         {routeStops.map((stopName, idx) => (
           <li key={`${stopName}-${idx}`} className="flex justify-between">
-            <span className="text-slate-800">{stopName}</span>
-            <span className="text-slate-800">
+            <span className="text-slate-900">{stopName}</span>
+            <span className="text-slate-600">
               {nightsPerStop[idx] ?? 1} night{(nightsPerStop[idx] ?? 1) === 1 ? "" : "s"}
             </span>
           </li>
@@ -35,8 +35,8 @@ export default function TripSummary({
       </ul>
 
       {totalTripDays > 0 && startDate && endDate && (
-        <p className="text-xs text-slate-800 mt-2">
-          Total days: <strong>{totalTripDays}</strong> ({formatDisplayDate(startDate)} –{" "}
+        <p className="text-xs text-slate-600 mt-2">
+          Total days: <strong className="text-slate-900">{totalTripDays}</strong> ({formatDisplayDate(startDate)} –{" "}
           {formatDisplayDate(endDate)}).
         </p>
       )}

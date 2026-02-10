@@ -87,10 +87,10 @@ export default function StopGroupCard({
 
   return (
     <div
-      className="rounded-2xl border border-slate-200 bg-white overflow-hidden"
+      className="rounded-3xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-slate-100/50 transition-all duration-200 ease-in-out hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] overflow-hidden"
     >
       {/* Stop header */}
-      <div className="px-3 md:px-4 py-3">
+      <div className="px-4 md:px-5 py-4">
         {/* Mobile: Stack layout */}
         <div className="md:hidden space-y-3">
           <div className="flex items-center gap-2 min-w-0">
@@ -102,23 +102,23 @@ export default function StopGroupCard({
               <span
                 className={[
                   "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-                  "border border-slate-200 bg-slate-50 group-hover:bg-slate-100 transition",
+                  "border border-slate-200/50 bg-slate-50/50 group-hover:bg-slate-100/70 transition-all duration-200 opacity-60",
                 ].join(" ")}
                 aria-hidden
               >
                 <ChevronDown
                   className={[
-                    "w-3.5 h-3.5 text-slate-600 transition-transform duration-200",
+                    "w-3.5 h-3.5 text-slate-500 transition-transform duration-200",
                     isStopOpen ? "rotate-0" : "-rotate-90",
                   ].join(" ")}
                 />
               </span>
 
               <div className="min-w-0 flex-1">
-                <div className="text-base font-semibold text-slate-800 break-words">{g.stopName}</div>
+                <div className="text-xl font-semibold text-slate-900 break-words leading-tight">{g.stopName}</div>
                 {arrivalDate && departureDate && (
-                  <div className="text-[11px] text-slate-600 mt-0.5">
-                    Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
+                  <div className="text-xs text-slate-500 mt-1 font-normal">
+                    {formatShortRangeDate(arrivalDate)} – {formatShortRangeDate(departureDate)} • {nightsHere} Night
                     {nightsHere === 1 ? "" : "s"}
                   </div>
                 )}
@@ -128,7 +128,7 @@ export default function StopGroupCard({
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
-                className="p-1.5 -mr-1 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
+                className="p-1.5 -mr-1 rounded-lg border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:border-slate-400 active:bg-slate-300 touch-none cursor-grab transition-all duration-200"
                 aria-label="Reorder stop"
                 {...dragListeners}
                 {...dragAttributes}
@@ -139,13 +139,13 @@ export default function StopGroupCard({
           </div>
 
           {/* Nights stepper for mobile */}
-          <div className="flex items-center gap-2 pl-9">
-            <span className="text-[11px] text-slate-600">Nights:</span>
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2 pl-9 opacity-60">
+            <span className="text-[10px] text-slate-500">Nights:</span>
+            <div className="inline-flex items-center rounded-lg border border-slate-200/60 bg-white shadow-sm overflow-hidden">
               <button
                 type="button"
                 onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
-                className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
+                className="px-3 py-1.5 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-all duration-200 border-r border-slate-200/60"
               >
                 −
               </button>
@@ -154,12 +154,12 @@ export default function StopGroupCard({
                 min={1}
                 value={nightsHere}
                 onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
-                className="w-12 text-center input-dark input-no-spinner text-sm py-1.5 px-1"
+                className="w-10 text-center input-dark input-no-spinner text-sm py-1.5 px-2 border-0 focus:ring-0"
               />
               <button
                 type="button"
                 onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
-                className="w-8 h-8 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center text-slate-700"
+                className="px-3 py-1.5 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-all duration-200 border-l border-slate-200/60"
               >
                 +
               </button>
@@ -178,23 +178,23 @@ export default function StopGroupCard({
               <span
                 className={[
                   "w-8 h-8 rounded-xl flex items-center justify-center",
-                  "border border-slate-200 bg-slate-50 group-hover:bg-slate-100 transition",
+                  "border border-slate-200/50 bg-slate-50/50 group-hover:bg-slate-100/70 transition-all duration-200 opacity-60",
                 ].join(" ")}
                 aria-hidden
               >
                 <ChevronDown
                   className={[
-                    "w-4 h-4 text-slate-600 transition-transform duration-200",
+                    "w-4 h-4 text-slate-500 transition-transform duration-200",
                     isStopOpen ? "rotate-0" : "-rotate-90",
                   ].join(" ")}
                 />
               </span>
 
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-800 truncate">{g.stopName}</div>
+                <div className="text-lg font-semibold text-slate-900 truncate leading-tight">{g.stopName}</div>
                 {arrivalDate && departureDate && (
-                  <div className="text-[11px] text-slate-600 truncate">
-                    Arrive {formatShortRangeDate(arrivalDate)} – Depart {formatShortRangeDate(departureDate)} | {nightsHere} Night
+                  <div className="text-xs text-slate-500 truncate font-normal mt-0.5">
+                    {formatShortRangeDate(arrivalDate)} – {formatShortRangeDate(departureDate)} • {nightsHere} Night
                     {nightsHere === 1 ? "" : "s"}
                   </div>
                 )}
@@ -203,13 +203,13 @@ export default function StopGroupCard({
           </div>
 
           {/* Nights stepper for desktop */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-600 mr-1">Nights</span>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 opacity-60">
+            <span className="text-[10px] text-slate-500 mr-1">Nights</span>
+            <div className="inline-flex items-center rounded-lg border border-slate-200/60 bg-white shadow-sm overflow-hidden">
               <button
                 type="button"
                 onClick={() => onChangeNights(g.stopIndex, nightsHere - 1)}
-                className="px-2 py-1 rounded-full border border-slate-200 text-xs hover:bg-slate-50 text-slate-700"
+                className="px-2.5 py-1 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-all duration-200 border-r border-slate-200/60 text-xs"
               >
                 −
               </button>
@@ -218,12 +218,12 @@ export default function StopGroupCard({
                 min={1}
                 value={nightsHere}
                 onChange={(e) => onChangeNights(g.stopIndex, Number(e.target.value))}
-                className="w-14 text-center input-dark input-no-spinner text-xs py-1 px-1"
+                className="w-10 text-center input-dark input-no-spinner text-xs py-1 px-2 border-0 focus:ring-0"
               />
               <button
                 type="button"
                 onClick={() => onChangeNights(g.stopIndex, nightsHere + 1)}
-                className="px-2 py-1 rounded-full border border-slate-200 text-xs hover:bg-slate-50 text-slate-700"
+                className="px-2.5 py-1 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-all duration-200 border-l border-slate-200/60 text-xs"
               >
                 +
               </button>
@@ -232,7 +232,7 @@ export default function StopGroupCard({
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
-                className="p-2 -mr-2 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 active:bg-slate-100 touch-none cursor-grab"
+                className="p-2 -mr-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:border-slate-400 active:bg-slate-300 touch-none cursor-grab transition-all duration-200"
                 aria-label="Reorder stop"
                 {...dragListeners}
                 {...dragAttributes}
@@ -252,7 +252,7 @@ export default function StopGroupCard({
         ].join(" ")}
       >
         <div className="overflow-hidden">
-          <div className="px-3 md:px-4 pb-4">
+          <div className="px-4 md:px-5 pb-4">
             <ViewToggle
               view={view}
               onViewChange={setView}
@@ -260,7 +260,7 @@ export default function StopGroupCard({
             />
             {view === "itinerary" ? (
               <>
-                <div className="pl-2 md:pl-3 border-l border-slate-200 space-y-2">
+                <div className="pl-3 md:pl-4 border-l border-slate-200 space-y-3 md:space-y-4">
                   {g.dayIndices.map((dayIdx, localIdx) => {
                     const d = plan.days[dayIdx];
                     const key = makeDayKey(d.date, d.location);
@@ -287,7 +287,7 @@ export default function StopGroupCard({
                 </div>
 
                 {/* Stop options - only visible when expanded */}
-                <div className="pl-2 md:pl-3 mt-4 pt-4 border-t border-slate-200">
+                <div className="pl-3 md:pl-4 mt-5 md:mt-6 pt-5 md:pt-6 border-t border-slate-200">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
                     {/* Mobile: Stack layout */}
                     <div className="md:hidden space-y-3">

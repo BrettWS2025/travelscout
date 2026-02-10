@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, List, MapPin } from "lucide-react";
 import {
   getWalkingExperiencesByDistrict,
   getWalkingExperiencesNearPoint,
@@ -14,6 +14,20 @@ import {
 } from "@/lib/walkingExperiences";
 import { searchPlacesByName, getPlaceDistrictByName } from "@/lib/places";
 import { parseDisplayName } from "@/lib/trip-planner/utils";
+import dynamic from "next/dynamic";
+
+// Lazy load the map component to improve initial load performance
+const ThingsToDoMap = dynamic(
+  () => import("./ThingsToDoMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[400px] flex items-center justify-center bg-slate-100 rounded-lg border border-slate-200">
+        <div className="text-xs text-slate-500">Loading map...</div>
+      </div>
+    ),
+  }
+);
 
 type ThingsToDoListProps = {
   location: string;
@@ -27,6 +41,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -217,6 +232,14 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     }
   }, [currentPage]);
 
+  // Count experiences with valid coordinates for map view
+  // This must be called before any conditional returns to follow Rules of Hooks
+  const experiencesWithCoords = useMemo(() => {
+    return sortedExperiences.filter(
+      (exp) => exp.latitude !== null && exp.longitude !== null && !isNaN(exp.latitude) && !isNaN(exp.longitude)
+    );
+  }, [sortedExperiences]);
+
   if (loading) {
     return (
       <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
@@ -245,10 +268,54 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
   return (
     <div className="space-y-3">
-      <div 
-        ref={scrollContainerRef}
-        className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2"
-      >
+      {/* View Toggle */}
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setViewMode("list")}
+          className={[
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+            viewMode === "list"
+              ? "bg-slate-200 text-slate-900 border border-slate-300"
+              : "bg-transparent text-slate-600 hover:text-slate-800 border border-slate-200 hover:border-slate-300",
+          ].join(" ")}
+        >
+          <List className="w-3.5 h-3.5" />
+          List
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("map")}
+          disabled={experiencesWithCoords.length === 0}
+          className={[
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+            viewMode === "map"
+              ? "bg-slate-200 text-slate-900 border border-slate-300"
+              : "bg-transparent text-slate-600 hover:text-slate-800 border border-slate-200 hover:border-slate-300",
+            experiencesWithCoords.length === 0 ? "opacity-50 cursor-not-allowed" : "",
+          ].join(" ")}
+          title={experiencesWithCoords.length === 0 ? "No experiences with location data available" : "View on map"}
+        >
+          <MapPin className="w-3.5 h-3.5" />
+          Map {experiencesWithCoords.length > 0 && `(${experiencesWithCoords.length})`}
+        </button>
+      </div>
+
+      {/* Map View */}
+      {viewMode === "map" && (
+        <ThingsToDoMap
+          experiences={sortedExperiences}
+          onAddToItinerary={onAddToItinerary}
+          location={location}
+        />
+      )}
+
+      {/* List View */}
+      {viewMode === "list" && (
+        <div 
+          ref={scrollContainerRef}
+          className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2"
+        >
         <div className="space-y-3">
           {currentPageExperiences.map((experience) => (
           <div
@@ -366,43 +433,44 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
           </div>
           ))}
         </div>
-      </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
-          <button
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-            className={[
-              "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
-              currentPage === 1
-                ? "text-slate-400 cursor-not-allowed bg-slate-100"
-                : "text-slate-700 bg-slate-100 hover:bg-slate-200"
-            ].join(" ")}
-          >
-            <ChevronLeft className="w-3 h-3" />
-            Previous
-          </button>
-          
-          <div className="text-xs text-slate-600">
-            Page {currentPage} of {totalPages} ({sortedExperiences.length} total)
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={[
+                "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
+                currentPage === 1
+                  ? "text-slate-400 cursor-not-allowed bg-slate-100"
+                  : "text-slate-700 bg-slate-100 hover:bg-slate-200"
+              ].join(" ")}
+            >
+              <ChevronLeft className="w-3 h-3" />
+              Previous
+            </button>
+            
+            <div className="text-xs text-slate-600">
+              Page {currentPage} of {totalPages} ({sortedExperiences.length} total)
+            </div>
+            
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={[
+                "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
+                currentPage === totalPages
+                  ? "text-slate-400 cursor-not-allowed bg-slate-100"
+                  : "text-slate-700 bg-slate-100 hover:bg-slate-200"
+              ].join(" ")}
+            >
+              Next
+              <ChevronRight className="w-3 h-3" />
+            </button>
           </div>
-          
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className={[
-              "flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
-              currentPage === totalPages
-                ? "text-slate-400 cursor-not-allowed bg-slate-100"
-                : "text-slate-700 bg-slate-100 hover:bg-slate-200"
-            ].join(" ")}
-          >
-            Next
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
+        )}
+      </div>
       )}
     </div>
   );
