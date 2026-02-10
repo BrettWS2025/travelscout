@@ -41,7 +41,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
-  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "dates" | "return">("start");
+  const [cityModalStep, setCityModalStep] = useState<"start" | "end" | "destinations" | "dates" | "return">("start");
 
   // Places/Things modal state
   const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
@@ -115,11 +115,13 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     router.replace(newUrl, { scroll: false });
   };
 
-  const handleCityModalStepChange = (step: "start" | "end" | "dates") => {
+  const handleCityModalStepChange = (step: "start" | "end" | "destinations" | "dates" | "return") => {
     setCityModalStep(step);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("setup", step);
-    router.push(`/trip-planner?${params.toString()}`, { scroll: false });
+    if (step !== "return" && step !== "destinations") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("setup", step);
+      router.push(`/trip-planner?${params.toString()}`, { scroll: false });
+    }
   };
 
   const handleSelectDates = () => {
