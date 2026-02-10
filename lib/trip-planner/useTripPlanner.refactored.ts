@@ -89,6 +89,8 @@ export function useTripPlanner() {
     places.selectedPlaceIds,
     places.selectedPlaceData,
     places.selectedThingIds,
+    state.destinationIds,
+    state.destinationData,
     state.routeStops,
     state.nightsPerStop,
     state.mapPoints,
@@ -111,7 +113,8 @@ export function useTripPlanner() {
     state.setEndDate,
     state.setStartCityData,
     state.setEndCityData,
-    places.setSelectedPlaceData
+    places.setSelectedPlaceData,
+    state.setDestinationData
   );
 
   // Persistence
