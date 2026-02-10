@@ -510,9 +510,9 @@ export default function CitySelectionModal({
                 />
               </div>
             </div>
-          ) : (
+          ) : (step === "start" || step === "end" || step === "return") ? (
             <CityPickerPanel
-              step={step}
+              step={step === "return" ? "start" : step}
               query={currentQuery}
               setQuery={setCurrentQuery}
               results={currentResults}
@@ -524,7 +524,7 @@ export default function CitySelectionModal({
               onSelectReturnToStart={handleSelectReturnToStart}
               onClose={onClose}
             />
-          )}
+          ) : null}
         </div>
 
         <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-3">
