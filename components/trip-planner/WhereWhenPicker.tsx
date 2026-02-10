@@ -71,6 +71,7 @@ export type WhereWhenPickerProps = {
   selectStartCity: (cityId: string) => void;
   selectEndCity: (cityId: string) => void;
   selectReturnToStart?: () => void;
+  clearEndCity?: () => void;
   selectDestination?: (cityId: string) => void;
   removeDestination?: (cityId: string) => void;
 
