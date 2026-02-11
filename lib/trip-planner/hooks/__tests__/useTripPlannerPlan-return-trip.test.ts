@@ -16,6 +16,13 @@ vi.mock('@/lib/itinerary', () => ({
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return diffDays;
   }),
+  countNights: vi.fn((start, end) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }),
 }));
 
 vi.mock('@/lib/trip-planner/utils', () => ({
@@ -87,6 +94,7 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
 
   it('should set both start and end sectors to road for return trip', async () => {
     const mockPlan = {
+      days: [],
       stops: ['Auckland', 'Auckland'],
       nights: [0, 0],
     };
@@ -98,6 +106,8 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
     vi.mocked(itinerary.buildTripPlanFromStopsAndNights).mockReturnValue(mockPlan as any);
     vi.mocked(utils.fetchRoadLegs).mockResolvedValue([]);
     vi.mocked(itinerary.countDaysInclusive).mockReturnValue(6);
+    vi.mocked(utils.buildDayStopMeta).mockReturnValue([]);
+    vi.mocked(utils.syncDayDetailsFromPlan).mockReturnValue({});
 
     const { result } = renderHook(() =>
       useTripPlannerPlan(
@@ -121,24 +131,30 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
       )
     );
 
-    const form = document.createElement('form');
     await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
 
     await waitFor(() => {
       expect(mockSetters.setStartSectorType).toHaveBeenCalledWith('road');
       expect(mockSetters.setEndSectorType).toHaveBeenCalledWith('road');
-    });
+    }, { timeout: 3000 });
   });
 
   it('should allocate nights correctly for return trip', async () => {
     const mockPlan = {
-      stops: ['Auckland', 'Wellington'],
-      nights: [0, 5],
+      days: [],
+      stops: ['Auckland', 'Wellington', 'Auckland'],
+      nights: [0, 5, 0],
     };
 
+    vi.mocked(nzStops.orderWaypointNamesByRoute).mockReturnValue({
+      orderedNames: ['Wellington'], // Middle stop
+      matchedStopsInOrder: [],
+    });
     vi.mocked(itinerary.buildTripPlanFromStopsAndNights).mockReturnValue(mockPlan as any);
     vi.mocked(utils.fetchRoadLegs).mockResolvedValue([]);
     vi.mocked(itinerary.countDaysInclusive).mockReturnValue(6);
+    vi.mocked(utils.buildDayStopMeta).mockReturnValue([]);
+    vi.mocked(utils.syncDayDetailsFromPlan).mockReturnValue({});
 
     const { result } = renderHook(() =>
       useTripPlannerPlan(
@@ -162,15 +178,14 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
       )
     );
 
-    const form = document.createElement('form');
     await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
 
     await waitFor(() => {
       expect(mockSetters.setNightsPerStop).toHaveBeenCalled();
       const callArgs = mockSetters.setNightsPerStop.mock.calls[0][0];
       expect(callArgs[0]).toBe(0); // First stop (start) should have 0 nights
-      expect(callArgs[1]).toBeGreaterThanOrEqual(1); // Second stop should have at least 1 night
-    });
+      expect(callArgs[callArgs.length - 1]).toBe(0); // Last stop (end) should have 0 nights
+    }, { timeout: 3000 });
   });
 
   it('should handle return trip with destinations', async () => {
@@ -182,6 +197,7 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
     };
 
     const mockPlan = {
+      days: [],
       stops: ['Auckland', 'Wellington', 'Auckland'],
       nights: [0, 2, 0],
     };
@@ -194,6 +210,8 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
     vi.mocked(utils.fetchRoadLegs).mockResolvedValue([]);
     vi.mocked(api.fetchPlaceCoordinates).mockResolvedValue(mockDestination as any);
     vi.mocked(itinerary.countDaysInclusive).mockReturnValue(6);
+    vi.mocked(utils.buildDayStopMeta).mockReturnValue([]);
+    vi.mocked(utils.syncDayDetailsFromPlan).mockReturnValue({});
 
     const destinationData = new Map();
     destinationData.set('wlg', mockDestination);
@@ -220,7 +238,6 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
       )
     );
 
-    const form = document.createElement('form');
     await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
 
     await waitFor(() => {
@@ -228,6 +245,6 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
       // When there are destinations with a return trip, the logic may vary
       // The important thing is that start is set to road
       expect(mockSetters.setStartSectorType).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
   });
 });

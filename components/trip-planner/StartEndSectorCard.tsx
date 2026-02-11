@@ -48,6 +48,7 @@ type StartEndSectorCardProps = {
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
   onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
 
 export default function StartEndSectorCard({
@@ -81,6 +82,7 @@ export default function StartEndSectorCard({
   onConfirmAddStop,
   onCancelAddStop,
   onAddToItinerary,
+  endDate,
 }: StartEndSectorCardProps) {
   // For road sectors, the road sector details are stored by destination stop index
   // When start is a road sector (stopIndex === 0), experiences are stored at the destination (index 1)
@@ -97,10 +99,10 @@ export default function StartEndSectorCard({
   
   // Calculate arrival and departure dates
   const arrivalDate = firstDay?.date ?? "";
-  // Departure date: for the last stop, use the last day (end date); for others, use last day + 1
-  const isLastStop = stopIndex === routeStops.length - 1;
+  // Departure date: always add 1 day to the last day to get the departure date
+  // (lastDay.date is the last day you're staying, departure is the next day)
   const departureDate = lastDay?.date 
-    ? (isLastStop ? lastDay.date : addDaysToIsoDate(lastDay.date, 1))
+    ? addDaysToIsoDate(lastDay.date, 1)
     : "";
   
   // For road sectors, calculate the date when arriving at destination
@@ -112,9 +114,17 @@ export default function StartEndSectorCard({
       return plan.days[0].date;
     }
     
-    // If this is the end sector (road), find the last day of the previous itinerary stop
+    // If this is the end sector (road), check if it's a return trip
     if (stopIndex === routeStops.length - 1) {
-      // Find the last itinerary stop before the end
+      // Check if it's a return trip (start and end are the same city)
+      const isReturnTrip = routeStops.length > 0 && routeStops[0] === routeStops[routeStops.length - 1];
+      
+      if (isReturnTrip && endDate) {
+        // For return trips, use the endDate directly
+        return endDate;
+      }
+      
+      // For non-return trips or when endDate is not available, find the last day of the previous itinerary stop
       let lastItineraryStopIndex = -1;
       for (let i = stopIndex - 1; i >= 0; i--) {
         if (nightsPerStop[i] > 0) {

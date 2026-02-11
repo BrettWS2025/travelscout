@@ -166,6 +166,9 @@ describe('WhereWhenPicker', () => {
 
   it('should call onOpenCityModal when "Choose now" is clicked', async () => {
     const user = userEvent.setup();
+    
+    // Ensure getCityById returns undefined for empty startCityId
+    vi.mocked(nzCities.getCityById).mockReturnValue(undefined);
 
     render(<WhereWhenPicker {...mockProps} />);
 
@@ -202,6 +205,9 @@ describe('WhereWhenPicker', () => {
       error: 'Location is outside New Zealand',
       isOutsideNZ: true,
     });
+    
+    // Ensure getCityById returns undefined for empty startCityId
+    vi.mocked(nzCities.getCityById).mockReturnValue(undefined);
 
     render(<WhereWhenPicker {...mockProps} />);
 
