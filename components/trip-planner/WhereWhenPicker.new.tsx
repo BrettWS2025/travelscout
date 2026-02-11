@@ -111,7 +111,9 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
   const destinationsInputRef = useRef<HTMLInputElement[]>([]);
 
   const startCity = getCityById(props.startCityId);
-  const selectedDestinations = props.destinationIds.map((id) => getCityById(id)).filter(Boolean);
+  const selectedDestinations = props.destinationIds
+    .map((id) => getCityById(id))
+    .filter((city): city is NonNullable<typeof city> => city !== undefined);
   const showBrowseLists = normalize(props.destinationsQuery).length === 0 || props.destinationsResults.length === 0;
 
   const handleAddDestinationInput = () => {
