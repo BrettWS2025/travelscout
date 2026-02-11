@@ -117,10 +117,7 @@ export default function DraftItinerary({
     <div className="bg-slate-50/50 p-4 md:p-6">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4 mb-6 md:mb-7">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Your Itinerary</h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Expand a location to see its days. Drag the grip to reorder stops.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">Your Journey</h2>
         </div>
 
         <div className="flex items-center gap-2">

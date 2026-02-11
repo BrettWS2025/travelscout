@@ -189,7 +189,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             <>
               <span className="text-base text-slate-700">
                 Your journey begins in{" "}
-                <span className="font-semibold text-slate-900">
+                <span className="font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
                   {startCity.name}, NZ
                 </span>
               </span>
@@ -253,10 +253,10 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
 
       </div>
 
-      {/* Where are you going? Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900 text-center">
-          Where are you going?
+      {/* Choose your destination Section */}
+      <div className="space-y-4 max-w-3xl mx-auto mt-8">
+        <h2 className="text-sm font-semibold text-slate-900 text-center tracking-wide uppercase">
+          Choose your destination
         </h2>
         
         <div className="space-y-4">
@@ -336,10 +336,10 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
         </div>
       </div>
 
-      {/* What dates are you travelling? Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900 text-center">
-          What dates are you travelling?
+      {/* Pick your travel dates Section */}
+      <div className="space-y-4 max-w-3xl mx-auto mt-10">
+        <h2 className="text-sm font-semibold text-slate-900 text-center tracking-wide uppercase">
+          Pick your travel dates
         </h2>
         
         <div>

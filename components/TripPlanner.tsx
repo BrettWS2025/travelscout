@@ -267,7 +267,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
         {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
 
-        <div className="flex justify-center md:justify-start">
+        <div className="flex justify-center">
           <button
             type="submit"
             className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
@@ -275,15 +275,15 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
               background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
             }}
           >
-            Create itinerary
+            Create your journey
           </button>
         </div>
       </form>
 
       {/* Results */}
       {tp.hasSubmitted && !tp.plan && !tp.error && (
-        <p className="text-sm text-gray-400">
-          Fill in your trip details and click &quot;Create itinerary&quot;.
+        <p className="text-sm text-gray-400 text-center md:text-left">
+          Fill in your trip details and click &quot;Create your journey&quot;.
         </p>
       )}
 
