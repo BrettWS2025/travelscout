@@ -57,6 +57,7 @@ export default function DraftItinerary({
   onRemoveStop,
   onReorderStops,
   onAddToItinerary,
+  endDate,
 }: Props) {
   const stopGroups = useMemo(() => {
     if (!plan || plan.days.length === 0) return [];
@@ -243,6 +244,7 @@ export default function DraftItinerary({
                   newStopCityId={newStopCityId}
                   setNewStopCityId={setNewStopCityId}
                   onToggleOpen={() => onToggleStopOpen(0)}
+                  endDate={endDate}
                   onChangeNights={onChangeNights}
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}
@@ -288,6 +290,7 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(stopGroups[0].stopIndex, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(stopGroups[0].stopIndex, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
                 </div>
               )}
@@ -318,6 +321,7 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
                 </div>
               )}
@@ -397,7 +401,7 @@ export default function DraftItinerary({
                 </SortableContext>
               </DndContext>
 
-              {/* Road sector from last middle stop to end - only show if end is itinerary sector */}
+              {/* Road sector from last middle stop to end - only show if end is itinerary sector (not for return trips) */}
               {stopGroups.length > 0 && endGroup && endSectorType === "itinerary" && (
                 <div className="relative">
                   {/* Timeline indicator for road - centered on card header (py-3 = 12px, header content ~24px, center at ~24px) */}
@@ -423,6 +427,7 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
                 </div>
               )}
@@ -453,6 +458,7 @@ export default function DraftItinerary({
                   newStopCityId={newStopCityId}
                   setNewStopCityId={setNewStopCityId}
                   onToggleOpen={() => onToggleStopOpen(routeStops.length - 1)}
+                  endDate={endDate}
                   onChangeNights={onChangeNights}
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}

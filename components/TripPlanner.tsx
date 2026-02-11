@@ -323,6 +323,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onRemoveStop={tp.handleRemoveStop}
             onReorderStops={tp.handleReorderStops}
             onAddToItinerary={handleAddToItinerary}
+            endDate={tp.endDate}
           />
         </>
       )}

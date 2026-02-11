@@ -26,6 +26,7 @@ type RoadSectorCardProps = {
   onUpdateActivities: (activities: string) => void;
   onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
   onRemoveExperience?: (experienceId: string) => void;
+  endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
 
 export default function RoadSectorCard({
@@ -45,6 +46,7 @@ export default function RoadSectorCard({
   onUpdateActivities,
   onAddToItinerary,
   onRemoveExperience,
+  endDate,
 }: RoadSectorCardProps) {
   // State for view toggle (road trip vs things to do)
   const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
@@ -80,7 +82,15 @@ export default function RoadSectorCard({
     const isEndStop = toStopIndex === (routeStops?.length ?? 0) - 1;
     
     if (isEndStop) {
-      // Find the last itinerary stop before the end
+      // Check if it's a return trip (start and end are the same city)
+      const isReturnTrip = routeStops && routeStops.length > 0 && routeStops[0] === routeStops[routeStops.length - 1];
+      
+      if (isReturnTrip && endDate) {
+        // For return trips, use the endDate directly
+        return endDate;
+      }
+      
+      // For non-return trips or when endDate is not available, find the last itinerary stop before the end
       let lastItineraryStopIndex = -1;
       for (let i = toStopIndex - 1; i >= 0; i--) {
         if (nightsPerStop[i] > 0) {

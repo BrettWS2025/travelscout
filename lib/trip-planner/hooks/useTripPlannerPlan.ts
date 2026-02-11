@@ -8,6 +8,7 @@ import { NZ_CITIES } from "@/lib/nzCities";
 import {
   buildTripPlanFromStopsAndNights,
   countDaysInclusive,
+  countNights,
   type TripPlan,
 } from "@/lib/itinerary";
 import {
@@ -261,19 +262,20 @@ export function useTripPlannerPlan(
       }
       setRouteStops(stops);
 
-      // Calculate total days
+      // Calculate total days and nights
       const totalDays = countDaysInclusive(startDate, endDate);
-      const initialNights = allocateNightsForStops(stops.length, totalDays);
+      const totalNights = countNights(startDate, endDate);
+      const initialNights = allocateNightsForStops(stops.length, totalNights);
       
       if (!end) {
         // No end city - all stops are destinations (itinerary sectors)
         // Start is a road sector (0 nights), all destinations get nights
         initialNights[0] = 0;
         
-        if (stops.length > 1 && totalDays > 0) {
+        if (stops.length > 1 && totalNights > 0) {
           const destinationCount = stops.length - 1;
-          const baseNightsPerDestination = Math.floor(totalDays / destinationCount);
-          const extraNights = totalDays % destinationCount;
+          const baseNightsPerDestination = Math.floor(totalNights / destinationCount);
+          const extraNights = totalNights % destinationCount;
           
           for (let i = 1; i < stops.length; i++) {
             initialNights[i] = baseNightsPerDestination + (i - 1 < extraNights ? 1 : 0);
@@ -292,28 +294,51 @@ export function useTripPlannerPlan(
       } else if (stops.length === 2) {
         // Just start and end (different cities) - end should be itinerary by default
         initialNights[0] = 0;
-        initialNights[1] = Math.max(1, totalDays);
+        initialNights[1] = Math.max(1, totalNights);
         setStartSectorType("road");
         setEndSectorType("itinerary");
       } else {
-        // Has end city - all destinations (including end) are itinerary sectors
-        // Start is a road sector (0 nights), all destinations get nights
-        initialNights[0] = 0;
+        // Check if it's a return trip (start and end are the same city)
+        const isReturnTrip = start.name === end.name;
         
-        // Allocate all nights to destinations (middle stops + end)
-        if (stops.length > 1 && totalDays > 0) {
-          const destinationCount = stops.length - 1; // All stops except start
-          const baseNightsPerDestination = Math.floor(totalDays / destinationCount);
-          const extraNights = totalDays % destinationCount;
+        if (isReturnTrip) {
+          // Return trip: start is road, middle stops get nights, end is road (0 nights)
+          initialNights[0] = 0; // Start is a road sector
+          initialNights[stops.length - 1] = 0; // End is a road sector, no nights
           
-          for (let i = 1; i < stops.length; i++) {
-            initialNights[i] = baseNightsPerDestination + (i - 1 < extraNights ? 1 : 0);
+          // Allocate all nights to middle stops only (not start or end)
+          if (stops.length > 2 && totalNights > 0) {
+            const middleStopCount = stops.length - 2; // Exclude start and end
+            const baseNightsPerMiddle = Math.floor(totalNights / middleStopCount);
+            const extraNights = totalNights % middleStopCount;
+            
+            for (let i = 1; i < stops.length - 1; i++) {
+              initialNights[i] = baseNightsPerMiddle + (i - 1 < extraNights ? 1 : 0);
+            }
           }
+          
+          setStartSectorType("road");
+          setEndSectorType("road");
+        } else {
+          // Has end city - all destinations (including end) are itinerary sectors
+          // Start is a road sector (0 nights), all destinations get nights
+          initialNights[0] = 0;
+          
+          // Allocate all nights to destinations (middle stops + end)
+          if (stops.length > 1 && totalNights > 0) {
+            const destinationCount = stops.length - 1; // All stops except start
+            const baseNightsPerDestination = Math.floor(totalNights / destinationCount);
+            const extraNights = totalNights % destinationCount;
+            
+            for (let i = 1; i < stops.length; i++) {
+              initialNights[i] = baseNightsPerDestination + (i - 1 < extraNights ? 1 : 0);
+            }
+          }
+          
+          setStartSectorType("road");
+          // End is an itinerary sector
+          setEndSectorType("itinerary");
         }
-        
-        setStartSectorType("road");
-        // End is an itinerary sector
-        setEndSectorType("itinerary");
       }
       
       setNightsPerStop(initialNights);
