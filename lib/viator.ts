@@ -45,6 +45,12 @@ export type ViatorProduct = {
     fromPrice?: number;
     fromPriceFormatted?: string;
     currencyCode?: string;
+    currency?: string;
+    price?: number | string;
+    summary?: {
+      fromPriceFormatted?: string;
+      fromPrice?: number;
+    };
   };
   coordinates?: {
     latitude: number;
