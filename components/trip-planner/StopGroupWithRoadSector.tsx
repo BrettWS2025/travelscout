@@ -95,24 +95,32 @@ export default function StopGroupWithRoadSector({
       ].join(" ")}
     >
       {showRoadSector && (
-        <RoadSectorCard
-          fromStopIndex={fromStopIndex}
-          toStopIndex={group.stopIndex}
-          fromStopName={fromStopName}
-          toStopName={group.stopName}
-          isOpen={roadSectorDetail?.isOpen ?? false}
-          activities={roadSectorDetail?.activities ?? ""}
-          experiences={roadSectorDetail?.experiences}
-          plan={plan}
-          nightsPerStop={nightsPerStop}
-          startDate={plan?.days[0]?.date ?? ""}
-          dayStopMeta={dayStopMeta}
-          routeStops={routeStops}
-          onToggleOpen={() => onToggleRoadSectorOpen(group.stopIndex)}
-          onUpdateActivities={(activities) => onUpdateRoadSectorActivities(group.stopIndex, activities)}
-          onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(group.stopIndex, experienceId) : undefined}
-          onAddToItinerary={onAddToItinerary}
-        />
+        <div className="relative">
+          {/* Timeline indicator for road - centered on card header (py-3 = 12px, header content ~24px, center at ~24px) */}
+          <div className="absolute -left-8 md:-left-10" style={{ top: '24px', transform: 'translateY(-50%)' }}>
+            <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+            </div>
+          </div>
+          <RoadSectorCard
+            fromStopIndex={fromStopIndex}
+            toStopIndex={group.stopIndex}
+            fromStopName={fromStopName}
+            toStopName={group.stopName}
+            isOpen={roadSectorDetail?.isOpen ?? false}
+            activities={roadSectorDetail?.activities ?? ""}
+            experiences={roadSectorDetail?.experiences}
+            plan={plan}
+            nightsPerStop={nightsPerStop}
+            startDate={plan?.days[0]?.date ?? ""}
+            dayStopMeta={dayStopMeta}
+            routeStops={routeStops}
+            onToggleOpen={() => onToggleRoadSectorOpen(group.stopIndex)}
+            onUpdateActivities={(activities) => onUpdateRoadSectorActivities(group.stopIndex, activities)}
+            onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(group.stopIndex, experienceId) : undefined}
+            onAddToItinerary={onAddToItinerary}
+          />
+        </div>
       )}
       <StopGroupCard
         group={group}

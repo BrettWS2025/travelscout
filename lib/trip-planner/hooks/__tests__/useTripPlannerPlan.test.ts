@@ -83,6 +83,7 @@ describe('useTripPlannerPlan', () => {
     setStartCityData: vi.fn(),
     setEndCityData: vi.fn(),
     setSelectedPlaceData: vi.fn(),
+    setDestinationData: vi.fn(),
   };
 
   beforeEach(() => {
@@ -111,6 +112,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -132,7 +135,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -160,6 +164,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -181,7 +187,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -192,7 +199,7 @@ describe('useTripPlannerPlan', () => {
     await result.current.handleSubmit(mockEvent);
 
     expect(mockSetters.setError).toHaveBeenCalledWith(
-      'Please select both a start city and an end city.'
+      'Please select a start city.'
     );
     expect(mockSetters.setPlan).toHaveBeenCalledWith(null);
   });
@@ -210,6 +217,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -231,7 +240,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -267,8 +277,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         {},
@@ -289,7 +301,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -313,6 +326,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -334,7 +349,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -356,6 +372,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -377,7 +395,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -399,6 +418,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -420,7 +441,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -441,8 +463,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         { 0: false },
@@ -463,7 +487,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -484,8 +509,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         {},
@@ -506,7 +533,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 
@@ -528,6 +556,8 @@ describe('useTripPlannerPlan', () => {
         new Map(),
         [],
         [],
+        new Map(),
+        [],
         [],
         [],
         {},
@@ -549,7 +579,8 @@ describe('useTripPlannerPlan', () => {
         mockSetters.setEndDate,
         mockSetters.setStartCityData,
         mockSetters.setEndCityData,
-        mockSetters.setSelectedPlaceData
+        mockSetters.setSelectedPlaceData,
+        mockSetters.setDestinationData
       )
     );
 

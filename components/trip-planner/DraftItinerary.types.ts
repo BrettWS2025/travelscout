@@ -46,6 +46,8 @@ export type DraftItineraryProps = {
   onReorderStops: (fromIndex: number, toIndex: number) => void;
 
   onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  
+  endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
 
 export type Group = {

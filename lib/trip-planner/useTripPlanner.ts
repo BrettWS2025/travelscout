@@ -3,6 +3,9 @@
 import { useAuth } from "@/components/AuthProvider";
 import { countDaysInclusive } from "@/lib/itinerary";
 import { formatShortRangeDate } from "@/lib/trip-planner/utils";
+import { getCityById } from "@/lib/nzCities";
+import { fetchPlaceCoordinates } from "./useTripPlanner.api";
+import { pushRecent } from "./useTripPlanner.utils";
 import { useTripPlannerState } from "./hooks/useTripPlannerState";
 import { useTripPlannerUI } from "./hooks/useTripPlannerUI";
 import { useTripPlannerSearch } from "./hooks/useTripPlannerSearch";
@@ -34,6 +37,55 @@ export function useTripPlanner() {
     state.setRecent,
     search.placesResults
   );
+
+  // Destinations selection (similar to places but separate)
+  async function selectDestination(cityId: string) {
+    try {
+      // Try to get from cache first
+      let c = getCityById(cityId);
+      
+      // If not in cache, fetch from database
+      if (!c) {
+        c = (await fetchPlaceCoordinates(cityId)) || undefined;
+      }
+      
+      // If still not found, try search results as fallback
+      if (!c) {
+        const found = search.destinationsResults.find((r) => r.id === cityId);
+        if (found) {
+          c = (await fetchPlaceCoordinates(found.id, found.name)) || undefined;
+        }
+      }
+      
+      if (!c) {
+        console.error(`Could not find destination with ID: ${cityId}`);
+        return;
+      }
+
+      // Add to array if not already selected
+      if (!state.destinationIds.includes(cityId)) {
+        state.setDestinationIds([...state.destinationIds, cityId]);
+        // Store the place data
+        state.setDestinationData((prev) => {
+          const next = new Map(prev);
+          next.set(cityId, c);
+          return next;
+        });
+      }
+      state.setRecent(pushRecent({ id: c.id, name: c.name }, state.recent));
+    } catch (error) {
+      console.error("Error selecting destination:", error);
+    }
+  }
+
+  function removeDestination(cityId: string) {
+    state.setDestinationIds(state.destinationIds.filter((id) => id !== cityId));
+    state.setDestinationData((prev) => {
+      const next = new Map(prev);
+      next.delete(cityId);
+      return next;
+    });
+  }
 
   // City selection
   const citySelection = useTripPlannerCitySelection(
@@ -88,6 +140,8 @@ export function useTripPlanner() {
     places.selectedPlaceIds,
     places.selectedPlaceData,
     places.selectedThingIds,
+    state.destinationIds,
+    state.destinationData,
     state.routeStops,
     state.nightsPerStop,
     state.mapPoints,
@@ -110,7 +164,8 @@ export function useTripPlanner() {
     state.setEndDate,
     state.setStartCityData,
     state.setEndCityData,
-    places.setSelectedPlaceData
+    places.setSelectedPlaceData,
+    state.setDestinationData
   );
 
   // Persistence
@@ -168,6 +223,10 @@ export function useTripPlanner() {
     : state.startCity 
     ? "Select End City"
     : "Select Start City";
+
+  const destinationsSummary = state.destinationIds.length > 0
+    ? `${state.destinationIds.length} destination${state.destinationIds.length > 1 ? 's' : ''} selected`
+    : "Add destinations";
 
   // Wrapper for handleConfirmAddStop to pass the required parameters
   const handleConfirmAddStop = () => {
@@ -252,6 +311,7 @@ export function useTripPlanner() {
     totalTripDays,
     whenLabel,
     whereSummary,
+    destinationsSummary,
     placesSummary: places.placesSummary,
     thingsSummary: places.thingsSummary,
 
@@ -292,6 +352,7 @@ export function useTripPlanner() {
     selectStartCity: citySelection.selectStartCity,
     selectEndCity: citySelection.selectEndCity,
     selectReturnToStart: citySelection.selectReturnToStart,
+    clearEndCity: citySelection.clearEndCity,
     selectPlace: places.selectPlace,
     selectThing: places.selectThing,
     removePlace: places.removePlace,
@@ -325,6 +386,15 @@ export function useTripPlanner() {
     saveStateToLocalStorage: persistence.saveStateToLocalStorage,
     restoreStateFromLocalStorage: persistence.restoreStateFromLocalStorage,
     clearSavedState: persistence.clearSavedState,
+
+    // destinations
+    destinationIds: state.destinationIds,
+    setDestinationIds: state.setDestinationIds,
+    destinationsQuery: search.destinationsQuery,
+    setDestinationsQuery: search.setDestinationsQuery,
+    destinationsResults: search.destinationsResults,
+    selectDestination,
+    removeDestination,
 
     // results
     startResults: search.startResults,

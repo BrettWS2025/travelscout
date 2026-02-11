@@ -11,11 +11,13 @@ import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/u
 export function useTripPlannerSearch() {
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
+  const [destinationsQuery, setDestinationsQuery] = useState("");
   const [placesQuery, setPlacesQuery] = useState("");
   const [thingsQuery, setThingsQuery] = useState("");
 
   const [startSearchResults, setStartSearchResults] = useState<CityLite[]>([]);
   const [endSearchResults, setEndSearchResults] = useState<CityLite[]>([]);
+  const [destinationsSearchResults, setDestinationsSearchResults] = useState<CityLite[]>([]);
   const [placesSearchResults, setPlacesSearchResults] = useState<CityLite[]>([]);
 
   // Search places for start city
@@ -82,6 +84,38 @@ export function useTripPlannerSearch() {
     return () => clearTimeout(timeoutId);
   }, [endQuery]);
 
+  // Search places for destinations
+  useEffect(() => {
+    if (!destinationsQuery.trim()) {
+      setDestinationsSearchResults([]);
+      return;
+    }
+    
+    const searchPlaces = async () => {
+      try {
+        const results = await searchPlacesByName(destinationsQuery, 20);
+        setDestinationsSearchResults(
+          results.slice(0, 8).map((p) => {
+            const displayName = p.display_name || p.name;
+            const { cityName, district } = parseDisplayName(displayName);
+            return {
+              id: p.id,
+              name: displayName,
+              cityName,
+              district,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error searching places for destinations:", error);
+        setDestinationsSearchResults([]);
+      }
+    };
+    
+    const timeoutId = setTimeout(searchPlaces, 300);
+    return () => clearTimeout(timeoutId);
+  }, [destinationsQuery]);
+
   // Search places
   useEffect(() => {
     if (!placesQuery.trim()) {
@@ -136,12 +170,18 @@ export function useTripPlannerSearch() {
     return placesSearchResults;
   }, [placesSearchResults]);
 
+  const destinationsResults = useMemo(() => {
+    return destinationsSearchResults;
+  }, [destinationsSearchResults]);
+
   return {
     // Query state
     startQuery,
     setStartQuery,
     endQuery,
     setEndQuery,
+    destinationsQuery,
+    setDestinationsQuery,
     placesQuery,
     setPlacesQuery,
     thingsQuery,
@@ -150,6 +190,7 @@ export function useTripPlannerSearch() {
     // Results
     startResults,
     endResults,
+    destinationsResults,
     placesResults,
     thingsResults,
   };

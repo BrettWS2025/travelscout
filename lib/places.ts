@@ -93,18 +93,65 @@ export async function getPlaceDistrict(id: string): Promise<string | null> {
  * Returns the district_name from nz_places_final
  */
 export async function getPlaceDistrictByName(placeName: string): Promise<string | null> {
+  const trimmedQuery = placeName.trim();
+  if (!trimmedQuery) return null;
+
+  const normalizedQuery = normalizeSearchQuery(trimmedQuery);
+  const queryPattern = `%${normalizedQuery}%`;
+
+  // Fetch a small set of candidates – we'll sort them in JS to pick the "best" one.
   const { data, error } = await supabase
     .from("nz_places_final")
-    .select("district_name")
-    .ilike("name", placeName)
+    .select("name, display_name, district_name, tags, name_norm, name_search")
+    .ilike("name_search", queryPattern)
     .in("place_type", ["city", "town", "village", "hamlet"])
-    .limit(1);
-  
+    .limit(20);
+
   if (error || !data || data.length === 0) {
     return null;
   }
-  
-  return data[0].district_name || null;
+
+  const queryLower = trimmedQuery.toLowerCase();
+
+  // Reuse the same prioritisation as searchPlacesByName so we consistently
+  // pick the "main" town/city when there are multiple matches (e.g. Whanganui).
+  const sorted = [...data].sort((a: any, b: any) => {
+    const nameALower = a.name.toLowerCase();
+    const nameBLower = b.name.toLowerCase();
+    const displayALower = a.display_name?.toLowerCase() || "";
+    const displayBLower = b.display_name?.toLowerCase() || "";
+
+    // 1) Exact name match
+    const aExact = nameALower === queryLower;
+    const bExact = nameBLower === queryLower;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+
+    // 2) Name starts with query
+    const aPrefix = nameALower.startsWith(queryLower);
+    const bPrefix = nameBLower.startsWith(queryLower);
+    if (aPrefix && !bPrefix) return -1;
+    if (!aPrefix && bPrefix) return 1;
+
+    // 3) Display name starts with query
+    const aDisplayPrefix = !aPrefix && displayALower.startsWith(queryLower);
+    const bDisplayPrefix = !bPrefix && displayBLower.startsWith(queryLower);
+    if (aDisplayPrefix && !bDisplayPrefix) return -1;
+    if (!aDisplayPrefix && bDisplayPrefix) return 1;
+
+    // 4) Population (largest first)
+    const popA = a.tags?.population ? parseInt(a.tags.population) : 0;
+    const popB = b.tags?.population ? parseInt(b.tags.population) : 0;
+    if (popA > 0 && popB > 0) return popB - popA;
+    if (popA > 0 && popB === 0) return -1;
+    if (popB > 0 && popA === 0) return 1;
+
+    // 5) Alphabetical by name
+    return a.name.localeCompare(b.name);
+  });
+
+  const best = sorted[0];
+  return best?.district_name || null;
 }
 
 /**
@@ -359,40 +406,54 @@ export async function findPlacesNearby(
   centerLng: number,
   radiusKm: number = 50
 ): Promise<Place[]> {
-  // Query nz_places_final and filter by distance using haversine formula
-  // Note: For better performance with large datasets, consider creating a database function using ST_DWithin
+  // Calculate bounding box to reduce dataset before distance filtering
+  // Approximate: 1 degree latitude ≈ 111 km, 1 degree longitude ≈ 111 km * cos(latitude)
+  const latRadius = radiusKm / 111;
+  const lngRadius = radiusKm / (111 * Math.cos((centerLat * Math.PI) / 180));
+  const minLat = centerLat - latRadius;
+  const maxLat = centerLat + latRadius;
+  const minLng = centerLng - lngRadius;
+  const maxLng = centerLng + lngRadius;
+  
+  // Query nz_places_final with bounding box filter to reduce dataset
+  // This is much faster than loading all places
   const { data, error } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags, geometry")
+    .select("id, name, display_name, lat, lon, tags, geometry, place_type")
     .in("place_type", ["city", "town", "village", "hamlet"])
-    .limit(50);
+    .gte("lat", minLat)
+    .lte("lat", maxLat)
+    .gte("lon", minLng)
+    .lte("lon", maxLng)
+    .limit(200); // Increased limit to ensure we get all places in the bounding box
 
   if (error) {
-    console.error("Error finding nearby places:", error);
+    console.error("[findPlacesNearby] Error finding nearby places:", error);
     // Fallback to simple distance calculation if query fails
     return findPlacesNearbyFallback(centerLat, centerLng, radiusKm);
   }
 
   if (!data || data.length === 0) {
+    console.warn("[findPlacesNearby] No places returned from database");
     return [];
   }
 
-  // Filter places within radius using haversine (since Supabase client doesn't support ST_DWithin directly)
-  // For better performance, we could create a database function, but this works for now
-  const nearbyPlaces = data.filter((place: any) => {
-    const distance = haversineDistance(centerLat, centerLng, place.lat, place.lon);
-    return distance <= radiusKm;
-  });
+  // Filter and sort places by distance (optimized: calculate distance once per place)
+  const placesWithDistance = data
+    .map((place: any) => {
+      if (!place.lat || !place.lon) return null;
+      const distance = haversineDistance(centerLat, centerLng, place.lat, place.lon);
+      return { place, distance };
+    })
+    .filter((item): item is { place: any; distance: number } => 
+      item !== null && item.distance <= radiusKm
+    )
+    .sort((a, b) => a.distance - b.distance);
 
-  // Sort by distance
-  nearbyPlaces.sort((a: any, b: any) => {
-    const distA = haversineDistance(centerLat, centerLng, a.lat, a.lon);
-    const distB = haversineDistance(centerLat, centerLng, b.lat, b.lon);
-    return distA - distB;
-  });
+  const nearbyPlaces = placesWithDistance.map(item => item.place);
 
   // Map to Place format
-  return nearbyPlaces.map((p: any) => ({
+  const result = nearbyPlaces.map((p: any) => ({
     id: p.id.toString(),
     name: p.name,
     display_name: p.display_name,
@@ -400,6 +461,8 @@ export async function findPlacesNearby(
     lng: p.lon,
     rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
   }));
+
+  return result;
 }
 
 /**
@@ -411,12 +474,17 @@ async function findPlacesNearbyFallback(
   centerLng: number,
   radiusKm: number
 ): Promise<Place[]> {
+  console.log("[findPlacesNearbyFallback] Using fallback method");
   const places = await getAllPlaces();
+  console.log("[findPlacesNearbyFallback] Total places loaded:", places.length);
   
   const nearby = places.filter((place) => {
+    if (!place.lat || !place.lng) return false;
     const distance = haversineDistance(centerLat, centerLng, place.lat, place.lng);
     return distance <= radiusKm;
   });
+  
+  console.log("[findPlacesNearbyFallback] Places within", radiusKm, "km:", nearby.length);
   
   // Sort by distance
   nearby.sort((a, b) => {

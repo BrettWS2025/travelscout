@@ -9,15 +9,10 @@ export const metadata: Metadata = {
 
 export default function TripPlannerPage() {
   return (
-    <main className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-3xl font-bold">
-        Build your NZ road trip
+    <main className="mx-auto max-w-5xl p-6 text-center">
+      <h1 className="mb-8 text-3xl font-semibold">
+        Start your journey
       </h1>
-
-      <p className="mb-6 text-sm text-gray-500">
-        Start with your dates and key stops. We'll help you sketch a
-        day-by-day itinerary.
-      </p>
 
       <TripPlanner />
     </main>

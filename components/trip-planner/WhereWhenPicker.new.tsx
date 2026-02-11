@@ -10,8 +10,8 @@ import {
   ChevronRight,
   Search,
   X,
+  Plus,
   Edit3,
-  RefreshCw,
 } from "lucide-react";
 import { getCityById } from "@/lib/nzCities";
 import { normalize, parseDisplayName, type CityLite } from "@/lib/trip-planner/utils";
@@ -31,18 +31,15 @@ export type WhereWhenPickerProps = {
   mobileActive: any;
 
   startQuery: string;
-  endQuery: string;
-  destinationsQuery?: string;
-  destinationsResults?: CityLite[];
+  destinationsQuery: string;
+  destinationsResults: CityLite[];
 
   recent: CityLite[];
   suggested: CityLite[];
 
   startResults: CityLite[];
-  endResults: CityLite[];
   startCityId: string;
-  endCityId: string;
-  destinationIds?: string[];
+  destinationIds: string[];
 
   // date state
   dateRange: DateRange | undefined;
@@ -59,8 +56,7 @@ export type WhereWhenPickerProps = {
   setActivePill: (v: any) => void;
 
   setStartQuery: (v: string) => void;
-  setEndQuery: (v: string) => void;
-  setDestinationsQuery?: (v: string) => void;
+  setDestinationsQuery: (v: string) => void;
 
   openMobileSheet: () => void;
   closeMobileSheet: () => void;
@@ -68,11 +64,8 @@ export type WhereWhenPickerProps = {
   openWhenDesktop: () => void;
 
   selectStartCity: (cityId: string) => void;
-  selectEndCity: (cityId: string) => void;
-  selectReturnToStart?: () => void;
-  clearEndCity?: () => void;
-  selectDestination?: (cityId: string) => void;
-  removeDestination?: (cityId: string) => void;
+  selectDestination: (cityId: string) => void;
+  removeDestination: (cityId: string) => void;
 
   handleDateRangeChange: (range: DateRange | undefined) => void;
   setDateRange: (range: DateRange | undefined) => void;
@@ -80,9 +73,7 @@ export type WhereWhenPickerProps = {
   clearDates: () => void;
 
   // Modal trigger
-  onOpenCityModal?: (step: "start" | "end" | "destinations" | "dates" | "return") => void;
-  // Return question trigger
-  onOpenReturnQuestion?: () => void;
+  onOpenCityModal?: (step: "start" | "destinations" | "dates") => void;
 };
 
 function DestinationListItem({
@@ -112,67 +103,38 @@ function DestinationListItem({
 }
 
 export default function WhereWhenPicker(props: WhereWhenPickerProps) {
-  const { nearestPlace, isLoading: isGeolocating, isOutsideNZ } = useGeolocation();
+  const { nearestPlace, isLoading: isGeolocating } = useGeolocation();
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [showDestinationsModal, setShowDestinationsModal] = useState(false);
   const [showDatesModal, setShowDatesModal] = useState(false);
-  const [destinationInput, setDestinationInput] = useState("");
+  const [destinationInputs, setDestinationInputs] = useState<string[]>([""]);
+  const destinationsInputRef = useRef<HTMLInputElement[]>([]);
 
   const startCity = getCityById(props.startCityId);
-  const endCity = getCityById(props.endCityId);
-  const isReturnTrip = startCity && endCity && props.startCityId === props.endCityId;
-  
-  // Show shimmer if geolocating and not outside NZ
-  const showShimmer = isGeolocating && !isOutsideNZ && !startCity;
+  const selectedDestinations = props.destinationIds
+    .map((id) => getCityById(id))
+    .filter((city): city is NonNullable<typeof city> => city !== undefined);
+  const showBrowseLists = normalize(props.destinationsQuery).length === 0 || props.destinationsResults.length === 0;
 
-  // Auto-select nearest place if detected and no start city is selected
-  useEffect(() => {
-    if (nearestPlace && !props.startCityId && !isGeolocating) {
-      // Auto-select the nearest place as start city and default to return trip
-      const autoSelect = async () => {
-        await props.selectStartCity(nearestPlace.id);
-        // Default to return trip: automatically set end city to start city
-        if (props.selectEndCity) {
-          await props.selectEndCity(nearestPlace.id);
-        }
-      };
-      autoSelect();
-    }
-  }, [nearestPlace, props.startCityId, isGeolocating, props.selectStartCity, props.selectEndCity]);
-  // Use destinationIds if available, otherwise use endCityId as single destination
-  const destinationIds = props.destinationIds || (props.endCityId ? [props.endCityId] : []);
-  const selectedDestinations = destinationIds.map((id) => getCityById(id)).filter((city): city is NonNullable<typeof city> => city !== null && city !== undefined);
-  const destinationsQuery = props.destinationsQuery || props.endQuery || "";
-  const destinationsResults = props.destinationsResults || props.endResults || [];
-  const showBrowseLists = normalize(destinationsQuery).length === 0 || destinationsResults.length === 0;
+  const handleAddDestinationInput = () => {
+    setDestinationInputs([...destinationInputs, ""]);
+  };
 
-  const handleDestinationInputChange = (value: string) => {
-    setDestinationInput(value);
-    if (props.setDestinationsQuery) {
-      props.setDestinationsQuery(value);
-    } else {
-      props.setEndQuery(value);
-    }
+  const handleDestinationInputChange = (index: number, value: string) => {
+    const newInputs = [...destinationInputs];
+    newInputs[index] = value;
+    setDestinationInputs(newInputs);
+    props.setDestinationsQuery(value);
   };
 
   const handleDestinationSelect = (cityId: string) => {
-    if (props.selectDestination) {
-      props.selectDestination(cityId);
-    } else {
-      props.selectEndCity(cityId);
-    }
-    setDestinationInput("");
-    if (props.setDestinationsQuery) {
-      props.setDestinationsQuery("");
-    } else {
-      props.setEndQuery("");
-    }
-  };
-
-  const handleRemoveDestination = (cityId: string) => {
-    if (props.removeDestination) {
-      props.removeDestination(cityId);
-    } else if (props.endCityId === cityId) {
-      props.selectEndCity("");
-    }
+    props.selectDestination(cityId);
+    // Clear the input that was used
+    const newInputs = destinationInputs.map((input, idx) => 
+      idx === destinationInputs.length - 1 ? "" : input
+    );
+    setDestinationInputs(newInputs);
+    props.setDestinationsQuery("");
   };
 
   const formatDate = (date: Date | undefined) => {
@@ -184,82 +146,49 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
     <div className="space-y-8">
       {/* Journey Start Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-center gap-2">
-          {startCity ? (
-            <>
-              <span className="text-base text-slate-700">
-                Your journey begins in{" "}
-                <span className="font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
-                  {startCity.name}, NZ
-                </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-base text-slate-700">
+              Your journey begins in{" "}
+              <span className="font-semibold text-slate-900">
+                {startCity ? `${startCity.name}, NZ` : "..."}
               </span>
-              <MapPin className="w-4 h-4 text-slate-500" />
-              {isReturnTrip && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (props.onOpenReturnQuestion) {
-                      props.onOpenReturnQuestion();
-                    }
-                  }}
-                  className="p-1.5 rounded-lg hover:bg-indigo-50 transition"
-                  title="Returning to start location"
-                >
-                  <RefreshCw className="w-4 h-4 text-indigo-600" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (props.onOpenCityModal) {
-                    props.onOpenCityModal("start");
-                  }
-                }}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
-              >
-                Change now
-              </button>
-            </>
-          ) : showShimmer ? (
-            <div className="flex items-center gap-2">
-              <span className="text-base text-slate-700 animate-pulse">
-                Your journey begins
-                <span className="inline-block w-8 ml-1 text-xl">
-                  <span className="inline-block animate-[pulse_1.4s_ease-in-out_infinite]">.</span>
-                  <span className="inline-block animate-[pulse_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.2s' }}>.</span>
-                  <span className="inline-block animate-[pulse_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.4s' }}>.</span>
-                </span>
-              </span>
-            </div>
-          ) : (
-            <>
-              <span className="text-base text-slate-700">
-                Where are you starting your journey from?
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (props.onOpenCityModal) {
-                    props.onOpenCityModal("start");
-                  }
-                }}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
-              >
-                Choose now
-              </button>
-            </>
-          )}
+            </span>
+            <MapPin className="w-4 h-4 text-slate-500" />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (props.onOpenCityModal) {
+                props.onOpenCityModal("start");
+              } else {
+                setShowStartModal(true);
+              }
+            }}
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
+          >
+            Change now
+          </button>
         </div>
 
+        {/* Scenic Illustration Placeholder */}
+        <div className="w-full h-64 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <MapPin className="w-16 h-16 text-indigo-400 mx-auto" />
+              <p className="text-slate-600 text-sm">Scenic illustration</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Choose your destination Section */}
-      <div className="space-y-4 max-w-3xl mx-auto mt-8">
-        <h2 className="text-sm font-semibold text-slate-900 text-center tracking-wide uppercase">
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900 text-center">
           Choose your destination
         </h2>
         
-        <div className="space-y-4">
+        <div className="rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 p-6 space-y-4">
           {/* Selected destinations */}
           {selectedDestinations.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -272,7 +201,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                   <span>{city.name}</span>
                   <button
                     type="button"
-                    onClick={() => handleRemoveDestination(city.id)}
+                    onClick={() => props.removeDestination(city.id)}
                     className="hover:bg-indigo-100 rounded p-0.5"
                   >
                     <X className="w-3 h-3" />
@@ -282,18 +211,34 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             </div>
           )}
 
-          {/* Destination input */}
+          {/* Destination inputs */}
           <div className="space-y-3">
-            <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={destinationInput}
-                onChange={(e) => handleDestinationInputChange(e.target.value)}
-                placeholder="Enter a destination..."
-                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
-              />
-            </div>
+            {destinationInputs.map((input, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="flex-1 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  <input
+                    ref={(el) => {
+                      if (el) destinationsInputRef.current[index] = el;
+                    }}
+                    type="text"
+                    value={input}
+                    onChange={(e) => handleDestinationInputChange(index, e.target.value)}
+                    placeholder="Enter a destination..."
+                    className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                  />
+                </div>
+                {index === destinationInputs.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAddDestinationInput}
+                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Search results dropdown */}
@@ -302,7 +247,7 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
               {showBrowseLists ? (
                 <div className="space-y-1">
                   {props.suggested
-                    .filter((c) => !destinationIds.includes(c.id))
+                    .filter((c) => !props.destinationIds.includes(c.id))
                     .slice(0, 5)
                     .map((c) => {
                       const { cityName, district } = parseDisplayName(c.name);
@@ -318,8 +263,8 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {destinationsResults
-                    .filter((c) => !destinationIds.includes(c.id))
+                  {props.destinationsResults
+                    .filter((c) => !props.destinationIds.includes(c.id))
                     .slice(0, 5)
                     .map((c) => (
                       <DestinationListItem
@@ -337,12 +282,12 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
       </div>
 
       {/* Pick your travel dates Section */}
-      <div className="space-y-4 max-w-3xl mx-auto mt-10">
-        <h2 className="text-sm font-semibold text-slate-900 text-center tracking-wide uppercase">
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900 text-center">
           Pick your travel dates
         </h2>
         
-        <div>
+        <div className="rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 p-6">
           <div className="flex items-center gap-4">
             {/* Start Date */}
             <button
@@ -389,6 +334,19 @@ export default function WhereWhenPicker(props: WhereWhenPickerProps) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Continue Button */}
+      <div className="flex justify-center pt-4">
+        <button
+          type="button"
+          className="px-8 py-4 rounded-full font-semibold text-white transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          style={{ 
+            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)",
+          }}
+        >
+          Continue
+        </button>
       </div>
 
       {/* Date Picker Modal */}

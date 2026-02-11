@@ -57,6 +57,7 @@ export default function DraftItinerary({
   onRemoveStop,
   onReorderStops,
   onAddToItinerary,
+  endDate,
 }: Props) {
   const stopGroups = useMemo(() => {
     if (!plan || plan.days.length === 0) return [];
@@ -114,34 +115,31 @@ export default function DraftItinerary({
   }
 
   return (
-    <div className="card p-4 md:p-6 space-y-4" style={{ borderColor: "rgba(148, 163, 184, 0.3)" }}>
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
+    <div className="bg-slate-50/50 p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4 mb-6 md:mb-7">
         <div>
-          <h2 className="text-lg font-semibold">Your Itinerary</h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Expand a location to see its days. Drag the grip to reorder stops.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">Your Journey</h2>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onExpandAllStops}
-            className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700"
+            className="px-3 py-1.5 rounded-full border border-slate-200/50 text-xs hover:bg-white/80 active:bg-white transition-all duration-200 text-slate-600 opacity-80"
           >
             Expand all
           </button>
           <button
             type="button"
             onClick={onCollapseAllStops}
-            className="px-3 py-1.5 rounded-full border border-slate-200 text-xs hover:bg-slate-50 active:bg-slate-100 transition text-slate-700"
+            className="px-3 py-1.5 rounded-full border border-slate-200/50 text-xs hover:bg-white/80 active:bg-white transition-all duration-200 text-slate-600 opacity-80"
           >
             Collapse all
           </button>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="relative">
         {/* Helper to get group data for a stop index */}
         {(() => {
           const getGroupForStop = (stopIdx: number): Group | null => {
@@ -179,11 +177,58 @@ export default function DraftItinerary({
           const startNights = routeStops.length > 0 ? (nightsPerStop[0] ?? 0) : 0;
           const endNights = routeStops.length > 1 ? (nightsPerStop[routeStops.length - 1] ?? 0) : 0;
 
+          // Calculate total items for timeline
+          const totalItems = [
+            startGroup,
+            ...(startGroup && stopGroups.length > 0 && startSectorType === "itinerary" ? [null] : []), // road sector
+            ...stopGroups.flatMap((g, idx) => [
+              g,
+              ...(idx < stopGroups.length - 1 || endGroup ? [null] : []), // road sectors between
+            ]),
+            ...(stopGroups.length > 0 && endGroup && endSectorType === "itinerary" ? [null] : []), // road sector before end
+            endGroup,
+          ].filter(Boolean);
+
+          // Determine first circle position for timeline line
+          // Circle centers: 28px mobile / 32px desktop for itinerary stops, 24px for road sectors
+          let lineTop = 0;
+          
+          if (startGroup) {
+            // First item is startGroup (itinerary stop) - use desktop value for line
+            lineTop = 32;
+          } else if (stopGroups.length > 0 && startSectorType === "itinerary") {
+            // First item is a road sector - circle at 24px
+            lineTop = 24;
+          } else if (stopGroups.length > 0) {
+            // First item is first middle stop - use desktop value for line
+            lineTop = 32;
+          }
+
           return (
-            <>
+            <div className="relative pl-8 md:pl-10">
+              {/* Timeline line - starts at first circle center, ends at last circle center */}
+              {lineTop > 0 && (
+                <div 
+                  className="absolute left-3 md:left-4 w-0.5 bg-slate-200"
+                  style={{ 
+                    top: `${lineTop}px`,
+                    bottom: '32px' // End approximately at last circle center (32px desktop / 28px mobile from bottom)
+                  }}
+                />
+              )}
+              
+              <div className="space-y-5 md:space-y-7">
               {/* Start sector */}
               {startGroup && (
-                <StartEndSectorCard
+                <div className="relative">
+                  {/* Timeline indicator - centered on card header */}
+                  {/* Mobile: py-4 (16px) + content center ~28px = 28px | Desktop: py-4 (16px) + content center ~16px = 32px */}
+                  <div className="absolute -left-8 md:-left-10 top-7 md:top-8" style={{ transform: 'translateY(-50%)' }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+                      <div className="w-2 h-2 rounded-full bg-slate-400" />
+                    </div>
+                  </div>
+                  <StartEndSectorCard
                   stopIndex={0}
                   stopName={startGroup.stopName}
                   sectorType={startSectorType}
@@ -199,6 +244,7 @@ export default function DraftItinerary({
                   newStopCityId={newStopCityId}
                   setNewStopCityId={setNewStopCityId}
                   onToggleOpen={() => onToggleStopOpen(0)}
+                  endDate={endDate}
                   onChangeNights={onChangeNights}
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}
@@ -215,11 +261,19 @@ export default function DraftItinerary({
                   onCancelAddStop={onCancelAddStop}
                   onAddToItinerary={onAddToItinerary}
                 />
+                </div>
               )}
 
               {/* Road sector from start to first middle stop - only show if start is itinerary sector */}
               {startGroup && stopGroups.length > 0 && startSectorType === "itinerary" && (
-                <RoadSectorCard
+                <div className="relative">
+                  {/* Timeline indicator for road - centered on card header (py-3 = 12px, header content ~24px, center at ~24px) */}
+                  <div className="absolute -left-8 md:-left-10" style={{ top: '24px', transform: 'translateY(-50%)' }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    </div>
+                  </div>
+                  <RoadSectorCard
                   fromStopIndex={0}
                   toStopIndex={stopGroups[0].stopIndex}
                   fromStopName={startGroup.stopName}
@@ -236,12 +290,21 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(stopGroups[0].stopIndex, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(stopGroups[0].stopIndex, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
+                </div>
               )}
 
               {/* Road sector from start to end when both are itinerary sectors and no middle stops */}
               {startGroup && endGroup && stopGroups.length === 0 && startSectorType === "itinerary" && endSectorType === "itinerary" && (
-                <RoadSectorCard
+                <div className="relative">
+                  {/* Timeline indicator for road - centered on card header (py-3 = 12px, header content ~24px, center at ~24px) */}
+                  <div className="absolute -left-8 md:-left-10" style={{ top: '24px', transform: 'translateY(-50%)' }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    </div>
+                  </div>
+                  <RoadSectorCard
                   fromStopIndex={0}
                   toStopIndex={routeStops.length - 1}
                   fromStopName={startGroup.stopName}
@@ -258,15 +321,54 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
+                </div>
               )}
 
               {/* Middle stops */}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={stopGroups.map((g) => g.stopIndex)} strategy={verticalListSortingStrategy}>
-                  {stopGroups.map((g, idx) => (
-                    <StopGroupWithRoadSector
-                      key={`stop-wrapper-${g.stopIndex}`}
+                  {stopGroups.map((g, idx) => {
+                    // Calculate offset: if there's a road sector above (idx > 0), add road sector height + gap
+                    // Road sector: ~56px height (py-3 = 24px padding + ~32px content)
+                    // Gap: 12px (space-y-3)
+                    // Stop header center: 32px mobile / 36px desktop (adjusted for better centering)
+                    const roadSectorOffset = idx > 0 ? 68 : 0; // 56px road sector + 12px gap
+                    const stopHeaderCenterMobile = 32;
+                    const stopHeaderCenterDesktop = 36;
+                    const totalOffsetMobile = roadSectorOffset + stopHeaderCenterMobile;
+                    const totalOffsetDesktop = roadSectorOffset + stopHeaderCenterDesktop;
+                    
+                    return (
+                    <div key={`stop-wrapper-${g.stopIndex}`} className="relative">
+                      {/* Timeline indicator for stop - centered on card header */}
+                      {/* Account for road sector above (if idx > 0): road sector height + gap + stop header center */}
+                      {/* Mobile indicator */}
+                      <div 
+                        className="absolute -left-8 md:hidden" 
+                        style={{ 
+                          top: `${totalOffsetMobile}px`,
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-indigo-400/80 flex items-center justify-center shadow-sm">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                        </div>
+                      </div>
+                      {/* Desktop indicator */}
+                      <div 
+                        className="absolute -left-10 hidden md:block" 
+                        style={{ 
+                          top: `${totalOffsetDesktop}px`,
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-indigo-400/80 flex items-center justify-center shadow-sm">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                        </div>
+                      </div>
+                      <StopGroupWithRoadSector
                       group={g}
                       idx={idx}
                       stopGroups={stopGroups}
@@ -293,13 +395,22 @@ export default function DraftItinerary({
                       onRemoveStop={onRemoveStop}
                       onAddToItinerary={onAddToItinerary}
                     />
-                  ))}
+                    </div>
+                    );
+                  })}
                 </SortableContext>
               </DndContext>
 
-              {/* Road sector from last middle stop to end - only show if end is itinerary sector */}
+              {/* Road sector from last middle stop to end - only show if end is itinerary sector (not for return trips) */}
               {stopGroups.length > 0 && endGroup && endSectorType === "itinerary" && (
-                <RoadSectorCard
+                <div className="relative">
+                  {/* Timeline indicator for road - centered on card header (py-3 = 12px, header content ~24px, center at ~24px) */}
+                  <div className="absolute -left-8 md:-left-10" style={{ top: '24px', transform: 'translateY(-50%)' }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    </div>
+                  </div>
+                  <RoadSectorCard
                   fromStopIndex={stopGroups[stopGroups.length - 1].stopIndex}
                   toStopIndex={routeStops.length - 1}
                   fromStopName={stopGroups[stopGroups.length - 1].stopName}
@@ -316,12 +427,22 @@ export default function DraftItinerary({
                   onUpdateActivities={(activities) => onUpdateRoadSectorActivities(routeStops.length - 1, activities)}
                   onRemoveExperience={onRemoveExperienceFromRoadSector ? (experienceId) => onRemoveExperienceFromRoadSector(routeStops.length - 1, experienceId) : undefined}
                   onAddToItinerary={onAddToItinerary}
+                  endDate={endDate}
                 />
+                </div>
               )}
 
               {/* End sector */}
               {endGroup && (
-                <StartEndSectorCard
+                <div className="relative">
+                  {/* Timeline indicator - centered on card header */}
+                  {/* Mobile: py-4 (16px) + content center ~28px = 28px | Desktop: py-4 (16px) + content center ~16px = 32px */}
+                  <div className="absolute -left-8 md:-left-10 top-7 md:top-8" style={{ transform: 'translateY(-50%)' }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-slate-300/80 flex items-center justify-center shadow-sm">
+                      <div className="w-2 h-2 rounded-full bg-slate-400" />
+                    </div>
+                  </div>
+                  <StartEndSectorCard
                   stopIndex={routeStops.length - 1}
                   stopName={endGroup.stopName}
                   sectorType={endSectorType}
@@ -337,6 +458,7 @@ export default function DraftItinerary({
                   newStopCityId={newStopCityId}
                   setNewStopCityId={setNewStopCityId}
                   onToggleOpen={() => onToggleStopOpen(routeStops.length - 1)}
+                  endDate={endDate}
                   onChangeNights={onChangeNights}
                   onToggleDayOpen={onToggleDayOpen}
                   onUpdateDayNotes={onUpdateDayNotes}
@@ -353,8 +475,10 @@ export default function DraftItinerary({
                   onCancelAddStop={onCancelAddStop}
                   onAddToItinerary={onAddToItinerary}
                 />
+                </div>
               )}
-            </>
+              </div>
+            </div>
           );
         })()}
       </div>

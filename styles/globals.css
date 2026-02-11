@@ -24,6 +24,13 @@ body {
 
 .container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
 
+/* Mobile: Reduce side padding to extend containers */
+@media (max-width: 767px) {
+  .container {
+    padding: 0 0.25rem; /* Quarter of the original 1rem padding */
+  }
+}
+
 .card {
   background: var(--card);
   border: 1px solid rgba(148, 163, 184, 0.2);

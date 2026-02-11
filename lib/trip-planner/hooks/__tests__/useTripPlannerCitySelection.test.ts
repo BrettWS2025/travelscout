@@ -230,4 +230,29 @@ describe('useTripPlannerCitySelection', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('should clear end city', () => {
+    const { result } = renderHook(() =>
+      useTripPlannerCitySelection(
+        mockStartSearchResults,
+        mockEndSearchResults,
+        mockRecent,
+        mockSetRecent,
+        mockSetStartCityId,
+        mockSetEndCityId,
+        mockSetStartCityData,
+        mockSetEndCityData,
+        mockSetStartQuery,
+        mockSetEndQuery,
+        mockSetWhereStep,
+        mockStartCity as any
+      )
+    );
+
+    result.current.clearEndCity();
+
+    expect(mockSetEndCityId).toHaveBeenCalledWith('');
+    expect(mockSetEndCityData).toHaveBeenCalledWith(null);
+    expect(mockSetEndQuery).toHaveBeenCalledWith('');
+  });
 });

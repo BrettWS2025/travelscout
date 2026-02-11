@@ -454,7 +454,7 @@ function haversineKm(
  */
 export function orderWaypointNamesByRoute(
   startCity: NzCity,
-  endCity: NzCity,
+  endCity: NzCity | null,
   rawWaypointNames: string[],
   waypointCoordinates?: Map<string, { lat: number; lng: number }>
 ): {
@@ -538,8 +538,12 @@ export function orderWaypointNamesByRoute(
       let totalDistance = distToCandidate;
       
       if (otherRemaining.length === 0) {
-        // This is the last waypoint, just add distance to end
-        totalDistance += haversineKm(candidate.lat, candidate.lng, endCity.lat, endCity.lng);
+        // This is the last waypoint
+        if (endCity) {
+          // If we have an end city, add distance to end
+          totalDistance += haversineKm(candidate.lat, candidate.lng, endCity.lat, endCity.lng);
+        }
+        // If no end city, we're done - no additional distance needed
       } else {
         // Visit remaining waypoints using nearest-neighbor from candidate
         let simLat = candidate.lat;
@@ -565,8 +569,10 @@ export function orderWaypointNamesByRoute(
           simLng = nearest.lng;
         }
         
-        // Add distance from last waypoint to end
-        totalDistance += haversineKm(simLat, simLng, endCity.lat, endCity.lng);
+        // Add distance from last waypoint to end (if end city exists)
+        if (endCity) {
+          totalDistance += haversineKm(simLat, simLng, endCity.lat, endCity.lng);
+        }
       }
       
       if (totalDistance < bestTotalDistance) {

@@ -120,12 +120,20 @@ export function useTripPlannerCitySelection(
   function selectReturnToStart() {
     if (!startCity) return;
     setEndCityId(startCity.id);
+    setEndCityData(startCity);
     setEndQuery("Return to start city");
+  }
+
+  function clearEndCity() {
+    setEndCityId("");
+    setEndCityData(null);
+    setEndQuery("");
   }
 
   return {
     selectStartCity,
     selectEndCity,
     selectReturnToStart,
+    clearEndCity,
   };
 }

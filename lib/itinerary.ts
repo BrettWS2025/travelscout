@@ -70,6 +70,16 @@ export function countDaysInclusive(startDate: string, endDate: string): number {
 }
 
 /**
+ * Calculate the number of nights between two ISO dates.
+ * Example: 2025-01-01 to 2025-01-03 => 2 nights (night of 1st-2nd, night of 2nd-3rd)
+ * Nights = days - 1
+ */
+export function countNights(startDate: string, endDate: string): number {
+  const days = countDaysInclusive(startDate, endDate);
+  return Math.max(0, days - 1);
+}
+
+/**
  * Build a TripPlan from a list of stops + "nights per stop" and a start date.
  *
  * We treat "nights per stop" here as "days at that stop" to keep things simple:

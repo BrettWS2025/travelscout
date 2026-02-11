@@ -152,10 +152,10 @@ export default function DayCard({
 
   return (
     <div className={[
-      "rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden",
+      "rounded-2xl bg-white shadow-[0_1px_8px_rgba(0,0,0,0.06)] border border-slate-100/50 transition-all duration-200 ease-in-out hover:shadow-[0_2px_12px_rgba(0,0,0,0.1)] overflow-hidden",
       loading ? "event-loading-shimmer" : ""
     ].join(" ")}>
-      <div className="px-3 py-3 relative z-0">
+      <div className="px-4 py-3 relative z-0">
         {/* Mobile: Stacked layout */}
         <div className="md:hidden space-y-2.5">
           <div className="min-w-0">
@@ -347,8 +347,8 @@ export default function DayCard({
       </div>
 
       {isOpen && (
-        <div className="px-3 pb-3">
-          <div className="rounded-xl bg-white border border-slate-200 p-3 space-y-3">
+        <div className="px-4 pb-4">
+          <div className="rounded-xl bg-slate-50/50 border border-slate-200/50 p-4 space-y-4 shadow-sm">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-900">

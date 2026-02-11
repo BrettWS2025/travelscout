@@ -14,6 +14,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
     "test:eventfinda": "tsx scripts/test-eventfinda-api.ts",
+    "test:viator": "tsx scripts/test-viator-api.ts",
     "test:redis": "tsx scripts/test-redis.ts",
     "fetch:wellington-feb13": "tsx scripts/fetch-wellington-feb13.ts",
     "redis:start": "docker-compose up -d redis",
