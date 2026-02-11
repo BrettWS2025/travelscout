@@ -199,7 +199,7 @@ describe('useTripPlannerPlan', () => {
     await result.current.handleSubmit(mockEvent);
 
     expect(mockSetters.setError).toHaveBeenCalledWith(
-      'Please select both a start city and an end city.'
+      'Please select a start city.'
     );
     expect(mockSetters.setPlan).toHaveBeenCalledWith(null);
   });
@@ -277,8 +277,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         {},
@@ -461,8 +463,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         { 0: false },
@@ -505,8 +509,10 @@ describe('useTripPlannerPlan', () => {
         [],
         new Map(),
         [],
-        ['Auckland', 'Wellington'],
-        [1, 1],
+        [], // destinationIds
+        new Map(), // destinationData
+        ['Auckland', 'Wellington'], // routeStops
+        [1, 1], // nightsPerStop
         [],
         {},
         {},

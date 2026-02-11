@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   countDaysInclusive,
+  countNights,
   buildTripPlanFromStopsAndNights,
   buildSimpleTripPlan,
 } from '../itinerary';
@@ -37,6 +38,30 @@ describe('itinerary utilities', () => {
       // This is a known limitation - should probably return 0 or throw
       const result = countDaysInclusive('2025-01-03', '2025-01-01');
       expect(result).toBeLessThanOrEqual(0);
+    });
+  });
+
+  describe('countNights', () => {
+    it('should count 0 nights for same start and end date', () => {
+      expect(countNights('2025-01-01', '2025-01-01')).toBe(0);
+    });
+
+    it('should count 2 nights for 3 consecutive days (Feb 13-15)', () => {
+      expect(countNights('2026-02-13', '2026-02-15')).toBe(2);
+    });
+
+    it('should count 6 nights for a week', () => {
+      expect(countNights('2025-01-01', '2025-01-07')).toBe(6);
+    });
+
+    it('should return 0 for invalid dates', () => {
+      expect(countNights('invalid', '2025-01-01')).toBe(0);
+      expect(countNights('2025-01-01', 'invalid')).toBe(0);
+    });
+
+    it('should return 0 for end date before start date', () => {
+      const result = countNights('2025-01-03', '2025-01-01');
+      expect(result).toBe(0);
     });
   });
 
