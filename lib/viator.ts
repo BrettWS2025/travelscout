@@ -42,6 +42,10 @@ export type ViatorProduct = {
     latitude: number;
     longitude: number;
   };
+  duration?: string | {
+    fixedDurationInMinutes?: number;
+    unstructuredDuration?: string;
+  };
   url?: string;
   productUrl?: string;
 };
