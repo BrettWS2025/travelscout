@@ -33,6 +33,14 @@ export type ViatorProduct = {
     averageRating: number;
     totalReviews: number;
   };
+  reviews?: {
+    combinedAverageRating?: number;
+    averageRating?: number;
+    rating?: number;
+    totalReviews?: number;
+    reviewCount?: number;
+    count?: number;
+  };
   pricing?: {
     fromPrice?: number;
     fromPriceFormatted?: string;
