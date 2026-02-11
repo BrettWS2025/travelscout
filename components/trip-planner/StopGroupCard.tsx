@@ -78,7 +78,13 @@ export default function StopGroupCard({
   
   // Calculate arrival and departure dates
   const arrivalDate = g.startDate;
-  const departureDate = arrivalDate ? addDaysToIsoDate(arrivalDate, nightsHere) : "";
+  // Departure date: for the last stop, use the last day (end date); for others, use last day + 1
+  const lastDayIndex = g.dayIndices.length > 0 ? g.dayIndices[g.dayIndices.length - 1] : -1;
+  const lastDay = lastDayIndex >= 0 && plan.days[lastDayIndex] ? plan.days[lastDayIndex] : null;
+  const isLastStop = g.stopIndex === routeStops.length - 1;
+  const departureDate = lastDay 
+    ? (isLastStop ? lastDay.date : addDaysToIsoDate(lastDay.date, 1))
+    : "";
 
   const isDragDisabledLocal = isDragDisabled ?? (g.stopIndex === 0 || g.stopIndex === routeStops.length - 1);
   

@@ -97,7 +97,11 @@ export default function StartEndSectorCard({
   
   // Calculate arrival and departure dates
   const arrivalDate = firstDay?.date ?? "";
-  const departureDate = arrivalDate ? addDaysToIsoDate(arrivalDate, nightsHere) : "";
+  // Departure date: for the last stop, use the last day (end date); for others, use last day + 1
+  const isLastStop = stopIndex === routeStops.length - 1;
+  const departureDate = lastDay?.date 
+    ? (isLastStop ? lastDay.date : addDaysToIsoDate(lastDay.date, 1))
+    : "";
   
   // For road sectors, calculate the date when arriving at destination
   const roadSectorDate = (() => {
