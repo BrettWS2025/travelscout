@@ -17,6 +17,7 @@ import {
   buildFallbackLegs,
   fetchRoadLegs,
   makeDayKey,
+  addDaysToIsoDate,
   type DayDetail,
   type DayStopMeta,
   type MapPoint,
@@ -482,10 +483,19 @@ export function useTripPlannerPlan(
     setPlan(nextPlan);
     setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(routeStops, next));
-
+    
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
+      // Check if the end stop is a road sector (0 nights)
+      const endIndex = routeStops.length - 1;
+      const endNights = next[endIndex] ?? 0;
+      if (endNights === 0) {
+        // When end is a road sector (0 nights), the road sector arrives on the day after the last day in the plan
+        // So endDate should be last.date + 1 day
+        setEndDate(addDaysToIsoDate(last.date, 1));
+      } else {
+        setEndDate(last.date);
+      }
     }
   }
 
@@ -572,12 +582,21 @@ export function useTripPlannerPlan(
     setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
-
+    
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
+      // Check if the end stop is a road sector (0 nights)
+      const endIndex = newRouteStops.length - 1;
+      const endNights = newNightsPerStop[endIndex] ?? 0;
+      if (endNights === 0) {
+        // When end is a road sector (0 nights), the road sector arrives on the day after the last day in the plan
+        // So endDate should be last.date + 1 day
+        setEndDate(addDaysToIsoDate(last.date, 1));
+      } else {
+        setEndDate(last.date);
+      }
     }
-
+    
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -648,12 +667,21 @@ export function useTripPlannerPlan(
     setPlan(nextPlan);
     setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
-
+    
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
+      // Check if the end stop is a road sector (0 nights)
+      const endIndex = newRouteStops.length - 1;
+      const endNights = newNightsPerStop[endIndex] ?? 0;
+      if (endNights === 0) {
+        // When end is a road sector (0 nights), the road sector arrives on the day after the last day in the plan
+        // So endDate should be last.date + 1 day
+        setEndDate(addDaysToIsoDate(last.date, 1));
+      } else {
+        setEndDate(last.date);
+      }
     }
-
+    
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -722,18 +750,27 @@ export function useTripPlannerPlan(
     setNightsPerStop(newNightsPerStop);
     setMapPoints(newMapPoints);
     setAddingStopAfterIndex(null);
-
+    
     const nextPlan = buildTripPlanFromStopsAndNights(newRouteStops, newNightsPerStop, startDate);
     setPlan(nextPlan);
     setDayDetails((prev) => syncDayDetailsFromPlan(nextPlan, prev));
     setDayStopMeta(buildDayStopMeta(newRouteStops, newNightsPerStop));
     setOpenStops({});
-
+    
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
+      // Check if the end stop is a road sector (0 nights)
+      const endIndex = newRouteStops.length - 1;
+      const endNights = newNightsPerStop[endIndex] ?? 0;
+      if (endNights === 0) {
+        // When end is a road sector (0 nights), the road sector arrives on the day after the last day in the plan
+        // So endDate should be last.date + 1 day
+        setEndDate(addDaysToIsoDate(last.date, 1));
+      } else {
+        setEndDate(last.date);
+      }
     }
-
+    
     if (newMapPoints.length >= 2) {
       setLegsLoading(true);
       fetchRoadLegs(newMapPoints)
@@ -999,7 +1036,9 @@ export function useTripPlannerPlan(
     
     if (nextPlan.days.length > 0) {
       const last = nextPlan.days[nextPlan.days.length - 1];
-      setEndDate(last.date);
+      // When end is a road sector (0 nights), the road sector arrives on the day after the last day in the plan
+      // So endDate should be last.date + 1 day
+      setEndDate(addDaysToIsoDate(last.date, 1));
     }
   }
 
