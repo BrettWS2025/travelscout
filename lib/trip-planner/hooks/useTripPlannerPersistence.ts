@@ -10,6 +10,7 @@ import {
   fromIsoDate,
   type DayStopMeta,
   type MapPoint,
+  type StartEndSectorType,
 } from "@/lib/trip-planner/utils";
 import { syncDayDetailsFromPlan } from "@/lib/trip-planner/useTripPlanner.utils";
 import type { Place } from "@/lib/nzCities";
@@ -41,6 +42,8 @@ export function useTripPlannerPersistence(
   dayDetails: Record<string, DayDetail>,
   mapPoints: MapPoint[],
   legs: TripLeg[],
+  startSectorType: StartEndSectorType,
+  endSectorType: StartEndSectorType,
   // State setters
   setStartCityId: (id: string) => void,
   setEndCityId: (id: string) => void,
@@ -58,7 +61,9 @@ export function useTripPlannerPersistence(
   setMapPoints: (points: MapPoint[]) => void,
   setLegs: (legs: TripLeg[]) => void,
   setHasSubmitted: (submitted: boolean) => void,
-  setError: (error: string | null) => void
+  setError: (error: string | null) => void,
+  setStartSectorType: (type: StartEndSectorType) => void,
+  setEndSectorType: (type: StartEndSectorType) => void
 ) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -126,6 +131,8 @@ export function useTripPlannerPersistence(
         legs,
         selectedPlaceIds,
         selectedThingIds,
+        startSectorType,
+        endSectorType,
       };
 
       const result = await saveItineraryToSupabase(
@@ -223,6 +230,22 @@ export function useTripPlannerPersistence(
         setDayStopMeta(buildDayStopMeta(savedRouteStops, savedNightsPerStop));
       }
 
+      // Restore sector types (with fallback to infer from nightsPerStop for backward compatibility)
+      if (trip_plan.startSectorType && (trip_plan.startSectorType === "road" || trip_plan.startSectorType === "itinerary")) {
+        setStartSectorType(trip_plan.startSectorType);
+      } else if (savedNightsPerStop.length > 0) {
+        // Infer from nights: if first stop has 0 nights, it's a road sector
+        setStartSectorType(savedNightsPerStop[0] === 0 ? "road" : "itinerary");
+      }
+
+      if (trip_plan.endSectorType && (trip_plan.endSectorType === "road" || trip_plan.endSectorType === "itinerary")) {
+        setEndSectorType(trip_plan.endSectorType);
+      } else if (savedNightsPerStop.length > 0) {
+        // Infer from nights: if last stop has 0 nights, it's a road sector
+        const lastIndex = savedNightsPerStop.length - 1;
+        setEndSectorType(savedNightsPerStop[lastIndex] === 0 ? "road" : "itinerary");
+      }
+
       // Restore plan
       if (trip_plan.days && trip_plan.days.length > 0) {
         setPlan(trip_plan);
@@ -273,6 +296,8 @@ export function useTripPlannerPersistence(
         selectedThingIds,
         routeStops,
         nightsPerStop,
+        startSectorType,
+        endSectorType,
         plan: plan ? {
           ...plan,
           routeStops,
@@ -283,6 +308,8 @@ export function useTripPlannerPersistence(
           legs,
           selectedPlaceIds,
           selectedThingIds,
+          startSectorType,
+          endSectorType,
         } : null,
       };
 
@@ -333,6 +360,22 @@ export function useTripPlannerPersistence(
         setRouteStops(state.routeStops);
         setNightsPerStop(state.nightsPerStop);
         setDayStopMeta(buildDayStopMeta(state.routeStops, state.nightsPerStop));
+      }
+
+      // Restore sector types (with fallback to infer from nightsPerStop for backward compatibility)
+      if (state.startSectorType && (state.startSectorType === "road" || state.startSectorType === "itinerary")) {
+        setStartSectorType(state.startSectorType);
+      } else if (state.nightsPerStop && state.nightsPerStop.length > 0) {
+        // Infer from nights: if first stop has 0 nights, it's a road sector
+        setStartSectorType(state.nightsPerStop[0] === 0 ? "road" : "itinerary");
+      }
+
+      if (state.endSectorType && (state.endSectorType === "road" || state.endSectorType === "itinerary")) {
+        setEndSectorType(state.endSectorType);
+      } else if (state.nightsPerStop && state.nightsPerStop.length > 0) {
+        // Infer from nights: if last stop has 0 nights, it's a road sector
+        const lastIndex = state.nightsPerStop.length - 1;
+        setEndSectorType(state.nightsPerStop[lastIndex] === 0 ? "road" : "itinerary");
       }
 
       // Restore plan if it exists
