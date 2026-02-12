@@ -82,15 +82,7 @@ export default function RoadSectorCard({
     const isEndStop = toStopIndex === (routeStops?.length ?? 0) - 1;
     
     if (isEndStop) {
-      // Check if it's a return trip (start and end are the same city)
-      const isReturnTrip = routeStops && routeStops.length > 0 && routeStops[0] === routeStops[routeStops.length - 1];
-      
-      if (isReturnTrip && endDate) {
-        // For return trips, use the endDate directly
-        return endDate;
-      }
-      
-      // For non-return trips or when endDate is not available, find the last itinerary stop before the end
+      // Find the last itinerary stop before the end (works for both return and non-return trips)
       let lastItineraryStopIndex = -1;
       for (let i = toStopIndex - 1; i >= 0; i--) {
         if (nightsPerStop[i] > 0) {
@@ -110,9 +102,15 @@ export default function RoadSectorCard({
         }
         
         if (lastDayAtPreviousStop) {
-          // Add 1 day to get the arrival date at the end
+          // Add 1 day to get the arrival date at the end (departure day from previous stop)
           return addDaysToIsoDate(lastDayAtPreviousStop.date, 1);
         }
+      }
+      
+      // Fallback: if endDate is available and no itinerary stop found, use endDate + 1 day
+      // (endDate is the last day of the trip, so travel starts the next day)
+      if (endDate) {
+        return addDaysToIsoDate(endDate, 1);
       }
     }
     

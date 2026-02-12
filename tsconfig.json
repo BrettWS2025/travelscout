@@ -41,6 +41,8 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
+    "**/*.old*.ts",
+    "**/*.old*.tsx",
     "tests/**/*",
     "e2e/**/*"
   ]
