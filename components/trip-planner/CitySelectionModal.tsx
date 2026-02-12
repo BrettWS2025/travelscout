@@ -298,6 +298,7 @@ export default function CitySelectionModal({
   const [isMobile, setIsMobile] = useState(false);
   const [showReturnQuestion, setShowReturnQuestion] = useState(false);
   const [pendingStartCityId, setPendingStartCityId] = useState<string | null>(null);
+  const isSelectingRef = useRef(false);
   const startResults = usePlaceSearch(startQuery);
   const endResults = usePlaceSearch(endQuery);
 
@@ -326,9 +327,9 @@ export default function CitySelectionModal({
     };
   }, [isOpen]);
 
-  // Reset queries when modal opens
+  // Reset queries when modal opens (but not when selecting a city)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isSelectingRef.current) {
       const startCity = getCityById(startCityId);
       const endCity = getCityById(endCityId);
       setStartQuery(startCity?.name ?? "");
@@ -343,9 +344,25 @@ export default function CitySelectionModal({
         setPendingStartCityId(null);
       }
     }
+    // Reset the flag after a short delay to allow for state updates
+    let timeoutId: NodeJS.Timeout | undefined;
+    if (isSelectingRef.current) {
+      timeoutId = setTimeout(() => {
+        isSelectingRef.current = false;
+      }, 100);
+    }
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [isOpen, startCityId, endCityId, step]);
 
   const handleSelectStartCity = async (cityId: string) => {
+    // Set flag to prevent useEffect from updating query
+    isSelectingRef.current = true;
+    // Clear the query to prevent re-searching with the full name
+    setStartQuery("");
     await onSelectStartCity(cityId);
     // Show return question instead of automatically setting end city
     setPendingStartCityId(cityId);
@@ -374,12 +391,20 @@ export default function CitySelectionModal({
   };
 
   const handleSelectEndCity = async (cityId: string) => {
+    // Set flag to prevent useEffect from updating query
+    isSelectingRef.current = true;
+    // Clear the query to prevent re-searching with the full name
+    setEndQuery("");
     await onSelectEndCity(cityId);
     // Automatically move to date selection
     onStepChange("dates");
   };
 
   const handleSelectReturnToStart = async () => {
+    // Set flag to prevent useEffect from updating query
+    isSelectingRef.current = true;
+    // Clear the query to prevent re-searching
+    setEndQuery("");
     await onSelectReturnToStart();
     // Automatically move to date selection
     onStepChange("dates");

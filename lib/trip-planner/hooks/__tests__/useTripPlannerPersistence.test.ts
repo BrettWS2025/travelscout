@@ -70,11 +70,19 @@ describe('useTripPlannerPersistence', () => {
     setNightsPerStop: vi.fn(),
     setDayStopMeta: vi.fn(),
     setPlan: vi.fn(),
-    setDayDetails: vi.fn((fn) => fn({})),
+    setDayDetails: vi.fn((arg: any) => {
+      // Handle both function and direct value updates
+      if (typeof arg === 'function') {
+        return arg({});
+      }
+      return arg;
+    }),
     setMapPoints: vi.fn(),
     setLegs: vi.fn(),
     setHasSubmitted: vi.fn(),
     setError: vi.fn(),
+    setStartSectorType: vi.fn(),
+    setEndSectorType: vi.fn(),
   };
 
   beforeEach(() => {
@@ -109,6 +117,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -125,7 +135,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -156,6 +168,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -172,7 +186,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -205,6 +221,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -221,7 +239,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -254,6 +274,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -270,7 +292,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -315,6 +339,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -331,7 +357,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -375,6 +403,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -391,7 +421,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -428,6 +460,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -444,7 +478,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -489,6 +525,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -505,7 +543,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -541,6 +581,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -557,7 +599,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 
@@ -591,6 +635,8 @@ describe('useTripPlannerPersistence', () => {
           {},
           [],
           [],
+          'itinerary',
+          'itinerary',
           mockSetters.setStartCityId,
           mockSetters.setEndCityId,
           mockSetters.setStartDate,
@@ -607,7 +653,9 @@ describe('useTripPlannerPersistence', () => {
           mockSetters.setMapPoints,
           mockSetters.setLegs,
           mockSetters.setHasSubmitted,
-          mockSetters.setError
+          mockSetters.setError,
+          mockSetters.setStartSectorType,
+          mockSetters.setEndSectorType
         )
       );
 

@@ -403,18 +403,66 @@ export function useEvents(date: string, locationName: string, lat?: number, lng?
             return false;
           }
 
-          // Include the event - we rely on session matching for events with sessions,
-          // and for events without sessions, we trust the API's date filtering
-          if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-            console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}:`, {
-              datetime_start: event.datetime_start,
-              datetime_end: event.datetime_end,
-              datetime_summary: event.datetime_summary,
-              hasSessions: event._hasSessions,
-              foundMatchingSession: event._foundMatchingSession
-            });
+          // For events with sessions, we already matched the session to the target date, so include it
+          if (event._hasSessions && event._foundMatchingSession) {
+            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+              console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: has matching session`, {
+                datetime_start: event.datetime_start,
+                datetime_end: event.datetime_end,
+                datetime_summary: event.datetime_summary,
+              });
+            }
+            return true;
           }
-          return true;
+
+          // For events without sessions, we need to distinguish between:
+          // 1. Single events that cross midnight (e.g., 8:30pm-12:30am) - only show on start date
+          // 2. Multi-day events (e.g., Saturday 7am-Sunday 10pm) - show on all days
+          const eventStartDate = extractLocalDate(event.datetime_start);
+          const eventStartsOnTargetDate = eventStartDate === date;
+
+          if (eventStartsOnTargetDate) {
+            // Event starts on target date - always include it
+            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+              console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: starts on target date`, {
+                datetime_start: event.datetime_start,
+                datetime_end: event.datetime_end,
+              });
+            }
+            return true;
+          }
+
+          // Event doesn't start on target date - only include if it's a multi-day event that spans the target date
+          if (event.datetime_end) {
+            const eventEndDate = extractLocalDate(event.datetime_end);
+            const eventStart = new Date(event.datetime_start);
+            const eventEnd = new Date(event.datetime_end);
+            
+            // Calculate duration in hours
+            const durationHours = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60);
+            
+            // Check if event spans the target date
+            const targetDateObj = new Date(date + "T00:00:00");
+            const spansTargetDate = eventStart <= targetDateObj && eventEnd >= targetDateObj;
+            
+            // Only include if:
+            // 1. Event spans the target date, AND
+            // 2. Event duration is >= 24 hours (multi-day event)
+            // This excludes single events that cross midnight from showing on the end date
+            if (spansTargetDate && durationHours >= 24) {
+              if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
+                console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: multi-day event spanning target date`, {
+                  datetime_start: event.datetime_start,
+                  datetime_end: event.datetime_end,
+                  durationHours: durationHours.toFixed(1),
+                });
+              }
+              return true;
+            }
+          }
+
+          // Event doesn't start on target date and either doesn't span it or is a short event crossing midnight
+          return false;
         }).map((event: any) => {
           // Remove internal flags before returning
           const { _hasSessions, _foundMatchingSession, ...cleanEvent } = event;

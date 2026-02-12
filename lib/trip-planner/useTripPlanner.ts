@@ -188,6 +188,8 @@ export function useTripPlanner() {
     state.dayDetails,
     state.mapPoints,
     state.legs,
+    state.startSectorType,
+    state.endSectorType,
     state.setStartCityId,
     state.setEndCityId,
     state.setStartDate,
@@ -204,7 +206,9 @@ export function useTripPlanner() {
     state.setMapPoints,
     state.setLegs,
     state.setHasSubmitted,
-    state.setError
+    state.setError,
+    state.setStartSectorType,
+    state.setEndSectorType
   );
 
   // Derived values
