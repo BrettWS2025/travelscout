@@ -14,6 +14,14 @@ import {
 } from "@/lib/walkingExperiences";
 import { searchPlacesByName, getPlaceDistrictByName } from "@/lib/places";
 import { parseDisplayName } from "@/lib/trip-planner/utils";
+import {
+  transformWalkingExperience,
+  transformViatorProduct,
+  fetchViatorProductsForLocation,
+  fetchViatorProductsForRoute,
+  fetchAllViatorProductsProgressive,
+  type ExperienceItem,
+} from "@/lib/viator-helpers";
 import dynamic from "next/dynamic";
 
 // Lazy load the map component to improve initial load performance
@@ -31,18 +39,33 @@ const ThingsToDoMap = dynamic(
 
 type ThingsToDoListProps = {
   location: string;
-  onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
 };
 
 const ITEMS_PER_PAGE = 10;
 
+type ViatorTag = {
+  tag_id: number;
+  tag_name: string;
+  description?: string;
+  category?: string;
+  group_name?: string;
+};
+
 export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToDoListProps) {
-  const [experiences, setExperiences] = useState<WalkingExperience[]>([]);
+  const [walkingExperiences, setWalkingExperiences] = useState<WalkingExperience[]>([]);
+  const [viatorProducts, setViatorProducts] = useState<ExperienceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [viatorPage, setViatorPage] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Tag filtering state
+  const [tags, setTags] = useState<ViatorTag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchExperiences() {
@@ -91,7 +114,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
             console.log("[ThingsToDoList] Route buffer results:", routeResults.length);
             
             if (routeResults.length > 0) {
-              setExperiences(routeResults);
+              setWalkingExperiences(routeResults);
             } else {
               // Fallback: Get districts along the route
               const districts = await getDistrictsAlongRoute(routeWkt, 20);
@@ -115,7 +138,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                 // Query by all districts along the route
                 const results = await getWalkingExperiencesByDistricts(allDistricts, 500);
                 console.log("[ThingsToDoList] District query results:", results.length);
-                setExperiences(results);
+                setWalkingExperiences(results);
               } else {
                 // Fallback: query by radius from midpoint
                 const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
@@ -133,8 +156,51 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   500
                 );
                 console.log("[ThingsToDoList] Midpoint query results:", results.length);
-                setExperiences(results);
+                setWalkingExperiences(results);
               }
+            }
+            
+            // Fetch Viator products for the route with progressive loading
+            try {
+              // Show first page immediately
+              const firstPage = await fetchViatorProductsForRoute(
+                fromPlace[0].lat,
+                fromPlace[0].lng,
+                toPlace[0].lat,
+                toPlace[0].lng,
+                0,
+                500,
+                fromCity,
+                toCity
+              );
+              
+              console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
+              
+              // Show first page immediately
+              setViatorProducts(firstPage.products);
+              
+              // Load remaining products in background if needed
+              if (firstPage.products.length < firstPage.total) {
+                // Calculate midpoint for progressive loading
+                const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
+                const midLng = (fromPlace[0].lng + toPlace[0].lng) / 2;
+                const locationName = fromCity || toCity;
+                
+                fetchAllViatorProductsProgressive(
+                  midLat,
+                  midLng,
+                  locationName,
+                  firstPage.products,
+                  firstPage.total
+                ).then((result) => {
+                  setViatorProducts(result.products);
+                }).catch((error) => {
+                  console.warn("Error loading remaining products:", error);
+                });
+              }
+            } catch (viatorError) {
+              console.warn("Failed to fetch Viator products for route:", viatorError);
+              setViatorProducts([]);
             }
           } else {
             // Fallback: try to find districts by name only
@@ -145,9 +211,9 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
             
             if (districts.length > 0) {
               const results = await getWalkingExperiencesByDistricts(districts, 500);
-              setExperiences(results);
+              setWalkingExperiences(results);
             } else {
-              setExperiences([]);
+              setWalkingExperiences([]);
             }
           }
         } else {
@@ -173,7 +239,71 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
             });
 
             if (results.length > 0) {
-              setExperiences(results);
+              setWalkingExperiences(results);
+              
+              // Fetch Viator products for this location
+              const places = await searchPlacesByName(cityName || location, 1);
+              if (places.length > 0 && places[0].lat && places[0].lng) {
+                try {
+                  console.log(`[ThingsToDoList] ========================================`);
+                  console.log(`[ThingsToDoList] FETCHING VIATOR PRODUCTS`);
+                  console.log(`[ThingsToDoList] Location: ${cityName || location}`);
+                  console.log(`[ThingsToDoList] Coordinates: lat=${places[0].lat}, lng=${places[0].lng}`);
+                  console.log(`[ThingsToDoList] Radius: 60km (NOTE: Viator API ignores radius - searches by destination only)`);
+                  console.log(`[ThingsToDoList] ========================================`);
+                  
+                  // Use progressive loading: show first page immediately, then load rest in background
+                  console.log(`[ThingsToDoList] Starting progressive load...`);
+                  
+                  // Show first page immediately
+                  const firstPage = await fetchViatorProductsForLocation(
+                    places[0].lat,
+                    places[0].lng,
+                    60.0,
+                    0,
+                    500,
+                    cityName || location
+                  );
+                  
+                  console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
+                  console.log(`[ThingsToDoList] Has more: ${firstPage.hasMore}`);
+                  console.log(`[ThingsToDoList] Need more: ${firstPage.products.length < firstPage.total}`);
+                  
+                  // Show first page immediately to user
+                  setViatorProducts(firstPage.products);
+                  
+                  // If there are more products, fetch them in the background using parallel batches
+                  // Check if we have fewer products than total (don't rely on hasMore flag)
+                  if (firstPage.products.length < firstPage.total) {
+                    console.log(`[ThingsToDoList] Loading remaining products in background...`);
+                    console.log(`[ThingsToDoList] Need to fetch ${firstPage.total - firstPage.products.length} more products`);
+                    
+                    // Fetch all remaining products progressively (in parallel batches)
+                    // Pass the first page data so we don't refetch it
+                    fetchAllViatorProductsProgressive(
+                      places[0].lat,
+                      places[0].lng,
+                      cityName || location,
+                      firstPage.products,
+                      firstPage.total,
+                      (current, total) => {
+                        console.log(`[ThingsToDoList] Progress: ${current}/${total} products loaded`);
+                      }
+                    ).then((result) => {
+                      console.log(`[ThingsToDoList] All products loaded: ${result.products.length}/${result.total}`);
+                      setViatorProducts(result.products);
+                    }).catch((error) => {
+                      console.warn(`[ThingsToDoList] Error loading remaining products:`, error);
+                      // Keep the first page results even if background loading fails
+                    });
+                  } else {
+                    console.log(`[ThingsToDoList] All products already loaded (${firstPage.products.length}/${firstPage.total})`);
+                  }
+                } catch (viatorError) {
+                  console.warn("Failed to fetch Viator products:", viatorError);
+                  setViatorProducts([]);
+                }
+              }
               return;
             }
 
@@ -202,16 +332,54 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
               500
             );
             console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
-            setExperiences(results);
+            setWalkingExperiences(results);
+            
+            // Fetch Viator products with progressive loading
+            try {
+              // Show first page immediately
+              const firstPage = await fetchViatorProductsForLocation(
+                places[0].lat,
+                places[0].lng,
+                60.0,
+                0,
+                500,
+                cityName || location
+              );
+              
+              console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
+              
+              // Show first page immediately
+              setViatorProducts(firstPage.products);
+              
+              // Load remaining products in background if needed
+              if (firstPage.products.length < firstPage.total) {
+                fetchAllViatorProductsProgressive(
+                  places[0].lat,
+                  places[0].lng,
+                  cityName || location,
+                  firstPage.products,
+                  firstPage.total
+                ).then((result) => {
+                  setViatorProducts(result.products);
+                }).catch((error) => {
+                  console.warn("Error loading remaining products:", error);
+                });
+              }
+            } catch (viatorError) {
+              console.warn("Failed to fetch Viator products:", viatorError);
+              setViatorProducts([]);
+            }
           } else {
             console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
-            setExperiences([]);
+            setWalkingExperiences([]);
+            setViatorProducts([]);
           }
         }
       } catch (err) {
-        console.error("Error fetching walking experiences:", err);
-        setError("Failed to load walking experiences");
-        setExperiences([]);
+        console.error("Error fetching experiences:", err);
+        setError("Failed to load experiences");
+        setWalkingExperiences([]);
+        setViatorProducts([]);
       } finally {
         setLoading(false);
       }
@@ -219,14 +387,114 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
     fetchExperiences();
     setCurrentPage(1); // Reset to first page when location changes
+    setViatorPage(1);
   }, [location]);
 
-  // Sort experiences alphabetically by track name
-  const sortedExperiences = useMemo(() => {
-    return [...experiences].sort((a, b) => 
-      a.track_name.localeCompare(b.track_name)
-    );
-  }, [experiences]);
+  // Fetch tags for filtering
+  useEffect(() => {
+    async function fetchTags() {
+      setTagsLoading(true);
+      try {
+        const response = await fetch("/api/viator/tags");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.tags) {
+            setTags(data.tags);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch tags:", err);
+      } finally {
+        setTagsLoading(false);
+      }
+    }
+    fetchTags();
+  }, []);
+
+  // Transform walking experiences to ExperienceItem and combine with Viator products
+  const allExperiences = useMemo(() => {
+    const walking = walkingExperiences.map(transformWalkingExperience);
+    return [...walking, ...viatorProducts];
+  }, [walkingExperiences, viatorProducts]);
+
+  // Helper function to parse duration to minutes for sorting
+  const parseDurationToMinutes = (duration: string | undefined | null, durationInMinutes?: number): number => {
+    // If we already have duration in minutes (from Viator), use that
+    if (durationInMinutes !== undefined) {
+      return durationInMinutes;
+    }
+    
+    if (!duration) return Infinity; // Put items without duration at the end
+    
+    const durationStr = duration.toLowerCase().trim();
+    
+    // Try to parse formats like "2 to 60 days", "2-4 days", "2h 30m", "3h", "45m", "72h", etc.
+    const dayMatch = durationStr.match(/(\d+)\s*(?:to|-)\s*(\d+)?\s*d/);
+    const hourMatch = durationStr.match(/(\d+)\s*h/);
+    const minuteMatch = durationStr.match(/(\d+)\s*m/);
+    
+    let totalMinutes = 0;
+    
+    if (dayMatch) {
+      // Handle "2 to 60 days" or "2-4 days" - use the minimum for sorting
+      const minDays = parseInt(dayMatch[1], 10);
+      totalMinutes = minDays * 24 * 60; // Use minimum days
+    } else {
+      if (hourMatch) {
+        totalMinutes += parseInt(hourMatch[1], 10) * 60;
+      }
+      if (minuteMatch) {
+        totalMinutes += parseInt(minuteMatch[1], 10);
+      }
+    }
+    
+    // If no matches, try to parse as just a number (assume minutes)
+    if (totalMinutes === 0) {
+      const numberMatch = durationStr.match(/(\d+)/);
+      if (numberMatch) {
+        totalMinutes = parseInt(numberMatch[1], 10);
+      }
+    }
+    
+    return totalMinutes === 0 ? Infinity : totalMinutes;
+  };
+
+  // Filter and sort experiences
+  const filteredAndSortedExperiences = useMemo(() => {
+    // First filter by selected tags (only applies to Viator products)
+    let filtered = allExperiences;
+    if (selectedTagIds.length > 0) {
+      filtered = allExperiences.filter(exp => {
+        // Walking experiences always pass (no tags)
+        if (exp.type !== "viator") return true;
+        // Viator products must have at least one matching tag
+        if (!exp.tagIds || exp.tagIds.length === 0) return false;
+        return exp.tagIds.some(tagId => selectedTagIds.includes(tagId));
+      });
+    }
+    
+    // Then sort by duration (shortest to longest), then alphabetically for same duration
+    return [...filtered].sort((a, b) => {
+      // For Viator products, prefer durationInMinutes if available, otherwise parse duration string
+      const aDuration = a.type === "viator" 
+        ? (a.durationInMinutes !== undefined ? a.durationInMinutes : parseDurationToMinutes(a.duration))
+        : parseDurationToMinutes(a.completion_time);
+      const bDuration = b.type === "viator"
+        ? (b.durationInMinutes !== undefined ? b.durationInMinutes : parseDurationToMinutes(b.duration))
+        : parseDurationToMinutes(b.completion_time);
+      
+      // Sort by duration first
+      if (aDuration !== bDuration) {
+        return aDuration - bDuration;
+      }
+      
+      // If same duration, sort alphabetically by title
+      return a.title.localeCompare(b.title);
+    });
+  }, [allExperiences, selectedTagIds]);
+
+  // Use filteredAndSortedExperiences instead of sortedExperiences
+  const sortedExperiences = filteredAndSortedExperiences;
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedExperiences.length / ITEMS_PER_PAGE);
@@ -277,7 +545,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     return (
       <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
         <div className="text-xs text-slate-500 text-center py-4">
-          No walking tracks found for this location.
+          No activities found for this location.
         </div>
       </div>
     );
@@ -285,6 +553,58 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
   return (
     <div className="space-y-3">
+      {/* Tag Filter - only show if we have tags and Viator products */}
+      {tags.length > 0 && viatorProducts.length > 0 && (
+        <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+          <div className="text-xs font-medium text-slate-700 mb-2">Filter by Tags:</div>
+          <div className="flex flex-wrap gap-2">
+            {tags.slice(0, 20).map((tag) => {
+              const isSelected = selectedTagIds.includes(tag.tag_id);
+              return (
+                <button
+                  key={tag.tag_id}
+                  type="button"
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedTagIds(selectedTagIds.filter(id => id !== tag.tag_id));
+                    } else {
+                      setSelectedTagIds([...selectedTagIds, tag.tag_id]);
+                    }
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className={[
+                    "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border",
+                    isSelected
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
+                  ].join(" ")}
+                  title={tag.description || tag.tag_name}
+                >
+                  {tag.tag_name}
+                </button>
+              );
+            })}
+            {selectedTagIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTagIds([]);
+                  setCurrentPage(1);
+                }}
+                className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+          {tags.length > 20 && (
+            <div className="text-xs text-slate-500 mt-2">
+              Showing first 20 tags. {tags.length - 20} more available.
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* View Toggle */}
       <div className="flex items-center justify-end gap-2">
         <button
@@ -341,10 +661,10 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
           >
             <div className="flex items-start gap-3">
               {/* Thumbnail */}
-              {experience.url_to_thumbnail ? (
+              {experience.imageUrl ? (
                 <img
-                  src={experience.url_to_thumbnail}
-                  alt={experience.track_name}
+                  src={experience.imageUrl}
+                  alt={experience.title}
                   className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-slate-200"
                   onError={(e) => {
                     // Hide image on error
@@ -353,7 +673,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                 />
               ) : (
                 <div className="w-16 h-16 rounded-lg bg-slate-300 border border-slate-400 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-slate-600">🏔️</span>
+                  <span className="text-xs text-slate-600">{experience.type === "viator" ? "🎫" : "🏔️"}</span>
                 </div>
               )}
               
@@ -362,18 +682,23 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h4 className="text-sm font-semibold text-slate-900 line-clamp-1">
                     <a
-                      href={experience.url_to_webpage}
+                      href={experience.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-indigo-600 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {experience.track_name}
+                      {experience.title}
                     </a>
                   </h4>
                   {experience.difficulty && (
                     <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                       {experience.difficulty}
+                    </span>
+                  )}
+                  {experience.type === "viator" && experience.rating && (
+                    <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                      ⭐ {experience.rating.toFixed(1)}
                     </span>
                   )}
                 </div>
@@ -386,6 +711,9 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   {experience.completion_time && (
                     <span>⏱️ {experience.completion_time}</span>
                   )}
+                  {experience.duration && (
+                    <span>⏱️ {experience.duration}</span>
+                  )}
                   {experience.kid_friendly && (
                     <span>👨‍👩‍👧 Kid-friendly</span>
                   )}
@@ -395,29 +723,63 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   {experience.district_name && (
                     <span>📍 {experience.district_name}</span>
                   )}
+                  {experience.type === "viator" && experience.price && (
+                    <span className="font-medium text-indigo-600">💰 {experience.price}</span>
+                  )}
+                  {experience.type === "viator" && experience.totalReviews && (
+                    <span>({experience.totalReviews} reviews)</span>
+                  )}
                   {/* Action Pills - Desktop: inline with details */}
                   <span className="hidden md:inline-flex items-center gap-2 ml-1">
-                    <a
-                      href={experience.url_to_webpage}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      More Detail
-                    </a>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onAddToItinerary) {
-                          onAddToItinerary(experience, location);
-                        }
-                      }}
-                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                    >
-                      Add to itinerary
-                    </button>
+                    {experience.type === "viator" ? (
+                      <>
+                        <a
+                          href={experience.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors border border-indigo-600 whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Book now
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onAddToItinerary) {
+                              onAddToItinerary(experience, location);
+                            }
+                          }}
+                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
+                        >
+                          Add to itinerary
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          href={experience.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          More Detail
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onAddToItinerary) {
+                              onAddToItinerary(experience, location);
+                            }
+                          }}
+                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                        >
+                          Add to itinerary
+                        </button>
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
@@ -425,27 +787,55 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
             
             {/* Action Pills - Mobile: separate section below */}
             <div className="flex items-center gap-2 flex-wrap md:hidden mt-3">
-              <a
-                href={experience.url_to_webpage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                More Detail
-              </a>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onAddToItinerary) {
-                    onAddToItinerary(experience, location);
-                  }
-                }}
-                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-              >
-                Add to itinerary
-              </button>
+              {experience.type === "viator" ? (
+                <>
+                  <a
+                    href={experience.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors border border-indigo-600"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Book now
+                  </a>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onAddToItinerary) {
+                        onAddToItinerary(experience, location);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+                  >
+                    Add to itinerary
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a
+                    href={experience.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    More Detail
+                  </a>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onAddToItinerary) {
+                        onAddToItinerary(experience, location);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                  >
+                    Add to itinerary
+                  </button>
+                </>
+              )}
             </div>
           </div>
           ))}

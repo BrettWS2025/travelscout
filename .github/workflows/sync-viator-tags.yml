@@ -1,0 +1,94 @@
+name: Sync Viator Tags
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force sync even if recently synced"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+  # Run weekly on Monday at 2 AM UTC (2 PM NZDT / 3 PM NZST)
+  schedule:
+    - cron: "0 2 * * 1"  # Every Monday at 2 AM UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-viator-tags
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Viator Tags
+        env:
+          VIATOR_API_KEY: ${{ secrets.VIATOR_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FORCE_SYNC: ${{ github.event.inputs.force == 'true' }}
+        run: |
+          # Use curl to call the sync endpoint
+          # Note: This requires the app to be deployed. For local/CI runs, you can use the script version.
+          API_URL="${VERCEL_URL:-https://travelscout.vercel.app}"
+          
+          # If VERCEL_URL is set but doesn't start with http, prepend https://
+          if [[ ! "$API_URL" =~ ^https?:// ]]; then
+            API_URL="https://${API_URL}"
+          fi
+          
+          FORCE_FLAG=""
+          if [ "$FORCE_SYNC" == "true" ]; then
+            FORCE_FLAG="?force=true"
+          fi
+          
+          echo "Syncing Viator tags from: ${API_URL}/api/viator/tags/sync${FORCE_FLAG}"
+          
+          # Try to call the API endpoint (requires deployment)
+          # If the app is not deployed, this will fail gracefully
+          response=$(curl -s -w "\n%{http_code}" \
+            -H "Content-Type: application/json" \
+            "${API_URL}/api/viator/tags/sync${FORCE_FLAG}" || echo -e "\n000")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Response HTTP Code: $http_code"
+          echo "Response Body:"
+          if command -v jq &> /dev/null; then
+            echo "$body" | jq '.' || echo "$body"
+          else
+            echo "$body"
+          fi
+          
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "✅ Tag sync completed successfully"
+            exit 0
+          elif [ "$http_code" == "000" ]; then
+            echo "⚠️  Could not reach API endpoint. This is expected if the app is not deployed."
+            echo "⚠️  To sync tags, either:"
+            echo "   1. Deploy the app and ensure the endpoint is accessible"
+            echo "   2. Run the sync script locally: npm run sync:viator-tags"
+            exit 0  # Don't fail the workflow if API is not available
+          else
+            echo "❌ Tag sync failed with HTTP $http_code"
+            exit 1
+          fi

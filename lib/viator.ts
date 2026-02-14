@@ -62,6 +62,10 @@ export type ViatorProduct = {
   };
   url?: string;
   productUrl?: string;
+  tags?: Array<{
+    tagId: number;
+    tagName?: string;
+  }> | number[]; // Can be array of tag IDs or array of tag objects
 };
 
 export type ViatorSearchParams = {
@@ -214,20 +218,21 @@ export class ViatorClient {
       body.filtering.highestPrice = params.maxPrice;
     }
 
-    // Sorting - based on example, valid values appear to be PRICE, REVIEW_AVG_RATING, etc.
-    // The example shows "PRICE", so let's use that as default and map our values
+    // Sorting - use only known valid values
+    // Based on API errors, REVIEW_AVG_RATING is not valid
+    // Try using simpler values or omit sorting if not supported
     if (params.sortBy) {
       // Map our sortBy values to API format
-      // Based on error, POPULARITY doesn't exist - trying common alternatives
+      // Use PRICE as the default since it's known to work
       const sortMap: Record<string, string> = {
-        POPULARITY: "REVIEW_AVG_RATING", // Popularity might map to rating
+        POPULARITY: "PRICE", // Fallback to PRICE since POPULARITY/REVIEW_AVG_RATING don't work
         PRICE: "PRICE",
-        RATING: "REVIEW_AVG_RATING",
-        DURATION: "DURATION",
+        RATING: "PRICE", // Fallback to PRICE since REVIEW_AVG_RATING doesn't work
+        DURATION: "PRICE", // Fallback to PRICE - DURATION may not be supported
       };
       body.sorting.sort = sortMap[params.sortBy] || "PRICE";
     } else {
-      body.sorting.sort = "PRICE"; // Use PRICE as default (from example)
+      body.sorting.sort = "PRICE"; // Use PRICE as default (known to work)
     }
 
     // Sort order
@@ -245,6 +250,9 @@ export class ViatorClient {
     body.currency = params.currencyCode || "USD";
 
     try {
+      console.log(`[ViatorClient] Making API request to /products/search`);
+      console.log(`[ViatorClient] Request body:`, JSON.stringify(body, null, 2));
+      
       const response = await this.makeRequest<any>("/products/search", {
         method: "POST",
         body: JSON.stringify(body),
@@ -254,13 +262,18 @@ export class ViatorClient {
       const products = response.products || response.data?.products || [];
       const totalCount = response.totalCount || response.data?.totalCount || products.length;
       
+      console.log(`[ViatorClient] API Response:`);
+      console.log(`[ViatorClient]   - Products returned: ${products.length}`);
+      console.log(`[ViatorClient]   - Total count: ${totalCount}`);
+      console.log(`[ViatorClient]   - Has more: ${products.length >= body.pagination.count}`);
+      
       return {
         products,
         totalCount,
         hasMore: products.length >= body.pagination.count,
       };
     } catch (error) {
-      console.error("Error searching Viator products:", error);
+      console.error("[ViatorClient] Error searching Viator products:", error);
       throw error;
     }
   }
