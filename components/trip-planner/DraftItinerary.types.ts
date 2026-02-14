@@ -1,5 +1,7 @@
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
+import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
 
 export type DraftItineraryProps = {
   plan: TripPlan;
@@ -45,7 +47,7 @@ export type DraftItineraryProps = {
 
   onReorderStops: (fromIndex: number, toIndex: number) => void;
 
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
   
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };

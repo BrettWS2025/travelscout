@@ -47,7 +47,7 @@ type StartEndSectorCardProps = {
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
 

@@ -36,7 +36,7 @@ type StopGroupWithRoadSectorProps = {
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
   onRemoveStop: (stopIndex: number) => void;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
 };
 
 export default function StopGroupWithRoadSector({

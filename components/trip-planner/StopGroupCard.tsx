@@ -44,7 +44,7 @@ type StopGroupCardProps = {
   dragAttributes?: any;
   dragListeners?: any;
   isDragDisabled?: boolean;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
 };
 
 export default function StopGroupCard({

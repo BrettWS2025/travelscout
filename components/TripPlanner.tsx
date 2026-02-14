@@ -15,6 +15,7 @@ import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
 
 type ItineraryData = {
   id: string;
@@ -143,8 +144,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   };
 
   // Handle adding experience to itinerary
-  const handleAddToItinerary = (experience: WalkingExperience, location: string) => {
-    setSelectedExperience(experience);
+  const handleAddToItinerary = (experience: WalkingExperience | ExperienceItem, location: string) => {
+    // Only allow adding WalkingExperience to itinerary for now
+    // Viator products would need different handling
+    if ('type' in experience && experience.type === 'viator') {
+      // For Viator products, we could open a different modal or handle differently
+      // For now, we'll just log and skip
+      console.log('Viator products cannot be added to itinerary yet');
+      return;
+    }
+    // Type guard: ensure it's a WalkingExperience
+    const walkingExp = experience as WalkingExperience;
+    setSelectedExperience(walkingExp);
     setSelectedExperienceLocation(location);
     setShowAddToItineraryModal(true);
   };

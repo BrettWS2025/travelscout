@@ -8,6 +8,7 @@ import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 import ExperienceCard from "@/components/trip-planner/ExperienceCard";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
 
 type RoadSectorCardProps = {
   fromStopIndex: number;
@@ -24,7 +25,7 @@ type RoadSectorCardProps = {
   routeStops: string[];
   onToggleOpen: () => void;
   onUpdateActivities: (activities: string) => void;
-  onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: ExperienceItem | WalkingExperience, location: string) => void;
   onRemoveExperience?: (experienceId: string) => void;
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
