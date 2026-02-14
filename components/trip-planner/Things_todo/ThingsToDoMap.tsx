@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
 import type { MapRef } from "react-map-gl/mapbox";
 import type { FeatureCollection, LineString } from "geojson";
 import { searchPlacesByName } from "@/lib/places";
@@ -41,8 +41,8 @@ const Layer = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.Laye
 });
 
 type ThingsToDoMapProps = {
-  experiences: WalkingExperience[];
-  onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
+  experiences: ExperienceItem[];
+  onAddToItinerary?: (experience: ExperienceItem, location: string) => void;
   location: string;
 };
 
@@ -113,7 +113,7 @@ export default function ThingsToDoMap({
   location,
 }: ThingsToDoMapProps) {
   const mapRef = useRef<MapRef>(null);
-  const [selectedExperience, setSelectedExperience] = useState<WalkingExperience | null>(null);
+  const [selectedExperience, setSelectedExperience] = useState<ExperienceItem | null>(null);
   const [popupLocation, setPopupLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [anchorLocations, setAnchorLocations] = useState<Array<{ lat: number; lng: number; name: string }>>([]);
   const [routeGeometry, setRouteGeometry] = useState<[number, number][] | null>(null);
@@ -483,7 +483,7 @@ export default function ThingsToDoMap({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="font-semibold text-gray-900 text-sm">
-                {selectedExperience.track_name}
+                {selectedExperience.title}
               </div>
 
               {selectedExperience.description && (
@@ -498,8 +498,16 @@ export default function ThingsToDoMap({
                     {selectedExperience.difficulty}
                   </span>
                 )}
+                {selectedExperience.type === "viator" && selectedExperience.rating && (
+                  <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">
+                    ⭐ {selectedExperience.rating.toFixed(1)}
+                  </span>
+                )}
                 {selectedExperience.completion_time && (
                   <span>⏱️ {selectedExperience.completion_time}</span>
+                )}
+                {selectedExperience.duration && (
+                  <span>⏱️ {selectedExperience.duration}</span>
                 )}
                 {selectedExperience.kid_friendly && (
                   <span>👨‍👩‍👧 Kid-friendly</span>
@@ -507,29 +515,60 @@ export default function ThingsToDoMap({
                 {selectedExperience.distance_km && (
                   <span>📍 {selectedExperience.distance_km.toFixed(1)} km away</span>
                 )}
+                {selectedExperience.type === "viator" && selectedExperience.price && (
+                  <span className="font-medium text-indigo-600">💰 {selectedExperience.price}</span>
+                )}
               </div>
 
               <div className="flex items-center gap-2 pt-1 border-t border-gray-200">
-                <a
-                  href={selectedExperience.url_to_webpage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  More Detail
-                </a>
-                {onAddToItinerary && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToItinerary(selectedExperience, location);
-                    }}
-                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-                  >
-                    Add to itinerary
-                  </button>
+                {selectedExperience.type === "viator" ? (
+                  <>
+                    <a
+                      href={selectedExperience.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors border border-indigo-600"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Book now
+                    </a>
+                    {onAddToItinerary && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToItinerary(selectedExperience, location);
+                        }}
+                        className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+                      >
+                        Add to itinerary
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <a
+                      href={selectedExperience.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      More Detail
+                    </a>
+                    {onAddToItinerary && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToItinerary(selectedExperience, location);
+                        }}
+                        className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        Add to itinerary
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
