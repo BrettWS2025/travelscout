@@ -7,7 +7,7 @@ import type { MapRef } from "react-map-gl/mapbox";
 import type { FeatureCollection, LineString } from "geojson";
 import { searchPlacesByName } from "@/lib/places";
 import { parseDisplayName } from "@/lib/trip-planner/utils";
-import "mapbox-gl/dist/mapbox-gl.css";
+// mapbox-gl CSS is imported globally in app/layout.tsx
 
 // Dynamically import Map to avoid SSR issues and improve initial load
 const Map = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.Map), {

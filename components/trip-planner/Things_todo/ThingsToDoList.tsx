@@ -42,7 +42,7 @@ type ThingsToDoListProps = {
   onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
 };
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 type ViatorTag = {
   tag_id: number;
@@ -836,193 +836,119 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
       {viewMode === "list" && (
         <div 
           ref={scrollContainerRef}
-          className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2"
+          className="overflow-y-auto pr-2"
         >
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {currentPageExperiences.map((experience) => (
-          <div
+          <a
             key={experience.id}
-            className="block rounded-xl bg-slate-50 border border-slate-200 p-3 hover:bg-slate-100 transition-colors"
+            href={experience.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col"
           >
-            <div className="flex items-start gap-3">
-              {/* Thumbnail */}
+            {/* Thumbnail - Full width at top */}
+            <div className="relative w-full aspect-[4/3] bg-slate-200">
               {experience.imageUrl ? (
                 <img
                   src={experience.imageUrl}
                   alt={experience.title}
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-slate-200"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     // Hide image on error
                     e.currentTarget.style.display = "none";
                   }}
                 />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-slate-300 border border-slate-400 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-slate-600">{experience.type === "viator" ? "🎫" : "🏔️"}</span>
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-2xl">{experience.type === "viator" ? "🎫" : "🏔️"}</span>
                 </div>
               )}
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h4 className="text-sm font-semibold text-slate-900 line-clamp-1">
-                    <a
-                      href={experience.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-indigo-600 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {experience.title}
-                    </a>
-                  </h4>
-                  {experience.difficulty && (
-                    <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      {experience.difficulty}
-                    </span>
-                  )}
-                  {experience.type === "viator" && experience.rating && (
-                    <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      ⭐ {experience.rating.toFixed(1)}
-                    </span>
-                  )}
-                </div>
-                {experience.description && (
-                  <p className="text-xs text-slate-700 line-clamp-2 mb-1">
-                    {experience.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-500">
-                  {experience.completion_time && (
-                    <span>⏱️ {experience.completion_time}</span>
-                  )}
-                  {experience.duration && (
-                    <span>⏱️ {experience.duration}</span>
-                  )}
-                  {experience.kid_friendly && (
-                    <span>👨‍👩‍👧 Kid-friendly</span>
-                  )}
-                  {experience.distance_km && (
-                    <span>📍 {experience.distance_km.toFixed(1)} km away</span>
-                  )}
-                  {experience.district_name && (
-                    <span>📍 {experience.district_name}</span>
-                  )}
-                  {experience.type === "viator" && experience.price && (
-                    <span className="font-medium text-indigo-600">💰 {experience.price}</span>
-                  )}
-                  {experience.type === "viator" && experience.totalReviews && (
-                    <span>({experience.totalReviews} reviews)</span>
-                  )}
-                  {/* Action Pills - Desktop: inline with details */}
-                  <span className="hidden md:inline-flex items-center gap-2 ml-1">
-                    {experience.type === "viator" ? (
-                      <>
-                        <a
-                          href={experience.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors border border-indigo-600 whitespace-nowrap"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Book now
-                        </a>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onAddToItinerary) {
-                              onAddToItinerary(experience, location);
-                            }
-                          }}
-                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
-                        >
-                          Add to itinerary
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <a
-                          href={experience.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          More Detail
-                        </a>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onAddToItinerary) {
-                              onAddToItinerary(experience, location);
-                            }
-                          }}
-                          className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                        >
-                          Add to itinerary
-                        </button>
-                      </>
-                    )}
-                  </span>
-                </div>
+              {/* Heart icon placeholder - top right */}
+              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-xs">♡</span>
               </div>
             </div>
             
-            {/* Action Pills - Mobile: separate section below */}
-            <div className="flex items-center gap-2 flex-wrap md:hidden mt-3">
-              {experience.type === "viator" ? (
-                <>
-                  <a
-                    href={experience.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors border border-indigo-600"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Book now
-                  </a>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onAddToItinerary) {
-                        onAddToItinerary(experience, location);
-                      }
-                    }}
-                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                  >
-                    Add to itinerary
-                  </button>
-                </>
-              ) : (
-                <>
-                  <a
-                    href={experience.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    More Detail
-                  </a>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onAddToItinerary) {
-                        onAddToItinerary(experience, location);
-                      }
-                    }}
-                    className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-                  >
-                    Add to itinerary
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+            {/* Content */}
+            <div className="p-3 flex flex-col h-full">
+                {/* Rating */}
+                {experience.type === "viator" && experience.rating && (
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-xs font-medium text-green-600">⭐</span>
+                    <span className="text-xs font-medium text-slate-900">{experience.rating.toFixed(1)}</span>
+                    {experience.totalReviews && (
+                      <span className="text-xs text-slate-500">({experience.totalReviews.toLocaleString()})</span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Title */}
+                <h4 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 hover:text-indigo-600 transition-colors">
+                  {experience.title}
+                </h4>
+                {/* Details */}
+                <div className="flex items-center gap-3 text-xs text-slate-600 mb-2">
+                  {experience.type === "viator" && (
+                    <span className="flex items-center gap-1">
+                      <span>✓</span>
+                      <span>Free Cancellation</span>
+                    </span>
+                  )}
+                  {(experience.completion_time || experience.duration) && (
+                    <span className="flex items-center gap-1">
+                      <span>⏱️</span>
+                      <span>{experience.duration || experience.completion_time}</span>
+                    </span>
+                  )}
+                </div>
+                
+                {/* Price */}
+                {experience.type === "viator" && experience.price && (
+                  <div className="text-sm font-semibold text-slate-900 mb-2">
+                    {experience.price}
+                  </div>
+                )}
+                
+                {/* Action Buttons - aligned at bottom */}
+                <div className="flex items-center gap-2 mt-auto">
+                  {experience.type === "viator" ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (onAddToItinerary) {
+                            onAddToItinerary(experience, location);
+                          }
+                        }}
+                        className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        Add to itinerary
+                      </button>
+                      <span className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600">
+                        Book now
+                      </span>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (onAddToItinerary) {
+                          onAddToItinerary(experience, location);
+                        }
+                      }}
+                      className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                    >
+                      Add to itinerary
+                    </button>
+                  )}
+                </div>
+              </div>
+          </a>
           ))}
         </div>
 

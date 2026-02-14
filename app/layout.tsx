@@ -1,4 +1,5 @@
 import "react-day-picker/dist/style.css"; // DayPicker first
+import "mapbox-gl/dist/mapbox-gl.css"; // Mapbox GL CSS - must be imported globally
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
