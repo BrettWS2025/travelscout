@@ -50,6 +50,14 @@ type ViatorTag = {
   description?: string;
   category?: string;
   group_name?: string;
+  metadata?: {
+    parentTagIds?: number[];
+    allNamesByLocale?: {
+      en?: string;
+      [key: string]: string | undefined;
+    };
+    [key: string]: any;
+  };
 };
 
 export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToDoListProps) {
@@ -398,12 +406,26 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
         const response = await fetch("/api/viator/tags");
         if (response.ok) {
           const data = await response.json();
+          console.log(`[ThingsToDoList] Tags API response:`, { success: data.success, count: data.count, tagsLength: data.tags?.length });
           if (data.success && data.tags) {
+            console.log(`[ThingsToDoList] Loaded ${data.tags.length} tags for filtering`);
+            if (data.tags.length > 0) {
+              console.log(`[ThingsToDoList] Sample tags:`, data.tags.slice(0, 3).map((t: any) => ({
+                id: t.tag_id,
+                name: t.tag_name,
+                metadata: t.metadata
+              })));
+            }
             setTags(data.tags);
+          } else {
+            console.warn("[ThingsToDoList] Tags API returned unsuccessful response:", data);
           }
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("[ThingsToDoList] Failed to fetch tags:", response.status, errorData);
         }
       } catch (err) {
-        console.warn("Failed to fetch tags:", err);
+        console.error("[ThingsToDoList] Error fetching tags:", err);
       } finally {
         setTagsLoading(false);
       }
@@ -560,6 +582,8 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
           <div className="flex flex-wrap gap-2">
             {tags.slice(0, 20).map((tag) => {
               const isSelected = selectedTagIds.includes(tag.tag_id);
+              // Extract English name from metadata, fallback to tag_name if not available
+              const displayName = tag.metadata?.allNamesByLocale?.en || tag.tag_name;
               return (
                 <button
                   key={tag.tag_id}
@@ -578,9 +602,9 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                       ? "bg-indigo-600 text-white border-indigo-600"
                       : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
                   ].join(" ")}
-                  title={tag.description || tag.tag_name}
+                  title={tag.description || displayName}
                 >
-                  {tag.tag_name}
+                  {displayName}
                 </button>
               );
             })}
