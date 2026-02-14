@@ -69,11 +69,14 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [viatorPage, setViatorPage] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tagsScrollRef = useRef<HTMLDivElement>(null);
   
   // Tag filtering state
   const [tags, setTags] = useState<ViatorTag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [tagsLoading, setTagsLoading] = useState(false);
+  const [canScrollTagsLeft, setCanScrollTagsLeft] = useState(false);
+  const [canScrollTagsRight, setCanScrollTagsRight] = useState(true);
 
   useEffect(() => {
     async function fetchExperiences() {
@@ -398,6 +401,36 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     setViatorPage(1);
   }, [location]);
 
+  // Check scroll buttons for tags
+  const checkTagsScrollButtons = () => {
+    if (!tagsScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tagsScrollRef.current;
+    setCanScrollTagsLeft(scrollLeft > 0);
+    setCanScrollTagsRight(scrollLeft < scrollWidth - clientWidth - 1);
+  };
+
+  // Scroll tags horizontally
+  const scrollTags = (direction: "left" | "right") => {
+    if (!tagsScrollRef.current) return;
+    const scrollAmount = 200; // pixels to scroll
+    const currentScroll = tagsScrollRef.current.scrollLeft;
+    const maxScroll = tagsScrollRef.current.scrollWidth - tagsScrollRef.current.clientWidth;
+    let newScroll: number;
+    
+    if (direction === "left") {
+      newScroll = Math.max(0, currentScroll - scrollAmount);
+    } else {
+      newScroll = Math.min(maxScroll, currentScroll + scrollAmount);
+    }
+    
+    tagsScrollRef.current.scrollTo({ left: newScroll, behavior: "smooth" });
+    
+    // Update button states after a short delay to account for smooth scrolling
+    setTimeout(() => {
+      checkTagsScrollButtons();
+    }, 100);
+  };
+
   // Fetch tags for filtering
   useEffect(() => {
     async function fetchTags() {
@@ -413,8 +446,12 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
               console.log(`[ThingsToDoList] Sample tags:`, data.tags.slice(0, 3).map((t: any) => ({
                 id: t.tag_id,
                 name: t.tag_name,
-                metadata: t.metadata
+                has_metadata: !!t.metadata,
+                metadata_type: typeof t.metadata,
+                metadata: t.metadata ? (typeof t.metadata === 'string' ? 'string' : Object.keys(t.metadata || {})) : null
               })));
+            } else {
+              console.warn(`[ThingsToDoList] API returned success but 0 tags. Check server terminal logs for [Viator Tags API] messages.`);
             }
             setTags(data.tags);
           } else {
@@ -432,6 +469,22 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     }
     fetchTags();
   }, []);
+
+  // Update scroll buttons when tags change or container resizes
+  useEffect(() => {
+    checkTagsScrollButtons();
+    const container = tagsScrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => checkTagsScrollButtons();
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", checkTagsScrollButtons);
+    
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkTagsScrollButtons);
+    };
+  }, [tags]);
 
   // Transform walking experiences to ExperienceItem and combine with Viator products
   const allExperiences = useMemo(() => {
@@ -578,36 +631,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
       {/* Tag Filter - only show if we have tags and Viator products */}
       {tags.length > 0 && viatorProducts.length > 0 && (
         <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-          <div className="text-xs font-medium text-slate-700 mb-2">Filter by Tags:</div>
-          <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 20).map((tag) => {
-              const isSelected = selectedTagIds.includes(tag.tag_id);
-              // Extract English name from metadata, fallback to tag_name if not available
-              const displayName = tag.metadata?.allNamesByLocale?.en || tag.tag_name;
-              return (
-                <button
-                  key={tag.tag_id}
-                  type="button"
-                  onClick={() => {
-                    if (isSelected) {
-                      setSelectedTagIds(selectedTagIds.filter(id => id !== tag.tag_id));
-                    } else {
-                      setSelectedTagIds([...selectedTagIds, tag.tag_id]);
-                    }
-                    setCurrentPage(1); // Reset to first page when filter changes
-                  }}
-                  className={[
-                    "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border",
-                    isSelected
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
-                  ].join(" ")}
-                  title={tag.description || displayName}
-                >
-                  {displayName}
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-end mb-2">
             {selectedTagIds.length > 0 && (
               <button
                 type="button"
@@ -615,17 +639,82 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   setSelectedTagIds([]);
                   setCurrentPage(1);
                 }}
-                className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition-colors"
+                className="px-2 py-0.5 text-xs font-medium rounded bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition-colors"
               >
                 Clear filters
               </button>
             )}
           </div>
-          {tags.length > 20 && (
-            <div className="text-xs text-slate-500 mt-2">
-              Showing first 20 tags. {tags.length - 20} more available.
+          
+          {/* Horizontal scrollable tags with navigation arrows on sides */}
+          <div className="relative flex items-center gap-2">
+            {/* Left arrow */}
+            <button
+              type="button"
+              onClick={() => scrollTags("left")}
+              disabled={!canScrollTagsLeft}
+              className={[
+                "p-1.5 rounded-full border transition flex-shrink-0",
+                canScrollTagsLeft
+                  ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
+                  : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
+              ].join(" ")}
+              aria-label="Scroll tags left"
+            >
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
+            </button>
+
+            {/* Scrollable tags container */}
+            <div
+              ref={tagsScrollRef}
+              className="flex gap-2 overflow-x-auto scrollbar-hide flex-1"
+            >
+              {tags.map((tag) => {
+                const isSelected = selectedTagIds.includes(tag.tag_id);
+                // Extract English name from metadata, fallback to tag_name if not available
+                const displayName = tag.metadata?.allNamesByLocale?.en || tag.tag_name;
+                return (
+                  <button
+                    key={tag.tag_id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedTagIds(selectedTagIds.filter(id => id !== tag.tag_id));
+                      } else {
+                        setSelectedTagIds([...selectedTagIds, tag.tag_id]);
+                      }
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    className={[
+                      "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border whitespace-nowrap flex-shrink-0",
+                      isSelected
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
+                    ].join(" ")}
+                    title={tag.description || displayName}
+                  >
+                    {displayName}
+                  </button>
+                );
+              })}
             </div>
-          )}
+
+            {/* Right arrow */}
+            <button
+              type="button"
+              onClick={() => scrollTags("right")}
+              disabled={!canScrollTagsRight}
+              className={[
+                "p-1.5 rounded-full border transition flex-shrink-0",
+                canScrollTagsRight
+                  ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
+                  : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
+              ].join(" ")}
+              aria-label="Scroll tags right"
+            >
+              <ChevronRight className="w-4 h-4 text-slate-600" />
+            </button>
+          </div>
         </div>
       )}
       
