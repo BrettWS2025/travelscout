@@ -77,6 +77,8 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   const [tagsLoading, setTagsLoading] = useState(false);
   const [canScrollTagsLeft, setCanScrollTagsLeft] = useState(false);
   const [canScrollTagsRight, setCanScrollTagsRight] = useState(true);
+  // Map of child tag ID -> array of parent tag IDs
+  const [childTagToParentsMap, setChildTagToParentsMap] = useState<Map<number, number[]>>(new Map());
 
   useEffect(() => {
     async function fetchExperiences() {
@@ -431,12 +433,31 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     }, 100);
   };
 
-  // Fetch tags for filtering
+  // Fetch tags for filtering and build child-to-parent mapping
   useEffect(() => {
-    async function fetchTags() {
+    async function fetchTagsAndBuildMap() {
       setTagsLoading(true);
       try {
-        const response = await fetch("/api/viator/tags");
+        // Collect all tag IDs from current products to filter tags
+        const productTagIds = new Set<number>();
+        viatorProducts.forEach(product => {
+          if (product.tagIds && Array.isArray(product.tagIds)) {
+            product.tagIds.forEach(tagId => {
+              if (typeof tagId === 'number') {
+                productTagIds.add(tagId);
+              }
+            });
+          }
+        });
+        
+        // Build API URL with product tag IDs if we have products
+        let apiUrl = "/api/viator/tags";
+        if (productTagIds.size > 0) {
+          const tagIdsParam = Array.from(productTagIds).join(',');
+          apiUrl += `?productTagIds=${encodeURIComponent(tagIdsParam)}`;
+        }
+        
+        const response = await fetch(apiUrl);
         if (response.ok) {
           const data = await response.json();
           console.log(`[ThingsToDoList] Tags API response:`, { success: data.success, count: data.count, tagsLength: data.tags?.length });
@@ -461,14 +482,50 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
           const errorData = await response.json().catch(() => ({}));
           console.error("[ThingsToDoList] Failed to fetch tags:", response.status, errorData);
         }
+
+        // Now fetch all product tags to build child-to-parent mapping
+        if (productTagIds.size > 0) {
+          try {
+            const childTagsResponse = await fetch(`/api/viator/tags?tagIds=${Array.from(productTagIds).join(',')}`);
+            if (childTagsResponse.ok) {
+              const childTagsData = await childTagsResponse.json();
+              if (childTagsData.success && childTagsData.allTags) {
+                const map = new Map<number, number[]>();
+                childTagsData.allTags.forEach((tag: any) => {
+                  let metadata = tag.metadata;
+                  if (typeof metadata === 'string') {
+                    try {
+                      metadata = JSON.parse(metadata);
+                    } catch (e) {
+                      return;
+                    }
+                  }
+                  const parentTagIds = metadata?.parentTagIds;
+                  if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
+                    const parentIds = parentTagIds.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : Number(id)).filter((id: number) => !isNaN(id) && id > 0);
+                    if (parentIds.length > 0) {
+                      map.set(tag.tag_id, parentIds);
+                    }
+                  }
+                });
+                setChildTagToParentsMap(map);
+                console.log(`[ThingsToDoList] Built child-to-parent map with ${map.size} entries`);
+              }
+            }
+          } catch (err) {
+            console.error("[ThingsToDoList] Error fetching child tag metadata:", err);
+          }
+        } else {
+          setChildTagToParentsMap(new Map());
+        }
       } catch (err) {
         console.error("[ThingsToDoList] Error fetching tags:", err);
       } finally {
         setTagsLoading(false);
       }
     }
-    fetchTags();
-  }, []);
+    fetchTagsAndBuildMap();
+  }, [viatorProducts]);
 
   // Update scroll buttons when tags change or container resizes
   useEffect(() => {
@@ -544,7 +601,22 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
         if (exp.type !== "viator") return true;
         // Viator products must have at least one matching tag
         if (!exp.tagIds || exp.tagIds.length === 0) return false;
-        return exp.tagIds.some(tagId => selectedTagIds.includes(tagId));
+        
+        // Check if product matches any selected parent tag
+        return exp.tagIds.some(productTagId => {
+          // Direct match: product has the parent tag directly
+          if (selectedTagIds.includes(productTagId)) {
+            return true;
+          }
+          
+          // Indirect match: product has a child tag that references this parent
+          const childParents = childTagToParentsMap.get(productTagId);
+          if (childParents && Array.isArray(childParents)) {
+            return childParents.some(parentId => selectedTagIds.includes(parentId));
+          }
+          
+          return false;
+        });
       });
     }
     
@@ -566,7 +638,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
       // If same duration, sort alphabetically by title
       return a.title.localeCompare(b.title);
     });
-  }, [allExperiences, selectedTagIds]);
+  }, [allExperiences, selectedTagIds, childTagToParentsMap]);
 
   // Use filteredAndSortedExperiences instead of sortedExperiences
   const sortedExperiences = filteredAndSortedExperiences;

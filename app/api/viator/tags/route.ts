@@ -33,6 +33,8 @@ export async function GET(req: Request) {
     
     const category = searchParams.get("category");
     const group = searchParams.get("group");
+    const productTagIdsParam = searchParams.get("productTagIds"); // Comma-separated list of tag IDs from products
+    const tagIdsParam = searchParams.get("tagIds"); // Comma-separated list of specific tag IDs to fetch (for building child-to-parent map)
 
     // Debug: Test basic access first
     console.log(`[Viator Tags API] Testing database access...`);
@@ -244,7 +246,68 @@ export async function GET(req: Request) {
     });
 
     // Filter to only tags that are parent tags
-    const parentTags = finalTags.filter(tag => allParentTagIds.has(Number(tag.tag_id)));
+    let parentTags = finalTags.filter(tag => allParentTagIds.has(Number(tag.tag_id)));
+
+    // If productTagIds are provided, filter to only show parent tags that are referenced by those products
+    if (productTagIdsParam) {
+      const productTagIds = productTagIdsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      
+      if (productTagIds.length > 0) {
+        // Get metadata for the product tags to find their parentTagIds
+        const productTagsQuery = supabase
+          .from("viator_tags")
+          .select("tag_id, metadata")
+          .in("tag_id", productTagIds);
+        
+        const { data: productTagsData } = await productTagsQuery;
+        
+        if (productTagsData && productTagsData.length > 0) {
+          // Collect all parent tag IDs referenced by product tags
+          const referencedParentTagIds = new Set<number>();
+          productTagsData.forEach(productTag => {
+            let metadata = productTag.metadata;
+            if (typeof metadata === 'string') {
+              try {
+                metadata = JSON.parse(metadata);
+              } catch (e) {
+                return;
+              }
+            }
+            const parentTagIds = metadata?.parentTagIds;
+            if (Array.isArray(parentTagIds)) {
+              parentTagIds.forEach((id: any) => {
+                const numId = typeof id === 'string' ? parseInt(id, 10) : Number(id);
+                if (!isNaN(numId) && numId > 0) {
+                  referencedParentTagIds.add(numId);
+                }
+              });
+            }
+          });
+          
+          // Also include parent tags that directly match product tag IDs (in case products have parent tags directly)
+          productTagIds.forEach(id => {
+            if (allParentTagIds.has(id)) {
+              referencedParentTagIds.add(id);
+            }
+          });
+          
+          // Filter parent tags to only those referenced by products
+          parentTags = parentTags.filter(tag => {
+            const tagId = Number(tag.tag_id);
+            return allParentTagIds.has(tagId) && referencedParentTagIds.has(tagId);
+          });
+          
+          console.log(`[Viator Tags API] Filtered to ${parentTags.length} applicable parent tags from ${productTagIds.length} product tags`);
+        }
+      }
+    }
+
+    // Final validation: ensure ALL returned tags are actually parent tags
+    const validatedParentTags = parentTags.filter(tag => allParentTagIds.has(Number(tag.tag_id)));
+    if (validatedParentTags.length !== parentTags.length) {
+      console.warn(`[Viator Tags API] WARNING: Filtered out ${parentTags.length - validatedParentTags.length} non-parent tags!`);
+    }
+    parentTags = validatedParentTags;
 
     // Debug logging - detailed breakdown
     console.log(`[Viator Tags API] Processing results:`);
@@ -312,10 +375,27 @@ export async function GET(req: Request) {
       }
     }
 
+    // If tagIds parameter is provided, also return all tags (not just parent tags) for building child-to-parent map
+    let allTagsForMap: any[] = [];
+    if (tagIdsParam) {
+      const tagIds = tagIdsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      if (tagIds.length > 0) {
+        const allTagsQuery = supabase
+          .from("viator_tags")
+          .select("tag_id, tag_name, metadata")
+          .in("tag_id", tagIds);
+        const { data: allTagsData } = await allTagsQuery;
+        if (allTagsData) {
+          allTagsForMap = allTagsData;
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       count: parentTags.length,
       tags: parentTags,
+      ...(allTagsForMap.length > 0 && { allTags: allTagsForMap }),
     });
   } catch (error) {
     console.error("[Viator Tags API] Unhandled error:", error);

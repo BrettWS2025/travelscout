@@ -73,6 +73,17 @@ export function useTripPlanner() {
         });
       }
       state.setRecent(pushRecent({ id: c.id, name: c.name }, state.recent));
+      
+      // Prefetch Viator products in the background when destination is selected
+      // This warms up the cache so "Things to do" loads faster
+      if (c.lat && c.lng) {
+        import("@/lib/viator-helpers").then(({ prefetchViatorProductsForLocation }) => {
+          prefetchViatorProductsForLocation(c.lat!, c.lng!, c.name).catch((err) => {
+            // Silently fail - prefetching is best effort
+            console.debug("Viator prefetch failed (non-critical):", err);
+          });
+        });
+      }
     } catch (error) {
       console.error("Error selecting destination:", error);
     }
