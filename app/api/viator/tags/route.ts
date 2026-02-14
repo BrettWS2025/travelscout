@@ -14,20 +14,21 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: Request) {
   try {
-    // Get Supabase credentials
+    // Get Supabase credentials (using anon key for read-only access)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
         {
           error: "Supabase credentials not configured.",
+          message: "Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment.",
         },
         { status: 500 }
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { searchParams } = new URL(req.url);
     
     const category = searchParams.get("category");
