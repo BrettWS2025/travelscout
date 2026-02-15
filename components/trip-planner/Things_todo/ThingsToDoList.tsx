@@ -3,25 +3,13 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ChevronLeft, ChevronRight, List, MapPin } from "lucide-react";
 import {
-  getWalkingExperiencesByDistrict,
-  getWalkingExperiencesNearPoint,
-  getWalkingExperiencesByDistricts,
-  getWalkingExperiencesNearRoute,
-  getDistrictsAlongRoute,
-  createStraightLineRoute,
-  routeToWKT,
   type WalkingExperience,
 } from "@/lib/walkingExperiences";
-import { searchPlacesByName, getPlaceDistrictByName } from "@/lib/places";
-import { parseDisplayName } from "@/lib/trip-planner/utils";
 import {
   transformWalkingExperience,
-  transformViatorProduct,
-  fetchViatorProductsForLocation,
-  fetchViatorProductsForRoute,
-  fetchAllViatorProductsProgressive,
   type ExperienceItem,
 } from "@/lib/viator-helpers";
+import { useThingsToDo, useTags, type ViatorTag } from "@/lib/hooks/useThingsToDo";
 import dynamic from "next/dynamic";
 
 // Lazy load the map component to improve initial load performance
@@ -44,363 +32,44 @@ type ThingsToDoListProps = {
 
 const ITEMS_PER_PAGE = 12;
 
-type ViatorTag = {
-  tag_id: number;
-  tag_name: string;
-  description?: string;
-  category?: string;
-  group_name?: string;
-  metadata?: {
-    parentTagIds?: number[];
-    allNamesByLocale?: {
-      en?: string;
-      [key: string]: string | undefined;
-    };
-    [key: string]: any;
-  };
-};
-
 export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToDoListProps) {
-  const [walkingExperiences, setWalkingExperiences] = useState<WalkingExperience[]>([]);
-  const [viatorProducts, setViatorProducts] = useState<ExperienceItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [viatorPage, setViatorPage] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const tagsScrollRef = useRef<HTMLDivElement>(null);
   
   // Tag filtering state
-  const [tags, setTags] = useState<ViatorTag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [tagsLoading, setTagsLoading] = useState(false);
   const [canScrollTagsLeft, setCanScrollTagsLeft] = useState(false);
   const [canScrollTagsRight, setCanScrollTagsRight] = useState(true);
-  // Map of child tag ID -> array of parent tag IDs
-  const [childTagToParentsMap, setChildTagToParentsMap] = useState<Map<number, number[]>>(new Map());
 
+  // Fetch things to do using React Query
+  const {
+    data: thingsToDoData,
+    isLoading: loading,
+    error: thingsToDoError,
+  } = useThingsToDo(location);
+
+  const walkingExperiences = thingsToDoData?.walkingExperiences || [];
+  const viatorProducts = thingsToDoData?.viatorProducts || [];
+  const error = thingsToDoError
+    ? (thingsToDoError instanceof Error
+        ? thingsToDoError.message
+        : "Failed to load experiences")
+    : null;
+
+  // Fetch tags using React Query
+  const {
+    data: tagsData,
+    isLoading: tagsLoading,
+  } = useTags(viatorProducts);
+
+  const tags = tagsData?.tags || [];
+  const childTagToParentsMap = tagsData?.childTagToParentsMap || new Map();
+
+  // Reset to first page when location changes
   useEffect(() => {
-    async function fetchExperiences() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Check if location is a road sector (contains " to ")
-        const isRoadSector = location.includes(" to ");
-        
-        if (isRoadSector) {
-          // Road sector: get experiences along the entire route
-          const [fromCity, toCity] = location.split(" to ").map(s => s.trim());
-          
-          console.log("[ThingsToDoList] Road sector:", { fromCity, toCity });
-          
-          // Get coordinates for both cities
-          const fromPlace = await searchPlacesByName(fromCity, 1);
-          const toPlace = await searchPlacesByName(toCity, 1);
-          
-          console.log("[ThingsToDoList] Places found:", { 
-            fromPlace: fromPlace[0] ? { name: fromPlace[0].name, lat: fromPlace[0].lat, lng: fromPlace[0].lng } : null,
-            toPlace: toPlace[0] ? { name: toPlace[0].name, lat: toPlace[0].lat, lng: toPlace[0].lng } : null
-          });
-          
-          if (fromPlace.length > 0 && toPlace.length > 0 && 
-              fromPlace[0].lat && fromPlace[0].lng && 
-              toPlace[0].lat && toPlace[0].lng) {
-            
-            // Create a route with intermediate waypoints (more waypoints for better coverage)
-            const routeCoordinates = createStraightLineRoute(
-              fromPlace[0].lat,
-              fromPlace[0].lng,
-              toPlace[0].lat,
-              toPlace[0].lng,
-              15 // More intermediate waypoints
-            );
-            
-            // Convert to WKT
-            const routeWkt = routeToWKT(routeCoordinates);
-            console.log("[ThingsToDoList] Route WKT created, length:", routeCoordinates.length, "points");
-            
-            // Try using route buffer approach first (more reliable)
-            const routeResults = await getWalkingExperiencesNearRoute(routeWkt, 30.0, 500); // 30km buffer, increased limit
-            
-            console.log("[ThingsToDoList] Route buffer results:", routeResults.length);
-            
-            if (routeResults.length > 0) {
-              setWalkingExperiences(routeResults);
-            } else {
-              // Fallback: Get districts along the route
-              const districts = await getDistrictsAlongRoute(routeWkt, 20);
-              console.log("[ThingsToDoList] Districts found along route:", districts);
-              
-              // Also include districts from start and end cities
-              const fromDistrict = await getPlaceDistrictByName(fromCity);
-              const toDistrict = await getPlaceDistrictByName(toCity);
-              console.log("[ThingsToDoList] City districts:", { fromDistrict, toDistrict });
-              
-              // Combine all districts and remove duplicates
-              const allDistricts = Array.from(new Set([
-                ...districts,
-                ...(fromDistrict ? [fromDistrict] : []),
-                ...(toDistrict ? [toDistrict] : []),
-              ]));
-              
-              console.log("[ThingsToDoList] All districts:", allDistricts);
-              
-              if (allDistricts.length > 0) {
-                // Query by all districts along the route
-                const results = await getWalkingExperiencesByDistricts(allDistricts, 500);
-                console.log("[ThingsToDoList] District query results:", results.length);
-                setWalkingExperiences(results);
-              } else {
-                // Fallback: query by radius from midpoint
-                const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
-                const midLng = (fromPlace[0].lng + toPlace[0].lng) / 2;
-                const distance = Math.sqrt(
-                  Math.pow((toPlace[0].lat - fromPlace[0].lat) * 111, 2) +
-                  Math.pow((toPlace[0].lng - fromPlace[0].lng) * 111 * Math.cos(midLat * Math.PI / 180), 2)
-                );
-                
-                console.log("[ThingsToDoList] Using midpoint fallback:", { midLat, midLng, distance });
-                const results = await getWalkingExperiencesNearPoint(
-                  midLat,
-                  midLng,
-                  Math.max(distance / 2, 50.0), // At least 50km radius
-                  500
-                );
-                console.log("[ThingsToDoList] Midpoint query results:", results.length);
-                setWalkingExperiences(results);
-              }
-            }
-            
-            // Fetch Viator products for the route with progressive loading
-            try {
-              // Show first page immediately
-              const firstPage = await fetchViatorProductsForRoute(
-                fromPlace[0].lat,
-                fromPlace[0].lng,
-                toPlace[0].lat,
-                toPlace[0].lng,
-                0,
-                500,
-                fromCity,
-                toCity
-              );
-              
-              console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
-              
-              // Show first page immediately
-              setViatorProducts(firstPage.products);
-              
-              // Load remaining products in background if needed
-              if (firstPage.products.length < firstPage.total) {
-                // Calculate midpoint for progressive loading
-                const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
-                const midLng = (fromPlace[0].lng + toPlace[0].lng) / 2;
-                const locationName = fromCity || toCity;
-                
-                fetchAllViatorProductsProgressive(
-                  midLat,
-                  midLng,
-                  locationName,
-                  firstPage.products,
-                  firstPage.total
-                ).then((result) => {
-                  setViatorProducts(result.products);
-                }).catch((error) => {
-                  console.warn("Error loading remaining products:", error);
-                });
-              }
-            } catch (viatorError) {
-              console.warn("Failed to fetch Viator products for route:", viatorError);
-              setViatorProducts([]);
-            }
-          } else {
-            // Fallback: try to find districts by name only
-            const fromDistrict = await getPlaceDistrictByName(fromCity);
-            const toDistrict = await getPlaceDistrictByName(toCity);
-            
-            const districts = [fromDistrict, toDistrict].filter((d): d is string => d !== null);
-            
-            if (districts.length > 0) {
-              const results = await getWalkingExperiencesByDistricts(districts, 500);
-              setWalkingExperiences(results);
-            } else {
-              setWalkingExperiences([]);
-            }
-          }
-        } else {
-          // Itinerary sector: single location
-          // Try to get district from location name
-          const { cityName, district } = parseDisplayName(location);
-          
-          let districtName: string | null = district || null;
-          
-          // If no district in display name, try to look it up
-          if (!districtName) {
-            districtName = await getPlaceDistrictByName(cityName || location);
-          }
-          
-          if (districtName) {
-            // Query by district (fastest / preferred)
-            const results = await getWalkingExperiencesByDistrict(districtName, 500);
-            console.log("[ThingsToDoList] Itinerary district results:", {
-              location,
-              cityName,
-              districtName,
-              count: results.length,
-            });
-
-            if (results.length > 0) {
-              setWalkingExperiences(results);
-              
-              // Fetch Viator products for this location
-              const places = await searchPlacesByName(cityName || location, 1);
-              if (places.length > 0 && places[0].lat && places[0].lng) {
-                try {
-                  console.log(`[ThingsToDoList] ========================================`);
-                  console.log(`[ThingsToDoList] FETCHING VIATOR PRODUCTS`);
-                  console.log(`[ThingsToDoList] Location: ${cityName || location}`);
-                  console.log(`[ThingsToDoList] Coordinates: lat=${places[0].lat}, lng=${places[0].lng}`);
-                  console.log(`[ThingsToDoList] Radius: 60km (NOTE: Viator API ignores radius - searches by destination only)`);
-                  console.log(`[ThingsToDoList] ========================================`);
-                  
-                  // Use progressive loading: show first page immediately, then load rest in background
-                  console.log(`[ThingsToDoList] Starting progressive load...`);
-                  
-                  // Show first page immediately
-                  const firstPage = await fetchViatorProductsForLocation(
-                    places[0].lat,
-                    places[0].lng,
-                    60.0,
-                    0,
-                    500,
-                    cityName || location
-                  );
-                  
-                  console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
-                  console.log(`[ThingsToDoList] Has more: ${firstPage.hasMore}`);
-                  console.log(`[ThingsToDoList] Need more: ${firstPage.products.length < firstPage.total}`);
-                  
-                  // Show first page immediately to user
-                  setViatorProducts(firstPage.products);
-                  
-                  // If there are more products, fetch them in the background using parallel batches
-                  // Check if we have fewer products than total (don't rely on hasMore flag)
-                  if (firstPage.products.length < firstPage.total) {
-                    console.log(`[ThingsToDoList] Loading remaining products in background...`);
-                    console.log(`[ThingsToDoList] Need to fetch ${firstPage.total - firstPage.products.length} more products`);
-                    
-                    // Fetch all remaining products progressively (in parallel batches)
-                    // Pass the first page data so we don't refetch it
-                    fetchAllViatorProductsProgressive(
-                      places[0].lat,
-                      places[0].lng,
-                      cityName || location,
-                      firstPage.products,
-                      firstPage.total,
-                      (current, total) => {
-                        console.log(`[ThingsToDoList] Progress: ${current}/${total} products loaded`);
-                      }
-                    ).then((result) => {
-                      console.log(`[ThingsToDoList] All products loaded: ${result.products.length}/${result.total}`);
-                      setViatorProducts(result.products);
-                    }).catch((error) => {
-                      console.warn(`[ThingsToDoList] Error loading remaining products:`, error);
-                      // Keep the first page results even if background loading fails
-                    });
-                  } else {
-                    console.log(`[ThingsToDoList] All products already loaded (${firstPage.products.length}/${firstPage.total})`);
-                  }
-                } catch (viatorError) {
-                  console.warn("Failed to fetch Viator products:", viatorError);
-                  setViatorProducts([]);
-                }
-              }
-              return;
-            }
-
-            // Some cities (e.g. Napier) can have a district name that doesn't
-            // exactly match the DOC walking_experiences.district_name values.
-            // If the district query returns no results, fall back to a
-            // coordinate-based radius search around the city so we still
-            // surface nearby tracks.
-            console.log("[ThingsToDoList] Itinerary district query empty, falling back to radius search");
-          }
-
-          // Fallback: try to get coordinates and query by radius
-          const places = await searchPlacesByName(cityName || location, 1);
-          
-          if (places.length > 0 && places[0].lat && places[0].lng) {
-            console.log("[ThingsToDoList] Itinerary fallback - searching near point:", {
-              location,
-              cityName,
-              place: { name: places[0].name, lat: places[0].lat, lng: places[0].lng },
-              radius: 60.0
-            });
-            const results = await getWalkingExperiencesNearPoint(
-              places[0].lat,
-              places[0].lng,
-              60.0, // 60km radius
-              500
-            );
-            console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
-            setWalkingExperiences(results);
-            
-            // Fetch Viator products with progressive loading
-            try {
-              // Show first page immediately
-              const firstPage = await fetchViatorProductsForLocation(
-                places[0].lat,
-                places[0].lng,
-                60.0,
-                0,
-                500,
-                cityName || location
-              );
-              
-              console.log(`[ThingsToDoList] First page loaded: ${firstPage.products.length} products, ${firstPage.total} total available`);
-              
-              // Show first page immediately
-              setViatorProducts(firstPage.products);
-              
-              // Load remaining products in background if needed
-              if (firstPage.products.length < firstPage.total) {
-                fetchAllViatorProductsProgressive(
-                  places[0].lat,
-                  places[0].lng,
-                  cityName || location,
-                  firstPage.products,
-                  firstPage.total
-                ).then((result) => {
-                  setViatorProducts(result.products);
-                }).catch((error) => {
-                  console.warn("Error loading remaining products:", error);
-                });
-              }
-            } catch (viatorError) {
-              console.warn("Failed to fetch Viator products:", viatorError);
-              setViatorProducts([]);
-            }
-          } else {
-            console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
-            setWalkingExperiences([]);
-            setViatorProducts([]);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching experiences:", err);
-        setError("Failed to load experiences");
-        setWalkingExperiences([]);
-        setViatorProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchExperiences();
-    setCurrentPage(1); // Reset to first page when location changes
-    setViatorPage(1);
+    setCurrentPage(1);
   }, [location]);
 
   // Check scroll buttons for tags
@@ -433,99 +102,6 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     }, 100);
   };
 
-  // Fetch tags for filtering and build child-to-parent mapping
-  useEffect(() => {
-    async function fetchTagsAndBuildMap() {
-      setTagsLoading(true);
-      try {
-        // Collect all tag IDs from current products to filter tags
-        const productTagIds = new Set<number>();
-        viatorProducts.forEach(product => {
-          if (product.tagIds && Array.isArray(product.tagIds)) {
-            product.tagIds.forEach(tagId => {
-              if (typeof tagId === 'number') {
-                productTagIds.add(tagId);
-              }
-            });
-          }
-        });
-        
-        // Build API URL with product tag IDs if we have products
-        let apiUrl = "/api/viator/tags";
-        if (productTagIds.size > 0) {
-          const tagIdsParam = Array.from(productTagIds).join(',');
-          apiUrl += `?productTagIds=${encodeURIComponent(tagIdsParam)}`;
-        }
-        
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`[ThingsToDoList] Tags API response:`, { success: data.success, count: data.count, tagsLength: data.tags?.length });
-          if (data.success && data.tags) {
-            console.log(`[ThingsToDoList] Loaded ${data.tags.length} tags for filtering`);
-            if (data.tags.length > 0) {
-              console.log(`[ThingsToDoList] Sample tags:`, data.tags.slice(0, 3).map((t: any) => ({
-                id: t.tag_id,
-                name: t.tag_name,
-                has_metadata: !!t.metadata,
-                metadata_type: typeof t.metadata,
-                metadata: t.metadata ? (typeof t.metadata === 'string' ? 'string' : Object.keys(t.metadata || {})) : null
-              })));
-            } else {
-              console.warn(`[ThingsToDoList] API returned success but 0 tags. Check server terminal logs for [Viator Tags API] messages.`);
-            }
-            setTags(data.tags);
-          } else {
-            console.warn("[ThingsToDoList] Tags API returned unsuccessful response:", data);
-          }
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.error("[ThingsToDoList] Failed to fetch tags:", response.status, errorData);
-        }
-
-        // Now fetch all product tags to build child-to-parent mapping
-        if (productTagIds.size > 0) {
-          try {
-            const childTagsResponse = await fetch(`/api/viator/tags?tagIds=${Array.from(productTagIds).join(',')}`);
-            if (childTagsResponse.ok) {
-              const childTagsData = await childTagsResponse.json();
-              if (childTagsData.success && childTagsData.allTags) {
-                const map = new Map<number, number[]>();
-                childTagsData.allTags.forEach((tag: any) => {
-                  let metadata = tag.metadata;
-                  if (typeof metadata === 'string') {
-                    try {
-                      metadata = JSON.parse(metadata);
-                    } catch (e) {
-                      return;
-                    }
-                  }
-                  const parentTagIds = metadata?.parentTagIds;
-                  if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
-                    const parentIds = parentTagIds.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : Number(id)).filter((id: number) => !isNaN(id) && id > 0);
-                    if (parentIds.length > 0) {
-                      map.set(tag.tag_id, parentIds);
-                    }
-                  }
-                });
-                setChildTagToParentsMap(map);
-                console.log(`[ThingsToDoList] Built child-to-parent map with ${map.size} entries`);
-              }
-            }
-          } catch (err) {
-            console.error("[ThingsToDoList] Error fetching child tag metadata:", err);
-          }
-        } else {
-          setChildTagToParentsMap(new Map());
-        }
-      } catch (err) {
-        console.error("[ThingsToDoList] Error fetching tags:", err);
-      } finally {
-        setTagsLoading(false);
-      }
-    }
-    fetchTagsAndBuildMap();
-  }, [viatorProducts]);
 
   // Update scroll buttons when tags change or container resizes
   useEffect(() => {

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Map, { Marker, Source, Layer, Popup, NavigationControl } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -266,41 +267,31 @@ async function fetchToiletsAlongRoute(routeGeometry: [number, number][]): Promis
 
 export default function TripMap({ points }: { points: TripMapPoint[] }) {
   const mapRef = useRef<MapRef>(null);
-  const [routeGeometry, setRouteGeometry] = useState<[number, number][] | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<TripMapPoint | null>(null);
   const [popupLocation, setPopupLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showToilets, setShowToilets] = useState(false);
-  const [toilets, setToilets] = useState<Toilet[]>([]);
-  const [toiletsLoading, setToiletsLoading] = useState(false);
   const [selectedToilet, setSelectedToilet] = useState<Toilet | null>(null);
 
-  // Fetch route geometry when points change
-  useEffect(() => {
-    if (points.length >= 2) {
-      fetchRouteGeometry(points).then(setRouteGeometry);
-    } else {
-      setRouteGeometry(null);
-    }
-  }, [points]);
+  // Fetch route geometry using React Query
+  const { data: routeGeometry } = useQuery({
+    queryKey: ["routeGeometry", points.map(p => `${p.lat},${p.lng}`).join(";")],
+    queryFn: () => fetchRouteGeometry(points),
+    enabled: points.length >= 2,
+  });
 
-  // Fetch toilets when toggle is enabled and route geometry is available
+  // Fetch toilets using React Query
+  const { data: toilets = [], isLoading: toiletsLoading } = useQuery({
+    queryKey: ["toilets", routeGeometry?.map(([lng, lat]) => `${lat},${lng}`).join(";")],
+    queryFn: () => fetchToiletsAlongRoute(routeGeometry!),
+    enabled: showToilets && !!routeGeometry && routeGeometry.length > 0,
+  });
+
+  // Clear selected toilet when toilets are hidden
   useEffect(() => {
-    if (showToilets && routeGeometry && routeGeometry.length > 0) {
-      setToiletsLoading(true);
-      fetchToiletsAlongRoute(routeGeometry)
-        .then((fetchedToilets) => {
-          setToilets(fetchedToilets);
-          setToiletsLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching toilets:", error);
-          setToiletsLoading(false);
-        });
-    } else {
-      setToilets([]);
+    if (!showToilets) {
       setSelectedToilet(null);
     }
-  }, [showToilets, routeGeometry]);
+  }, [showToilets]);
 
   // Fit map bounds to all points
   useEffect(() => {

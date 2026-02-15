@@ -6,6 +6,7 @@ import type { TripPlan } from "@/lib/itinerary";
 import { formatShortRangeDate, addDaysToIsoDate, type DayStopMeta } from "@/lib/trip-planner/utils";
 import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
+import { usePrefetchAdjacentDestinations } from "@/lib/hooks/usePrefetchAdjacentDestinations";
 import ExperienceCard from "@/components/trip-planner/ExperienceCard";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
@@ -52,6 +53,9 @@ export default function RoadSectorCard({
   // State for view toggle (road trip vs things to do)
   const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
   const routeName = `${fromStopName} to ${toStopName}`;
+
+  // Prefetch adjacent destinations for faster navigation
+  usePrefetchAdjacentDestinations(routeName, routeStops, toStopIndex);
   
   // Calculate the date when arriving at the destination
   // For road sector from A to B: find the first day at destination stop (toStopIndex)

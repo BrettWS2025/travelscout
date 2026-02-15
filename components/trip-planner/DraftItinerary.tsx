@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
+import { usePrefetchThingsToDo } from "@/lib/hooks/usePrefetchThingsToDo";
 import {
   DndContext,
   closestCenter,
@@ -59,6 +60,10 @@ export default function DraftItinerary({
   onAddToItinerary,
   endDate,
 }: Props) {
+  // Prefetch "Things to do" data for all route stops when the itinerary is generated
+  // This ensures data is ready immediately when users switch to the "Things to do" tab
+  usePrefetchThingsToDo(routeStops);
+
   const stopGroups = useMemo(() => {
     if (!plan || plan.days.length === 0) return [];
 

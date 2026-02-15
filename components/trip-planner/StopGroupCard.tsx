@@ -15,6 +15,7 @@ import CitySearchPill from "@/components/trip-planner/CitySearchPill";
 import type { Group } from "@/components/trip-planner/DraftItinerary.types";
 import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
+import { usePrefetchAdjacentDestinations } from "@/lib/hooks/usePrefetchAdjacentDestinations";
 
 type StopGroupCardProps = {
   group: Group;
@@ -90,6 +91,9 @@ export default function StopGroupCard({
   
   // State for view toggle (itinerary vs things to do)
   const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
+
+  // Prefetch adjacent destinations for faster navigation
+  usePrefetchAdjacentDestinations(g.stopName, routeStops, g.stopIndex);
 
   return (
     <div

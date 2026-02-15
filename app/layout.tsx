@@ -9,6 +9,7 @@ import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"; // optional
 import { AuthProvider } from "@/components/AuthProvider"; // 👈 NEW
+import { QueryProvider } from "@/components/QueryProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -126,13 +127,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         {/* 👇 Everything that needs to know about auth lives inside here */}
-        <AuthProvider>
-          <Navbar />
-          <main className="container pt-[120px] pb-10">{children}</main>
-          <Footer />
-          {isProd && <Analytics />}
-          {isProd && <SpeedInsights />}
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="container pt-[120px] pb-10">{children}</main>
+            <Footer />
+            {isProd && <Analytics />}
+            {isProd && <SpeedInsights />}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

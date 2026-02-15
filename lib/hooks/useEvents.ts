@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export type Event = {
   id: number;
@@ -174,333 +174,204 @@ function eventOccursOnDate(event: Event, targetDate: string): boolean {
 }
 
 /**
+ * Fetch events for a specific date and location
+ */
+async function fetchEvents(
+  date: string,
+  lat: number,
+  lng: number
+): Promise<Event[]> {
+  // Build query parameters
+  const params = new URLSearchParams();
+  params.append("lat", lat.toString());
+  params.append("lng", lng.toString());
+  params.append("radius", "30"); // 30km radius
+  
+  // Add date filtering - query for events that occur on the target date
+  const nextDay = getNextDay(date);
+  params.append("start_date", date);
+  params.append("end_date", nextDay);
+  params.append("rows", "20");
+  params.append("order", "date");
+
+  // Paginate through all results
+  const allEvents: Event[] = [];
+  let offset = 0;
+  const rowsPerPage = 20;
+  let hasMore = true;
+
+  while (hasMore) {
+    const paginatedParams = new URLSearchParams(params);
+    paginatedParams.set("offset", offset.toString());
+    
+    const res = await fetch(`/api/events?${paginatedParams.toString()}`);
+    
+    if (!res.ok) {
+      let errorMessage = `Failed to fetch events: ${res.statusText}`;
+      try {
+        const errorData = await res.json();
+        if (errorData.error) {
+          errorMessage = errorData.error;
+          if (errorData.details) {
+            errorMessage += ` - ${errorData.details}`;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // If JSON parsing fails, use the status text
+      }
+      throw new Error(errorMessage);
+    }
+    
+    const data = await res.json();
+    
+    if (data.error) {
+      throw new Error(`Failed to fetch events: ${data.error}${data.details ? ` - ${data.details}` : ''}`);
+    }
+
+    const events = data.events || [];
+    allEvents.push(...events);
+    
+    // Check if there are more results
+    const total = data.total || 0;
+    const fetched = offset + events.length;
+    hasMore = fetched < total && events.length === rowsPerPage;
+    offset += rowsPerPage;
+  }
+
+  // Transform Eventfinda events to our Event type
+  const transformedEvents: Event[] = allEvents.map((event: any) => {
+    // Extract image URL
+    let imageUrl: string | undefined;
+    
+    if (event.images) {
+      if (Array.isArray(event.images)) {
+        const primaryImage = event.images.find((img: any) => img.is_primary) || event.images[0];
+        if (primaryImage) {
+          imageUrl = primaryImage.original_url || primaryImage.url;
+        }
+      } else if (event.images.images && Array.isArray(event.images.images)) {
+        const primaryImage = event.images.images.find((img: any) => img.is_primary) || event.images.images[0];
+        if (primaryImage) {
+          imageUrl = primaryImage.original_url || primaryImage.url;
+        }
+      }
+    }
+
+    // Extract sessions and find the one matching the target date
+    let datetime_summary: string | undefined = event.datetime_summary;
+    let sessionDatetimeStart = event.datetime_start;
+    let sessionDatetimeEnd = event.datetime_end;
+    let hasSessions = false;
+    let foundMatchingSession = false;
+
+    if (event.sessions) {
+      hasSessions = true;
+      let sessions: any[] = [];
+      
+      if (Array.isArray(event.sessions)) {
+        sessions = event.sessions;
+      } else if (event.sessions.sessions && Array.isArray(event.sessions.sessions)) {
+        sessions = event.sessions.sessions;
+      }
+
+      const matchingSession = sessions.find((session: any) => {
+        if (!session.datetime_start || session.is_cancelled) return false;
+        const sessionDate = extractLocalDate(session.datetime_start);
+        return sessionDate === date;
+      });
+
+      if (matchingSession) {
+        datetime_summary = matchingSession.datetime_summary || datetime_summary;
+        sessionDatetimeStart = matchingSession.datetime_start;
+        sessionDatetimeEnd = matchingSession.datetime_end;
+        foundMatchingSession = true;
+      } else {
+        sessionDatetimeStart = null as any;
+        sessionDatetimeEnd = null as any;
+      }
+    }
+
+    return {
+      id: event.id,
+      name: event.name,
+      url: event.url,
+      description: event.description,
+      imageUrl,
+      datetime_start: sessionDatetimeStart,
+      datetime_end: sessionDatetimeEnd,
+      datetime_summary,
+      _hasSessions: hasSessions,
+      _foundMatchingSession: foundMatchingSession,
+    };
+  });
+
+  // Filter events to only include those that actually occur on the target date
+  const filteredEvents = transformedEvents.filter((event: any) => {
+    if (shouldExcludeEvent(event)) {
+      return false;
+    }
+    
+    if (event._hasSessions && !event._foundMatchingSession) {
+      return false;
+    }
+
+    if (!event.datetime_start) {
+      return false;
+    }
+
+    if (event._hasSessions && event._foundMatchingSession) {
+      return true;
+    }
+
+    const eventStartDate = extractLocalDate(event.datetime_start);
+    const eventStartsOnTargetDate = eventStartDate === date;
+
+    if (eventStartsOnTargetDate) {
+      return true;
+    }
+
+    if (event.datetime_end) {
+      const eventEndDate = extractLocalDate(event.datetime_end);
+      const eventStart = new Date(event.datetime_start);
+      const eventEnd = new Date(event.datetime_end);
+      const durationHours = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60);
+      const targetDateObj = new Date(date + "T00:00:00");
+      const spansTargetDate = eventStart <= targetDateObj && eventEnd >= targetDateObj;
+      
+      if (spansTargetDate && durationHours >= 24) {
+        return true;
+      }
+    }
+
+    return false;
+  }).map((event: any) => {
+    const { _hasSessions, _foundMatchingSession, ...cleanEvent } = event;
+    return cleanEvent;
+  });
+
+  return filteredEvents;
+}
+
+/**
  * Hook to fetch events for a specific date and location
  */
 export function useEvents(date: string, locationName: string, lat?: number, lng?: number): UseEventsResult {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Don't fetch if we don't have required data
-    if (!date || !locationName) {
-      setEvents([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    // Don't fetch if we don't have coordinates yet (they're being loaded asynchronously)
-    if (lat === undefined || lng === undefined) {
-      setEvents([]);
-      setLoading(true); // Still loading coordinates
-      setError(null);
-      return;
-    }
-
-    // Create AbortController to cancel in-flight requests when dependencies change
-    const abortController = new AbortController();
-    let isCancelled = false;
-
-    setLoading(true);
-    setError(null);
-
-    // Build query parameters
-    const params = new URLSearchParams();
-    
-    // Use lat/lng - we know they're defined at this point
-    params.append("lat", lat.toString());
-    params.append("lng", lng.toString());
-    params.append("radius", "30"); // 30km radius
-    
-    // Add date filtering - query for events that occur on the target date
-    // Strategy: Query a range that includes:
-    // 1. Events starting on the target date
-    // 2. Events that span midnight (start on target date, end next day)
-    // 
-    // The Eventfinda API's end_date is exclusive (events ending before this date)
-    // So to include events ending on the target date, we need end_date=target date + 1 day
-    // To include events starting on the target date, we use start_date=target date
-    const nextDay = getNextDay(date); // One day after the target date
-    params.append("start_date", date); // Include events starting on the target date
-    params.append("end_date", nextDay); // Include events ending on the target date (end_date is exclusive)
-    
-    params.append("rows", "20"); // Eventfinda API max is 20 per request
-    params.append("order", "date");
-
-    // Paginate through all results
-    const fetchAllEvents = async (): Promise<Event[]> => {
-      const allEvents: Event[] = [];
-      let offset = 0;
-      const rowsPerPage = 20;
-      let hasMore = true;
-
-      while (hasMore && !isCancelled) {
-        const paginatedParams = new URLSearchParams(params);
-        paginatedParams.set("offset", offset.toString());
-        
-        const res = await fetch(`/api/events?${paginatedParams.toString()}`, {
-          signal: abortController.signal,
-        });
-        
-        if (!res.ok) {
-          // Try to get more detailed error information
-          let errorMessage = `Failed to fetch events: ${res.statusText}`;
-          try {
-            const errorData = await res.json();
-            if (errorData.error) {
-              errorMessage = errorData.error;
-              if (errorData.details) {
-                errorMessage += ` - ${errorData.details}`;
-              }
-            } else if (errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch {
-            // If JSON parsing fails, use the status text
-          }
-          throw new Error(errorMessage);
-        }
-        
-        const data = await res.json();
-        
-        if (data.error) {
-          throw new Error(`Failed to fetch events: ${data.error}${data.details ? ` - ${data.details}` : ''}`);
-        }
-
-        const events = data.events || [];
-        allEvents.push(...events);
-        
-        // Check if there are more results
-        const total = data.total || 0;
-        const fetched = offset + events.length;
-        hasMore = fetched < total && events.length === rowsPerPage;
-        offset += rowsPerPage;
+  const { data: events = [], isLoading: loading, error } = useQuery({
+    queryKey: ["events", date, locationName, lat, lng],
+    queryFn: () => {
+      if (!date || !locationName || lat === undefined || lng === undefined) {
+        return Promise.resolve([]);
       }
+      return fetchEvents(date, lat, lng);
+    },
+    enabled: !!date && !!locationName && lat !== undefined && lng !== undefined,
+  });
 
-      return allEvents;
-    };
-
-    fetchAllEvents()
-      .then((allEvents) => {
-        if (isCancelled) return;
-
-        // Transform Eventfinda events to our Event type
-        const transformedEvents: Event[] = allEvents.map((event: any) => {
-          // Extract image URL - handle different image formats
-          let imageUrl: string | undefined;
-          
-          if (event.images) {
-            if (Array.isArray(event.images)) {
-              // If images is an array, find primary or first image
-              const primaryImage = event.images.find((img: any) => img.is_primary) || event.images[0];
-              if (primaryImage) {
-                imageUrl = primaryImage.original_url || primaryImage.url;
-              }
-            } else if (event.images.images && Array.isArray(event.images.images)) {
-              // If images has an images property
-              const primaryImage = event.images.images.find((img: any) => img.is_primary) || event.images.images[0];
-              if (primaryImage) {
-                imageUrl = primaryImage.original_url || primaryImage.url;
-              }
-            }
-          }
-
-          // Extract sessions and find the one matching the target date
-          let datetime_summary: string | undefined = event.datetime_summary;
-          let sessionDatetimeStart = event.datetime_start;
-          let sessionDatetimeEnd = event.datetime_end;
-          let hasSessions = false;
-          let foundMatchingSession = false;
-
-          if (event.sessions) {
-            hasSessions = true;
-            let sessions: any[] = [];
-            
-            // Handle different session formats
-            if (Array.isArray(event.sessions)) {
-              sessions = event.sessions;
-            } else if (event.sessions.sessions && Array.isArray(event.sessions.sessions)) {
-              sessions = event.sessions.sessions;
-            }
-
-            // Debug logging for events we're tracking
-            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-              console.log(`[useEvents] Event "${event.name}" has sessions:`, {
-                eventId: event.id,
-                sessionsCount: sessions.length,
-                sessionsStructure: event.sessions,
-                targetDate: date
-              });
-            }
-
-            // Find the session that matches the target date
-            const matchingSession = sessions.find((session: any) => {
-              if (!session.datetime_start || session.is_cancelled) return false;
-              const sessionDate = extractLocalDate(session.datetime_start);
-              return sessionDate === date;
-            });
-
-            if (matchingSession) {
-              // Use the matching session's datetime_summary and times
-              datetime_summary = matchingSession.datetime_summary || datetime_summary;
-              sessionDatetimeStart = matchingSession.datetime_start;
-              sessionDatetimeEnd = matchingSession.datetime_end;
-              foundMatchingSession = true;
-            } else {
-              // Event has sessions but no matching session - set datetime to null to ensure exclusion
-              // This prevents the parent event's date range from being used
-              sessionDatetimeStart = null as any;
-              sessionDatetimeEnd = null as any;
-            }
-          }
-
-          return {
-            id: event.id,
-            name: event.name,
-            url: event.url,
-            description: event.description,
-            imageUrl,
-            datetime_start: sessionDatetimeStart,
-            datetime_end: sessionDatetimeEnd,
-            datetime_summary,
-            _hasSessions: hasSessions,
-            _foundMatchingSession: foundMatchingSession,
-          };
-        });
-
-        // Filter events to only include those that actually occur on the target date
-        // Stage 1: Keyword-based exclusion - filter out irrelevant events (business networking, weekly catchball, etc.)
-        // Stage 2: Session-based exclusion - if event has sessions, only include if matching session found
-        const filteredEvents = transformedEvents.filter((event: any) => {
-          // First, check if event should be excluded based on keywords
-          if (shouldExcludeEvent(event)) {
-            console.log(`[useEvents] Event "${event.name}" filtered out: matches exclusion pattern`);
-            return false;
-          }
-          
-          // Critical: If event has sessions but no matching session was found, exclude it
-          // This prevents recurring events from showing on dates they don't actually occur
-          if (event._hasSessions && !event._foundMatchingSession) {
-            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-              console.log(`[useEvents] Event "${event.name}" filtered out: has sessions but none match target date ${date}`, {
-                eventId: event.id,
-                targetDate: date,
-                hasSessions: event._hasSessions,
-                foundMatchingSession: event._foundMatchingSession,
-                datetime_start: event.datetime_start,
-                datetime_end: event.datetime_end
-              });
-            }
-            return false;
-          }
-
-          // If datetime_start is null (because we have sessions but no match), exclude it
-          if (!event.datetime_start) {
-            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-              console.log(`[useEvents] Event "${event.name}" filtered out: datetime_start is null`);
-            }
-            return false;
-          }
-
-          // For events with sessions, we already matched the session to the target date, so include it
-          if (event._hasSessions && event._foundMatchingSession) {
-            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-              console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: has matching session`, {
-                datetime_start: event.datetime_start,
-                datetime_end: event.datetime_end,
-                datetime_summary: event.datetime_summary,
-              });
-            }
-            return true;
-          }
-
-          // For events without sessions, we need to distinguish between:
-          // 1. Single events that cross midnight (e.g., 8:30pm-12:30am) - only show on start date
-          // 2. Multi-day events (e.g., Saturday 7am-Sunday 10pm) - show on all days
-          const eventStartDate = extractLocalDate(event.datetime_start);
-          const eventStartsOnTargetDate = eventStartDate === date;
-
-          if (eventStartsOnTargetDate) {
-            // Event starts on target date - always include it
-            if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-              console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: starts on target date`, {
-                datetime_start: event.datetime_start,
-                datetime_end: event.datetime_end,
-              });
-            }
-            return true;
-          }
-
-          // Event doesn't start on target date - only include if it's a multi-day event that spans the target date
-          if (event.datetime_end) {
-            const eventEndDate = extractLocalDate(event.datetime_end);
-            const eventStart = new Date(event.datetime_start);
-            const eventEnd = new Date(event.datetime_end);
-            
-            // Calculate duration in hours
-            const durationHours = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60);
-            
-            // Check if event spans the target date
-            const targetDateObj = new Date(date + "T00:00:00");
-            const spansTargetDate = eventStart <= targetDateObj && eventEnd >= targetDateObj;
-            
-            // Only include if:
-            // 1. Event spans the target date, AND
-            // 2. Event duration is >= 24 hours (multi-day event)
-            // This excludes single events that cross midnight from showing on the end date
-            if (spansTargetDate && durationHours >= 24) {
-              if (event.name?.toLowerCase().includes('night market') || event.name?.toLowerCase().includes('welly')) {
-                console.log(`[useEvents] Event "${event.name}" INCLUDED for date ${date}: multi-day event spanning target date`, {
-                  datetime_start: event.datetime_start,
-                  datetime_end: event.datetime_end,
-                  durationHours: durationHours.toFixed(1),
-                });
-              }
-              return true;
-            }
-          }
-
-          // Event doesn't start on target date and either doesn't span it or is a short event crossing midnight
-          return false;
-        }).map((event: any) => {
-          // Remove internal flags before returning
-          const { _hasSessions, _foundMatchingSession, ...cleanEvent } = event;
-          return cleanEvent;
-        });
-
-        if (!isCancelled) {
-          console.log(`[useEvents] Fetched ${transformedEvents.length} events (paginated), filtered to ${filteredEvents.length} for date ${date}`);
-          if (transformedEvents.length > 0 && filteredEvents.length === 0) {
-            console.warn(`[useEvents] All events were filtered out! Sample event:`, {
-              name: transformedEvents[0].name,
-              datetime_start: transformedEvents[0].datetime_start,
-              datetime_end: transformedEvents[0].datetime_end
-            });
-          }
-          setEvents(filteredEvents);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        // Don't set error if request was aborted (expected behavior)
-        if (err.name === 'AbortError' || isCancelled) {
-          return;
-        }
-        console.error("Error fetching events:", err);
-        if (!isCancelled) {
-          setError(err.message || "Failed to fetch events");
-          setEvents([]);
-          setLoading(false);
-        }
-      });
-
-    // Cleanup: abort request if dependencies change or component unmounts
-    return () => {
-      isCancelled = true;
-      abortController.abort();
-    };
-  }, [date, locationName, lat, lng]);
-
-  return { events, loading, error };
+  return {
+    events,
+    loading,
+    error: error ? (error instanceof Error ? error.message : "Failed to fetch events") : null,
+  };
 }
