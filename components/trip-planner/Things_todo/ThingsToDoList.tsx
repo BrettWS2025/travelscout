@@ -40,6 +40,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   
   // Tag filtering state
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedWalkingFilter, setSelectedWalkingFilter] = useState(false);
   const [canScrollTagsLeft, setCanScrollTagsLeft] = useState(false);
   const [canScrollTagsRight, setCanScrollTagsRight] = useState(true);
 
@@ -67,9 +68,11 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   const tags = tagsData?.tags || [];
   const childTagToParentsMap = tagsData?.childTagToParentsMap || new Map();
 
-  // Reset to first page when location changes
+  // Reset to first page and clear filters when location changes
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedTagIds([]);
+    setSelectedWalkingFilter(false);
   }, [location]);
 
   // Check scroll buttons for tags
@@ -169,12 +172,18 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
   // Filter and sort experiences
   const filteredAndSortedExperiences = useMemo(() => {
-    // First filter by selected tags (only applies to Viator products)
+    // First filter by walking filter or tag filters
     let filtered = allExperiences;
-    if (selectedTagIds.length > 0) {
+    
+    // If walking filter is selected, show only walking experiences
+    if (selectedWalkingFilter) {
+      filtered = allExperiences.filter(exp => exp.type === "walking");
+    } 
+    // If tag filters are selected (but not walking filter), show only matching Viator products
+    else if (selectedTagIds.length > 0) {
       filtered = allExperiences.filter(exp => {
-        // Walking experiences always pass (no tags)
-        if (exp.type !== "viator") return true;
+        // Walking experiences are excluded when tag filters are active
+        if (exp.type !== "viator") return false;
         // Viator products must have at least one matching tag
         if (!exp.tagIds || exp.tagIds.length === 0) return false;
         
@@ -214,7 +223,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
       // If same duration, sort alphabetically by title
       return a.title.localeCompare(b.title);
     });
-  }, [allExperiences, selectedTagIds, childTagToParentsMap]);
+  }, [allExperiences, selectedTagIds, selectedWalkingFilter, childTagToParentsMap]);
 
   // Use filteredAndSortedExperiences instead of sortedExperiences
   const sortedExperiences = filteredAndSortedExperiences;
@@ -276,15 +285,16 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
   return (
     <div className="space-y-3">
-      {/* Tag Filter - only show if we have tags and Viator products */}
-      {tags.length > 0 && viatorProducts.length > 0 && (
+      {/* Filter Section - show if we have walking experiences or tags/Viator products */}
+      {(walkingExperiences.length > 0 || (tags.length > 0 && viatorProducts.length > 0)) && (
         <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
           <div className="flex items-center justify-end mb-2">
-            {selectedTagIds.length > 0 && (
+            {(selectedTagIds.length > 0 || selectedWalkingFilter) && (
               <button
                 type="button"
                 onClick={() => {
                   setSelectedTagIds([]);
+                  setSelectedWalkingFilter(false);
                   setCurrentPage(1);
                 }}
                 className="px-2 py-0.5 text-xs font-medium rounded bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition-colors"
@@ -294,7 +304,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
             )}
           </div>
           
-          {/* Horizontal scrollable tags with navigation arrows on sides */}
+          {/* Horizontal scrollable filters with navigation arrows on sides */}
           <div className="relative flex items-center gap-2">
             {/* Left arrow */}
             <button
@@ -307,17 +317,43 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
                   : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
               ].join(" ")}
-              aria-label="Scroll tags left"
+              aria-label="Scroll filters left"
             >
               <ChevronLeft className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* Scrollable tags container */}
+            {/* Scrollable filters container */}
             <div
               ref={tagsScrollRef}
               className="flex gap-2 overflow-x-auto scrollbar-hide flex-1"
             >
-              {tags.map((tag) => {
+              {/* Nature Hike/Walk filter - always first if walking experiences exist */}
+              {walkingExperiences.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedWalkingFilter) {
+                      setSelectedWalkingFilter(false);
+                    } else {
+                      setSelectedWalkingFilter(true);
+                      setSelectedTagIds([]); // Clear tag filters when selecting walking filter
+                    }
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className={[
+                    "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border whitespace-nowrap flex-shrink-0",
+                    selectedWalkingFilter
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
+                  ].join(" ")}
+                  title="Filter to show only nature hikes and walking experiences"
+                >
+                  Nature Hike/Walk
+                </button>
+              )}
+              
+              {/* Viator tag filters */}
+              {tags.length > 0 && viatorProducts.length > 0 && tags.map((tag) => {
                 const isSelected = selectedTagIds.includes(tag.tag_id);
                 // Extract English name from metadata, fallback to tag_name if not available
                 const displayName = tag.metadata?.allNamesByLocale?.en || tag.tag_name;
@@ -330,6 +366,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                         setSelectedTagIds(selectedTagIds.filter(id => id !== tag.tag_id));
                       } else {
                         setSelectedTagIds([...selectedTagIds, tag.tag_id]);
+                        setSelectedWalkingFilter(false); // Clear walking filter when selecting tag filter
                       }
                       setCurrentPage(1); // Reset to first page when filter changes
                     }}
@@ -358,7 +395,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
                   : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
               ].join(" ")}
-              aria-label="Scroll tags right"
+              aria-label="Scroll filters right"
             >
               <ChevronRight className="w-4 h-4 text-slate-600" />
             </button>
