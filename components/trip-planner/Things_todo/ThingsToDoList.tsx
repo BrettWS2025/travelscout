@@ -123,9 +123,22 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   }, [tags]);
 
   // Transform walking experiences to ExperienceItem and combine with Viator products
+  // Deduplicate products by ID to prevent duplicate keys
   const allExperiences = useMemo(() => {
     const walking = walkingExperiences.map(transformWalkingExperience);
-    return [...walking, ...viatorProducts];
+    
+    // Deduplicate viator products by ID (in case same product appears multiple times)
+    const seenIds = new Set<string>();
+    const uniqueViatorProducts = viatorProducts.filter(product => {
+      if (seenIds.has(product.id)) {
+        console.warn(`[ThingsToDoList] Duplicate product detected and removed: ${product.id} - ${product.title}`);
+        return false;
+      }
+      seenIds.add(product.id);
+      return true;
+    });
+    
+    return [...walking, ...uniqueViatorProducts];
   }, [walkingExperiences, viatorProducts]);
 
   // Helper function to parse duration to minutes for sorting

@@ -21,6 +21,13 @@ import {
   type ExperienceItem,
 } from "@/lib/viator-helpers";
 
+// Tags to exclude from Viator product searches
+// 12044 = "Airport & Hotel Transfers"
+// 11945 = "Port Transfers"
+// 11937 = "Port Transfers" (variant with trailing space)
+// 20238 = "Private Drivers"
+const EXCLUDED_TAG_IDS = [12044, 11945, 11937, 20238];
+
 type ThingsToDoResult = {
   walkingExperiences: WalkingExperience[];
   viatorProducts: ExperienceItem[];
@@ -120,7 +127,8 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
           0,
           500,
           fromCity,
-          toCity
+          toCity,
+          EXCLUDED_TAG_IDS
         );
 
         viatorProducts = firstPage.products;
@@ -136,7 +144,9 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
             midLng,
             locationName,
             firstPage.products,
-            firstPage.total
+            firstPage.total,
+            undefined,
+            EXCLUDED_TAG_IDS
           );
           viatorProducts = result.products;
         }
@@ -196,7 +206,8 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
               60.0,
               0,
               500,
-              cityName || location
+              cityName || location,
+              EXCLUDED_TAG_IDS
             );
 
             viatorProducts = firstPage.products;
@@ -208,7 +219,9 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
                 places[0].lng,
                 cityName || location,
                 firstPage.products,
-                firstPage.total
+                firstPage.total,
+                undefined,
+                EXCLUDED_TAG_IDS
               );
               viatorProducts = result.products;
             }
@@ -240,7 +253,8 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
           60.0,
           0,
           500,
-          cityName || location
+          cityName || location,
+          EXCLUDED_TAG_IDS
         );
 
         viatorProducts = firstPage.products;
@@ -252,7 +266,9 @@ export async function fetchThingsToDo(location: string): Promise<ThingsToDoResul
             places[0].lng,
             cityName || location,
             firstPage.products,
-            firstPage.total
+            firstPage.total,
+            undefined,
+            EXCLUDED_TAG_IDS
           );
           viatorProducts = result.products;
         }

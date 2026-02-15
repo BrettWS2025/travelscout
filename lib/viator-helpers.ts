@@ -190,7 +190,8 @@ export async function fetchViatorProductsForLocation(
   radius: number = 20,
   start: number = 0,
   count: number = 20,
-  locationName?: string
+  locationName?: string,
+  excludeTagIds?: number[] // Tags to exclude (e.g., [12044] for Airport & Hotel Transfers)
 ): Promise<{ products: ExperienceItem[]; total: number; hasMore: boolean }> {
   try {
     const params = new URLSearchParams({
@@ -207,6 +208,11 @@ export async function fetchViatorProductsForLocation(
     // Add location name if provided (helps with destination ID lookup)
     if (locationName) {
       params.append("locationName", locationName);
+    }
+
+    // Add exclude tag IDs if provided
+    if (excludeTagIds && excludeTagIds.length > 0) {
+      params.append("excludeTagIds", excludeTagIds.join(","));
     }
 
     const response = await fetch(`/api/viator?${params.toString()}`);
@@ -243,12 +249,13 @@ export async function fetchViatorProductsForLocation(
 export async function prefetchViatorProductsForLocation(
   lat: number,
   lng: number,
-  locationName?: string
+  locationName?: string,
+  excludeTagIds?: number[]
 ): Promise<void> {
   try {
     // Just trigger the API call to warm up the cache - don't wait for all pages
     // The cache will be populated by the first request
-    await fetchViatorProductsForLocation(lat, lng, 60.0, 0, 500, locationName);
+    await fetchViatorProductsForLocation(lat, lng, 60.0, 0, 500, locationName, excludeTagIds);
   } catch (error) {
     // Silently fail - prefetching is best effort
     console.debug("Prefetch failed (non-critical):", error);
@@ -267,7 +274,8 @@ export async function fetchViatorProductsForRoute(
   start: number = 0,
   count: number = 20,
   fromLocationName?: string,
-  toLocationName?: string
+  toLocationName?: string,
+  excludeTagIds?: number[]
 ): Promise<{ products: ExperienceItem[]; total: number; hasMore: boolean }> {
   // Calculate midpoint
   const midLat = (fromLat + toLat) / 2;
@@ -284,7 +292,7 @@ export async function fetchViatorProductsForRoute(
   // Use the first location name if available
   const locationName = fromLocationName || toLocationName;
   
-  return fetchViatorProductsForLocation(midLat, midLng, radius, start, count, locationName);
+  return fetchViatorProductsForLocation(midLat, midLng, radius, start, count, locationName, excludeTagIds);
 }
 
 /**
@@ -297,7 +305,8 @@ export async function fetchAllViatorProductsProgressive(
   locationName: string | undefined,
   firstPageProducts: ExperienceItem[],
   firstPageTotal: number,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  excludeTagIds?: number[]
 ): Promise<{ products: ExperienceItem[]; total: number }> {
   // If we already have all products, return early
   if (firstPageProducts.length >= firstPageTotal) {
@@ -315,6 +324,7 @@ export async function fetchAllViatorProductsProgressive(
   
   // Fetch remaining pages in parallel (batches of 3 to avoid overwhelming the API)
   const allProducts = [...firstPageProducts];
+  const seenProductIds = new Set<string>(firstPageProducts.map(p => p.id));
   const batchSize = 3;
   
   for (let batchStart = 1; batchStart < totalPages; batchStart += batchSize) {
@@ -326,16 +336,23 @@ export async function fetchAllViatorProductsProgressive(
     for (let page = batchStart; page < batchEnd; page++) {
       const pageStart = page * productsPerPage;
       batchPromises.push(
-        fetchViatorProductsForLocation(lat, lng, 60.0, pageStart, 500, locationName)
+        fetchViatorProductsForLocation(lat, lng, 60.0, pageStart, 500, locationName, excludeTagIds)
       );
     }
     
     // Wait for batch to complete
     const batchResults = await Promise.all(batchPromises);
     
-    // Merge results
+    // Merge results, deduplicating by product ID
     for (const result of batchResults) {
-      allProducts.push(...result.products);
+      for (const product of result.products) {
+        if (!seenProductIds.has(product.id)) {
+          allProducts.push(product);
+          seenProductIds.add(product.id);
+        } else {
+          console.debug(`[fetchAllViatorProductsProgressive] Skipping duplicate product: ${product.id}`);
+        }
+      }
       onProgress?.(allProducts.length, firstPageTotal);
       
       console.log(`[fetchAllViatorProductsProgressive] Progress: ${allProducts.length}/${firstPageTotal} products loaded`);

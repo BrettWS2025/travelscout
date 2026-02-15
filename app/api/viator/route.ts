@@ -25,6 +25,7 @@ const CACHE_TTL_SECONDS = 21600;
  * - currencyCode: currency code for pricing (default: "NZD")
  * - minPrice: minimum price filter (optional)
  * - maxPrice: maximum price filter (optional)
+ * - excludeTagIds: comma-separated list of tag IDs to exclude (optional, e.g., "12044")
  */
 export async function GET(req: Request) {
   try {
@@ -58,6 +59,7 @@ export async function GET(req: Request) {
     const currencyCode = searchParams.get("currencyCode") || "NZD";
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const excludeTagIds = searchParams.get("excludeTagIds"); // Comma-separated list of tag IDs to exclude
 
     // Validate that we have either lat/lng or destinationId (searchQuery alone is not enough)
     // Viator API requires destinationId for product search
@@ -354,6 +356,18 @@ export async function GET(req: Request) {
     }
     if (maxPrice) {
       searchParams_obj.maxPrice = parseFloat(maxPrice);
+    }
+
+    // Add exclude tag IDs filter
+    if (excludeTagIds) {
+      const tagIdArray = excludeTagIds
+        .split(",")
+        .map((id) => parseInt(id.trim(), 10))
+        .filter((id) => !isNaN(id) && id > 0);
+      if (tagIdArray.length > 0) {
+        searchParams_obj.excludeTagIds = tagIdArray;
+        console.log(`[Viator API] Excluding products with tags: ${tagIdArray.join(", ")}`);
+      }
     }
 
     // Generate cache key from query parameters
