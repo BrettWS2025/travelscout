@@ -263,19 +263,44 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
   
   // If name_search doesn't return enough results, also search display_name and name_norm
   // But prioritize name_search matches
+  // Note: We make separate queries instead of using .or() because queryPattern may contain commas
+  // which would break PostgREST's .or() syntax (commas are used to separate conditions)
   if (!nzPlacesError && nzPlacesData && nzPlacesData.length < limit) {
-    const { data: additionalData, error: additionalError } = await supabase
+    const existingIds = new Set(nzPlacesData.map(p => p.id));
+    const additionalResults: any[] = [];
+    
+    // Search display_name separately
+    const { data: displayNameData, error: displayNameError } = await supabase
       .from("nz_places_final")
       .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
-      .or(`display_name.ilike.${queryPattern},name_norm.ilike.${queryPattern}`)
+      .ilike("display_name", queryPattern)
       .in("place_type", ["city", "town", "village", "hamlet"])
       .limit(limit * 2);
     
-    if (!additionalError && additionalData) {
-      // Merge results, avoiding duplicates
-      const existingIds = new Set(nzPlacesData.map(p => p.id));
-      const newResults = additionalData.filter(p => !existingIds.has(p.id));
-      nzPlacesData = [...nzPlacesData, ...newResults];
+    if (!displayNameError && displayNameData) {
+      const newResults = displayNameData.filter(p => !existingIds.has(p.id));
+      additionalResults.push(...newResults);
+      newResults.forEach(p => existingIds.add(p.id));
+    }
+    
+    // Search name_norm separately if we still need more results
+    if (additionalResults.length + nzPlacesData.length < limit) {
+      const { data: nameNormData, error: nameNormError } = await supabase
+        .from("nz_places_final")
+        .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+        .ilike("name_norm", queryPattern)
+        .in("place_type", ["city", "town", "village", "hamlet"])
+        .limit(limit * 2);
+      
+      if (!nameNormError && nameNormData) {
+        const newResults = nameNormData.filter(p => !existingIds.has(p.id));
+        additionalResults.push(...newResults);
+      }
+    }
+    
+    // Merge results
+    if (additionalResults.length > 0) {
+      nzPlacesData = [...nzPlacesData, ...additionalResults];
     }
   }
   
