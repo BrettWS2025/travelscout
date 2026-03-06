@@ -18,13 +18,18 @@ export function syncDayDetailsFromPlan(
   const next: Record<string, DayDetail> = {};
   for (const d of nextPlan.days) {
     const key = makeDayKey(d.date, d.location);
-    next[key] =
-      prevDayDetails[key] ?? {
-        notes: "",
-        accommodation: "",
-        isOpen: false,
-        experiences: [],
-      };
+    const existing = prevDayDetails[key];
+    next[key] = existing ?? {
+      notes: "",
+      accommodation: "",
+      isOpen: false,
+      experiences: [],
+      events: [],
+    };
+    // Preserve events if they exist, otherwise initialize as empty array
+    if (!next[key].events) {
+      next[key].events = [];
+    }
   }
   return next;
 }

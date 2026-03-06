@@ -11,12 +11,12 @@ import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
 import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
-import PinEventModal from "@/components/trip-planner/PinEventModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
+import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
 import type { Event } from "@/lib/hooks/useEvents";
 
 type ItineraryData = {
@@ -49,10 +49,6 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Places/Things modal state
   const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
   const [placesThingsModalStep, setPlacesThingsModalStep] = useState<"places" | "things">("places");
-
-  // Event pinning modal state
-  const [showPinEventModal, setShowPinEventModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   // Add to itinerary modal state
   const [showAddToItineraryModal, setShowAddToItineraryModal] = useState(false);
@@ -159,8 +155,22 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       console.log('Viator products cannot be added to itinerary yet');
       return;
     }
-    // Type guard: ensure it's a WalkingExperience
-    const walkingExp = experience as WalkingExperience;
+    
+    // Convert ExperienceItem to WalkingExperience if needed
+    let walkingExp: WalkingExperience;
+    if ('type' in experience && experience.type === 'walking') {
+      // It's an ExperienceItem, convert it back to WalkingExperience
+      const converted = transformExperienceItemToWalking(experience);
+      if (!converted) {
+        console.error('Failed to convert ExperienceItem to WalkingExperience');
+        return;
+      }
+      walkingExp = converted;
+    } else {
+      // It's already a WalkingExperience
+      walkingExp = experience as WalkingExperience;
+    }
+    
     setSelectedExperience(walkingExp);
     setSelectedExperienceLocation(location);
     setShowAddToItineraryModal(true);
@@ -182,19 +192,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     tp.addExperienceToRoadSector(destinationStopIndex, experience);
   };
 
-  // Handle event hearted (opens pin modal)
-  const handleEventHearted = (event: Event) => {
-    setSelectedEvent(event);
-    setShowPinEventModal(true);
-  };
-
-  const handleClosePinEventModal = () => {
-    setShowPinEventModal(false);
-    setSelectedEvent(null);
-  };
-
-  // Pin event to day
-  const handlePinEventToDay = (date: string, location: string, event: Event) => {
+  // Handle event hearted (pins directly to the day it's shown for)
+  const handleEventHearted = (event: Event, date: string, location: string) => {
     tp.addEventToDay(date, location, event);
   };
 
@@ -366,18 +365,6 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             endDate={tp.endDate}
           />
         </>
-      )}
-
-      {/* Pin Event Modal */}
-      {showPinEventModal && selectedEvent && tp.plan && (
-        <PinEventModal
-          isOpen={showPinEventModal}
-          onClose={handleClosePinEventModal}
-          event={selectedEvent}
-          plan={tp.plan}
-          dayDetails={tp.dayDetails}
-          onPinToDay={handlePinEventToDay}
-        />
       )}
 
       {/* Add to Itinerary Modal */}

@@ -7,10 +7,11 @@ import { saveEventToCache } from "@/lib/events.api";
 
 type Props = {
   events?: Event[];
-  onEventHearted?: (event: Event) => void;
+  onPinEvent?: (event: Event) => void; // Called when heart is clicked to pin event to current day
+  pinnedEventIds?: Set<number>; // Events already pinned to this day
 };
 
-export default function EventsAttractionsCarousel({ events = [], onEventHearted }: Props) {
+export default function EventsAttractionsCarousel({ events = [], onPinEvent, pinnedEventIds }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -20,9 +21,15 @@ export default function EventsAttractionsCarousel({ events = [], onEventHearted 
   const touchEndX = useRef<number | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Track which events are hearted (saved to cache)
+  // Track which events are hearted (saved to cache) - combine with pinned events
   const [heartedEvents, setHeartedEvents] = useState<Set<number>>(new Set());
   const [savingEventId, setSavingEventId] = useState<number | null>(null);
+
+  // Combine local hearted events with pinned events from props
+  const allHeartedEvents = new Set([
+    ...heartedEvents,
+    ...(pinnedEventIds || [])
+  ]);
 
   // Don't render if no events
   if (events.length === 0) {
@@ -124,8 +131,8 @@ export default function EventsAttractionsCarousel({ events = [], onEventHearted 
     e.preventDefault();
     e.stopPropagation();
 
-    // If already hearted, don't do anything (or could allow un-hearting later)
-    if (heartedEvents.has(event.id)) {
+    // If already hearted or pinned, don't do anything (or could allow un-hearting later)
+    if (allHeartedEvents.has(event.id)) {
       return;
     }
 
@@ -135,9 +142,9 @@ export default function EventsAttractionsCarousel({ events = [], onEventHearted 
       const result = await saveEventToCache(event);
       if (result.success) {
         setHeartedEvents((prev) => new Set(prev).add(event.id));
-        // Notify parent component that event was hearted
-        if (onEventHearted) {
-          onEventHearted(event);
+        // Pin event to the current day
+        if (onPinEvent) {
+          onPinEvent(event);
         }
       } else {
         console.error("Failed to save event:", result.error);
@@ -241,16 +248,16 @@ export default function EventsAttractionsCarousel({ events = [], onEventHearted 
                     "bg-white/90 backdrop-blur-sm shadow-sm",
                     "hover:bg-white hover:scale-110",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
-                    heartedEvents.has(event.id) 
+                    allHeartedEvents.has(event.id) 
                       ? "text-red-500" 
                       : "text-slate-600 hover:text-red-500",
                   ].join(" ")}
-                  aria-label={heartedEvents.has(event.id) ? "Event saved" : "Save event"}
+                  aria-label={allHeartedEvents.has(event.id) ? "Event saved" : "Save event"}
                 >
                   <Heart
                     className={[
                       "w-4 h-4 transition-all",
-                      heartedEvents.has(event.id) ? "fill-current" : "",
+                      allHeartedEvents.has(event.id) ? "fill-current" : "",
                     ].join(" ")}
                   />
                 </button>

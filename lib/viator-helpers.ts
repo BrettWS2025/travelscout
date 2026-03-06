@@ -56,6 +56,38 @@ export function transformWalkingExperience(experience: WalkingExperience): Exper
 }
 
 /**
+ * Transform an ExperienceItem back to WalkingExperience
+ * This is needed when adding experiences to itinerary
+ */
+export function transformExperienceItemToWalking(experience: ExperienceItem): WalkingExperience | null {
+  // Only convert walking experiences, not viator
+  if (experience.type !== "walking") {
+    return null;
+  }
+
+  return {
+    id: experience.id,
+    track_name: experience.title,
+    description: experience.description,
+    difficulty: experience.difficulty ?? null,
+    completion_time: experience.completion_time ?? null,
+    completion_min: null, // Not available in ExperienceItem
+    completion_max: null, // Not available in ExperienceItem
+    is_range: false, // Not available in ExperienceItem
+    kid_friendly: experience.kid_friendly ?? false,
+    has_alerts: null, // Not available in ExperienceItem
+    url_to_thumbnail: experience.imageUrl,
+    url_to_webpage: experience.url,
+    latitude: experience.latitude,
+    longitude: experience.longitude,
+    shape_length: null, // Not available in ExperienceItem
+    district_name: experience.district_name ?? null,
+    district_osm_id: null, // Not available in ExperienceItem
+    distance_km: experience.distance_km,
+  };
+}
+
+/**
  * Transform a ViatorProduct to an ExperienceItem
  */
 export function transformViatorProduct(product: ViatorProduct): ExperienceItem {

@@ -78,7 +78,7 @@ type Props = {
   onUpdateAccommodation: (accommodation: string) => void;
   onRemoveExperience?: (experienceId: string) => void;
   onRemoveEvent?: (eventId: number) => void;
-  onEventHearted?: (event: Event) => void;
+  onEventHearted?: (event: Event, date: string, location: string) => void;
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
   children?: ReactNode;
@@ -381,32 +381,24 @@ export default function DayCard({
               </div>
             </div>
 
-            {/* Experience Cards */}
-            {detail?.experiences && detail.experiences.length > 0 && (
+            {/* Added Experiences and Events */}
+            {((detail?.experiences && detail.experiences.length > 0) || (detail?.events && detail.events.length > 0)) && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-900">
-                  Added Experiences
+                  Added Experiences and Events
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {detail.experiences.map((experience) => (
+                  {/* Experience Cards */}
+                  {detail?.experiences && detail.experiences.map((experience) => (
                     <ExperienceCard
                       key={experience.id}
                       experience={experience}
                       onRemove={onRemoveExperience ? () => onRemoveExperience(experience.id) : undefined}
                     />
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pinned Events */}
-            {detail?.events && detail.events.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-900">
-                  Pinned Events
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {detail.events.map((event) => (
+                  
+                  {/* Pinned Events */}
+                  {detail?.events && detail.events.map((event) => (
                     <div
                       key={event.id}
                       className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-rose-200 bg-rose-50 hover:border-rose-300 transition-all max-w-full"
@@ -490,7 +482,13 @@ export default function DayCard({
                 ) : (
                   <EventsAttractionsCarousel 
                     events={sortedEvents} 
-                    onEventHearted={onEventHearted}
+                    onPinEvent={(event) => {
+                      // Pin event to this day
+                      if (onEventHearted) {
+                        onEventHearted(event, day.date, day.location);
+                      }
+                    }}
+                    pinnedEventIds={detail?.events ? new Set(detail.events.map(e => e.id)) : undefined}
                   />
                 )}
               </div>

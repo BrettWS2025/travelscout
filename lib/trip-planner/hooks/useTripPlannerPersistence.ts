@@ -249,12 +249,34 @@ export function useTripPlannerPersistence(
       // Restore plan
       if (trip_plan.days && trip_plan.days.length > 0) {
         setPlan(trip_plan);
+        // Sync day details first to ensure all days exist
         setDayDetails((prev) => syncDayDetailsFromPlan(trip_plan, prev));
       }
 
-      // Restore day details
+      // Restore day details (this will preserve events if they were saved)
       if (trip_plan.dayDetails) {
-        setDayDetails(trip_plan.dayDetails);
+        setDayDetails((prev) => {
+          // Merge saved dayDetails with synced ones to preserve events
+          const merged: Record<string, DayDetail> = {};
+          for (const key in trip_plan.dayDetails) {
+            const saved = trip_plan.dayDetails[key];
+            const synced = prev[key];
+            merged[key] = {
+              notes: saved.notes ?? synced?.notes ?? "",
+              accommodation: saved.accommodation ?? synced?.accommodation ?? "",
+              isOpen: saved.isOpen ?? synced?.isOpen ?? false,
+              experiences: saved.experiences ?? synced?.experiences ?? [],
+              events: saved.events ?? synced?.events ?? [],
+            };
+          }
+          // Also include any synced days that weren't in saved dayDetails
+          for (const key in prev) {
+            if (!merged[key]) {
+              merged[key] = prev[key];
+            }
+          }
+          return merged;
+        });
       }
 
       // Restore map points and legs
@@ -385,7 +407,28 @@ export function useTripPlannerPersistence(
         
         // Restore extended plan data
         if (state.plan.dayDetails) {
-          setDayDetails(state.plan.dayDetails);
+          setDayDetails((prev) => {
+            // Merge saved dayDetails with synced ones to preserve events
+            const merged: Record<string, DayDetail> = {};
+            for (const key in state.plan.dayDetails) {
+              const saved = state.plan.dayDetails[key];
+              const synced = prev[key];
+              merged[key] = {
+                notes: saved.notes ?? synced?.notes ?? "",
+                accommodation: saved.accommodation ?? synced?.accommodation ?? "",
+                isOpen: saved.isOpen ?? synced?.isOpen ?? false,
+                experiences: saved.experiences ?? synced?.experiences ?? [],
+                events: saved.events ?? synced?.events ?? [],
+              };
+            }
+            // Also include any synced days that weren't in saved dayDetails
+            for (const key in prev) {
+              if (!merged[key]) {
+                merged[key] = prev[key];
+              }
+            }
+            return merged;
+          });
         }
         if (state.plan.mapPoints) {
           setMapPoints(state.plan.mapPoints);

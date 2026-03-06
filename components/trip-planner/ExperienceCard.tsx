@@ -16,7 +16,7 @@ export default function ExperienceCard({ experience, onRemove }: ExperienceCardP
         href={experience.url_to_webpage}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-shrink-0 w-6 h-6 rounded overflow-hidden bg-slate-200 flex items-center justify-center hover:opacity-90 transition-opacity"
+        className="flex-shrink-0 w-10 h-10 rounded overflow-hidden bg-slate-200 flex items-center justify-center hover:opacity-90 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         {experience.url_to_thumbnail ? (
@@ -38,18 +38,18 @@ export default function ExperienceCard({ experience, onRemove }: ExperienceCardP
             experience.url_to_thumbnail ? "hidden" : "",
           ].join(" ")}
         >
-          <span className="text-[8px] text-slate-500">🏔️</span>
+          <span className="text-sm text-slate-500">🏔️</span>
         </div>
       </a>
       
-      {/* Name - clickable link with dynamic sizing */}
+      {/* Name - clickable link */}
       <a
         href={experience.url_to_webpage}
         target="_blank"
         rel="noopener noreferrer"
         className="text-xs font-medium text-slate-900 hover:text-indigo-600 transition-colors line-clamp-2 min-w-0 flex-1"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: "calc(100% - 2.5rem)" }}
+        style={{ maxWidth: "calc(100% - 3rem)" }}
       >
         {experience.track_name}
       </a>
@@ -62,10 +62,10 @@ export default function ExperienceCard({ experience, onRemove }: ExperienceCardP
             e.stopPropagation();
             onRemove();
           }}
-          className="flex-shrink-0 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="flex-shrink-0 p-0.5 hover:bg-slate-100 rounded transition-colors"
           aria-label="Remove experience"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3 h-3 text-slate-600" />
         </button>
       )}
     </div>

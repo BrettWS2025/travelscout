@@ -39,7 +39,7 @@ type StopGroupCardProps = {
   ) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
   onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
-  onEventHearted?: (event: import("@/lib/hooks/useEvents").Event) => void;
+  onEventHearted?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
@@ -296,6 +296,7 @@ export default function StopGroupCard({
                         }
                         onRemoveExperience={onRemoveExperienceFromDay ? (experienceId) => onRemoveExperienceFromDay(d.date, d.location, experienceId) : undefined}
                         onRemoveEvent={onRemoveEventFromDay ? (eventId) => onRemoveEventFromDay(d.date, d.location, eventId) : undefined}
+                        onEventHearted={onEventHearted}
                       />
                     );
                   })}
