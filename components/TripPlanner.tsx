@@ -13,6 +13,7 @@ import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
 import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/AuthModal";
 import type { TripInput } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
@@ -41,6 +42,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
   
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
@@ -77,6 +80,20 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       }
     }
   }, [initialItinerary, itineraryLoaded, tp]);
+
+  // After auth modal closes, wait for user to be available, then show title dialog
+  useEffect(() => {
+    if (pendingSave && !showAuthModal && user) {
+      // User has logged in, show title dialog
+      const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
+        ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
+        : "My Trip");
+      setSaveTitle(defaultTitle);
+      setShowSaveDialog(true);
+      setSaveSuccess(false);
+      setPendingSave(false);
+    }
+  }, [pendingSave, showAuthModal, user, initialItinerary, tp]);
 
   // Handle URL search params for deep linking (only sync URL -> state, not state -> URL)
   useEffect(() => {
@@ -227,14 +244,17 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   const handleSaveClick = () => {
     if (!user) {
-      // Save current state to localStorage before redirecting
+      // Save current state to localStorage before showing auth modal
       tp.saveStateToLocalStorage();
-      
-      // Redirect to login with return URL
-      const returnUrl = encodeURIComponent("/trip-planner");
-      router.push(`/auth/login?returnTo=${returnUrl}`);
+      setPendingSave(true);
+      setShowAuthModal(true);
       return;
     }
+    // User is logged in, show title dialog immediately
+    showTitleDialog();
+  };
+
+  const showTitleDialog = () => {
     // Use existing title if editing, otherwise generate default
     const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
       ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
@@ -242,6 +262,11 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     setSaveTitle(defaultTitle);
     setShowSaveDialog(true);
     setSaveSuccess(false);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    // The useEffect will handle showing the title dialog once user is available
   };
 
   const handleSaveConfirm = async () => {
@@ -255,11 +280,14 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       // Clear saved draft state after successful save
       tp.clearSavedState();
       setSaveSuccess(true);
+      // Navigate to itineraries list after a brief delay
       setTimeout(() => {
         setShowSaveDialog(false);
         setSaveSuccess(false);
         setSaveTitle("");
-      }, 1500);
+        setPendingSave(false);
+        router.push("/account/itineraries");
+      }, 1000);
     }
   };
 
@@ -410,6 +438,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           onAddToDay={handleAddToDay}
           onAddViatorProductToDay={handleAddViatorProductToDay}
           onAddToRoadSector={handleAddToRoadSector}
+        />
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => {
+            setShowAuthModal(false);
+            setPendingSave(false);
+          }}
+          onSuccess={handleAuthSuccess}
         />
       )}
 
