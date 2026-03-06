@@ -267,6 +267,7 @@ export function useTripPlannerPersistence(
               isOpen: saved.isOpen ?? synced?.isOpen ?? false,
               experiences: saved.experiences ?? synced?.experiences ?? [],
               events: saved.events ?? synced?.events ?? [],
+              viatorProducts: saved.viatorProducts ?? synced?.viatorProducts ?? [],
             };
           }
           // Also include any synced days that weren't in saved dayDetails
@@ -419,6 +420,7 @@ export function useTripPlannerPersistence(
                 isOpen: saved.isOpen ?? synced?.isOpen ?? false,
                 experiences: saved.experiences ?? synced?.experiences ?? [],
                 events: saved.events ?? synced?.events ?? [],
+                viatorProducts: saved.viatorProducts ?? synced?.viatorProducts ?? [],
               };
             }
             // Also include any synced days that weren't in saved dayDetails
