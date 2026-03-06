@@ -490,10 +490,6 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                   <span className="text-2xl">{experience.type === "viator" ? "🎫" : "🏔️"}</span>
                 </div>
               )}
-              {/* Heart icon placeholder - top right */}
-              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-xs">♡</span>
-              </div>
             </div>
             
             {/* Content */}
