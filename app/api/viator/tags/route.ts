@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getRedisClient } from "@/lib/redis/client";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
+
+// Cache TTL: 1 hour (3600 seconds) - tags don't change frequently
+const CACHE_TTL_SECONDS = 3600;
 
 /**
  * Get Viator Tags API Route
@@ -35,6 +40,27 @@ export async function GET(req: Request) {
     const group = searchParams.get("group");
     const productTagIdsParam = searchParams.get("productTagIds"); // Comma-separated list of tag IDs from products
     const tagIdsParam = searchParams.get("tagIds"); // Comma-separated list of specific tag IDs to fetch (for building child-to-parent map)
+
+    // Generate cache key from query parameters
+    const cacheKey = `viator:tags:${crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ category, group, productTagIdsParam, tagIdsParam }))
+      .digest("hex")}`;
+
+    // Try to get cached response
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          const cachedData = JSON.parse(cached);
+          return NextResponse.json(cachedData);
+        }
+      } catch (cacheError) {
+        // Log but don't fail - continue to database query
+        console.warn("Redis cache read error:", cacheError);
+      }
+    }
 
     // Debug: Test basic access first
     console.log(`[Viator Tags API] Testing database access...`);
@@ -249,11 +275,19 @@ export async function GET(req: Request) {
     let parentTags = finalTags.filter(tag => allParentTagIds.has(Number(tag.tag_id)));
 
     // If productTagIds are provided, filter to only show parent tags that are referenced by those products
+    // Also prepare for fetching child tags if tagIdsParam is provided
+    let allTagsForMap: any[] = [];
+    const tagIdsToFetch = new Set<number>();
+    
     if (productTagIdsParam) {
       const productTagIds = productTagIdsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
       
       if (productTagIds.length > 0) {
+        // Add product tag IDs to the set of tags to fetch
+        productTagIds.forEach(id => tagIdsToFetch.add(id));
+        
         // Get metadata for the product tags to find their parentTagIds
+        // If tagIdsParam is also provided, we'll combine the queries
         const productTagsQuery = supabase
           .from("viator_tags")
           .select("tag_id, metadata")
@@ -299,6 +333,25 @@ export async function GET(req: Request) {
           
           console.log(`[Viator Tags API] Filtered to ${parentTags.length} applicable parent tags from ${productTagIds.length} product tags`);
         }
+      }
+    }
+
+    // If tagIds parameter is provided, also return all tags (not just parent tags) for building child-to-parent map
+    // Combine with productTagIds if both are provided to reduce database queries
+    if (tagIdsParam) {
+      const tagIds = tagIdsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      tagIds.forEach(id => tagIdsToFetch.add(id));
+    }
+
+    // Fetch all needed tags in a single query if we have any tag IDs to fetch
+    if (tagIdsToFetch.size > 0) {
+      const allTagsQuery = supabase
+        .from("viator_tags")
+        .select("tag_id, tag_name, metadata")
+        .in("tag_id", Array.from(tagIdsToFetch));
+      const { data: allTagsData } = await allTagsQuery;
+      if (allTagsData) {
+        allTagsForMap = allTagsData;
       }
     }
 
@@ -375,28 +428,25 @@ export async function GET(req: Request) {
       }
     }
 
-    // If tagIds parameter is provided, also return all tags (not just parent tags) for building child-to-parent map
-    let allTagsForMap: any[] = [];
-    if (tagIdsParam) {
-      const tagIds = tagIdsParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
-      if (tagIds.length > 0) {
-        const allTagsQuery = supabase
-          .from("viator_tags")
-          .select("tag_id, tag_name, metadata")
-          .in("tag_id", tagIds);
-        const { data: allTagsData } = await allTagsQuery;
-        if (allTagsData) {
-          allTagsForMap = allTagsData;
-        }
-      }
-    }
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       count: parentTags.length,
       tags: parentTags,
       ...(allTagsForMap.length > 0 && { allTags: allTagsForMap }),
-    });
+    };
+
+    // Cache the response
+    if (redis) {
+      try {
+        await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(responseData));
+      } catch (cacheError) {
+        // Log but don't fail - response is still valid
+        console.warn("Redis cache write error:", cacheError);
+      }
+    }
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("[Viator Tags API] Unhandled error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);

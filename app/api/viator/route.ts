@@ -118,8 +118,30 @@ export async function GET(req: Request) {
       
       if (locationName) {
         try {
-          console.log(`[Viator API] Fetching destinations to find ID for: ${locationName}`);
-          const destinationsResponse = await client.getDestinations();
+          // Check cache for destination ID first
+          const destinationCacheKey = `viator:destination:${locationName.toLowerCase().trim()}`;
+          const redis = getRedisClient();
+          let cachedDestinationId: number | null = null;
+          
+          if (redis) {
+            try {
+              const cached = await redis.get(destinationCacheKey);
+              if (cached) {
+                cachedDestinationId = parseInt(cached, 10);
+                if (!isNaN(cachedDestinationId) && cachedDestinationId > 0) {
+                  console.log(`[Viator API] ✅ Found cached destination ID: ${cachedDestinationId} for ${locationName}`);
+                  foundDestinationId = cachedDestinationId;
+                }
+              }
+            } catch (cacheError) {
+              console.warn("[Viator API] Redis cache read error for destination:", cacheError);
+            }
+          }
+          
+          // If not cached, fetch and search
+          if (!foundDestinationId) {
+            console.log(`[Viator API] Fetching destinations to find ID for: ${locationName}`);
+            const destinationsResponse = await client.getDestinations();
           
           // Handle different response structures
           let destinations: any[] = [];
@@ -274,6 +296,16 @@ export async function GET(req: Request) {
               console.log(`[Viator API]   - Name: ${matchName}`);
               console.log(`[Viator API]   - ID: ${foundDestinationId}`);
               console.log(`[Viator API]   - Will search ONLY this destination (not nearby areas)`);
+              
+              // Cache the destination ID for future requests (24 hour TTL)
+              if (redis && foundDestinationId) {
+                try {
+                  await redis.setex(destinationCacheKey, 86400, foundDestinationId.toString());
+                  console.log(`[Viator API] ✅ Cached destination ID for future requests`);
+                } catch (cacheError) {
+                  console.warn("[Viator API] Redis cache write error for destination:", cacheError);
+                }
+              }
             }
           } else {
             console.log(`[Viator API] ❌ No destination match found for ${locationName}`);
@@ -300,6 +332,7 @@ export async function GET(req: Request) {
               id: d.destinationId || d.id || d.destId,
             }));
             console.log(`[Viator API] Sample of all NZ destinations (first 50):`, allNzDestinations);
+          }
           }
         } catch (destError) {
           console.error(`[Viator API] ❌ Error fetching destinations:`, destError);

@@ -326,13 +326,20 @@ async function fetchTags(productTagIds: number[]): Promise<TagsResult> {
     apiUrl += `?productTagIds=${encodeURIComponent(tagIdsParam)}`;
   }
 
-  const response = await fetch(apiUrl);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Failed to fetch tags: ${response.status}`);
+  // Parallelize: fetch parent tags and child tags metadata simultaneously
+  const [parentTagsResponse, childTagsResponse] = await Promise.all([
+    fetch(apiUrl),
+    productTagIds.length > 0 
+      ? fetch(`/api/viator/tags?tagIds=${productTagIds.join(",")}`)
+      : Promise.resolve(null),
+  ]);
+
+  if (!parentTagsResponse.ok) {
+    const errorData = await parentTagsResponse.json().catch(() => ({}));
+    throw new Error(`Failed to fetch tags: ${parentTagsResponse.status}`);
   }
 
-  const data = await response.json();
+  const data = await parentTagsResponse.json();
   if (!data.success || !data.tags) {
     return { tags: [], childTagToParentsMap: new Map() };
   }
@@ -342,36 +349,31 @@ async function fetchTags(productTagIds: number[]): Promise<TagsResult> {
   // Build child-to-parent mapping
   let childTagToParentsMap = new Map<number, number[]>();
 
-  if (productTagIds.length > 0) {
+  if (childTagsResponse && childTagsResponse.ok) {
     try {
-      const childTagsResponse = await fetch(
-        `/api/viator/tags?tagIds=${productTagIds.join(",")}`
-      );
-      if (childTagsResponse.ok) {
-        const childTagsData = await childTagsResponse.json();
-        if (childTagsData.success && childTagsData.allTags) {
-          childTagsData.allTags.forEach((tag: any) => {
-            let metadata = tag.metadata;
-            if (typeof metadata === "string") {
-              try {
-                metadata = JSON.parse(metadata);
-              } catch (e) {
-                return;
-              }
+      const childTagsData = await childTagsResponse.json();
+      if (childTagsData.success && childTagsData.allTags) {
+        childTagsData.allTags.forEach((tag: any) => {
+          let metadata = tag.metadata;
+          if (typeof metadata === "string") {
+            try {
+              metadata = JSON.parse(metadata);
+            } catch (e) {
+              return;
             }
-            const parentTagIds = metadata?.parentTagIds;
-            if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
-              const parentIds = parentTagIds
-                .map((id: any) =>
-                  typeof id === "string" ? parseInt(id, 10) : Number(id)
-                )
-                .filter((id: number) => !isNaN(id) && id > 0);
-              if (parentIds.length > 0) {
-                childTagToParentsMap.set(tag.tag_id, parentIds);
-              }
+          }
+          const parentTagIds = metadata?.parentTagIds;
+          if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
+            const parentIds = parentTagIds
+              .map((id: any) =>
+                typeof id === "string" ? parseInt(id, 10) : Number(id)
+              )
+              .filter((id: number) => !isNaN(id) && id > 0);
+            if (parentIds.length > 0) {
+              childTagToParentsMap.set(tag.tag_id, parentIds);
             }
-          });
-        }
+          }
+        });
       }
     } catch (err) {
       console.error("[useTags] Error fetching child tag metadata:", err);
