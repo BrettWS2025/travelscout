@@ -385,6 +385,8 @@ export function useTripPlanner() {
     removeExperienceFromDay: plan.removeExperienceFromDay,
     addEventToDay: plan.addEventToDay,
     removeEventFromDay: plan.removeEventFromDay,
+    addViatorProductToDay: plan.addViatorProductToDay,
+    removeViatorProductFromDay: plan.removeViatorProductFromDay,
     toggleRoadSectorOpen: plan.toggleRoadSectorOpen,
     updateRoadSectorActivities: plan.updateRoadSectorActivities,
     addExperienceToRoadSector: plan.addExperienceToRoadSector,
