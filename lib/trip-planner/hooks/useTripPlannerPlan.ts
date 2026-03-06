@@ -826,6 +826,44 @@ export function useTripPlannerPlan(
     });
   }
 
+  function addEventToDay(date: string, location: string, event: import("@/lib/hooks/useEvents").Event) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const currentEvents = existing?.events ?? [];
+      // Check if event already exists (by id)
+      if (currentEvents.some((e) => e.id === event.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [key]: {
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: existing?.experiences ?? [],
+          events: [...currentEvents, event],
+        },
+      };
+    });
+  }
+
+  function removeEventFromDay(date: string, location: string, eventId: number) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const filteredEvents = (existing.events ?? []).filter((e) => e.id !== eventId);
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          events: filteredEvents,
+        },
+      };
+    });
+  }
+
   /**
    * Road sector details management
    */
@@ -1038,6 +1076,8 @@ export function useTripPlannerPlan(
     updateDayAccommodation,
     addExperienceToDay,
     removeExperienceFromDay,
+    addEventToDay,
+    removeEventFromDay,
     toggleRoadSectorOpen,
     updateRoadSectorActivities,
     addExperienceToRoadSector,

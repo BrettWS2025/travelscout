@@ -2,6 +2,7 @@ import { buildLegsFromPoints, type TripLeg } from "@/lib/itinerary";
 import { NZ_CITIES } from "@/lib/nzCities";
 import { getPlacesCache } from "@/lib/places";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { Event } from "@/lib/hooks/useEvents";
 
 export type MapPoint = {
   lat: number;
@@ -14,6 +15,7 @@ export type DayDetail = {
   accommodation: string;
   isOpen: boolean;
   experiences?: WalkingExperience[];
+  events?: Event[];
 };
 
 export type RoadSectorDetail = {

@@ -1,14 +1,16 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import type { Event } from "@/lib/hooks/useEvents";
+import { saveEventToCache } from "@/lib/events.api";
 
 type Props = {
   events?: Event[];
+  onEventHearted?: (event: Event) => void;
 };
 
-export default function EventsAttractionsCarousel({ events = [] }: Props) {
+export default function EventsAttractionsCarousel({ events = [], onEventHearted }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -17,6 +19,10 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Track which events are hearted (saved to cache)
+  const [heartedEvents, setHeartedEvents] = useState<Set<number>>(new Set());
+  const [savingEventId, setSavingEventId] = useState<number | null>(null);
 
   // Don't render if no events
   if (events.length === 0) {
@@ -114,6 +120,36 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
     }
   }, [currentIndex, events.length]);
 
+  const handleHeartClick = async (event: Event, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // If already hearted, don't do anything (or could allow un-hearting later)
+    if (heartedEvents.has(event.id)) {
+      return;
+    }
+
+    setSavingEventId(event.id);
+
+    try {
+      const result = await saveEventToCache(event);
+      if (result.success) {
+        setHeartedEvents((prev) => new Set(prev).add(event.id));
+        // Notify parent component that event was hearted
+        if (onEventHearted) {
+          onEventHearted(event);
+        }
+      } else {
+        console.error("Failed to save event:", result.error);
+        // Could show a toast notification here
+      }
+    } catch (err) {
+      console.error("Error saving event:", err);
+    } finally {
+      setSavingEventId(null);
+    }
+  };
+
   return (
     <div className="relative">
       {/* Desktop: Show arrows */}
@@ -172,7 +208,7 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
             ].join(" ")}
           >
             <div className="rounded-xl bg-slate-300 border border-slate-400 p-2.5">
-              <div className="aspect-video bg-slate-400 rounded-lg mb-2 overflow-hidden">
+              <div className="aspect-video bg-slate-400 rounded-lg mb-2 overflow-hidden relative group">
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
@@ -195,6 +231,29 @@ export default function EventsAttractionsCarousel({ events = [] }: Props) {
                 >
                   <span className="text-[10px] text-slate-500">No image</span>
                 </div>
+                {/* Heart icon overlay */}
+                <button
+                  type="button"
+                  onClick={(e) => handleHeartClick(event, e)}
+                  disabled={savingEventId === event.id}
+                  className={[
+                    "absolute top-2 right-2 p-1.5 rounded-full transition-all",
+                    "bg-white/90 backdrop-blur-sm shadow-sm",
+                    "hover:bg-white hover:scale-110",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    heartedEvents.has(event.id) 
+                      ? "text-red-500" 
+                      : "text-slate-600 hover:text-red-500",
+                  ].join(" ")}
+                  aria-label={heartedEvents.has(event.id) ? "Event saved" : "Save event"}
+                >
+                  <Heart
+                    className={[
+                      "w-4 h-4 transition-all",
+                      heartedEvents.has(event.id) ? "fill-current" : "",
+                    ].join(" ")}
+                  />
+                </button>
               </div>
               <h4 className="text-xs font-semibold text-slate-900 mb-0.5">
                 <a

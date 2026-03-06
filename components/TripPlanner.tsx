@@ -11,11 +11,13 @@ import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
 import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
+import PinEventModal from "@/components/trip-planner/PinEventModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import type { TripInput } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
+import type { Event } from "@/lib/hooks/useEvents";
 
 type ItineraryData = {
   id: string;
@@ -47,6 +49,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Places/Things modal state
   const [showPlacesThingsModal, setShowPlacesThingsModal] = useState(false);
   const [placesThingsModalStep, setPlacesThingsModalStep] = useState<"places" | "things">("places");
+
+  // Event pinning modal state
+  const [showPinEventModal, setShowPinEventModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   // Add to itinerary modal state
   const [showAddToItineraryModal, setShowAddToItineraryModal] = useState(false);
@@ -174,6 +180,27 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Add experience to road sector
   const handleAddToRoadSector = (destinationStopIndex: number, experience: WalkingExperience) => {
     tp.addExperienceToRoadSector(destinationStopIndex, experience);
+  };
+
+  // Handle event hearted (opens pin modal)
+  const handleEventHearted = (event: Event) => {
+    setSelectedEvent(event);
+    setShowPinEventModal(true);
+  };
+
+  const handleClosePinEventModal = () => {
+    setShowPinEventModal(false);
+    setSelectedEvent(null);
+  };
+
+  // Pin event to day
+  const handlePinEventToDay = (date: string, location: string, event: Event) => {
+    tp.addEventToDay(date, location, event);
+  };
+
+  // Remove event from day
+  const handleRemoveEventFromDay = (date: string, location: string, eventId: number) => {
+    tp.removeEventFromDay(date, location, eventId);
   };
 
   const handleSaveClick = () => {
@@ -319,6 +346,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onUpdateDayNotes={tp.updateDayNotes}
             onUpdateDayAccommodation={tp.updateDayAccommodation}
             onRemoveExperienceFromDay={tp.removeExperienceFromDay}
+            onRemoveEventFromDay={handleRemoveEventFromDay}
+            onEventHearted={handleEventHearted}
             onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
             onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
             onRemoveExperienceFromRoadSector={tp.removeExperienceFromRoadSector}
@@ -337,6 +366,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             endDate={tp.endDate}
           />
         </>
+      )}
+
+      {/* Pin Event Modal */}
+      {showPinEventModal && selectedEvent && tp.plan && (
+        <PinEventModal
+          isOpen={showPinEventModal}
+          onClose={handleClosePinEventModal}
+          event={selectedEvent}
+          plan={tp.plan}
+          dayDetails={tp.dayDetails}
+          onPinToDay={handlePinEventToDay}
+        />
       )}
 
       {/* Add to Itinerary Modal */}

@@ -8,6 +8,7 @@ import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractio
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
 import ExperienceCard from "@/components/trip-planner/ExperienceCard";
+import { X } from "lucide-react";
 
 type TripDay = TripPlan["days"][number];
 
@@ -76,6 +77,8 @@ type Props = {
   onUpdateNotes: (notes: string) => void;
   onUpdateAccommodation: (accommodation: string) => void;
   onRemoveExperience?: (experienceId: string) => void;
+  onRemoveEvent?: (eventId: number) => void;
+  onEventHearted?: (event: Event) => void;
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
   children?: ReactNode;
@@ -89,6 +92,8 @@ export default function DayCard({
   onUpdateNotes,
   onUpdateAccommodation,
   onRemoveExperience,
+  onRemoveEvent,
+  onEventHearted,
   children,
 }: Props) {
   // Find location coordinates by matching location name
@@ -394,6 +399,81 @@ export default function DayCard({
               </div>
             )}
 
+            {/* Pinned Events */}
+            {detail?.events && detail.events.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-900">
+                  Pinned Events
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {detail.events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-rose-200 bg-rose-50 hover:border-rose-300 transition-all max-w-full"
+                    >
+                      {/* Image - clickable link */}
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 w-6 h-6 rounded overflow-hidden bg-slate-200 flex items-center justify-center hover:opacity-90 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {event.imageUrl ? (
+                          <img
+                            src={event.imageUrl}
+                            alt={event.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) placeholder.style.display = "flex";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={[
+                            "w-full h-full flex items-center justify-center",
+                            event.imageUrl ? "hidden" : "",
+                          ].join(" ")}
+                        >
+                          <span className="text-[8px] text-slate-500">🎪</span>
+                        </div>
+                      </a>
+                      
+                      {/* Name - clickable link */}
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-slate-900 hover:text-rose-600 transition-colors line-clamp-2 min-w-0 flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: "calc(100% - 2.5rem)" }}
+                      >
+                        {event.name}
+                      </a>
+
+                      {/* Remove button */}
+                      {onRemoveEvent && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveEvent(event.id);
+                          }}
+                          className="flex-shrink-0 p-0.5 hover:bg-rose-200 rounded transition-colors"
+                          aria-label="Remove event"
+                        >
+                          <X className="w-3 h-3 text-slate-600" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Events and Attractions - only show if there are events */}
             {events.length > 0 && (
               <div className="pt-3 border-t border-slate-200">
@@ -408,7 +488,10 @@ export default function DayCard({
                 {loading ? (
                   <div className="text-xs text-slate-600">Loading events...</div>
                 ) : (
-                  <EventsAttractionsCarousel events={sortedEvents} />
+                  <EventsAttractionsCarousel 
+                    events={sortedEvents} 
+                    onEventHearted={onEventHearted}
+                  />
                 )}
               </div>
             )}

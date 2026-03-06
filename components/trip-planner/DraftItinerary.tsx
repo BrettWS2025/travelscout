@@ -42,6 +42,8 @@ export default function DraftItinerary({
   onUpdateDayNotes,
   onUpdateDayAccommodation,
   onRemoveExperienceFromDay,
+  onRemoveEventFromDay,
+  onEventHearted,
   roadSectorDetails,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
@@ -392,6 +394,9 @@ export default function DraftItinerary({
                       onToggleDayOpen={onToggleDayOpen}
                       onUpdateDayNotes={onUpdateDayNotes}
                       onUpdateDayAccommodation={onUpdateDayAccommodation}
+                      onRemoveExperienceFromDay={onRemoveExperienceFromDay}
+                      onRemoveEventFromDay={onRemoveEventFromDay}
+                      onEventHearted={onEventHearted}
                       onToggleRoadSectorOpen={onToggleRoadSectorOpen}
                       onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
                       onStartAddStop={onStartAddStop}

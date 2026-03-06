@@ -29,6 +29,8 @@ type StopGroupWithRoadSectorProps = {
   onUpdateDayNotes: (date: string, location: string, notes: string) => void;
   onUpdateDayAccommodation: (date: string, location: string, accommodation: string) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
+  onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
+  onEventHearted?: (event: import("@/lib/hooks/useEvents").Event) => void;
   onToggleRoadSectorOpen: (destinationStopIndex: number) => void;
   onUpdateRoadSectorActivities: (destinationStopIndex: number, activities: string) => void;
   onRemoveExperienceFromRoadSector?: (destinationStopIndex: number, experienceId: string) => void;
@@ -59,6 +61,8 @@ export default function StopGroupWithRoadSector({
   onUpdateDayNotes,
   onUpdateDayAccommodation,
   onRemoveExperienceFromDay,
+  onRemoveEventFromDay,
+  onEventHearted,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
   onRemoveExperienceFromRoadSector,
@@ -139,6 +143,8 @@ export default function StopGroupWithRoadSector({
         onUpdateDayNotes={onUpdateDayNotes}
         onUpdateDayAccommodation={onUpdateDayAccommodation}
         onRemoveExperienceFromDay={onRemoveExperienceFromDay}
+        onRemoveEventFromDay={onRemoveEventFromDay}
+        onEventHearted={onEventHearted}
         onStartAddStop={onStartAddStop}
         onConfirmAddStop={onConfirmAddStop}
         onCancelAddStop={onCancelAddStop}
