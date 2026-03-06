@@ -78,6 +78,7 @@ type Props = {
   onUpdateAccommodation: (accommodation: string) => void;
   onRemoveExperience?: (experienceId: string) => void;
   onRemoveEvent?: (eventId: number) => void;
+  onRemoveViatorProduct?: (productId: string) => void;
   onEventHearted?: (event: Event, date: string, location: string) => void;
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
@@ -93,6 +94,7 @@ export default function DayCard({
   onUpdateAccommodation,
   onRemoveExperience,
   onRemoveEvent,
+  onRemoveViatorProduct,
   onEventHearted,
   children,
 }: Props) {
@@ -382,7 +384,7 @@ export default function DayCard({
             </div>
 
             {/* Added Experiences and Events */}
-            {((detail?.experiences && detail.experiences.length > 0) || (detail?.events && detail.events.length > 0)) && (
+            {((detail?.experiences && detail.experiences.length > 0) || (detail?.events && detail.events.length > 0) || (detail?.viatorProducts && detail.viatorProducts.length > 0)) && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-900">
                   Added Experiences and Events
@@ -462,6 +464,72 @@ export default function DayCard({
                       )}
                     </div>
                   ))}
+                  
+                  {/* Pinned Viator Products */}
+                  {detail?.viatorProducts && detail.viatorProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-indigo-200 bg-indigo-50 hover:border-indigo-300 transition-all max-w-full"
+                    >
+                      {/* Image - clickable link */}
+                      <a
+                        href={product.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 w-6 h-6 rounded overflow-hidden bg-slate-200 flex items-center justify-center hover:opacity-90 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) placeholder.style.display = "flex";
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={[
+                            "w-full h-full flex items-center justify-center",
+                            product.imageUrl ? "hidden" : "",
+                          ].join(" ")}
+                        >
+                          <span className="text-[8px] text-slate-500">🎫</span>
+                        </div>
+                      </a>
+                      
+                      {/* Name - clickable link */}
+                      <a
+                        href={product.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-slate-900 hover:text-indigo-600 transition-colors line-clamp-2 min-w-0 flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: "calc(100% - 2.5rem)" }}
+                      >
+                        {product.title}
+                      </a>
+
+                      {/* Remove button */}
+                      {onRemoveViatorProduct && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveViatorProduct(product.id);
+                          }}
+                          className="flex-shrink-0 p-0.5 hover:bg-indigo-200 rounded transition-colors"
+                          aria-label="Remove Viator product"
+                        >
+                          <X className="w-3 h-3 text-slate-600" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -491,6 +559,96 @@ export default function DayCard({
                     pinnedEventIds={detail?.events ? new Set(detail.events.map(e => e.id)) : undefined}
                   />
                 )}
+              </div>
+            )}
+
+            {/* Pinned Viator Products - show in expanded view */}
+            {detail?.viatorProducts && detail.viatorProducts.length > 0 && (
+              <div className="pt-3 border-t border-slate-200">
+                <div className="mb-2">
+                  <h4 className="text-xs font-semibold text-slate-900">
+                    Viator Activities
+                  </h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Added to this day
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {detail.viatorProducts.map((product) => (
+                    <a
+                      key={product.id}
+                      href={product.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-indigo-200 bg-indigo-50/50 p-2.5 hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-slate-200 flex items-center justify-center">
+                          {product.imageUrl ? (
+                            <img
+                              src={product.imageUrl}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                const placeholder = target.nextElementSibling as HTMLElement;
+                                if (placeholder) placeholder.style.display = "flex";
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={[
+                              "w-full h-full flex items-center justify-center",
+                              product.imageUrl ? "hidden" : "",
+                            ].join(" ")}
+                          >
+                            <span className="text-[10px] text-slate-500">🎫</span>
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xs font-semibold text-slate-900 mb-0.5 line-clamp-1">
+                            {product.title}
+                          </h4>
+                          {product.rating && (
+                            <p className="text-[10px] text-slate-600 mb-1">
+                              ⭐ {product.rating.toFixed(1)} {product.totalReviews ? `(${product.totalReviews} reviews)` : ''}
+                            </p>
+                          )}
+                          {product.duration && (
+                            <p className="text-[10px] text-slate-600 mb-1">
+                              ⏱️ {product.duration}
+                            </p>
+                          )}
+                          {product.price && (
+                            <p className="text-[10px] text-slate-700 mb-1">
+                              💰 {product.price}
+                            </p>
+                          )}
+                          {product.description && (
+                            <p className="text-[10px] text-slate-700 line-clamp-2">
+                              {product.description}
+                            </p>
+                          )}
+                        </div>
+                        {onRemoveViatorProduct && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onRemoveViatorProduct(product.id);
+                            }}
+                            className="flex-shrink-0 p-1 hover:bg-indigo-200 rounded transition-colors"
+                            aria-label="Remove Viator product"
+                          >
+                            <X className="w-3 h-3 text-slate-600" />
+                          </button>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 

@@ -30,6 +30,7 @@ export type DraftItineraryProps = {
   ) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
   onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
+  onRemoveViatorProductFromDay?: (date: string, location: string, productId: string) => void;
   onEventHearted?: (event: Event, date: string, location: string) => void;
 
   roadSectorDetails: Record<number, RoadSectorDetail>;

@@ -864,6 +864,45 @@ export function useTripPlannerPlan(
     });
   }
 
+  function addViatorProductToDay(date: string, location: string, product: import("@/lib/viator-helpers").ExperienceItem) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const currentProducts = existing?.viatorProducts ?? [];
+      // Check if product already exists (by id)
+      if (currentProducts.some((p) => p.id === product.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [key]: {
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: existing?.experiences ?? [],
+          events: existing?.events ?? [],
+          viatorProducts: [...currentProducts, product],
+        },
+      };
+    });
+  }
+
+  function removeViatorProductFromDay(date: string, location: string, productId: string) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const filteredProducts = (existing.viatorProducts ?? []).filter((p) => p.id !== productId);
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          viatorProducts: filteredProducts,
+        },
+      };
+    });
+  }
+
   /**
    * Road sector details management
    */
@@ -1078,6 +1117,8 @@ export function useTripPlannerPlan(
     removeExperienceFromDay,
     addEventToDay,
     removeEventFromDay,
+    addViatorProductToDay,
+    removeViatorProductFromDay,
     toggleRoadSectorOpen,
     updateRoadSectorActivities,
     addExperienceToRoadSector,

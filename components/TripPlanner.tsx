@@ -53,6 +53,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Add to itinerary modal state
   const [showAddToItineraryModal, setShowAddToItineraryModal] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState<WalkingExperience | null>(null);
+  const [selectedViatorProduct, setSelectedViatorProduct] = useState<ExperienceItem | null>(null);
   const [selectedExperienceLocation, setSelectedExperienceLocation] = useState<string>("");
 
   // Restore state from localStorage on mount (if not loading initialItinerary)
@@ -146,16 +147,26 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   };
 
   // Handle adding experience to itinerary
-  const handleAddToItinerary = (experience: WalkingExperience | ExperienceItem, location: string) => {
-    // Only allow adding WalkingExperience to itinerary for now
-    // Viator products would need different handling
+  const handleAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
+    // Handle Viator products
     if ('type' in experience && experience.type === 'viator') {
-      // For Viator products, we could open a different modal or handle differently
-      // For now, we'll just log and skip
-      console.log('Viator products cannot be added to itinerary yet');
+      // Save to cache first
+      const { saveViatorProductToCache } = await import("@/lib/viator.api");
+      const result = await saveViatorProductToCache(experience);
+      
+      if (!result.success) {
+        console.error('Failed to save Viator product to cache:', result.error);
+        return;
+      }
+      
+      setSelectedViatorProduct(experience);
+      setSelectedExperience(null);
+      setSelectedExperienceLocation(location);
+      setShowAddToItineraryModal(true);
       return;
     }
     
+    // Handle walking experiences
     // Convert ExperienceItem to WalkingExperience if needed
     let walkingExp: WalkingExperience;
     if ('type' in experience && experience.type === 'walking') {
@@ -172,6 +183,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     }
     
     setSelectedExperience(walkingExp);
+    setSelectedViatorProduct(null);
     setSelectedExperienceLocation(location);
     setShowAddToItineraryModal(true);
   };
@@ -179,12 +191,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const handleCloseAddToItineraryModal = () => {
     setShowAddToItineraryModal(false);
     setSelectedExperience(null);
+    setSelectedViatorProduct(null);
     setSelectedExperienceLocation("");
   };
 
   // Add experience to day
   const handleAddToDay = (date: string, location: string, experience: WalkingExperience) => {
     tp.addExperienceToDay(date, location, experience);
+  };
+
+  // Add Viator product to day
+  const handleAddViatorProductToDay = (date: string, location: string, product: ExperienceItem) => {
+    tp.addViatorProductToDay(date, location, product);
   };
 
   // Add experience to road sector
@@ -200,6 +218,11 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Remove event from day
   const handleRemoveEventFromDay = (date: string, location: string, eventId: number) => {
     tp.removeEventFromDay(date, location, eventId);
+  };
+
+  // Remove Viator product from day
+  const handleRemoveViatorProductFromDay = (date: string, location: string, productId: string) => {
+    tp.removeViatorProductFromDay(date, location, productId);
   };
 
   const handleSaveClick = () => {
@@ -346,6 +369,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onUpdateDayAccommodation={tp.updateDayAccommodation}
             onRemoveExperienceFromDay={tp.removeExperienceFromDay}
             onRemoveEventFromDay={handleRemoveEventFromDay}
+            onRemoveViatorProductFromDay={handleRemoveViatorProductFromDay}
             onEventHearted={handleEventHearted}
             onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
             onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
@@ -368,11 +392,12 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       )}
 
       {/* Add to Itinerary Modal */}
-      {showAddToItineraryModal && selectedExperience && tp.plan && (
+      {showAddToItineraryModal && (selectedExperience || selectedViatorProduct) && tp.plan && (
         <AddToItineraryModal
           isOpen={showAddToItineraryModal}
           onClose={handleCloseAddToItineraryModal}
-          experience={selectedExperience}
+          experience={selectedExperience || undefined}
+          viatorProduct={selectedViatorProduct || undefined}
           location={selectedExperienceLocation}
           plan={tp.plan}
           routeStops={tp.routeStops}
@@ -383,6 +408,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           startSectorType={tp.startSectorType}
           endSectorType={tp.endSectorType}
           onAddToDay={handleAddToDay}
+          onAddViatorProductToDay={handleAddViatorProductToDay}
           onAddToRoadSector={handleAddToRoadSector}
         />
       )}
