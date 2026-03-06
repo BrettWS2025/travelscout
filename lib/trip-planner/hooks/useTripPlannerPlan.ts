@@ -523,55 +523,21 @@ export function useTripPlannerPlan(
 
     const newRouteStops = routeStops.filter((_, i) => i !== idx);
     const newNightsPerStop = nightsPerStop.filter((_, i) => i !== idx);
+    // Filter mapPoints by index - they should be aligned with routeStops
+    const newMapPoints = mapPoints.filter((_, i) => i !== idx);
     
-    if (newRouteStops[newRouteStops.length - 1] !== endCityName) {
+    // Ensure the last stop is the end city
+    if (newRouteStops.length > 0 && newRouteStops[newRouteStops.length - 1] !== endCityName) {
       newRouteStops[newRouteStops.length - 1] = endCityName;
-    }
-
-    const newMapPoints: MapPoint[] = [];
-    
-    if (startCity) {
-      newMapPoints.push({
-        lat: startCity.lat,
-        lng: startCity.lng,
-        name: startCity.name,
-      });
-    }
-
-    for (let i = 1; i < newRouteStops.length - 1; i++) {
-      const stopName = newRouteStops[i];
-      const matchingPoint = mapPoints.find((p, origIdx) => {
-        return p.name === stopName && origIdx !== idx && origIdx !== 0 && origIdx !== mapPoints.length - 1;
-      });
-      
-      if (matchingPoint) {
-        newMapPoints.push(matchingPoint);
-      } else {
-        const stop = NZ_STOPS.find((s) => s.name === stopName);
-        if (stop) {
-          newMapPoints.push({
-            lat: stop.lat,
-            lng: stop.lng,
-            name: stop.name,
-          });
-        } else {
-          const city = NZ_CITIES.find((c) => c.name === stopName);
-          if (city) {
-            newMapPoints.push({
-              lat: city.lat,
-              lng: city.lng,
-              name: city.name,
-            });
-          }
-        }
+      // Also update the last mapPoint to match the end city
+      if (newMapPoints.length > 0) {
+        newMapPoints[newMapPoints.length - 1] = {
+          lat: endCity.lat,
+          lng: endCity.lng,
+          name: endCity.name,
+        };
       }
     }
-
-    newMapPoints.push({
-      lat: endCity.lat,
-      lng: endCity.lng,
-      name: endCity.name,
-    });
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);
