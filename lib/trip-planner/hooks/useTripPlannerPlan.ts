@@ -805,6 +805,8 @@ export function useTripPlannerPlan(
           accommodation: existing?.accommodation ?? "",
           isOpen: existing?.isOpen ?? true,
           experiences: [...currentExperiences, experience],
+          events: existing?.events ?? [],
+          viatorProducts: existing?.viatorProducts ?? [],
         },
       };
     });
@@ -843,6 +845,7 @@ export function useTripPlannerPlan(
           isOpen: existing?.isOpen ?? true,
           experiences: existing?.experiences ?? [],
           events: [...currentEvents, event],
+          viatorProducts: existing?.viatorProducts ?? [],
         },
       };
     });
