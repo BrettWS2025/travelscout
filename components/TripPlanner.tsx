@@ -44,6 +44,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [stateRestored, setStateRestored] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
+  const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
+  
+  // Pending actions (to execute after authentication)
+  const [pendingAddToItinerary, setPendingAddToItinerary] = useState<{
+    experience: WalkingExperience | ExperienceItem;
+    location: string;
+  } | null>(null);
+  const [pendingPinEvent, setPendingPinEvent] = useState<{
+    event: Event;
+    date: string;
+    location: string;
+  } | null>(null);
   
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
@@ -94,6 +106,44 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       setPendingSave(false);
     }
   }, [pendingSave, showAuthModal, user, initialItinerary, tp]);
+
+  // Execute pending actions after successful authentication
+  useEffect(() => {
+    // Only execute if auth modal just closed and user is now authenticated
+    // and we have pending actions
+    if (!showAuthModal && user && (pendingAddToItinerary || pendingPinEvent)) {
+      // User just authenticated, execute pending actions
+      if (pendingAddToItinerary) {
+        const action = pendingAddToItinerary;
+        setPendingAddToItinerary(null); // Clear immediately to prevent re-execution
+        proceedWithAddToItinerary(
+          action.experience,
+          action.location
+        );
+      }
+      
+      if (pendingPinEvent) {
+        // Save event to cache first, then pin it
+        const action = pendingPinEvent;
+        setPendingPinEvent(null); // Clear immediately to prevent re-execution
+        const saveEvent = async () => {
+          const { saveEventToCache } = await import("@/lib/events.api");
+          const result = await saveEventToCache(action.event);
+          if (result.success) {
+            // Event saved to cache, now pin it to the day
+            tp.addEventToDay(
+              action.date,
+              action.location,
+              action.event
+            );
+          } else {
+            console.error("Failed to save event to cache:", result.error);
+          }
+        };
+        saveEvent();
+      }
+    }
+  }, [showAuthModal, user, pendingAddToItinerary, pendingPinEvent, tp]);
 
   // Handle URL search params for deep linking (only sync URL -> state, not state -> URL)
   useEffect(() => {
@@ -165,6 +215,21 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   // Handle adding experience to itinerary
   const handleAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
+    // Check if user is authenticated
+    if (!user) {
+      // Store the pending action and show auth modal
+      setPendingAddToItinerary({ experience, location });
+      setAuthModalContext("add-to-itinerary");
+      setShowAuthModal(true);
+      return;
+    }
+
+    // User is authenticated, proceed with adding to itinerary
+    await proceedWithAddToItinerary(experience, location);
+  };
+
+  // Internal function to actually add to itinerary (called after auth or if already authenticated)
+  const proceedWithAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
     // Handle Viator products
     if ('type' in experience && experience.type === 'viator') {
       // Save to cache first
@@ -229,7 +294,25 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   // Handle event hearted (pins directly to the day it's shown for)
   const handleEventHearted = (event: Event, date: string, location: string) => {
+    // Check if user is authenticated
+    if (!user) {
+      // Store the pending action and show auth modal
+      setPendingPinEvent({ event, date, location });
+      setAuthModalContext("pin-event");
+      setShowAuthModal(true);
+      return;
+    }
+
+    // User is authenticated, proceed with pinning event
     tp.addEventToDay(date, location, event);
+  };
+
+  // Handle require auth for events (called from EventsAttractionsCarousel)
+  const handleRequireAuth = (event: Event, date: string, location: string) => {
+    // Store the pending action and show auth modal
+    setPendingPinEvent({ event, date, location });
+    setAuthModalContext("pin-event");
+    setShowAuthModal(true);
   };
 
   // Remove event from day
@@ -247,6 +330,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       // Save current state to localStorage before showing auth modal
       tp.saveStateToLocalStorage();
       setPendingSave(true);
+      setAuthModalContext("save-itinerary");
       setShowAuthModal(true);
       return;
     }
@@ -399,6 +483,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onRemoveEventFromDay={handleRemoveEventFromDay}
             onRemoveViatorProductFromDay={handleRemoveViatorProductFromDay}
             onEventHearted={handleEventHearted}
+            onRequireAuth={handleRequireAuth}
             onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
             onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
             onRemoveExperienceFromRoadSector={tp.removeExperienceFromRoadSector}
@@ -448,8 +533,12 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           onClose={() => {
             setShowAuthModal(false);
             setPendingSave(false);
+            // Clear pending actions if user closes modal without authenticating
+            setPendingAddToItinerary(null);
+            setPendingPinEvent(null);
           }}
           onSuccess={handleAuthSuccess}
+          context={authModalContext}
         />
       )}
 

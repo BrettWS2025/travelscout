@@ -4,14 +4,17 @@ import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import type { Event } from "@/lib/hooks/useEvents";
 import { saveEventToCache } from "@/lib/events.api";
+import { useAuth } from "@/components/AuthProvider";
 
 type Props = {
   events?: Event[];
   onPinEvent?: (event: Event) => void; // Called when heart is clicked to pin event to current day
   pinnedEventIds?: Set<number>; // Events already pinned to this day
+  onRequireAuth?: (event: Event) => void; // Called when authentication is required
 };
 
-export default function EventsAttractionsCarousel({ events = [], onPinEvent, pinnedEventIds }: Props) {
+export default function EventsAttractionsCarousel({ events = [], onPinEvent, pinnedEventIds, onRequireAuth }: Props) {
+  const { user } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -133,6 +136,15 @@ export default function EventsAttractionsCarousel({ events = [], onPinEvent, pin
 
     // If already hearted or pinned, don't do anything (or could allow un-hearting later)
     if (allHeartedEvents.has(event.id)) {
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      // Call onRequireAuth callback if provided, which will show auth modal
+      if (onRequireAuth) {
+        onRequireAuth(event);
+      }
       return;
     }
 

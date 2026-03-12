@@ -41,6 +41,7 @@ type StopGroupCardProps = {
   onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
   onRemoveViatorProductFromDay?: (date: string, location: string, productId: string) => void;
   onEventHearted?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
+  onRequireAuth?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
@@ -70,6 +71,7 @@ export default function StopGroupCard({
   onRemoveEventFromDay,
   onRemoveViatorProductFromDay,
   onEventHearted,
+  onRequireAuth,
   onStartAddStop,
   onConfirmAddStop,
   onCancelAddStop,
@@ -300,6 +302,7 @@ export default function StopGroupCard({
                         onRemoveEvent={onRemoveEventFromDay ? (eventId) => onRemoveEventFromDay(d.date, d.location, eventId) : undefined}
                         onRemoveViatorProduct={onRemoveViatorProductFromDay ? (productId) => onRemoveViatorProductFromDay(d.date, d.location, productId) : undefined}
                         onEventHearted={onEventHearted}
+                        onRequireAuth={onRequireAuth}
                       />
                     );
                   })}

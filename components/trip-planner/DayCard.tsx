@@ -80,6 +80,7 @@ type Props = {
   onRemoveEvent?: (eventId: number) => void;
   onRemoveViatorProduct?: (productId: string) => void;
   onEventHearted?: (event: Event, date: string, location: string) => void;
+  onRequireAuth?: (event: Event, date: string, location: string) => void;
 
   /** Optional: render extra content inside the expanded panel (e.g. attraction / ticket options). */
   children?: ReactNode;
@@ -96,6 +97,7 @@ export default function DayCard({
   onRemoveEvent,
   onRemoveViatorProduct,
   onEventHearted,
+  onRequireAuth,
   children,
 }: Props) {
   // Find location coordinates by matching location name
@@ -554,6 +556,12 @@ export default function DayCard({
                       // Pin event to this day
                       if (onEventHearted) {
                         onEventHearted(event, day.date, day.location);
+                      }
+                    }}
+                    onRequireAuth={(event) => {
+                      // Require auth before pinning event
+                      if (onRequireAuth) {
+                        onRequireAuth(event, day.date, day.location);
                       }
                     }}
                     pinnedEventIds={detail?.events ? new Set(detail.events.map(e => e.id)) : undefined}

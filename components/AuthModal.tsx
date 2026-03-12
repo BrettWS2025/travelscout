@@ -8,9 +8,10 @@ type AuthModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  context?: "add-to-itinerary" | "pin-event" | "save-itinerary";
 };
 
-export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess, context = "save-itinerary" }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "signup">("login");
 
   // Signup-only
@@ -138,7 +139,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       <div className="relative z-10 w-full max-w-md rounded-2xl bg-[#1E2C4B] border border-white/10 shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">
-            {mode === "login" ? "Sign in to save" : "Create an account"}
+            {mode === "login" 
+              ? context === "add-to-itinerary" 
+                ? "Sign in to add to itinerary"
+                : context === "pin-event"
+                ? "Sign in to pin event"
+                : "Sign in to save"
+              : "Create an account"}
           </h3>
           <button
             type="button"
@@ -151,7 +158,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
         <p className="text-sm text-white/70 mb-6">
           {mode === "login"
-            ? "Please sign in to save your itinerary."
+            ? context === "add-to-itinerary"
+              ? "Please sign in to add this experience to your itinerary."
+              : context === "pin-event"
+              ? "Please sign in to pin this event to your itinerary."
+              : "Please sign in to save your itinerary."
+            : context === "add-to-itinerary"
+            ? "Create an account to add experiences to your itinerary."
+            : context === "pin-event"
+            ? "Create an account to pin events to your itinerary."
             : "Create an account to save your itinerary."}
         </p>
 

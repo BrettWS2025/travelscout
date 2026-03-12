@@ -45,6 +45,7 @@ export default function DraftItinerary({
   onRemoveEventFromDay,
   onRemoveViatorProductFromDay,
   onEventHearted,
+  onRequireAuth,
   roadSectorDetails,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
@@ -399,6 +400,7 @@ export default function DraftItinerary({
                       onRemoveEventFromDay={onRemoveEventFromDay}
                       onRemoveViatorProductFromDay={onRemoveViatorProductFromDay}
                       onEventHearted={onEventHearted}
+                      onRequireAuth={onRequireAuth}
                       onToggleRoadSectorOpen={onToggleRoadSectorOpen}
                       onUpdateRoadSectorActivities={onUpdateRoadSectorActivities}
                       onStartAddStop={onStartAddStop}
