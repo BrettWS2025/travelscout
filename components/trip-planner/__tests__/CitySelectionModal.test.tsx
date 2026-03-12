@@ -70,7 +70,7 @@ describe('CitySelectionModal', () => {
       />
     );
 
-    expect(screen.getByText('Will you be returning to this location?')).toBeInTheDocument();
+    expect(screen.getByText('Are you coming back here?')).toBeInTheDocument();
     expect(screen.getByText('Auckland')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();

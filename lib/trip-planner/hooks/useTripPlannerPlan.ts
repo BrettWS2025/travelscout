@@ -523,55 +523,21 @@ export function useTripPlannerPlan(
 
     const newRouteStops = routeStops.filter((_, i) => i !== idx);
     const newNightsPerStop = nightsPerStop.filter((_, i) => i !== idx);
+    // Filter mapPoints by index - they should be aligned with routeStops
+    const newMapPoints = mapPoints.filter((_, i) => i !== idx);
     
-    if (newRouteStops[newRouteStops.length - 1] !== endCityName) {
+    // Ensure the last stop is the end city
+    if (newRouteStops.length > 0 && newRouteStops[newRouteStops.length - 1] !== endCityName) {
       newRouteStops[newRouteStops.length - 1] = endCityName;
-    }
-
-    const newMapPoints: MapPoint[] = [];
-    
-    if (startCity) {
-      newMapPoints.push({
-        lat: startCity.lat,
-        lng: startCity.lng,
-        name: startCity.name,
-      });
-    }
-
-    for (let i = 1; i < newRouteStops.length - 1; i++) {
-      const stopName = newRouteStops[i];
-      const matchingPoint = mapPoints.find((p, origIdx) => {
-        return p.name === stopName && origIdx !== idx && origIdx !== 0 && origIdx !== mapPoints.length - 1;
-      });
-      
-      if (matchingPoint) {
-        newMapPoints.push(matchingPoint);
-      } else {
-        const stop = NZ_STOPS.find((s) => s.name === stopName);
-        if (stop) {
-          newMapPoints.push({
-            lat: stop.lat,
-            lng: stop.lng,
-            name: stop.name,
-          });
-        } else {
-          const city = NZ_CITIES.find((c) => c.name === stopName);
-          if (city) {
-            newMapPoints.push({
-              lat: city.lat,
-              lng: city.lng,
-              name: city.name,
-            });
-          }
-        }
+      // Also update the last mapPoint to match the end city
+      if (newMapPoints.length > 0) {
+        newMapPoints[newMapPoints.length - 1] = {
+          lat: endCity.lat,
+          lng: endCity.lng,
+          name: endCity.name,
+        };
       }
     }
-
-    newMapPoints.push({
-      lat: endCity.lat,
-      lng: endCity.lng,
-      name: endCity.name,
-    });
 
     setRouteStops(newRouteStops);
     setNightsPerStop(newNightsPerStop);
@@ -839,6 +805,8 @@ export function useTripPlannerPlan(
           accommodation: existing?.accommodation ?? "",
           isOpen: existing?.isOpen ?? true,
           experiences: [...currentExperiences, experience],
+          events: existing?.events ?? [],
+          viatorProducts: existing?.viatorProducts ?? [],
         },
       };
     });
@@ -855,6 +823,84 @@ export function useTripPlannerPlan(
         [key]: {
           ...existing,
           experiences: filteredExperiences,
+        },
+      };
+    });
+  }
+
+  function addEventToDay(date: string, location: string, event: import("@/lib/hooks/useEvents").Event) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const currentEvents = existing?.events ?? [];
+      // Check if event already exists (by id)
+      if (currentEvents.some((e) => e.id === event.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [key]: {
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: existing?.experiences ?? [],
+          events: [...currentEvents, event],
+          viatorProducts: existing?.viatorProducts ?? [],
+        },
+      };
+    });
+  }
+
+  function removeEventFromDay(date: string, location: string, eventId: number) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const filteredEvents = (existing.events ?? []).filter((e) => e.id !== eventId);
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          events: filteredEvents,
+        },
+      };
+    });
+  }
+
+  function addViatorProductToDay(date: string, location: string, product: import("@/lib/viator-helpers").ExperienceItem) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const currentProducts = existing?.viatorProducts ?? [];
+      // Check if product already exists (by id)
+      if (currentProducts.some((p) => p.id === product.id)) {
+        return prev; // Don't add duplicates
+      }
+      return {
+        ...prev,
+        [key]: {
+          notes: existing?.notes ?? "",
+          accommodation: existing?.accommodation ?? "",
+          isOpen: existing?.isOpen ?? true,
+          experiences: existing?.experiences ?? [],
+          events: existing?.events ?? [],
+          viatorProducts: [...currentProducts, product],
+        },
+      };
+    });
+  }
+
+  function removeViatorProductFromDay(date: string, location: string, productId: string) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const filteredProducts = (existing.viatorProducts ?? []).filter((p) => p.id !== productId);
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          viatorProducts: filteredProducts,
         },
       };
     });
@@ -1072,6 +1118,10 @@ export function useTripPlannerPlan(
     updateDayAccommodation,
     addExperienceToDay,
     removeExperienceFromDay,
+    addEventToDay,
+    removeEventFromDay,
+    addViatorProductToDay,
+    removeViatorProductFromDay,
     toggleRoadSectorOpen,
     updateRoadSectorActivities,
     addExperienceToRoadSector,

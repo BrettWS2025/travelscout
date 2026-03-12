@@ -15,6 +15,7 @@ import DayCard from "@/components/trip-planner/DayCard";
 import CitySearchPill from "@/components/trip-planner/CitySearchPill";
 import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
+import { usePrefetchAdjacentDestinations } from "@/lib/hooks/usePrefetchAdjacentDestinations";
 import ExperienceCard from "@/components/trip-planner/ExperienceCard";
 
 type StartEndSectorCardProps = {
@@ -47,7 +48,7 @@ type StartEndSectorCardProps = {
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
 
@@ -162,6 +163,9 @@ export default function StartEndSectorCard({
   
   // State for view toggle (itinerary/road trip vs things to do)
   const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
+
+  // Prefetch adjacent destinations for faster navigation
+  usePrefetchAdjacentDestinations(stopName, routeStops, stopIndex);
   
   // For road sectors, show route instead of just city name
   const displayName = useMemo(() => {

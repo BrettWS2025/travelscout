@@ -3,17 +3,13 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ChevronLeft, ChevronRight, List, MapPin } from "lucide-react";
 import {
-  getWalkingExperiencesByDistrict,
-  getWalkingExperiencesNearPoint,
-  getWalkingExperiencesByDistricts,
-  getWalkingExperiencesNearRoute,
-  getDistrictsAlongRoute,
-  createStraightLineRoute,
-  routeToWKT,
   type WalkingExperience,
 } from "@/lib/walkingExperiences";
-import { searchPlacesByName, getPlaceDistrictByName } from "@/lib/places";
-import { parseDisplayName } from "@/lib/trip-planner/utils";
+import {
+  transformWalkingExperience,
+  type ExperienceItem,
+} from "@/lib/viator-helpers";
+import { useThingsToDo, useTags, type ViatorTag } from "@/lib/hooks/useThingsToDo";
 import dynamic from "next/dynamic";
 
 // Lazy load the map component to improve initial load performance
@@ -31,202 +27,219 @@ const ThingsToDoMap = dynamic(
 
 type ThingsToDoListProps = {
   location: string;
-  onAddToItinerary?: (experience: WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
 };
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToDoListProps) {
-  const [experiences, setExperiences] = useState<WalkingExperience[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tagsScrollRef = useRef<HTMLDivElement>(null);
+  
+  // Tag filtering state
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedWalkingFilter, setSelectedWalkingFilter] = useState(false);
+  const [canScrollTagsLeft, setCanScrollTagsLeft] = useState(false);
+  const [canScrollTagsRight, setCanScrollTagsRight] = useState(true);
 
+  // Fetch things to do using React Query
+  const {
+    data: thingsToDoData,
+    isLoading: loading,
+    error: thingsToDoError,
+  } = useThingsToDo(location);
+
+  const walkingExperiences = thingsToDoData?.walkingExperiences || [];
+  const viatorProducts = thingsToDoData?.viatorProducts || [];
+  const error = thingsToDoError
+    ? (thingsToDoError instanceof Error
+        ? thingsToDoError.message
+        : "Failed to load experiences")
+    : null;
+
+  // Fetch tags using React Query
+  const {
+    data: tagsData,
+    isLoading: tagsLoading,
+  } = useTags(viatorProducts);
+
+  const tags = tagsData?.tags || [];
+  const childTagToParentsMap = tagsData?.childTagToParentsMap || new Map();
+
+  // Reset to first page and clear filters when location changes
   useEffect(() => {
-    async function fetchExperiences() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Check if location is a road sector (contains " to ")
-        const isRoadSector = location.includes(" to ");
-        
-        if (isRoadSector) {
-          // Road sector: get experiences along the entire route
-          const [fromCity, toCity] = location.split(" to ").map(s => s.trim());
-          
-          console.log("[ThingsToDoList] Road sector:", { fromCity, toCity });
-          
-          // Get coordinates for both cities
-          const fromPlace = await searchPlacesByName(fromCity, 1);
-          const toPlace = await searchPlacesByName(toCity, 1);
-          
-          console.log("[ThingsToDoList] Places found:", { 
-            fromPlace: fromPlace[0] ? { name: fromPlace[0].name, lat: fromPlace[0].lat, lng: fromPlace[0].lng } : null,
-            toPlace: toPlace[0] ? { name: toPlace[0].name, lat: toPlace[0].lat, lng: toPlace[0].lng } : null
-          });
-          
-          if (fromPlace.length > 0 && toPlace.length > 0 && 
-              fromPlace[0].lat && fromPlace[0].lng && 
-              toPlace[0].lat && toPlace[0].lng) {
-            
-            // Create a route with intermediate waypoints (more waypoints for better coverage)
-            const routeCoordinates = createStraightLineRoute(
-              fromPlace[0].lat,
-              fromPlace[0].lng,
-              toPlace[0].lat,
-              toPlace[0].lng,
-              15 // More intermediate waypoints
-            );
-            
-            // Convert to WKT
-            const routeWkt = routeToWKT(routeCoordinates);
-            console.log("[ThingsToDoList] Route WKT created, length:", routeCoordinates.length, "points");
-            
-            // Try using route buffer approach first (more reliable)
-            const routeResults = await getWalkingExperiencesNearRoute(routeWkt, 30.0, 500); // 30km buffer, increased limit
-            
-            console.log("[ThingsToDoList] Route buffer results:", routeResults.length);
-            
-            if (routeResults.length > 0) {
-              setExperiences(routeResults);
-            } else {
-              // Fallback: Get districts along the route
-              const districts = await getDistrictsAlongRoute(routeWkt, 20);
-              console.log("[ThingsToDoList] Districts found along route:", districts);
-              
-              // Also include districts from start and end cities
-              const fromDistrict = await getPlaceDistrictByName(fromCity);
-              const toDistrict = await getPlaceDistrictByName(toCity);
-              console.log("[ThingsToDoList] City districts:", { fromDistrict, toDistrict });
-              
-              // Combine all districts and remove duplicates
-              const allDistricts = Array.from(new Set([
-                ...districts,
-                ...(fromDistrict ? [fromDistrict] : []),
-                ...(toDistrict ? [toDistrict] : []),
-              ]));
-              
-              console.log("[ThingsToDoList] All districts:", allDistricts);
-              
-              if (allDistricts.length > 0) {
-                // Query by all districts along the route
-                const results = await getWalkingExperiencesByDistricts(allDistricts, 500);
-                console.log("[ThingsToDoList] District query results:", results.length);
-                setExperiences(results);
-              } else {
-                // Fallback: query by radius from midpoint
-                const midLat = (fromPlace[0].lat + toPlace[0].lat) / 2;
-                const midLng = (fromPlace[0].lng + toPlace[0].lng) / 2;
-                const distance = Math.sqrt(
-                  Math.pow((toPlace[0].lat - fromPlace[0].lat) * 111, 2) +
-                  Math.pow((toPlace[0].lng - fromPlace[0].lng) * 111 * Math.cos(midLat * Math.PI / 180), 2)
-                );
-                
-                console.log("[ThingsToDoList] Using midpoint fallback:", { midLat, midLng, distance });
-                const results = await getWalkingExperiencesNearPoint(
-                  midLat,
-                  midLng,
-                  Math.max(distance / 2, 50.0), // At least 50km radius
-                  500
-                );
-                console.log("[ThingsToDoList] Midpoint query results:", results.length);
-                setExperiences(results);
-              }
-            }
-          } else {
-            // Fallback: try to find districts by name only
-            const fromDistrict = await getPlaceDistrictByName(fromCity);
-            const toDistrict = await getPlaceDistrictByName(toCity);
-            
-            const districts = [fromDistrict, toDistrict].filter((d): d is string => d !== null);
-            
-            if (districts.length > 0) {
-              const results = await getWalkingExperiencesByDistricts(districts, 500);
-              setExperiences(results);
-            } else {
-              setExperiences([]);
-            }
-          }
-        } else {
-          // Itinerary sector: single location
-          // Try to get district from location name
-          const { cityName, district } = parseDisplayName(location);
-          
-          let districtName: string | null = district || null;
-          
-          // If no district in display name, try to look it up
-          if (!districtName) {
-            districtName = await getPlaceDistrictByName(cityName || location);
-          }
-          
-          if (districtName) {
-            // Query by district (fastest / preferred)
-            const results = await getWalkingExperiencesByDistrict(districtName, 500);
-            console.log("[ThingsToDoList] Itinerary district results:", {
-              location,
-              cityName,
-              districtName,
-              count: results.length,
-            });
-
-            if (results.length > 0) {
-              setExperiences(results);
-              return;
-            }
-
-            // Some cities (e.g. Napier) can have a district name that doesn't
-            // exactly match the DOC walking_experiences.district_name values.
-            // If the district query returns no results, fall back to a
-            // coordinate-based radius search around the city so we still
-            // surface nearby tracks.
-            console.log("[ThingsToDoList] Itinerary district query empty, falling back to radius search");
-          }
-
-          // Fallback: try to get coordinates and query by radius
-          const places = await searchPlacesByName(cityName || location, 1);
-          
-          if (places.length > 0 && places[0].lat && places[0].lng) {
-            console.log("[ThingsToDoList] Itinerary fallback - searching near point:", {
-              location,
-              cityName,
-              place: { name: places[0].name, lat: places[0].lat, lng: places[0].lng },
-              radius: 60.0
-            });
-            const results = await getWalkingExperiencesNearPoint(
-              places[0].lat,
-              places[0].lng,
-              60.0, // 60km radius
-              500
-            );
-            console.log("[ThingsToDoList] Itinerary fallback results:", results.length, results);
-            setExperiences(results);
-          } else {
-            console.log("[ThingsToDoList] Itinerary - no place coordinates found:", { location, cityName, places });
-            setExperiences([]);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching walking experiences:", err);
-        setError("Failed to load walking experiences");
-        setExperiences([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchExperiences();
-    setCurrentPage(1); // Reset to first page when location changes
+    setCurrentPage(1);
+    setSelectedTagIds([]);
+    setSelectedWalkingFilter(false);
   }, [location]);
 
-  // Sort experiences alphabetically by track name
-  const sortedExperiences = useMemo(() => {
-    return [...experiences].sort((a, b) => 
-      a.track_name.localeCompare(b.track_name)
-    );
-  }, [experiences]);
+  // Check scroll buttons for tags
+  const checkTagsScrollButtons = () => {
+    if (!tagsScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tagsScrollRef.current;
+    setCanScrollTagsLeft(scrollLeft > 0);
+    setCanScrollTagsRight(scrollLeft < scrollWidth - clientWidth - 1);
+  };
+
+  // Scroll tags horizontally
+  const scrollTags = (direction: "left" | "right") => {
+    if (!tagsScrollRef.current) return;
+    const scrollAmount = 200; // pixels to scroll
+    const currentScroll = tagsScrollRef.current.scrollLeft;
+    const maxScroll = tagsScrollRef.current.scrollWidth - tagsScrollRef.current.clientWidth;
+    let newScroll: number;
+    
+    if (direction === "left") {
+      newScroll = Math.max(0, currentScroll - scrollAmount);
+    } else {
+      newScroll = Math.min(maxScroll, currentScroll + scrollAmount);
+    }
+    
+    tagsScrollRef.current.scrollTo({ left: newScroll, behavior: "smooth" });
+    
+    // Update button states after a short delay to account for smooth scrolling
+    setTimeout(() => {
+      checkTagsScrollButtons();
+    }, 100);
+  };
+
+
+  // Update scroll buttons when tags change or container resizes
+  useEffect(() => {
+    checkTagsScrollButtons();
+    const container = tagsScrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => checkTagsScrollButtons();
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", checkTagsScrollButtons);
+    
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkTagsScrollButtons);
+    };
+  }, [tags]);
+
+  // Transform walking experiences to ExperienceItem and combine with Viator products
+  // Deduplicate products by ID to prevent duplicate keys
+  const allExperiences = useMemo(() => {
+    const walking = walkingExperiences.map(transformWalkingExperience);
+    
+    // Deduplicate viator products by ID (in case same product appears multiple times)
+    const seenIds = new Set<string>();
+    const uniqueViatorProducts = viatorProducts.filter(product => {
+      if (seenIds.has(product.id)) {
+        console.warn(`[ThingsToDoList] Duplicate product detected and removed: ${product.id} - ${product.title}`);
+        return false;
+      }
+      seenIds.add(product.id);
+      return true;
+    });
+    
+    return [...walking, ...uniqueViatorProducts];
+  }, [walkingExperiences, viatorProducts]);
+
+  // Helper function to parse duration to minutes for sorting
+  const parseDurationToMinutes = (duration: string | undefined | null, durationInMinutes?: number): number => {
+    // If we already have duration in minutes (from Viator), use that
+    if (durationInMinutes !== undefined) {
+      return durationInMinutes;
+    }
+    
+    if (!duration) return Infinity; // Put items without duration at the end
+    
+    const durationStr = duration.toLowerCase().trim();
+    
+    // Try to parse formats like "2 to 60 days", "2-4 days", "2h 30m", "3h", "45m", "72h", etc.
+    const dayMatch = durationStr.match(/(\d+)\s*(?:to|-)\s*(\d+)?\s*d/);
+    const hourMatch = durationStr.match(/(\d+)\s*h/);
+    const minuteMatch = durationStr.match(/(\d+)\s*m/);
+    
+    let totalMinutes = 0;
+    
+    if (dayMatch) {
+      // Handle "2 to 60 days" or "2-4 days" - use the minimum for sorting
+      const minDays = parseInt(dayMatch[1], 10);
+      totalMinutes = minDays * 24 * 60; // Use minimum days
+    } else {
+      if (hourMatch) {
+        totalMinutes += parseInt(hourMatch[1], 10) * 60;
+      }
+      if (minuteMatch) {
+        totalMinutes += parseInt(minuteMatch[1], 10);
+      }
+    }
+    
+    // If no matches, try to parse as just a number (assume minutes)
+    if (totalMinutes === 0) {
+      const numberMatch = durationStr.match(/(\d+)/);
+      if (numberMatch) {
+        totalMinutes = parseInt(numberMatch[1], 10);
+      }
+    }
+    
+    return totalMinutes === 0 ? Infinity : totalMinutes;
+  };
+
+  // Filter and sort experiences
+  const filteredAndSortedExperiences = useMemo(() => {
+    // First filter by walking filter or tag filters
+    let filtered = allExperiences;
+    
+    // If walking filter is selected, show only walking experiences
+    if (selectedWalkingFilter) {
+      filtered = allExperiences.filter(exp => exp.type === "walking");
+    } 
+    // If tag filters are selected (but not walking filter), show only matching Viator products
+    else if (selectedTagIds.length > 0) {
+      filtered = allExperiences.filter(exp => {
+        // Walking experiences are excluded when tag filters are active
+        if (exp.type !== "viator") return false;
+        // Viator products must have at least one matching tag
+        if (!exp.tagIds || exp.tagIds.length === 0) return false;
+        
+        // Check if product matches any selected parent tag
+        return exp.tagIds.some(productTagId => {
+          // Direct match: product has the parent tag directly
+          if (selectedTagIds.includes(productTagId)) {
+            return true;
+          }
+          
+          // Indirect match: product has a child tag that references this parent
+          const childParents = childTagToParentsMap.get(productTagId);
+          if (childParents && Array.isArray(childParents)) {
+            return childParents.some(parentId => selectedTagIds.includes(parentId));
+          }
+          
+          return false;
+        });
+      });
+    }
+    
+    // Then sort by duration (shortest to longest), then alphabetically for same duration
+    return [...filtered].sort((a, b) => {
+      // For Viator products, prefer durationInMinutes if available, otherwise parse duration string
+      const aDuration = a.type === "viator" 
+        ? (a.durationInMinutes !== undefined ? a.durationInMinutes : parseDurationToMinutes(a.duration))
+        : parseDurationToMinutes(a.completion_time);
+      const bDuration = b.type === "viator"
+        ? (b.durationInMinutes !== undefined ? b.durationInMinutes : parseDurationToMinutes(b.duration))
+        : parseDurationToMinutes(b.completion_time);
+      
+      // Sort by duration first
+      if (aDuration !== bDuration) {
+        return aDuration - bDuration;
+      }
+      
+      // If same duration, sort alphabetically by title
+      return a.title.localeCompare(b.title);
+    });
+  }, [allExperiences, selectedTagIds, selectedWalkingFilter, childTagToParentsMap]);
+
+  // Use filteredAndSortedExperiences instead of sortedExperiences
+  const sortedExperiences = filteredAndSortedExperiences;
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedExperiences.length / ITEMS_PER_PAGE);
@@ -277,7 +290,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
     return (
       <div className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2">
         <div className="text-xs text-slate-500 text-center py-4">
-          No walking tracks found for this location.
+          No activities found for this location.
         </div>
       </div>
     );
@@ -285,6 +298,124 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
 
   return (
     <div className="space-y-3">
+      {/* Filter Section - show if we have walking experiences or tags/Viator products */}
+      {(walkingExperiences.length > 0 || (tags.length > 0 && viatorProducts.length > 0)) && (
+        <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+          <div className="flex items-center justify-end mb-2">
+            {(selectedTagIds.length > 0 || selectedWalkingFilter) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTagIds([]);
+                  setSelectedWalkingFilter(false);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-0.5 text-xs font-medium rounded bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+          
+          {/* Horizontal scrollable filters with navigation arrows on sides */}
+          <div className="relative flex items-center gap-2">
+            {/* Left arrow */}
+            <button
+              type="button"
+              onClick={() => scrollTags("left")}
+              disabled={!canScrollTagsLeft}
+              className={[
+                "p-1.5 rounded-full border transition flex-shrink-0",
+                canScrollTagsLeft
+                  ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
+                  : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
+              ].join(" ")}
+              aria-label="Scroll filters left"
+            >
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
+            </button>
+
+            {/* Scrollable filters container */}
+            <div
+              ref={tagsScrollRef}
+              className="flex gap-2 overflow-x-auto scrollbar-hide flex-1"
+            >
+              {/* Nature Hike/Walk filter - always first if walking experiences exist */}
+              {walkingExperiences.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedWalkingFilter) {
+                      setSelectedWalkingFilter(false);
+                    } else {
+                      setSelectedWalkingFilter(true);
+                      setSelectedTagIds([]); // Clear tag filters when selecting walking filter
+                    }
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className={[
+                    "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border whitespace-nowrap flex-shrink-0",
+                    selectedWalkingFilter
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
+                  ].join(" ")}
+                  title="Filter to show only nature hikes and walking experiences"
+                >
+                  Nature Hike/Walk
+                </button>
+              )}
+              
+              {/* Viator tag filters */}
+              {tags.length > 0 && viatorProducts.length > 0 && tags.map((tag) => {
+                const isSelected = selectedTagIds.includes(tag.tag_id);
+                // Extract English name from metadata, fallback to tag_name if not available
+                const displayName = tag.metadata?.allNamesByLocale?.en || tag.tag_name;
+                return (
+                  <button
+                    key={tag.tag_id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedTagIds(selectedTagIds.filter(id => id !== tag.tag_id));
+                      } else {
+                        setSelectedTagIds([...selectedTagIds, tag.tag_id]);
+                        setSelectedWalkingFilter(false); // Clear walking filter when selecting tag filter
+                      }
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    className={[
+                      "px-2.5 py-1 text-xs font-medium rounded-full transition-colors border whitespace-nowrap flex-shrink-0",
+                      isSelected
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 hover:text-indigo-700"
+                    ].join(" ")}
+                    title={tag.description || displayName}
+                  >
+                    {displayName}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right arrow */}
+            <button
+              type="button"
+              onClick={() => scrollTags("right")}
+              disabled={!canScrollTagsRight}
+              className={[
+                "p-1.5 rounded-full border transition flex-shrink-0",
+                canScrollTagsRight
+                  ? "border-slate-400 bg-slate-200 hover:bg-slate-300 cursor-pointer"
+                  : "border-slate-300 bg-slate-100 opacity-40 cursor-not-allowed"
+              ].join(" ")}
+              aria-label="Scroll filters right"
+            >
+              <ChevronRight className="w-4 h-4 text-slate-600" />
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* View Toggle */}
       <div className="flex items-center justify-end gap-2">
         <button
@@ -331,123 +462,115 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
       {viewMode === "list" && (
         <div 
           ref={scrollContainerRef}
-          className="max-h-[calc(3*120px+2*12px+24px)] overflow-y-auto pr-2"
+          className="overflow-y-auto pr-2"
         >
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {currentPageExperiences.map((experience) => (
-          <div
+          <a
             key={experience.id}
-            className="block rounded-xl bg-slate-50 border border-slate-200 p-3 hover:bg-slate-100 transition-colors"
+            href={experience.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col"
           >
-            <div className="flex items-start gap-3">
-              {/* Thumbnail */}
-              {experience.url_to_thumbnail ? (
+            {/* Thumbnail - Full width at top */}
+            <div className="relative w-full aspect-[4/3] bg-slate-200">
+              {experience.imageUrl ? (
                 <img
-                  src={experience.url_to_thumbnail}
-                  alt={experience.track_name}
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-slate-200"
+                  src={experience.imageUrl}
+                  alt={experience.title}
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     // Hide image on error
                     e.currentTarget.style.display = "none";
                   }}
                 />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-slate-300 border border-slate-400 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-slate-600">🏔️</span>
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-2xl">{experience.type === "viator" ? "🎫" : "🏔️"}</span>
                 </div>
               )}
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h4 className="text-sm font-semibold text-slate-900 line-clamp-1">
-                    <a
-                      href={experience.url_to_webpage}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-indigo-600 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {experience.track_name}
-                    </a>
-                  </h4>
-                  {experience.difficulty && (
-                    <span className="text-[10px] text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      {experience.difficulty}
+            </div>
+            
+            {/* Content */}
+            <div className="p-3 flex flex-col h-full">
+                {/* Rating */}
+                {experience.type === "viator" && experience.rating && (
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-xs font-medium text-green-600">⭐</span>
+                    <span className="text-xs font-medium text-slate-900">{experience.rating.toFixed(1)}</span>
+                    {experience.totalReviews && (
+                      <span className="text-xs text-slate-500">({experience.totalReviews.toLocaleString()})</span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Title */}
+                <h4 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 hover:text-indigo-600 transition-colors">
+                  {experience.title}
+                </h4>
+                {/* Details */}
+                <div className="flex items-center gap-3 text-xs text-slate-600 mb-2">
+                  {experience.type === "viator" && (
+                    <span className="flex items-center gap-1">
+                      <span>✓</span>
+                      <span>Free Cancellation</span>
+                    </span>
+                  )}
+                  {(experience.completion_time || experience.duration) && (
+                    <span className="flex items-center gap-1">
+                      <span>⏱️</span>
+                      <span>{experience.duration || experience.completion_time}</span>
                     </span>
                   )}
                 </div>
-                {experience.description && (
-                  <p className="text-xs text-slate-700 line-clamp-2 mb-1">
-                    {experience.description}
-                  </p>
+                
+                {/* Price */}
+                {experience.type === "viator" && experience.price && (
+                  <div className="text-sm font-semibold text-slate-900 mb-2">
+                    {experience.price}
+                  </div>
                 )}
-                <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-500">
-                  {experience.completion_time && (
-                    <span>⏱️ {experience.completion_time}</span>
-                  )}
-                  {experience.kid_friendly && (
-                    <span>👨‍👩‍👧 Kid-friendly</span>
-                  )}
-                  {experience.distance_km && (
-                    <span>📍 {experience.distance_km.toFixed(1)} km away</span>
-                  )}
-                  {experience.district_name && (
-                    <span>📍 {experience.district_name}</span>
-                  )}
-                  {/* Action Pills - Desktop: inline with details */}
-                  <span className="hidden md:inline-flex items-center gap-2 ml-1">
-                    <a
-                      href={experience.url_to_webpage}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200 whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      More Detail
-                    </a>
+                
+                {/* Action Buttons - aligned at bottom */}
+                <div className="flex items-center gap-2 mt-auto">
+                  {experience.type === "viator" ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (onAddToItinerary) {
+                            onAddToItinerary(experience, location);
+                          }
+                        }}
+                        className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        Add to itinerary
+                      </button>
+                      <span className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600">
+                        Book now
+                      </span>
+                    </>
+                  ) : (
                     <button
                       type="button"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         if (onAddToItinerary) {
                           onAddToItinerary(experience, location);
                         }
                       }}
-                      className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                      className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                     >
                       Add to itinerary
                     </button>
-                  </span>
+                  )}
                 </div>
               </div>
-            </div>
-            
-            {/* Action Pills - Mobile: separate section below */}
-            <div className="flex items-center gap-2 flex-wrap md:hidden mt-3">
-              <a
-                href={experience.url_to_webpage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                More Detail
-              </a>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onAddToItinerary) {
-                    onAddToItinerary(experience, location);
-                  }
-                }}
-                className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-              >
-                Add to itinerary
-              </button>
-            </div>
-          </div>
+          </a>
           ))}
         </div>
 

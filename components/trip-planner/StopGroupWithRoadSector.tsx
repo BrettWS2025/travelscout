@@ -29,6 +29,10 @@ type StopGroupWithRoadSectorProps = {
   onUpdateDayNotes: (date: string, location: string, notes: string) => void;
   onUpdateDayAccommodation: (date: string, location: string, accommodation: string) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
+  onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
+  onRemoveViatorProductFromDay?: (date: string, location: string, productId: string) => void;
+  onEventHearted?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
+  onRequireAuth?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
   onToggleRoadSectorOpen: (destinationStopIndex: number) => void;
   onUpdateRoadSectorActivities: (destinationStopIndex: number, activities: string) => void;
   onRemoveExperienceFromRoadSector?: (destinationStopIndex: number, experienceId: string) => void;
@@ -36,7 +40,7 @@ type StopGroupWithRoadSectorProps = {
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
   onRemoveStop: (stopIndex: number) => void;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
 };
 
 export default function StopGroupWithRoadSector({
@@ -59,6 +63,10 @@ export default function StopGroupWithRoadSector({
   onUpdateDayNotes,
   onUpdateDayAccommodation,
   onRemoveExperienceFromDay,
+  onRemoveEventFromDay,
+  onRemoveViatorProductFromDay,
+  onEventHearted,
+  onRequireAuth,
   onToggleRoadSectorOpen,
   onUpdateRoadSectorActivities,
   onRemoveExperienceFromRoadSector,
@@ -139,6 +147,10 @@ export default function StopGroupWithRoadSector({
         onUpdateDayNotes={onUpdateDayNotes}
         onUpdateDayAccommodation={onUpdateDayAccommodation}
         onRemoveExperienceFromDay={onRemoveExperienceFromDay}
+        onRemoveEventFromDay={onRemoveEventFromDay}
+        onRemoveViatorProductFromDay={onRemoveViatorProductFromDay}
+        onEventHearted={onEventHearted}
+        onRequireAuth={onRequireAuth}
         onStartAddStop={onStartAddStop}
         onConfirmAddStop={onConfirmAddStop}
         onCancelAddStop={onCancelAddStop}

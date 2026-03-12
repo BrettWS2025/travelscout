@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, ChevronDown, Car } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
 import {
   formatShortRangeDate,
@@ -16,7 +17,8 @@ import {
 type AddToItineraryModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  experience: WalkingExperience;
+  experience?: WalkingExperience; // Optional for walking experiences
+  viatorProduct?: ExperienceItem; // Optional for Viator products
   location: string; // The location context (city name or "CityA to CityB")
   plan: TripPlan;
   routeStops: string[];
@@ -27,6 +29,7 @@ type AddToItineraryModalProps = {
   startSectorType: "road" | "itinerary";
   endSectorType: "road" | "itinerary";
   onAddToDay: (date: string, location: string, experience: WalkingExperience) => void;
+  onAddViatorProductToDay?: (date: string, location: string, product: ExperienceItem) => void;
   onAddToRoadSector: (destinationStopIndex: number, experience: WalkingExperience) => void;
 };
 
@@ -34,6 +37,7 @@ export default function AddToItineraryModal({
   isOpen,
   onClose,
   experience,
+  viatorProduct,
   location,
   plan,
   routeStops,
@@ -44,6 +48,7 @@ export default function AddToItineraryModal({
   startSectorType,
   endSectorType,
   onAddToDay,
+  onAddViatorProductToDay,
   onAddToRoadSector,
 }: AddToItineraryModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -288,13 +293,20 @@ export default function AddToItineraryModal({
   }, [plan, dayStopMeta, routeStops, endSectorType]);
 
   const handleAddToDay = (date: string, location: string) => {
-    onAddToDay(date, location, experience);
+    if (viatorProduct && onAddViatorProductToDay) {
+      onAddViatorProductToDay(date, location, viatorProduct);
+    } else if (experience) {
+      onAddToDay(date, location, experience);
+    }
     onClose();
   };
 
   const handleAddToRoadSector = (destinationStopIndex: number) => {
-    onAddToRoadSector(destinationStopIndex, experience);
-    onClose();
+    // Road sectors only support walking experiences for now
+    if (experience) {
+      onAddToRoadSector(destinationStopIndex, experience);
+      onClose();
+    }
   };
 
   // Calculate road sector dates
@@ -359,8 +371,15 @@ export default function AddToItineraryModal({
 
   if (!mounted || !isOpen) return null;
 
-  const activityText = experience.track_name;
+  // Determine if we're handling a Viator product or walking experience
+  const isViatorProduct = !!viatorProduct;
+  const activityText = isViatorProduct 
+    ? (viatorProduct.title || "Viator Activity")
+    : (experience?.track_name || "Activity");
   const isRoadSector = location.includes(" to ");
+  
+  // Don't show road sector options for Viator products
+  const showRoadSectors = !isViatorProduct;
 
   return createPortal(
     <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
@@ -396,7 +415,7 @@ export default function AddToItineraryModal({
         {/* Mini Itinerary */}
         <div className="flex-1 overflow-y-auto pr-2 space-y-3">
           {/* Start road sector - show when start is road sector and there are at least 2 stops */}
-          {startSectorType === "road" && routeStops.length >= 2 && (
+          {showRoadSectors && startSectorType === "road" && routeStops.length >= 2 && (
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <button
                 type="button"
@@ -510,8 +529,8 @@ export default function AddToItineraryModal({
                 </div>
               )}
 
-              {/* Road sector from start to first middle stop */}
-              {startSectorType === "itinerary" && stopGroups.length > 0 && startGroup && (
+              {/* Road sector from start to first middle stop - only for walking experiences */}
+              {showRoadSectors && startSectorType === "itinerary" && stopGroups.length > 0 && startGroup && (
                 <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                   <button
                     type="button"
@@ -562,7 +581,7 @@ export default function AddToItineraryModal({
               )}
 
               {/* Road sector from start to end when only 2 stops and both are itinerary */}
-              {startSectorType === "itinerary" && endSectorType === "itinerary" && 
+              {showRoadSectors && startSectorType === "itinerary" && endSectorType === "itinerary" && 
                routeStops.length === 2 && stopGroups.length === 0 && startGroup && endGroup && (
                 <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                   <button
@@ -626,8 +645,8 @@ export default function AddToItineraryModal({
             return (
               <div key={`group-${group.stopIndex}`} className="space-y-2">
                 {/* Road sector before this stop */}
-                {/* Don't render if: (1) first stop and start is itinerary, OR (2) first stop and start is road (already rendered above) */}
-                {idx === 0 && ((startGroup && startSectorType === "itinerary") || startSectorType === "road") ? null : (
+                {/* Don't render if: (1) first stop and start is itinerary, OR (2) first stop and start is road (already rendered above), OR (3) Viator products don't support road sectors */}
+                {showRoadSectors && !(idx === 0 && ((startGroup && startSectorType === "itinerary") || startSectorType === "road")) && (
                   <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                     <button
                       type="button"
@@ -742,7 +761,7 @@ export default function AddToItineraryModal({
           })}
 
           {/* Road sector to end */}
-          {stopGroups.length > 0 && endGroup && endSectorType === "itinerary" && (
+          {showRoadSectors && stopGroups.length > 0 && endGroup && endSectorType === "itinerary" && (
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <button
                 type="button"
@@ -796,7 +815,7 @@ export default function AddToItineraryModal({
 
 
           {/* End road sector */}
-          {(endGroup || (routeStops.length >= 2 && endSectorType === "road")) && endSectorType === "road" && (
+          {showRoadSectors && (endGroup || (routeStops.length >= 2 && endSectorType === "road")) && endSectorType === "road" && (
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <button
                 type="button"
@@ -913,7 +932,7 @@ export default function AddToItineraryModal({
           {!endGroup && routeStops.length >= 2 && (
             <>
               {/* End road sector fallback */}
-              {endSectorType === "road" && (
+              {showRoadSectors && endSectorType === "road" && (
                 <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                   <button
                     type="button"

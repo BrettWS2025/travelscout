@@ -13,8 +13,12 @@ import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
 import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/AuthModal";
 import type { TripInput } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
+import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
+import type { Event } from "@/lib/hooks/useEvents";
 
 type ItineraryData = {
   id: string;
@@ -38,6 +42,20 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
+  const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
+  
+  // Pending actions (to execute after authentication)
+  const [pendingAddToItinerary, setPendingAddToItinerary] = useState<{
+    experience: WalkingExperience | ExperienceItem;
+    location: string;
+  } | null>(null);
+  const [pendingPinEvent, setPendingPinEvent] = useState<{
+    event: Event;
+    date: string;
+    location: string;
+  } | null>(null);
   
   // City selection modal state
   const [showCityModal, setShowCityModal] = useState(false);
@@ -50,6 +68,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   // Add to itinerary modal state
   const [showAddToItineraryModal, setShowAddToItineraryModal] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState<WalkingExperience | null>(null);
+  const [selectedViatorProduct, setSelectedViatorProduct] = useState<ExperienceItem | null>(null);
   const [selectedExperienceLocation, setSelectedExperienceLocation] = useState<string>("");
 
   // Restore state from localStorage on mount (if not loading initialItinerary)
@@ -73,6 +92,58 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       }
     }
   }, [initialItinerary, itineraryLoaded, tp]);
+
+  // After auth modal closes, wait for user to be available, then show title dialog
+  useEffect(() => {
+    if (pendingSave && !showAuthModal && user) {
+      // User has logged in, show title dialog
+      const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
+        ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
+        : "My Trip");
+      setSaveTitle(defaultTitle);
+      setShowSaveDialog(true);
+      setSaveSuccess(false);
+      setPendingSave(false);
+    }
+  }, [pendingSave, showAuthModal, user, initialItinerary, tp]);
+
+  // Execute pending actions after successful authentication
+  useEffect(() => {
+    // Only execute if auth modal just closed and user is now authenticated
+    // and we have pending actions
+    if (!showAuthModal && user && (pendingAddToItinerary || pendingPinEvent)) {
+      // User just authenticated, execute pending actions
+      if (pendingAddToItinerary) {
+        const action = pendingAddToItinerary;
+        setPendingAddToItinerary(null); // Clear immediately to prevent re-execution
+        proceedWithAddToItinerary(
+          action.experience,
+          action.location
+        );
+      }
+      
+      if (pendingPinEvent) {
+        // Save event to cache first, then pin it
+        const action = pendingPinEvent;
+        setPendingPinEvent(null); // Clear immediately to prevent re-execution
+        const saveEvent = async () => {
+          const { saveEventToCache } = await import("@/lib/events.api");
+          const result = await saveEventToCache(action.event);
+          if (result.success) {
+            // Event saved to cache, now pin it to the day
+            tp.addEventToDay(
+              action.date,
+              action.location,
+              action.event
+            );
+          } else {
+            console.error("Failed to save event to cache:", result.error);
+          }
+        };
+        saveEvent();
+      }
+    }
+  }, [showAuthModal, user, pendingAddToItinerary, pendingPinEvent, tp]);
 
   // Handle URL search params for deep linking (only sync URL -> state, not state -> URL)
   useEffect(() => {
@@ -143,8 +214,58 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   };
 
   // Handle adding experience to itinerary
-  const handleAddToItinerary = (experience: WalkingExperience, location: string) => {
-    setSelectedExperience(experience);
+  const handleAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
+    // Check if user is authenticated
+    if (!user) {
+      // Store the pending action and show auth modal
+      setPendingAddToItinerary({ experience, location });
+      setAuthModalContext("add-to-itinerary");
+      setShowAuthModal(true);
+      return;
+    }
+
+    // User is authenticated, proceed with adding to itinerary
+    await proceedWithAddToItinerary(experience, location);
+  };
+
+  // Internal function to actually add to itinerary (called after auth or if already authenticated)
+  const proceedWithAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
+    // Handle Viator products
+    if ('type' in experience && experience.type === 'viator') {
+      // Save to cache first
+      const { saveViatorProductToCache } = await import("@/lib/viator.api");
+      const result = await saveViatorProductToCache(experience);
+      
+      if (!result.success) {
+        console.error('Failed to save Viator product to cache:', result.error);
+        return;
+      }
+      
+      setSelectedViatorProduct(experience);
+      setSelectedExperience(null);
+      setSelectedExperienceLocation(location);
+      setShowAddToItineraryModal(true);
+      return;
+    }
+    
+    // Handle walking experiences
+    // Convert ExperienceItem to WalkingExperience if needed
+    let walkingExp: WalkingExperience;
+    if ('type' in experience && experience.type === 'walking') {
+      // It's an ExperienceItem, convert it back to WalkingExperience
+      const converted = transformExperienceItemToWalking(experience);
+      if (!converted) {
+        console.error('Failed to convert ExperienceItem to WalkingExperience');
+        return;
+      }
+      walkingExp = converted;
+    } else {
+      // It's already a WalkingExperience
+      walkingExp = experience as WalkingExperience;
+    }
+    
+    setSelectedExperience(walkingExp);
+    setSelectedViatorProduct(null);
     setSelectedExperienceLocation(location);
     setShowAddToItineraryModal(true);
   };
@@ -152,6 +273,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const handleCloseAddToItineraryModal = () => {
     setShowAddToItineraryModal(false);
     setSelectedExperience(null);
+    setSelectedViatorProduct(null);
     setSelectedExperienceLocation("");
   };
 
@@ -160,21 +282,63 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     tp.addExperienceToDay(date, location, experience);
   };
 
+  // Add Viator product to day
+  const handleAddViatorProductToDay = (date: string, location: string, product: ExperienceItem) => {
+    tp.addViatorProductToDay(date, location, product);
+  };
+
   // Add experience to road sector
   const handleAddToRoadSector = (destinationStopIndex: number, experience: WalkingExperience) => {
     tp.addExperienceToRoadSector(destinationStopIndex, experience);
   };
 
-  const handleSaveClick = () => {
+  // Handle event hearted (pins directly to the day it's shown for)
+  const handleEventHearted = (event: Event, date: string, location: string) => {
+    // Check if user is authenticated
     if (!user) {
-      // Save current state to localStorage before redirecting
-      tp.saveStateToLocalStorage();
-      
-      // Redirect to login with return URL
-      const returnUrl = encodeURIComponent("/trip-planner");
-      router.push(`/auth/login?returnTo=${returnUrl}`);
+      // Store the pending action and show auth modal
+      setPendingPinEvent({ event, date, location });
+      setAuthModalContext("pin-event");
+      setShowAuthModal(true);
       return;
     }
+
+    // User is authenticated, proceed with pinning event
+    tp.addEventToDay(date, location, event);
+  };
+
+  // Handle require auth for events (called from EventsAttractionsCarousel)
+  const handleRequireAuth = (event: Event, date: string, location: string) => {
+    // Store the pending action and show auth modal
+    setPendingPinEvent({ event, date, location });
+    setAuthModalContext("pin-event");
+    setShowAuthModal(true);
+  };
+
+  // Remove event from day
+  const handleRemoveEventFromDay = (date: string, location: string, eventId: number) => {
+    tp.removeEventFromDay(date, location, eventId);
+  };
+
+  // Remove Viator product from day
+  const handleRemoveViatorProductFromDay = (date: string, location: string, productId: string) => {
+    tp.removeViatorProductFromDay(date, location, productId);
+  };
+
+  const handleSaveClick = () => {
+    if (!user) {
+      // Save current state to localStorage before showing auth modal
+      tp.saveStateToLocalStorage();
+      setPendingSave(true);
+      setAuthModalContext("save-itinerary");
+      setShowAuthModal(true);
+      return;
+    }
+    // User is logged in, show title dialog immediately
+    showTitleDialog();
+  };
+
+  const showTitleDialog = () => {
     // Use existing title if editing, otherwise generate default
     const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
       ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
@@ -182,6 +346,11 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     setSaveTitle(defaultTitle);
     setShowSaveDialog(true);
     setSaveSuccess(false);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    // The useEffect will handle showing the title dialog once user is available
   };
 
   const handleSaveConfirm = async () => {
@@ -195,11 +364,14 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       // Clear saved draft state after successful save
       tp.clearSavedState();
       setSaveSuccess(true);
+      // Navigate to itineraries list after a brief delay
       setTimeout(() => {
         setShowSaveDialog(false);
         setSaveSuccess(false);
         setSaveTitle("");
-      }, 1500);
+        setPendingSave(false);
+        router.push("/account/itineraries");
+      }, 1000);
     }
   };
 
@@ -308,6 +480,10 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onUpdateDayNotes={tp.updateDayNotes}
             onUpdateDayAccommodation={tp.updateDayAccommodation}
             onRemoveExperienceFromDay={tp.removeExperienceFromDay}
+            onRemoveEventFromDay={handleRemoveEventFromDay}
+            onRemoveViatorProductFromDay={handleRemoveViatorProductFromDay}
+            onEventHearted={handleEventHearted}
+            onRequireAuth={handleRequireAuth}
             onToggleRoadSectorOpen={tp.toggleRoadSectorOpen}
             onUpdateRoadSectorActivities={tp.updateRoadSectorActivities}
             onRemoveExperienceFromRoadSector={tp.removeExperienceFromRoadSector}
@@ -329,11 +505,12 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       )}
 
       {/* Add to Itinerary Modal */}
-      {showAddToItineraryModal && selectedExperience && tp.plan && (
+      {showAddToItineraryModal && (selectedExperience || selectedViatorProduct) && tp.plan && (
         <AddToItineraryModal
           isOpen={showAddToItineraryModal}
           onClose={handleCloseAddToItineraryModal}
-          experience={selectedExperience}
+          experience={selectedExperience || undefined}
+          viatorProduct={selectedViatorProduct || undefined}
           location={selectedExperienceLocation}
           plan={tp.plan}
           routeStops={tp.routeStops}
@@ -344,7 +521,24 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           startSectorType={tp.startSectorType}
           endSectorType={tp.endSectorType}
           onAddToDay={handleAddToDay}
+          onAddViatorProductToDay={handleAddViatorProductToDay}
           onAddToRoadSector={handleAddToRoadSector}
+        />
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => {
+            setShowAuthModal(false);
+            setPendingSave(false);
+            // Clear pending actions if user closes modal without authenticating
+            setPendingAddToItinerary(null);
+            setPendingPinEvent(null);
+          }}
+          onSuccess={handleAuthSuccess}
+          context={authModalContext}
         />
       )}
 

@@ -489,7 +489,7 @@ export default function CitySelectionModal({
             <div className="space-y-4 py-4">
               <div className="text-center">
                 <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                  Will you be returning to this location?
+                  Are you coming back here?
                 </h3>
                 <p className="text-sm text-slate-600 mb-6">
                   {pendingStartCityId ? getCityById(pendingStartCityId)?.name : getCityById(startCityId)?.name}

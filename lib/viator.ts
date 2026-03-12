@@ -62,6 +62,10 @@ export type ViatorProduct = {
   };
   url?: string;
   productUrl?: string;
+  tags?: Array<{
+    tagId: number;
+    tagName?: string;
+  }> | number[]; // Can be array of tag IDs or array of tag objects
 };
 
 export type ViatorSearchParams = {
@@ -85,6 +89,7 @@ export type ViatorSearchParams = {
   // Filters
   categoryIds?: number[];
   tagIds?: number[];
+  excludeTagIds?: number[]; // Tags to exclude from results
   minPrice?: number;
   maxPrice?: number;
   currencyCode?: string; // e.g., "NZD", "USD"
@@ -214,20 +219,21 @@ export class ViatorClient {
       body.filtering.highestPrice = params.maxPrice;
     }
 
-    // Sorting - based on example, valid values appear to be PRICE, REVIEW_AVG_RATING, etc.
-    // The example shows "PRICE", so let's use that as default and map our values
+    // Sorting - use only known valid values
+    // Based on API errors, REVIEW_AVG_RATING is not valid
+    // Try using simpler values or omit sorting if not supported
     if (params.sortBy) {
       // Map our sortBy values to API format
-      // Based on error, POPULARITY doesn't exist - trying common alternatives
+      // Use PRICE as the default since it's known to work
       const sortMap: Record<string, string> = {
-        POPULARITY: "REVIEW_AVG_RATING", // Popularity might map to rating
+        POPULARITY: "PRICE", // Fallback to PRICE since POPULARITY/REVIEW_AVG_RATING don't work
         PRICE: "PRICE",
-        RATING: "REVIEW_AVG_RATING",
-        DURATION: "DURATION",
+        RATING: "PRICE", // Fallback to PRICE since REVIEW_AVG_RATING doesn't work
+        DURATION: "PRICE", // Fallback to PRICE - DURATION may not be supported
       };
       body.sorting.sort = sortMap[params.sortBy] || "PRICE";
     } else {
-      body.sorting.sort = "PRICE"; // Use PRICE as default (from example)
+      body.sorting.sort = "PRICE"; // Use PRICE as default (known to work)
     }
 
     // Sort order
@@ -245,22 +251,71 @@ export class ViatorClient {
     body.currency = params.currencyCode || "USD";
 
     try {
+      console.log(`[ViatorClient] Making API request to /products/search`);
+      console.log(`[ViatorClient] Request body:`, JSON.stringify(body, null, 2));
+      
       const response = await this.makeRequest<any>("/products/search", {
         method: "POST",
         body: JSON.stringify(body),
       });
 
       // Transform the response to our expected format
-      const products = response.products || response.data?.products || [];
-      const totalCount = response.totalCount || response.data?.totalCount || products.length;
+      let products = response.products || response.data?.products || [];
+      const originalTotalCount = response.totalCount || response.data?.totalCount || products.length;
+      
+      // Filter out products with excluded tags (client-side filtering)
+      if (params.excludeTagIds && params.excludeTagIds.length > 0) {
+        const excludeTagIdsSet = new Set(params.excludeTagIds);
+        const beforeFilterCount = products.length;
+        
+        console.log(`[ViatorClient] Filtering products to exclude tags: ${params.excludeTagIds.join(', ')}`);
+        console.log(`[ViatorClient] Products before filtering: ${beforeFilterCount}`);
+        
+        products = products.filter((product: ViatorProduct) => {
+          // Check if product has any excluded tags
+          if (!product.tags || product.tags.length === 0) {
+            return true; // Keep products without tags
+          }
+          
+          // Handle both array of tag IDs and array of tag objects
+          const productTagIds = product.tags.map((tag: any) => {
+            if (typeof tag === 'number') {
+              return tag;
+            }
+            // Try different possible property names
+            return tag.tagId || tag.id || tag.tag_id || (typeof tag === 'object' && tag !== null ? Object.values(tag)[0] : null);
+          }).filter((id): id is number => typeof id === 'number' && !isNaN(id));
+          
+          // Debug: log products that might be excluded
+          const hasExcludedTag = productTagIds.some((tagId: number) => excludeTagIdsSet.has(tagId));
+          if (hasExcludedTag) {
+            console.log(`[ViatorClient] Excluding product ${product.productCode} (${product.title?.substring(0, 50)}) with tags: ${productTagIds.join(', ')}`);
+          }
+          
+          return !hasExcludedTag;
+        });
+        
+        const filteredCount = beforeFilterCount - products.length;
+        console.log(`[ViatorClient] Products after filtering: ${products.length}`);
+        if (filteredCount > 0) {
+          console.log(`[ViatorClient] ✅ Filtered out ${filteredCount} products with excluded tags: ${params.excludeTagIds.join(', ')}`);
+        } else {
+          console.log(`[ViatorClient] ⚠️  No products were filtered. This might indicate that no products had the excluded tags, or the tag format is different than expected.`);
+        }
+      }
+      
+      console.log(`[ViatorClient] API Response:`);
+      console.log(`[ViatorClient]   - Products returned: ${products.length}`);
+      console.log(`[ViatorClient]   - Total count: ${originalTotalCount}`);
+      console.log(`[ViatorClient]   - Has more: ${products.length >= body.pagination.count}`);
       
       return {
         products,
-        totalCount,
+        totalCount: originalTotalCount, // Keep original count for pagination purposes
         hasMore: products.length >= body.pagination.count,
       };
     } catch (error) {
-      console.error("Error searching Viator products:", error);
+      console.error("[ViatorClient] Error searching Viator products:", error);
       throw error;
     }
   }

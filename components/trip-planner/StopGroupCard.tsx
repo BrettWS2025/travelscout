@@ -15,6 +15,7 @@ import CitySearchPill from "@/components/trip-planner/CitySearchPill";
 import type { Group } from "@/components/trip-planner/DraftItinerary.types";
 import ViewToggle from "@/components/trip-planner/Things_todo/ViewToggle";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
+import { usePrefetchAdjacentDestinations } from "@/lib/hooks/usePrefetchAdjacentDestinations";
 
 type StopGroupCardProps = {
   group: Group;
@@ -37,6 +38,10 @@ type StopGroupCardProps = {
     accommodation: string
   ) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
+  onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
+  onRemoveViatorProductFromDay?: (date: string, location: string, productId: string) => void;
+  onEventHearted?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
+  onRequireAuth?: (event: import("@/lib/hooks/useEvents").Event, date: string, location: string) => void;
   onStartAddStop: (stopIndex: number) => void;
   onConfirmAddStop: () => void;
   onCancelAddStop: () => void;
@@ -44,7 +49,7 @@ type StopGroupCardProps = {
   dragAttributes?: any;
   dragListeners?: any;
   isDragDisabled?: boolean;
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience | import("@/lib/viator-helpers").ExperienceItem, location: string) => void;
 };
 
 export default function StopGroupCard({
@@ -63,6 +68,10 @@ export default function StopGroupCard({
   onUpdateDayNotes,
   onUpdateDayAccommodation,
   onRemoveExperienceFromDay,
+  onRemoveEventFromDay,
+  onRemoveViatorProductFromDay,
+  onEventHearted,
+  onRequireAuth,
   onStartAddStop,
   onConfirmAddStop,
   onCancelAddStop,
@@ -90,6 +99,9 @@ export default function StopGroupCard({
   
   // State for view toggle (itinerary vs things to do)
   const [view, setView] = useState<"itinerary" | "thingsToDo">("itinerary");
+
+  // Prefetch adjacent destinations for faster navigation
+  usePrefetchAdjacentDestinations(g.stopName, routeStops, g.stopIndex);
 
   return (
     <div
@@ -287,6 +299,10 @@ export default function StopGroupCard({
                           onUpdateDayAccommodation(d.date, d.location, accommodation)
                         }
                         onRemoveExperience={onRemoveExperienceFromDay ? (experienceId) => onRemoveExperienceFromDay(d.date, d.location, experienceId) : undefined}
+                        onRemoveEvent={onRemoveEventFromDay ? (eventId) => onRemoveEventFromDay(d.date, d.location, eventId) : undefined}
+                        onRemoveViatorProduct={onRemoveViatorProductFromDay ? (productId) => onRemoveViatorProductFromDay(d.date, d.location, productId) : undefined}
+                        onEventHearted={onEventHearted}
+                        onRequireAuth={onRequireAuth}
                       />
                     );
                   })}

@@ -1,5 +1,8 @@
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
+import type { WalkingExperience } from "@/lib/walkingExperiences";
+import type { ExperienceItem } from "@/lib/viator-helpers";
+import type { Event } from "@/lib/hooks/useEvents";
 
 export type DraftItineraryProps = {
   plan: TripPlan;
@@ -26,6 +29,10 @@ export type DraftItineraryProps = {
     accommodation: string
   ) => void;
   onRemoveExperienceFromDay?: (date: string, location: string, experienceId: string) => void;
+  onRemoveEventFromDay?: (date: string, location: string, eventId: number) => void;
+  onRemoveViatorProductFromDay?: (date: string, location: string, productId: string) => void;
+  onEventHearted?: (event: Event, date: string, location: string) => void;
+  onRequireAuth?: (event: Event, date: string, location: string) => void;
 
   roadSectorDetails: Record<number, RoadSectorDetail>;
   onToggleRoadSectorOpen: (destinationStopIndex: number) => void;
@@ -45,7 +52,7 @@ export type DraftItineraryProps = {
 
   onReorderStops: (fromIndex: number, toIndex: number) => void;
 
-  onAddToItinerary?: (experience: import("@/lib/walkingExperiences").WalkingExperience, location: string) => void;
+  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
   
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
 };
