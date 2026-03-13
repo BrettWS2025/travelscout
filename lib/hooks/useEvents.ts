@@ -381,11 +381,30 @@ async function fetchEvents(
         }
       }
 
+      // Prefer the dedicated description field. If it's missing or blank,
+      // fall back to a concise "${genre} · ${venue}" summary instead of
+      // Ticketmaster's generic info/pleaseNote policy text.
+      let description: string | undefined =
+        typeof event.description === "string"
+          ? event.description.trim() || undefined
+          : undefined;
+
+      if (!description) {
+        const genre =
+          event.classifications?.[0]?.genre?.name ||
+          event.classifications?.[0]?.segment?.name;
+        const venue = event._embedded?.venues?.[0]?.name;
+        const parts = [genre, venue].filter(Boolean);
+        if (parts.length > 0) {
+          description = parts.join(" · ");
+        }
+      }
+
       return {
         id,
         name: event.name,
         url: event.url,
-        description: event.info || event.pleaseNote || event.description,
+        description,
         imageUrl,
         datetime_start: startIso,
         datetime_end: endIso,
