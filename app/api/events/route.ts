@@ -252,9 +252,9 @@ export async function GET(req: Request) {
           lat: parseFloat(lat),
           lng: parseFloat(lng),
           radiusKm: radius,
-          startDate,
-          endDate,
-          keyword: q,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          keyword: q || undefined,
         });
 
         return {
