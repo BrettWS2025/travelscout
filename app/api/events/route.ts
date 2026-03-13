@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRedisClient } from "@/lib/redis/client";
 import crypto from "crypto";
+import { searchTicketmasterEvents } from "@/lib/ticketmaster";
 
 export const dynamic = "force-dynamic";
 
@@ -146,7 +147,7 @@ export async function GET(req: Request) {
     const startDate = searchParams.get("start_date"); // YYYY-MM-DD format
     const endDate = searchParams.get("end_date"); // YYYY-MM-DD format
 
-    // Build API URL
+    // Build Eventfinda API URL
     const apiUrl = new URL("https://api.eventfinda.co.nz/v2/events.json");
     
     // Add point parameter (we know lat/lng are defined due to validation above)
@@ -186,8 +187,8 @@ export async function GET(req: Request) {
     // Format: fields=event:(id,name,url,url_slug,images:(id,url,width,height),sessions:(id,datetime_start,datetime_end,datetime_summary),category:(id,name,url_slug,parent_id))
     apiUrl.searchParams.append("fields", "event:(id,name,url,url_slug,description,datetime_start,datetime_end,datetime_summary,images,location:(id,name,url_slug,address,latitude,longitude),category:(id,name,url_slug,parent_id),sessions:(id,datetime_start,datetime_end,datetime_summary,is_cancelled))");
 
-    // Generate cache key from query parameters
-    const cacheKey = `eventfinda:${crypto
+    // Generate cache key from query parameters (covers both providers)
+    const cacheKey = `events-aggregated:${crypto
       .createHash("sha256")
       .update(apiUrl.toString())
       .digest("hex")}`;
@@ -207,40 +208,142 @@ export async function GET(req: Request) {
       }
     }
 
-    // Make request to Eventfinda API
+    // Make requests to providers in parallel
     const auth = Buffer.from(`${username}:${password}`).toString("base64");
-    const response = await fetch(apiUrl.toString(), {
-      headers: {
-        Authorization: `Basic ${auth}`,
-        Accept: "application/json",
-      },
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Eventfinda API error:", response.status, errorText);
-      return NextResponse.json(
-        { 
-          error: "Failed to fetch events from Eventfinda API",
-          status: response.status,
-          details: errorText
+    const eventfindaPromise = (async () => {
+      const response = await fetch(apiUrl.toString(), {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          Accept: "application/json",
         },
-        { status: response.status }
-      );
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Eventfinda API error:", response.status, errorText);
+        throw new Error(
+          `Failed to fetch events from Eventfinda API: ${response.status} ${errorText}`
+        );
+      }
+
+      const data: EventfindaResponse = await response.json();
+
+      const totalCount =
+        data["@attributes"]?.count ||
+        data.meta?.total ||
+        data.events?.length ||
+        0;
+
+      return {
+        events:
+          (data.events || []).map((event) => ({
+            ...event,
+            source: "eventfinda" as const,
+          })) || [],
+        total: totalCount,
+      };
+    })();
+
+    const ticketmasterPromise = (async () => {
+      try {
+        // Ticketmaster uses lat/long and date range similarly; we pass through the same parameters
+        const { events, total } = await searchTicketmasterEvents({
+          lat: parseFloat(lat),
+          lng: parseFloat(lng),
+          radiusKm: radius,
+          startDate,
+          endDate,
+          keyword: q,
+        });
+
+        return {
+          events: events.map((event: any) => ({
+            ...event,
+            source: "ticketmaster" as const,
+          })),
+          total,
+        };
+      } catch (err) {
+        console.error("Ticketmaster API error (non-fatal):", err);
+        // Fail open for Ticketmaster so Eventfinda can still serve results
+        return { events: [] as any[], total: 0 };
+      }
+    })();
+
+    const [eventfindaResult, ticketmasterResult] = await Promise.all([
+      eventfindaPromise,
+      ticketmasterPromise,
+    ]);
+
+    // Merge and de-duplicate events across providers.
+    // We use a simple key of lowercased name + primary start date, and prefer
+    // Eventfinda when there is a conflict (as it's our primary NZ source).
+    const merged: any[] = [];
+    const seen = new Map<string, number>();
+
+    function makeKey(event: any): string {
+      const name = (event.name || "").toString().toLowerCase().trim();
+      let datePart = "";
+
+      if (event.source === "eventfinda") {
+        datePart = event.datetime_start || "";
+      } else if (event.source === "ticketmaster") {
+        const start =
+          event.dates?.start?.dateTime || event.dates?.start?.localDate || "";
+        datePart = start;
+      }
+
+      return `${name}|${datePart}`;
     }
 
-    const data: EventfindaResponse = await response.json();
+    const allProviderEvents = [
+      ...eventfindaResult.events,
+      ...ticketmasterResult.events,
+    ];
 
-    // Eventfinda API returns total count in @attributes.count, not meta.total
-    const totalCount = data["@attributes"]?.count || data.meta?.total || data.events?.length || 0;
+    for (const ev of allProviderEvents) {
+      const key = makeKey(ev);
+
+      if (!key.trim()) {
+        merged.push(ev);
+        continue;
+      }
+
+      const existingIndex = seen.get(key);
+
+      if (existingIndex === undefined) {
+        seen.set(key, merged.length);
+        merged.push(ev);
+        continue;
+      }
+
+      const existing = merged[existingIndex];
+
+      // Prefer Eventfinda over Ticketmaster when both represent
+      // the same logical event.
+      if (existing.source === "eventfinda") {
+        continue;
+      }
+      if (ev.source === "eventfinda") {
+        merged[existingIndex] = ev;
+        continue;
+      }
+
+      // Otherwise keep the first.
+    }
+
+    const allEvents = merged;
+
+    const totalCount = allEvents.length;
 
     const responseData = {
       success: true,
-      count: data.events?.length || 0,
+      count: allEvents.length,
       total: totalCount,
       offset: offset,
       rows: rows,
-      events: data.events || [],
+      events: allEvents,
     };
 
     // Cache the response

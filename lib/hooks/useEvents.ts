@@ -32,6 +32,22 @@ function getNextDay(dateStr: string): string {
 }
 
 /**
+ * Helper to format an event date (ISO string or YYYY-MM-DD) into
+ * a short human-friendly label like "Thu 12 Mar".
+ */
+function formatEventDateLabel(input: string): string {
+  if (!input) return "";
+  const date =
+    input.length === 10 ? new Date(input + "T00:00:00") : new Date(input);
+  if (Number.isNaN(date.getTime())) return input;
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+/**
  * Helper function to get the previous day in YYYY-MM-DD format
  */
 function getPreviousDay(dateStr: string): string {
@@ -240,71 +256,154 @@ async function fetchEvents(
     offset += rowsPerPage;
   }
 
-  // Transform Eventfinda events to our Event type
+  // Transform provider-specific events (Eventfinda, Ticketmaster, etc.) to our Event type
   const transformedEvents: Event[] = allEvents.map((event: any) => {
-    // Extract image URL
-    let imageUrl: string | undefined;
-    
-    if (event.images) {
-      if (Array.isArray(event.images)) {
-        const primaryImage = event.images.find((img: any) => img.is_primary) || event.images[0];
-        if (primaryImage) {
-          imageUrl = primaryImage.original_url || primaryImage.url;
-        }
-      } else if (event.images.images && Array.isArray(event.images.images)) {
-        const primaryImage = event.images.images.find((img: any) => img.is_primary) || event.images.images[0];
-        if (primaryImage) {
-          imageUrl = primaryImage.original_url || primaryImage.url;
-        }
-      }
-    }
+    const source = event.source || "eventfinda";
 
-    // Extract sessions and find the one matching the target date
-    let datetime_summary: string | undefined = event.datetime_summary;
-    let sessionDatetimeStart = event.datetime_start;
-    let sessionDatetimeEnd = event.datetime_end;
-    let hasSessions = false;
-    let foundMatchingSession = false;
-
-    if (event.sessions) {
-      hasSessions = true;
-      let sessions: any[] = [];
+    // Eventfinda mapping (existing behaviour)
+    if (source === "eventfinda") {
+      // Extract image URL
+      let imageUrl: string | undefined;
       
-      if (Array.isArray(event.sessions)) {
-        sessions = event.sessions;
-      } else if (event.sessions.sessions && Array.isArray(event.sessions.sessions)) {
-        sessions = event.sessions.sessions;
+      if (event.images) {
+        if (Array.isArray(event.images)) {
+          const primaryImage = event.images.find((img: any) => img.is_primary) || event.images[0];
+          if (primaryImage) {
+            imageUrl = primaryImage.original_url || primaryImage.url;
+          }
+        } else if (event.images.images && Array.isArray(event.images.images)) {
+          const primaryImage = event.images.images.find((img: any) => img.is_primary) || event.images.images[0];
+          if (primaryImage) {
+            imageUrl = primaryImage.original_url || primaryImage.url;
+          }
+        }
       }
-
-      const matchingSession = sessions.find((session: any) => {
-        if (!session.datetime_start || session.is_cancelled) return false;
-        const sessionDate = extractLocalDate(session.datetime_start);
-        return sessionDate === date;
-      });
-
-      if (matchingSession) {
-        datetime_summary = matchingSession.datetime_summary || datetime_summary;
-        sessionDatetimeStart = matchingSession.datetime_start;
-        sessionDatetimeEnd = matchingSession.datetime_end;
-        foundMatchingSession = true;
-      } else {
-        sessionDatetimeStart = null as any;
-        sessionDatetimeEnd = null as any;
+  
+      // Extract sessions and find the one matching the target date
+      let datetime_summary: string | undefined = event.datetime_summary;
+      let sessionDatetimeStart = event.datetime_start;
+      let sessionDatetimeEnd = event.datetime_end;
+      let hasSessions = false;
+      let foundMatchingSession = false;
+  
+      if (event.sessions) {
+        hasSessions = true;
+        let sessions: any[] = [];
+        
+        if (Array.isArray(event.sessions)) {
+          sessions = event.sessions;
+        } else if (event.sessions.sessions && Array.isArray(event.sessions.sessions)) {
+          sessions = event.sessions.sessions;
+        }
+  
+        const matchingSession = sessions.find((session: any) => {
+          if (!session.datetime_start || session.is_cancelled) return false;
+          const sessionDate = extractLocalDate(session.datetime_start);
+          return sessionDate === date;
+        });
+  
+        if (matchingSession) {
+          datetime_summary = matchingSession.datetime_summary || datetime_summary;
+          sessionDatetimeStart = matchingSession.datetime_start;
+          sessionDatetimeEnd = matchingSession.datetime_end;
+          foundMatchingSession = true;
+        } else {
+          sessionDatetimeStart = null as any;
+          sessionDatetimeEnd = null as any;
+        }
       }
+  
+      return {
+        id: event.id,
+        name: event.name,
+        url: event.url,
+        description: event.description,
+        imageUrl,
+        datetime_start: sessionDatetimeStart,
+        datetime_end: sessionDatetimeEnd,
+        datetime_summary,
+        _hasSessions: hasSessions,
+        _foundMatchingSession: foundMatchingSession,
+      } as any;
     }
 
+    // Ticketmaster mapping
+    if (source === "ticketmaster") {
+      // Ticketmaster event structure (Discovery API v2):
+      // - id: string
+      // - name: string
+      // - url: string
+      // - images: [{ url, width, height, ... }]
+      // - dates.start.dateTime
+      // - dates.end.dateTime (sometimes)
+      const idRaw = event.id;
+      const id =
+        typeof idRaw === "number"
+          ? idRaw
+          : typeof idRaw === "string"
+          ? Math.abs(
+              Array.from(idRaw).reduce(
+                (hash: number, ch: string) =>
+                  ((hash << 5) - hash + ch.charCodeAt(0)) | 0,
+                0
+              )
+            )
+          : 0;
+
+      let imageUrl: string | undefined;
+      if (Array.isArray(event.images) && event.images.length > 0) {
+        const preferred = event.images.find(
+          (img: any) => img.ratio === "16_9"
+        );
+        const chosen = preferred || event.images[0];
+        if (chosen && chosen.url) {
+          imageUrl = chosen.url;
+        }
+      }
+
+      const startIso: string | undefined =
+        event.dates?.start?.dateTime || event.dates?.start?.localDate;
+      const endIso: string | undefined =
+        event.dates?.end?.dateTime || event.dates?.end?.localDate || undefined;
+
+      let datetime_summary: string | undefined;
+      if (startIso) {
+        const startLabel = formatEventDateLabel(startIso);
+        if (endIso) {
+          const endLabel = formatEventDateLabel(endIso);
+          if (startLabel !== endLabel) {
+            datetime_summary = `${startLabel} - ${endLabel}`;
+          } else {
+            datetime_summary = startLabel;
+          }
+        } else {
+          datetime_summary = startLabel;
+        }
+      }
+
+      return {
+        id,
+        name: event.name,
+        url: event.url,
+        description: event.info || event.pleaseNote || event.description,
+        imageUrl,
+        datetime_start: startIso,
+        datetime_end: endIso,
+        datetime_summary,
+      } as any;
+    }
+
+    // Fallback: try best-effort mapping
     return {
-      id: event.id,
-      name: event.name,
-      url: event.url,
+      id: event.id ?? 0,
+      name: event.name ?? "Untitled event",
+      url: event.url ?? "",
       description: event.description,
-      imageUrl,
-      datetime_start: sessionDatetimeStart,
-      datetime_end: sessionDatetimeEnd,
-      datetime_summary,
-      _hasSessions: hasSessions,
-      _foundMatchingSession: foundMatchingSession,
-    };
+      imageUrl: event.imageUrl,
+      datetime_start: event.datetime_start || event.start || new Date().toISOString(),
+      datetime_end: event.datetime_end,
+      datetime_summary: event.datetime_summary,
+    } as any;
   });
 
   // Filter events to only include those that actually occur on the target date
