@@ -298,7 +298,7 @@ export function Navbar() {
     <header
       className="relative z-[1000] py-3 overflow-visible"
       style={{
-        background: "rgba(255, 255, 255, 0.8)",
+        background: "rgba(255, 255, 255, 0.6)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
         backdropFilter: "saturate(180%) blur(20px)",
         borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
