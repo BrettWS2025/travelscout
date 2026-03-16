@@ -68,6 +68,16 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
   const tags = tagsData?.tags || [];
   const childTagToParentsMap = tagsData?.childTagToParentsMap || new Map();
 
+  // Debug logging
+  useEffect(() => {
+    if (viatorProducts.length > 0) {
+      console.log(`[ThingsToDoList] Location: ${location}, Products: ${viatorProducts.length}, Tags: ${tags.length}, TagsLoading: ${tagsLoading}`);
+      if (tags.length > 0) {
+        console.log(`[ThingsToDoList] Tag names:`, tags.map(t => t.metadata?.allNamesByLocale?.en || t.tag_name));
+      }
+    }
+  }, [location, viatorProducts.length, tags.length, tagsLoading]);
+
   // Reset to first page and clear filters when location changes
   useEffect(() => {
     setCurrentPage(1);

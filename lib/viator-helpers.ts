@@ -192,6 +192,15 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
       }
     }
   }
+  
+  // Debug logging for first few products
+  if (tagIds && tagIds.length > 0) {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has ${tagIds.length} tags:`, tagIds.slice(0, 10));
+  } else if (!product.tags) {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has no tags property`);
+  } else {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has empty tags array`);
+  }
 
   return {
     id: `viator-${product.productCode}`,
@@ -238,8 +247,12 @@ export async function fetchViatorProductsForLocation(
     });
     
     // Add location name if provided (helps with destination ID lookup)
+    // Normalize to remove macrons for better matching (e.g., "Wānaka" -> "Wanaka")
     if (locationName) {
-      params.append("locationName", locationName);
+      const { removeMacrons } = await import("@/lib/trip-planner/utils");
+      const normalizedName = removeMacrons(locationName);
+      // Pass both original and normalized for maximum compatibility
+      params.append("locationName", normalizedName);
     }
 
     // Add exclude tag IDs if provided

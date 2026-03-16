@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Edit3 } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
@@ -14,7 +14,7 @@ import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
-import type { TripInput } from "@/lib/itinerary";
+import type { TripInput, TripPlan } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
@@ -45,6 +45,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
+  const [isFormMinimized, setIsFormMinimized] = useState(false);
+  const prevPlanRef = useRef<TripPlan | null>(null);
   
   // Pending actions (to execute after authentication)
   const [pendingAddToItinerary, setPendingAddToItinerary] = useState<{
@@ -92,6 +94,20 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       }
     }
   }, [initialItinerary, itineraryLoaded, tp]);
+
+  // Auto-minimize form whenever a new plan is generated after submission
+  useEffect(() => {
+    // Check if this is a new plan (different from the previous one)
+    const isNewPlan = tp.plan !== null && tp.plan !== prevPlanRef.current;
+    
+    // Minimize when a new plan is generated after submission
+    if (isNewPlan && tp.hasSubmitted) {
+      setIsFormMinimized(true);
+    }
+    
+    // Update the previous plan reference
+    prevPlanRef.current = tp.plan;
+  }, [tp.plan, tp.hasSubmitted]);
 
   // After auth modal closes, wait for user to be available, then show title dialog
   useEffect(() => {
@@ -378,79 +394,97 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   return (
     <div className="space-y-8">
       <LoadingScreen isLoading={tp.legsLoading} />
-      <form
-        onSubmit={tp.handleSubmit}
-        className="p-4 md:p-6 space-y-6"
-        style={{ color: "var(--text)" }}
-      >
-        <WhereWhenPicker
-          whereRef={tp.whereRef}
-          whenRef={tp.whenRef}
-          activePill={tp.activePill}
-          showWherePopover={tp.showWherePopover}
-          showCalendar={tp.showCalendar}
-          mobileSheetOpen={tp.mobileSheetOpen}
-          mobileActive={tp.mobileActive}
-          startQuery={tp.startQuery}
-          endQuery={tp.endQuery}
-          destinationsQuery={tp.destinationsQuery}
-          destinationsResults={tp.destinationsResults}
-          recent={tp.recent}
-          suggested={tp.suggested}
-          startResults={tp.startResults}
-          endResults={tp.endResults}
-          startCityId={tp.startCityId}
-          endCityId={tp.endCityId}
-          destinationIds={tp.destinationIds}
-          dateRange={tp.dateRange}
-          calendarMonth={tp.calendarMonth}
-          startSummary={tp.whereSummary}
-          destinationsSummary={tp.destinationsSummary}
-          whenLabel={tp.whenLabel}
-          setMobileActive={tp.setMobileActive}
-          setShowCalendar={tp.setShowCalendar}
-          setActivePill={tp.setActivePill}
-          setStartQuery={tp.setStartQuery}
-          setEndQuery={tp.setEndQuery}
-          setDestinationsQuery={tp.setDestinationsQuery}
-          openMobileSheet={tp.openMobileSheet}
-          closeMobileSheet={tp.closeMobileSheet}
-          openWhereDesktop={tp.openWhereDesktop}
-          openWhenDesktop={tp.openWhenDesktop}
-          selectStartCity={tp.selectStartCity}
-          selectEndCity={tp.selectEndCity}
-          selectReturnToStart={tp.selectReturnToStart}
-          selectDestination={tp.selectDestination}
-          removeDestination={tp.removeDestination}
-          clearEndCity={tp.clearEndCity}
-          handleDateRangeChange={tp.handleDateRangeChange}
-          setDateRange={tp.setDateRange}
-          setCalendarMonth={tp.setCalendarMonth}
-          clearDates={() => {
-            tp.setDateRange(undefined);
-            tp.setStartDate("");
-            tp.setEndDate("");
-            tp.setCalendarMonth(new Date());
-          }}
-          onOpenCityModal={handleOpenCityModal}
-          onOpenReturnQuestion={handleOpenReturnQuestion}
-        />
-
-
-        {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
-
+      
+      {/* Minimized form pill */}
+      {isFormMinimized && tp.plan && (
         <div className="flex justify-center">
           <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
-            style={{ 
-              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-            }}
+            type="button"
+            onClick={() => setIsFormMinimized(false)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition shadow-sm hover:shadow-md"
           >
-            Create your journey
+            <Edit3 className="w-4 h-4" />
+            Edit your journey
           </button>
         </div>
-      </form>
+      )}
+
+      {/* Full form - shown when not minimized or when no plan exists */}
+      {(!isFormMinimized || !tp.plan) && (
+        <form
+          onSubmit={tp.handleSubmit}
+          className="p-4 md:p-6 space-y-6"
+          style={{ color: "var(--text)" }}
+        >
+          <WhereWhenPicker
+            whereRef={tp.whereRef}
+            whenRef={tp.whenRef}
+            activePill={tp.activePill}
+            showWherePopover={tp.showWherePopover}
+            showCalendar={tp.showCalendar}
+            mobileSheetOpen={tp.mobileSheetOpen}
+            mobileActive={tp.mobileActive}
+            startQuery={tp.startQuery}
+            endQuery={tp.endQuery}
+            destinationsQuery={tp.destinationsQuery}
+            destinationsResults={tp.destinationsResults}
+            recent={tp.recent}
+            suggested={tp.suggested}
+            startResults={tp.startResults}
+            endResults={tp.endResults}
+            startCityId={tp.startCityId}
+            endCityId={tp.endCityId}
+            destinationIds={tp.destinationIds}
+            dateRange={tp.dateRange}
+            calendarMonth={tp.calendarMonth}
+            startSummary={tp.whereSummary}
+            destinationsSummary={tp.destinationsSummary}
+            whenLabel={tp.whenLabel}
+            setMobileActive={tp.setMobileActive}
+            setShowCalendar={tp.setShowCalendar}
+            setActivePill={tp.setActivePill}
+            setStartQuery={tp.setStartQuery}
+            setEndQuery={tp.setEndQuery}
+            setDestinationsQuery={tp.setDestinationsQuery}
+            openMobileSheet={tp.openMobileSheet}
+            closeMobileSheet={tp.closeMobileSheet}
+            openWhereDesktop={tp.openWhereDesktop}
+            openWhenDesktop={tp.openWhenDesktop}
+            selectStartCity={tp.selectStartCity}
+            selectEndCity={tp.selectEndCity}
+            selectReturnToStart={tp.selectReturnToStart}
+            selectDestination={tp.selectDestination}
+            removeDestination={tp.removeDestination}
+            clearEndCity={tp.clearEndCity}
+            handleDateRangeChange={tp.handleDateRangeChange}
+            setDateRange={tp.setDateRange}
+            setCalendarMonth={tp.setCalendarMonth}
+            clearDates={() => {
+              tp.setDateRange(undefined);
+              tp.setStartDate("");
+              tp.setEndDate("");
+              tp.setCalendarMonth(new Date());
+            }}
+            onOpenCityModal={handleOpenCityModal}
+            onOpenReturnQuestion={handleOpenReturnQuestion}
+          />
+
+
+          {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
+
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
+              style={{ 
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              }}
+            >
+              Create your journey
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Results */}
       {tp.hasSubmitted && !tp.plan && !tp.error && (

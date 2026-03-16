@@ -210,6 +210,25 @@ export function normalize(s: string) {
   return s.trim().toLowerCase();
 }
 
+/**
+ * Remove macrons and other diacritics from a string
+ * Useful for matching place names that may have macrons (e.g., "Wānaka" -> "Wanaka")
+ * Handles both uppercase and lowercase macrons
+ */
+export function removeMacrons(text: string): string {
+  return text
+    .replace(/ā/g, 'a')
+    .replace(/Ā/g, 'A')
+    .replace(/ē/g, 'e')
+    .replace(/Ē/g, 'E')
+    .replace(/ī/g, 'i')
+    .replace(/Ī/g, 'I')
+    .replace(/ō/g, 'o')
+    .replace(/Ō/g, 'O')
+    .replace(/ū/g, 'u')
+    .replace(/Ū/g, 'U');
+}
+
 export function safeReadRecent(): CityLite[] {
   try {
     const raw = localStorage.getItem(RECENT_KEY);

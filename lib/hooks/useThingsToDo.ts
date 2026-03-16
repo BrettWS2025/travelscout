@@ -319,6 +319,8 @@ type TagsResult = {
  * Fetch tags for filtering
  */
 async function fetchTags(productTagIds: number[]): Promise<TagsResult> {
+  console.log(`[fetchTags] Fetching tags for ${productTagIds.length} product tag IDs:`, productTagIds.slice(0, 20));
+  
   // Build API URL with product tag IDs if we have products
   let apiUrl = "/api/viator/tags";
   if (productTagIds.length > 0) {
@@ -336,15 +338,20 @@ async function fetchTags(productTagIds: number[]): Promise<TagsResult> {
 
   if (!parentTagsResponse.ok) {
     const errorData = await parentTagsResponse.json().catch(() => ({}));
+    console.error(`[fetchTags] Failed to fetch tags: ${parentTagsResponse.status}`, errorData);
     throw new Error(`Failed to fetch tags: ${parentTagsResponse.status}`);
   }
 
   const data = await parentTagsResponse.json();
+  console.log(`[fetchTags] API response:`, { success: data.success, tagsCount: data.tags?.length || 0, hasTags: !!data.tags });
+  
   if (!data.success || !data.tags) {
+    console.warn(`[fetchTags] No tags returned. Response:`, data);
     return { tags: [], childTagToParentsMap: new Map() };
   }
 
   const tags: ViatorTag[] = data.tags;
+  console.log(`[fetchTags] Returning ${tags.length} tags:`, tags.slice(0, 5).map(t => ({ id: t.tag_id, name: t.tag_name })));
 
   // Build child-to-parent mapping
   let childTagToParentsMap = new Map<number, number[]>();
@@ -395,6 +402,13 @@ export function useTags(viatorProducts: ExperienceItem[]) {
     
     // Sort and deduplicate
     const uniqueIds = Array.from(new Set(ids)).sort((a, b) => a - b);
+    
+    // Debug logging
+    if (viatorProducts.length > 0) {
+      const productsWithTags = viatorProducts.filter(p => p.tagIds && p.tagIds.length > 0);
+      console.log(`[useTags] Products: ${viatorProducts.length}, Products with tags: ${productsWithTags.length}, Unique tag IDs: ${uniqueIds.length}`, uniqueIds);
+    }
+    
     return uniqueIds;
   }, [viatorProducts]);
 
@@ -402,7 +416,11 @@ export function useTags(viatorProducts: ExperienceItem[]) {
 
   return useQuery({
     queryKey: ["viatorTags", tagIdsKey],
-    queryFn: () => fetchTags(productTagIds),
+    queryFn: async () => {
+      const result = await fetchTags(productTagIds);
+      console.log(`[useTags] Fetched ${result.tags.length} parent tags from API`);
+      return result;
+    },
     enabled: productTagIds.length > 0,
     staleTime: 10 * 60 * 1000, // 10 minutes - same as other queries
   });

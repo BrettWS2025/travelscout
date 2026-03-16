@@ -350,6 +350,24 @@ export function useTripPlannerPlan(
       setDayStopMeta(buildDayStopMeta(stops, initialNights));
       setOpenStops({});
 
+      // Prefetch Viator Tags API to reduce lag when user clicks "Things to do"
+      // This fetches all parent tags (without productTagIds filter) to warm up the cache
+      fetch("/api/viator/tags")
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+        })
+        .then((data) => {
+          if (data?.success) {
+            console.log("[Trip Planner] Prefetched Viator tags:", data.tags?.length || 0, "tags");
+          }
+        })
+        .catch((error) => {
+          // Silently fail - this is just a prefetch to improve UX
+          console.debug("[Trip Planner] Failed to prefetch Viator tags:", error);
+        });
+
       // Build map points from all selected places, destinations, and matched stops
       const placeCoordsMap = new Map<string, { lat: number; lng: number; name: string }>();
       
