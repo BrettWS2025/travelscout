@@ -17,6 +17,9 @@ export type ExperienceItem = {
   latitude: number | null;
   longitude: number | null;
   type: "walking" | "viator";
+  // Destination info (Viator-specific, but kept here for caching)
+  destinationId?: number;
+  destinationName?: string;
   // Walking experience specific fields
   difficulty?: string | null;
   completion_time?: string | null;
@@ -103,6 +106,11 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
       imageUrl = sortedVariants[0].url;
     }
   }
+
+  // Get destination information (prefer primaryDestination)
+  const destinationSource = product.primaryDestination || product.destination;
+  const destinationId = destinationSource?.destinationId;
+  const destinationName = destinationSource?.destinationName;
 
   // Get price
   let price: string | undefined;
@@ -211,6 +219,8 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
     latitude: product.coordinates?.latitude || null,
     longitude: product.coordinates?.longitude || null,
     type: "viator",
+    destinationId,
+    destinationName,
     productCode: product.productCode,
     rating: rating ? Number(rating) : undefined,
     totalReviews: totalReviews ? Number(totalReviews) : undefined,

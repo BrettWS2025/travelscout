@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
+import { TripPlannerNavbar } from "@/components/TripPlannerNavbar";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"; // optional
@@ -130,6 +131,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <QueryProvider>
           <AuthProvider>
             <Navbar />
+            <TripPlannerNavbar />
             <main className="container pt-[120px] pb-10">{children}</main>
             <Footer />
             {isProd && <Analytics />}

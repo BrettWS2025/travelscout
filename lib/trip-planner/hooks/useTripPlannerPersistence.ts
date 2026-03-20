@@ -44,6 +44,7 @@ export function useTripPlannerPersistence(
   legs: TripLeg[],
   startSectorType: StartEndSectorType,
   endSectorType: StartEndSectorType,
+  hasSubmitted: boolean,
   // State setters
   setStartCityId: (id: string) => void,
   setEndCityId: (id: string) => void,
@@ -321,6 +322,7 @@ export function useTripPlannerPersistence(
         nightsPerStop,
         startSectorType,
         endSectorType,
+        hasSubmitted,
         plan: plan ? {
           ...plan,
           routeStops,

@@ -27,7 +27,12 @@ const ThingsToDoMap = dynamic(
 
 type ThingsToDoListProps = {
   location: string;
-  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
+  onAddToItinerary?: (
+    experience: WalkingExperience | ExperienceItem,
+    location: string,
+    dayDate?: string,
+    dayLocation?: string
+  ) => void;
 };
 
 const ITEMS_PER_PAGE = 12;
@@ -476,12 +481,9 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
         >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {currentPageExperiences.map((experience) => (
-          <a
+          <div
             key={experience.id}
-            href={experience.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-md hover:border-slate-300 transition-all cursor-pointer flex flex-col"
+            className="rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-md hover:border-slate-300 transition-all flex flex-col"
           >
             {/* Thumbnail - Full width at top */}
             <div className="relative w-full aspect-[4/3] bg-slate-200">
@@ -557,11 +559,16 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                         }}
                         className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                       >
-                        Add to itinerary
+                        Add to trip
                       </button>
-                      <span className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600">
+                      <a
+                        href={experience.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity"
+                      >
                         Book now
-                      </span>
+                      </a>
                     </>
                   ) : (
                     <button
@@ -575,12 +582,12 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                       }}
                       className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                     >
-                      Add to itinerary
+                      Add to trip
                     </button>
                   )}
                 </div>
               </div>
-          </a>
+          </div>
           ))}
         </div>
 

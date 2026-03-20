@@ -15,6 +15,10 @@ export async function saveViatorProductToCache(
       return { success: false, error: "Not a valid Viator product" };
     }
 
+    // Extract destination information if available
+    const destinationId = product.destinationId ?? null;
+    const destinationName = product.destinationName ?? null;
+
     // First, check if product already exists
     const { data: existing, error: checkError } = await supabase
       .from("cached_viator_products")
@@ -60,6 +64,8 @@ export async function saveViatorProductToCache(
         duration_minutes: product.durationInMinutes || null,
         latitude: product.latitude || null,
         longitude: product.longitude || null,
+        destination_id: destinationId,
+        destination_name: destinationName,
         tag_ids: product.tagIds || null,
       })
       .select("id")

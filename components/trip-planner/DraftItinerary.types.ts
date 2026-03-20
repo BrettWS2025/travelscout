@@ -1,4 +1,4 @@
-import type { TripPlan } from "@/lib/itinerary";
+import type { TripPlan, TripLeg } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
@@ -52,9 +52,17 @@ export type DraftItineraryProps = {
 
   onReorderStops: (fromIndex: number, toIndex: number) => void;
 
-  onAddToItinerary?: (experience: WalkingExperience | ExperienceItem, location: string) => void;
+  onAddToItinerary?: (
+    experience: WalkingExperience | ExperienceItem,
+    location: string,
+    dayDate?: string,
+    dayLocation?: string
+  ) => void;
   
   endDate?: string; // End date of the trip (for return trip road sector date calculation)
+
+  // Optional driving legs, used for showing dynamic distance/time on driving modules
+  legs?: TripLeg[];
 };
 
 export type Group = {

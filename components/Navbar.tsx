@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import type React from "react";
+import { usePathname } from "next/navigation";
 import {
   PanelsTopLeft,
   Compass,
@@ -275,6 +276,8 @@ export function Navbar() {
   const [expandedNested, setExpandedNested] = useState<Record<string, boolean>>(
     {}
   );
+  const pathname = usePathname();
+  const isTripPlanner = pathname?.includes("/trip-planner");
 
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -301,9 +304,9 @@ export function Navbar() {
         background: "rgba(255, 255, 255, 0.6)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
         backdropFilter: "saturate(180%) blur(20px)",
-        borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
+        borderBottom: isTripPlanner ? "none" : "1px solid rgba(148, 163, 184, 0.2)",
         color: "var(--text)",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+        boxShadow: isTripPlanner ? "none" : "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
       <div className="container navbar-responsive flex items-center justify-between overflow-visible">
