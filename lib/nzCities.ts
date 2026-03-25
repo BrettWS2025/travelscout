@@ -20,4 +20,5 @@ export {
   searchPlacesByName,
   findPlacesNearby,
   clearPlacesCache,
+  getPrimaryPlaceImageUrls,
 } from "@/lib/places";

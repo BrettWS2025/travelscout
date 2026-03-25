@@ -557,6 +557,55 @@ export function clearPlacesCache(): void {
   cacheTimestamp = null;
 }
 
+type PlaceImageRow = {
+  place_id: string;
+  image_url: string;
+  is_primary: boolean;
+  sort_order: number;
+};
+
+/**
+ * Fetch primary image URL for a set of places.
+ * - Returns a map: { [placeId]: imageUrl }
+ * - If multiple images exist, prefers `is_primary = true` and then lowest `sort_order`.
+ */
+export async function getPrimaryPlaceImageUrls(
+  placeIds: string[],
+): Promise<Record<string, string>> {
+  const uniqueIds = Array.from(new Set(placeIds)).filter(Boolean);
+  if (uniqueIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("nz_place_images")
+    .select("place_id, image_url, is_primary, sort_order")
+    .in("place_id", uniqueIds);
+
+  if (error || !data) {
+    console.error("Error fetching place images:", error);
+    return {};
+  }
+
+  const byPlaceId = new Map<string, PlaceImageRow[]>();
+  for (const row of data as PlaceImageRow[]) {
+    const placeId = row.place_id;
+    if (!placeId) continue;
+    const arr = byPlaceId.get(placeId) ?? [];
+    arr.push(row);
+    byPlaceId.set(placeId, arr);
+  }
+
+  const result: Record<string, string> = {};
+  for (const [placeId, rows] of byPlaceId.entries()) {
+    const sorted = [...rows].sort((a, b) => {
+      if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    });
+    if (sorted[0]?.image_url) result[placeId] = sorted[0].image_url;
+  }
+
+  return result;
+}
+
 // Default city IDs for backward compatibility
 export const DEFAULT_START_CITY_ID = "chc"; // Christchurch
 export const DEFAULT_END_CITY_ID = "zqn"; // Queenstown

@@ -5,7 +5,7 @@ import { Calendar, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta } from "@/lib/trip-planner/utils";
 import { formatShortRangeDate, addDaysToIsoDate, formatDisplayDate } from "@/lib/trip-planner/utils";
-import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
+import { getCityById, NZ_CITIES, searchPlacesByName, getPrimaryPlaceImageUrls, type NzCity } from "@/lib/nzCities";
 import { usePrefetchThingsToDo } from "@/lib/hooks/usePrefetchThingsToDo";
 import { useThingsToDo } from "@/lib/hooks/useThingsToDo";
 import { transformWalkingExperience, type ExperienceItem } from "@/lib/viator-helpers";
@@ -272,6 +272,24 @@ export default function DraftItinerary(props: Props) {
       .filter((box): box is NonNullable<typeof box> => box !== null);
   }, [plan, routeStops, nightsPerStop, dayStopMeta]);
 
+  // Image URLs for the currently selected trip locations.
+  const [placeImageUrls, setPlaceImageUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const ids = locationBoxes.map((l) => l.cityId);
+    if (ids.length === 0) {
+      setPlaceImageUrls({});
+      return;
+    }
+
+    getPrimaryPlaceImageUrls(ids)
+      .then((urls) => setPlaceImageUrls(urls))
+      .catch((err) => {
+        console.error("Error fetching place images:", err);
+        setPlaceImageUrls({});
+      });
+  }, [locationBoxes, getPrimaryPlaceImageUrls]);
+
   // Get days for the selected location
   const selectedLocationDays = useMemo(() => {
     if (!plan || locationBoxes.length === 0) return [];
@@ -376,6 +394,7 @@ export default function DraftItinerary(props: Props) {
               <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
                 {locationBoxes.map((location, idx) => {
                   const isActive = idx === selectedLocationIndex;
+                  const imgUrl = placeImageUrls[location.cityId];
                   return (
                     <button
                       key={`location-box-${location.stopIndex}`}
@@ -388,9 +407,27 @@ export default function DraftItinerary(props: Props) {
                     >
                       {/* Image container - slightly inset with rounded corners */}
                       <div className="relative mx-1 mt-1 h-20 md:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
-                        <div className="w-full h-full flex items-center justify-center">
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          data-placeholder="true"
+                          style={{ display: imgUrl ? "none" : "flex" }}
+                        >
                           <div className="text-slate-400 text-xs">Image</div>
                         </div>
+
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={location.cityName}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                              const placeholder = target.parentElement?.querySelector('[data-placeholder="true"]') as HTMLElement | null;
+                              if (placeholder) placeholder.style.display = "flex";
+                            }}
+                          />
+                        ) : null}
                         {/* Active indicator */}
                         {isActive && (
                           <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[10px] font-medium px-1.5 py-0.5 rounded z-10">
