@@ -309,7 +309,7 @@ export default function DraftItineraryDayContent({
   const addedViatorProducts = detail.viatorProducts || [];
 
   return (
-    <div className="flex-1 rounded-xl bg-slate-50/50 p-4 md:p-6">
+    <div className="flex-1 rounded-xl bg-slate-50/50 p-2 sm:p-3 md:p-6">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -337,8 +337,8 @@ export default function DraftItineraryDayContent({
 
       <div className="space-y-9">
         {shouldShowTimeline && selectedLocation && (
-          <div className="flex gap-4 relative">
-            <div className="flex flex-col items-center relative self-stretch">
+          <div className="flex gap-2 sm:gap-4 relative">
+            <div className="flex flex-col items-center relative self-stretch w-10 flex-shrink-0">
               <div className="w-10 h-10 aspect-square rounded-full bg-white border-2 border-indigo-600 flex items-center justify-center shrink-0 z-10">
                 {isDrivingDay ? <Car className="w-5 h-5 text-indigo-600" /> : <Zap className="w-5 h-5 text-indigo-600" />}
               </div>
@@ -365,7 +365,7 @@ export default function DraftItineraryDayContent({
 
             <div ref={contentColumnRef} className="flex-1 min-w-0 space-y-9">
               {isDrivingDay && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 md:p-6">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="space-y-1.5">
                       <div className="text-sm font-semibold text-slate-900">
@@ -386,10 +386,10 @@ export default function DraftItineraryDayContent({
                       <button
                         type="button"
                         onClick={onConvertStartToItinerary}
-                        className="self-start md:self-auto inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2.5 shadow-sm text-left hover:bg-slate-50 transition"
+                        className="self-start md:self-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm text-left hover:bg-slate-50 transition"
                       >
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
-                          <Home className="h-4 w-4" />
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+                          <Home className="h-3.5 w-3.5" />
                         </span>
                         <span className="flex flex-col">
                           <span className="text-xs font-semibold text-slate-900">
@@ -493,22 +493,31 @@ export default function DraftItineraryDayContent({
                   </div>
                 )}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
                       {isDrivingDay ? <Compass className="w-4 h-4 text-indigo-600" /> : <Zap className="w-4 h-4 text-indigo-600" />}
-                      <h4 className="text-sm font-semibold text-slate-900">{isDrivingDay ? "Discover along the route" : "Things to do"}</h4>
+                      <h4 className="text-sm font-semibold text-slate-900 min-w-0 break-words">
+                        {isDrivingDay ? "Discover along the route" : "Things to do"}
+                      </h4>
                     </div>
                     {topExperiences.length > 0 && (
-                      <button type="button" onClick={onShowAllThingsToDo} className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors">
+                      <button
+                        type="button"
+                        onClick={onShowAllThingsToDo}
+                        className="shrink-0 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors"
+                      >
                         Show all
                       </button>
                     )}
                   </div>
                   {topExperiences.length > 0 ? (
                     <div className="overflow-hidden">
-                      <div className="flex w-full gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                      <div className="flex w-full gap-0 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
                         {topExperiences.map((experience) => (
-                          <div key={experience.id} className="flex flex-col flex-shrink-0 w-52 md:w-56 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                          <div
+                            key={experience.id}
+                            className="flex flex-col flex-shrink-0 w-full md:w-56 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                          >
                             <div className="relative mx-1 mt-1 h-20 md:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
                               {experience.imageUrl ? (
                                 <img src={experience.imageUrl} alt={experience.title} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />

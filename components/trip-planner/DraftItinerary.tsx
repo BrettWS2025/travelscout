@@ -425,12 +425,12 @@ export default function DraftItinerary(props: Props) {
   return (
     <div className="bg-slate-50/50">
       {/* Keep a single, consistent page container so all sections align on desktop and mobile */}
-      <div className="mx-auto w-full max-w-5xl px-4 md:px-6 py-4 md:py-6">
+      <div className="mx-auto w-full max-w-5xl px-0 sm:px-4 md:px-6 py-3 md:py-6">
         {/* One continuous white surface so the top location strip and the left "Days" strip touch (no gap) */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {/* Location boxes - horizontal layout */}
           {locationBoxes.length > 0 && (
-            <div className="p-4 md:p-6">
+            <div className="p-2 sm:p-4 md:p-6">
               <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
                 {locationBoxes.map((location, idx) => {
                   const isActive = idx === selectedLocationIndex;
@@ -534,7 +534,7 @@ export default function DraftItinerary(props: Props) {
             const selectedDayForLabel = selectedLocationDays[selectedDayIndex]?.day;
 
             return (
-              <div className="p-4 md:p-6">
+              <div className="p-2 sm:p-4 md:p-6">
                 <div className="flex flex-row gap-3 md:gap-6">
                   {/* Left Sidebar - Day Navigation (hidden when Show all is active) */}
                   {!showAllThingsToDo && (
@@ -573,7 +573,17 @@ export default function DraftItinerary(props: Props) {
                           type="button"
                           onClick={() => setMobileDaysCollapsed((v) => !v)}
                           aria-label={mobileDaysCollapsed ? "Expand day list" : "Collapse day list"}
-                          className="absolute right-0 top-3 translate-x-1/2 w-6 h-10 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900"
+                          className={[
+                            "absolute top-3 w-6 h-10 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900",
+                            // When collapsed on mobile, align to the left edge of the overall container
+                            // (so it lines up with the page padding). When expanded, keep it between the
+                            // day list and the content column.
+                            mobileDaysCollapsed
+                              // Parent wrapper uses p-4 on mobile, so shift left by that padding
+                              // to align with the overarching container border.
+                              ? "-left-1 translate-x-0"
+                              : "right-0 translate-x-1/2",
+                          ].join(" ")}
                         >
                           {mobileDaysCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                         </button>

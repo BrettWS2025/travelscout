@@ -128,7 +128,7 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
       {/* Scroll container - same max-width and card size as Things to do carousel */}
       <div
         className={[
-          "flex gap-3 md:gap-4 overflow-x-auto pb-2 scroll-smooth",
+          "flex gap-0 md:gap-4 overflow-x-auto pb-2 scroll-smooth",
           "w-full snap-x snap-mandatory",
         ].join(" ")}
       >
@@ -136,7 +136,7 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
           <div
             key={event.id}
             data-carousel-item
-            className="flex-shrink-0 w-52 md:w-56 snap-start"
+            className="flex-shrink-0 w-full md:w-56 snap-start"
           >
             <div className="flex flex-col flex-shrink-0 h-full rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all">
               {/* Image - same fixed height as Things to do cards */}

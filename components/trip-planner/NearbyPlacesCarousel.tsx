@@ -19,12 +19,16 @@ export default function NearbyPlacesCarousel({ places = [], title }: Props) {
     <div className="relative">
       {/* Scroll container */}
       <div
-        className="flex gap-3 md:gap-4 overflow-x-auto pb-2 scroll-smooth w-full snap-x snap-mandatory"
+        className="flex gap-0 md:gap-4 overflow-x-auto pb-2 scroll-smooth w-full snap-x snap-mandatory"
       >
         {places.map((place) => {
           const href = place.googleMapsUri;
           return (
-            <div key={place.id} data-carousel-item className="flex-shrink-0 w-52 md:w-56 snap-start">
+            <div
+              key={place.id}
+              data-carousel-item
+              className="flex-shrink-0 w-full md:w-56 snap-start"
+            >
               <div className="flex flex-col h-full rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all">
                 <div className="relative mx-1 mt-1 h-20 md:h-24 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden">
                   {place.imageUrl ? (
