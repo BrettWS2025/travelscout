@@ -21,4 +21,5 @@ export {
   findPlacesNearby,
   clearPlacesCache,
   getPrimaryPlaceImageUrls,
+  placeKeyFromOsm,
 } from "@/lib/places";

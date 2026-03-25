@@ -5,7 +5,14 @@ import { Calendar, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta } from "@/lib/trip-planner/utils";
 import { formatShortRangeDate, addDaysToIsoDate, formatDisplayDate } from "@/lib/trip-planner/utils";
-import { getCityById, NZ_CITIES, searchPlacesByName, getPrimaryPlaceImageUrls, type NzCity } from "@/lib/nzCities";
+import {
+  getCityById,
+  NZ_CITIES,
+  searchPlacesByName,
+  getPrimaryPlaceImageUrls,
+  placeKeyFromOsm,
+  type NzCity,
+} from "@/lib/nzCities";
 import { usePrefetchThingsToDo } from "@/lib/hooks/usePrefetchThingsToDo";
 import { useThingsToDo } from "@/lib/hooks/useThingsToDo";
 import { transformWalkingExperience, type ExperienceItem } from "@/lib/viator-helpers";
@@ -276,18 +283,51 @@ export default function DraftItinerary(props: Props) {
   const [placeImageUrls, setPlaceImageUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const ids = locationBoxes.map((l) => l.cityId);
-    if (ids.length === 0) {
+    const names = locationBoxes.map((l) => l.cityId);
+    if (names.length === 0) {
       setPlaceImageUrls({});
       return;
     }
 
-    getPrimaryPlaceImageUrls(ids)
-      .then((urls) => setPlaceImageUrls(urls))
-      .catch((err) => {
-        console.error("Error fetching place images:", err);
-        setPlaceImageUrls({});
-      });
+    let cancelled = false;
+
+    const run = async () => {
+      // Convert each city name to the stable nz_places_final identity (place_key),
+      // then fetch the primary image for each.
+      const placeKeyByName: Record<string, string> = {};
+      const placeKeys: string[] = [];
+
+      await Promise.all(
+        names.map(async (name) => {
+          const results = await searchPlacesByName(name, 1);
+          const best = results[0];
+          const key = placeKeyFromOsm(best?.country_code, best?.osm_type, best?.osm_id);
+          if (!key) return;
+
+          placeKeyByName[name] = key;
+          placeKeys.push(key);
+        })
+      );
+
+      const urlsByKey = await getPrimaryPlaceImageUrls(placeKeys);
+      if (cancelled) return;
+
+      const urlsByName: Record<string, string> = {};
+      for (const [name, key] of Object.entries(placeKeyByName)) {
+        const url = urlsByKey[key];
+        if (url) urlsByName[name] = url;
+      }
+      setPlaceImageUrls(urlsByName);
+    };
+
+    run().catch((err) => {
+      console.error("Error fetching place images:", err);
+      if (!cancelled) setPlaceImageUrls({});
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [locationBoxes, getPrimaryPlaceImageUrls]);
 
   // Get days for the selected location

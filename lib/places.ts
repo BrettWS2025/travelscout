@@ -11,6 +11,13 @@ export type Place = {
   lat: number;
   lng: number;
   /**
+   * Stable OSM identifiers (used to link to secondary tables even if the
+   * `nz_places_final.id` UUIDs are rebuilt).
+   */
+  country_code?: string;
+  osm_type?: string;
+  osm_id?: string;
+  /**
    * Optional UI ranking for suggestions / ordering.
    * Lower = more prominent (e.g. 1 is top suggested).
    */
@@ -46,7 +53,7 @@ export async function getAllPlaces(): Promise<Place[]> {
 
   const { data, error } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags")
+    .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags")
     .in("place_type", ["city", "town", "village", "hamlet"])
     .order("name", { ascending: true });
 
@@ -63,6 +70,9 @@ export async function getAllPlaces(): Promise<Place[]> {
     display_name: p.display_name,
     lat: p.lat,
     lng: p.lon, // Note: nz_places_final uses 'lon' not 'lng'
+    country_code: p.country_code,
+    osm_type: p.osm_type,
+    osm_id: p.osm_id,
     rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
   })) as Place[];
   
@@ -167,7 +177,7 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
   // Query nz_places_final (by UUID)
   const { data: nzPlaceData, error: nzPlaceError } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags")
+    .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags")
     .eq("id", id)
     .single();
   
@@ -178,6 +188,9 @@ export async function getPlaceById(id: string): Promise<Place | undefined> {
       display_name: nzPlaceData.display_name,
       lat: nzPlaceData.lat,
       lng: nzPlaceData.lon,
+      country_code: nzPlaceData.country_code,
+      osm_type: nzPlaceData.osm_type,
+      osm_id: nzPlaceData.osm_id,
       rank: nzPlaceData.tags?.population ? parseInt(nzPlaceData.tags.population) : undefined,
     };
     
@@ -256,7 +269,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
   // This ensures users can search without macrons and still find places with macrons
   let { data: nzPlacesData, error: nzPlacesError } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+    .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags, name_norm, name_search")
     .ilike("name_search", queryPattern)
     .in("place_type", ["city", "town", "village", "hamlet"])
     .limit(limit * 2);
@@ -272,7 +285,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     // Search display_name separately
     const { data: displayNameData, error: displayNameError } = await supabase
       .from("nz_places_final")
-      .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+      .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags, name_norm, name_search")
       .ilike("display_name", queryPattern)
       .in("place_type", ["city", "town", "village", "hamlet"])
       .limit(limit * 2);
@@ -287,7 +300,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     if (additionalResults.length + nzPlacesData.length < limit) {
       const { data: nameNormData, error: nameNormError } = await supabase
         .from("nz_places_final")
-        .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+        .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags, name_norm, name_search")
         .ilike("name_norm", queryPattern)
         .in("place_type", ["city", "town", "village", "hamlet"])
         .limit(limit * 2);
@@ -350,7 +363,7 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
     // Fallback: search just the name_search field
     const { data: fallbackData, error: fallbackError } = await supabase
       .from("nz_places_final")
-      .select("id, name, display_name, lat, lon, tags, name_norm, name_search")
+      .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags, name_norm, name_search")
       .ilike("name_search", queryPattern)
       .in("place_type", ["city", "town", "village", "hamlet"])
       .limit(limit * 2);
@@ -411,6 +424,9 @@ export async function searchPlacesByName(query: string, limit: number = 20): Pro
       display_name: p.display_name, // Full display name with region - for selection UI
       lat: p.lat,
       lng: p.lon, // Note: nz_places_final uses 'lon' not 'lng'
+      country_code: p.country_code,
+      osm_type: p.osm_type,
+      osm_id: p.osm_id,
       rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
     }));
   }
@@ -444,7 +460,7 @@ export async function findPlacesNearby(
   // This is much faster than loading all places
   const { data, error } = await supabase
     .from("nz_places_final")
-    .select("id, name, display_name, lat, lon, tags, geometry, place_type")
+    .select("id, country_code, osm_type, osm_id, name, display_name, lat, lon, tags, geometry, place_type")
     .in("place_type", ["city", "town", "village", "hamlet"])
     .gte("lat", minLat)
     .lte("lat", maxLat)
@@ -484,6 +500,9 @@ export async function findPlacesNearby(
     display_name: p.display_name,
     lat: p.lat,
     lng: p.lon,
+    country_code: p.country_code,
+    osm_type: p.osm_type,
+    osm_id: p.osm_id,
     rank: p.tags?.population ? parseInt(p.tags.population) : undefined,
   }));
 
@@ -558,7 +577,7 @@ export function clearPlacesCache(): void {
 }
 
 type PlaceImageRow = {
-  place_id: string;
+  place_key: string;
   image_url: string;
   is_primary: boolean;
   sort_order: number;
@@ -570,15 +589,15 @@ type PlaceImageRow = {
  * - If multiple images exist, prefers `is_primary = true` and then lowest `sort_order`.
  */
 export async function getPrimaryPlaceImageUrls(
-  placeIds: string[],
+  placeKeys: string[],
 ): Promise<Record<string, string>> {
-  const uniqueIds = Array.from(new Set(placeIds)).filter(Boolean);
-  if (uniqueIds.length === 0) return {};
+  const uniqueKeys = Array.from(new Set(placeKeys)).filter(Boolean);
+  if (uniqueKeys.length === 0) return {};
 
   const { data, error } = await supabase
     .from("nz_place_images")
-    .select("place_id, image_url, is_primary, sort_order")
-    .in("place_id", uniqueIds);
+    .select("place_key, image_url, is_primary, sort_order")
+    .in("place_key", uniqueKeys);
 
   if (error || !data) {
     console.error("Error fetching place images:", error);
@@ -587,11 +606,11 @@ export async function getPrimaryPlaceImageUrls(
 
   const byPlaceId = new Map<string, PlaceImageRow[]>();
   for (const row of data as PlaceImageRow[]) {
-    const placeId = row.place_id;
-    if (!placeId) continue;
-    const arr = byPlaceId.get(placeId) ?? [];
+    const placeKey = row.place_key;
+    if (!placeKey) continue;
+    const arr = byPlaceId.get(placeKey) ?? [];
     arr.push(row);
-    byPlaceId.set(placeId, arr);
+    byPlaceId.set(placeKey, arr);
   }
 
   const result: Record<string, string> = {};
@@ -604,6 +623,15 @@ export async function getPrimaryPlaceImageUrls(
   }
 
   return result;
+}
+
+export function placeKeyFromOsm(
+  countryCode: string | undefined,
+  osmType: string | undefined,
+  osmId: string | undefined,
+): string | null {
+  if (!countryCode || !osmType || !osmId) return null;
+  return `${countryCode}:${osmType}:${osmId}`;
 }
 
 // Default city IDs for backward compatibility
