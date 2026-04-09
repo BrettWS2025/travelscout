@@ -30,6 +30,8 @@ type TripPlannerProps = {
   initialItinerary?: ItineraryData | null;
 };
 
+const TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY = "tripPlanner_restore_after_auth";
+
 function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();
   const { user } = useAuth();
@@ -39,7 +41,6 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
-  const [stateRestored, setStateRestored] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
@@ -72,16 +73,51 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [selectedExperience, setSelectedExperience] = useState<WalkingExperience | null>(null);
   const [selectedViatorProduct, setSelectedViatorProduct] = useState<ExperienceItem | null>(null);
   const [selectedExperienceLocation, setSelectedExperienceLocation] = useState<string>("");
+  const handledInitialDraftBehaviorRef = useRef(false);
+  const [isRestoringDraft, setIsRestoringDraft] = useState(!initialItinerary);
 
-  // Restore state from localStorage on mount (if not loading initialItinerary)
+  // Restore any saved draft so Journey/Summary navigation keeps the same state.
+  // (Saved itineraries opened via /trip-planner/[id] use `initialItinerary` instead.)
   useEffect(() => {
-    if (!initialItinerary && !stateRestored) {
-      const restored = tp.restoreStateFromLocalStorage();
-      if (restored) {
-        setStateRestored(true);
-      }
+    if (handledInitialDraftBehaviorRef.current) return;
+    handledInitialDraftBehaviorRef.current = true;
+    if (initialItinerary) {
+      setIsRestoringDraft(false);
+      return;
     }
-  }, [initialItinerary, stateRestored, tp]);
+    try {
+      tp.restoreStateFromLocalStorage();
+      localStorage.removeItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY);
+    } catch (err) {
+      console.error("Failed to process trip planner draft state:", err);
+    } finally {
+      setIsRestoringDraft(false);
+    }
+  }, [initialItinerary, tp]);
+
+  // Keep local draft synced as users edit itinerary data so route switches preserve progress.
+  useEffect(() => {
+    if (initialItinerary) return;
+    tp.saveStateToLocalStorage();
+  }, [
+    initialItinerary,
+    tp,
+    tp.startCityId,
+    tp.endCityId,
+    tp.startDate,
+    tp.endDate,
+    tp.selectedPlaceIds,
+    tp.selectedThingIds,
+    tp.routeStops,
+    tp.nightsPerStop,
+    tp.startSectorType,
+    tp.endSectorType,
+    tp.hasSubmitted,
+    tp.plan,
+    tp.dayDetails,
+    tp.mapPoints,
+    tp.legs,
+  ]);
 
   // Load initial itinerary if provided
   useEffect(() => {
@@ -257,6 +293,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   ) => {
     // Check if user is authenticated
     if (!user) {
+      tp.saveStateToLocalStorage();
+      localStorage.setItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY, "1");
       // Store the pending action and show auth modal
       setPendingAddToItinerary({ experience, location, dayDate, dayLocation });
       setAuthModalContext("add-to-itinerary");
@@ -368,6 +406,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const handleEventHearted = (event: Event, date: string, location: string) => {
     // Check if user is authenticated
     if (!user) {
+      tp.saveStateToLocalStorage();
+      localStorage.setItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY, "1");
       // Store the pending action and show auth modal
       setPendingPinEvent({ event, date, location });
       setAuthModalContext("pin-event");
@@ -381,6 +421,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   // Handle require auth for events (called from EventsAttractionsCarousel)
   const handleRequireAuth = (event: Event, date: string, location: string) => {
+    tp.saveStateToLocalStorage();
+    localStorage.setItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY, "1");
     // Store the pending action and show auth modal
     setPendingPinEvent({ event, date, location });
     setAuthModalContext("pin-event");
@@ -401,6 +443,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     if (!user) {
       // Save current state to localStorage before showing auth modal
       tp.saveStateToLocalStorage();
+      localStorage.setItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY, "1");
       setPendingSave(true);
       setAuthModalContext("save-itinerary");
       setShowAuthModal(true);
@@ -449,11 +492,11 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   return (
     <div className="space-y-8">
-      <LoadingScreen isLoading={tp.legsLoading} />
+      <LoadingScreen isLoading={tp.legsLoading || isRestoringDraft} />
       
 
       {/* Full form - shown when not minimized or when no plan exists */}
-      {(!isFormMinimized || !tp.plan) && (
+      {!isRestoringDraft && (!isFormMinimized || !tp.plan) && (
         <form
           onSubmit={tp.handleSubmit}
           className="p-4 md:p-6 space-y-6"
@@ -530,13 +573,13 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       )}
 
       {/* Results */}
-      {tp.hasSubmitted && !tp.plan && !tp.error && (
+      {!isRestoringDraft && tp.hasSubmitted && !tp.plan && !tp.error && (
         <p className="text-sm text-gray-400 text-center md:text-left">
           Fill in your trip details and click &quot;Create your journey&quot;.
         </p>
       )}
 
-      {tp.plan && tp.plan.days.length > 0 && (
+      {!isRestoringDraft && tp.plan && tp.plan.days.length > 0 && (
         <>
           <DraftItinerary
             plan={tp.plan}
@@ -583,7 +626,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
       )}
 
       {/* Add to Itinerary Modal */}
-      {showAddToItineraryModal && (selectedExperience || selectedViatorProduct) && tp.plan && (
+      {!isRestoringDraft && showAddToItineraryModal && (selectedExperience || selectedViatorProduct) && tp.plan && (
         <AddToItineraryModal
           isOpen={showAddToItineraryModal}
           onClose={handleCloseAddToItineraryModal}
@@ -611,6 +654,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           onClose={() => {
             setShowAuthModal(false);
             setPendingSave(false);
+            localStorage.removeItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY);
             // Clear pending actions if user closes modal without authenticating
             setPendingAddToItinerary(null);
             setPendingPinEvent(null);
@@ -694,7 +738,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
         </div>
       )}
 
-      {tp.plan && tp.plan.days.length > 0 && (
+      {!isRestoringDraft && tp.plan && tp.plan.days.length > 0 && (
         <div className="flex flex-col items-center gap-3 pt-4">
           {tp.saveError && (
             <p className="text-sm text-red-400">{tp.saveError}</p>
