@@ -541,7 +541,7 @@ export default function ThingsToDoMap({
                         }}
                         className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
                       >
-                        Add to itinerary
+                        Add to trip
                       </button>
                     )}
                   </>
@@ -565,7 +565,7 @@ export default function ThingsToDoMap({
                         }}
                         className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                       >
-                        Add to itinerary
+                        Add to trip
                       </button>
                     )}
                   </>

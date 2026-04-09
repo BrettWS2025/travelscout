@@ -158,20 +158,34 @@ export async function GET(req: Request) {
           const locationParts = locationName.split('/').map(p => p.trim());
           const mainLocation = locationParts[0];
           
-          // Generate search variations
+          // Import removeMacrons utility
+          const { removeMacrons } = await import("@/lib/trip-planner/utils");
+          
+          // Generate search variations (with and without macrons)
+          const normalizedLocationName = removeMacrons(locationName.toLowerCase().trim());
+          const normalizedMainLocation = removeMacrons(mainLocation.toLowerCase().trim());
+          
           const searchVariations = [
-            locationName.toLowerCase().trim(), // Full name: "franz josef / waiau"
-            mainLocation.toLowerCase().trim(),  // Main part: "franz josef"
-            ...locationParts.map(p => p.toLowerCase().trim()), // All parts
+            locationName.toLowerCase().trim(), // Original: "wānaka"
+            normalizedLocationName, // Without macrons: "wanaka"
+            mainLocation.toLowerCase().trim(),  // Main part: "wānaka"
+            normalizedMainLocation, // Main part without macrons: "wanaka"
+            ...locationParts.map(p => p.toLowerCase().trim()), // All parts original
+            ...locationParts.map(p => removeMacrons(p.toLowerCase().trim())), // All parts without macrons
           ];
           
           // Add common variations for glacier locations
           if (mainLocation.toLowerCase().includes("josef") || mainLocation.toLowerCase().includes("fox")) {
             searchVariations.push(`${mainLocation.toLowerCase()} glacier`);
+            searchVariations.push(`${normalizedMainLocation} glacier`);
             searchVariations.push(`${mainLocation.toLowerCase()} & fox glacier`);
+            searchVariations.push(`${normalizedMainLocation} & fox glacier`);
           }
           
-          console.log(`[Viator API] Searching for destination with variations:`, searchVariations);
+          // Remove duplicates
+          const uniqueVariations = Array.from(new Set(searchVariations));
+          
+          console.log(`[Viator API] Searching for destination with variations:`, uniqueVariations);
           
           // Filter to New Zealand destinations first (but keep all destinations as fallback)
           const nzDestinations = destinations.filter((dest: any) => {
@@ -203,15 +217,23 @@ export async function GET(req: Request) {
           let match: any = null;
           
           // First, try exact match in NZ destinations for each variation
-          for (const variation of searchVariations) {
+          for (const variation of uniqueVariations) {
+            const normalizedVariation = removeMacrons(variation);
             match = nzDestinations.find((dest: any) => {
               const destName = (dest.destinationName || dest.name || dest.title || "").toLowerCase().trim();
+              const normalizedDestName = removeMacrons(destName);
               return destName === variation || 
+                     normalizedDestName === normalizedVariation ||
                      destName === `${variation}, new zealand` || 
+                     normalizedDestName === `${normalizedVariation}, new zealand` ||
                      destName === `${variation}, nz` ||
+                     normalizedDestName === `${normalizedVariation}, nz` ||
                      destName.startsWith(`${variation},`) ||
+                     normalizedDestName.startsWith(`${normalizedVariation},`) ||
                      destName === `${variation} new zealand` ||
-                     destName === `${variation} nz`;
+                     normalizedDestName === `${normalizedVariation} new zealand` ||
+                     destName === `${variation} nz` ||
+                     normalizedDestName === `${normalizedVariation} nz`;
             });
             if (match) {
               console.log(`[Viator API] ✅ Exact match found in NZ destinations with variation: "${variation}"`);
@@ -221,13 +243,19 @@ export async function GET(req: Request) {
           
           // If no exact match in NZ, try in all destinations (for edge cases)
           if (!match) {
-            for (const variation of searchVariations) {
+            for (const variation of uniqueVariations) {
+              const normalizedVariation = removeMacrons(variation);
               match = destinations.find((dest: any) => {
                 const destName = (dest.destinationName || dest.name || dest.title || "").toLowerCase().trim();
+                const normalizedDestName = removeMacrons(destName);
                 return destName === variation || 
+                       normalizedDestName === normalizedVariation ||
                        destName === `${variation}, new zealand` || 
+                       normalizedDestName === `${normalizedVariation}, new zealand` ||
                        destName === `${variation}, nz` ||
-                       destName.startsWith(`${variation},`);
+                       normalizedDestName === `${normalizedVariation}, nz` ||
+                       destName.startsWith(`${variation},`) ||
+                       normalizedDestName.startsWith(`${normalizedVariation},`);
               });
               if (match) {
                 console.log(`[Viator API] ✅ Exact match found in all destinations with variation: "${variation}"`);
@@ -238,20 +266,27 @@ export async function GET(req: Request) {
           
           // If no exact match, try partial match in NZ destinations for each variation
           if (!match) {
-            for (const variation of searchVariations) {
+            for (const variation of uniqueVariations) {
               // Split variation into words for better matching
               const variationWords = variation.split(/\s+/).filter(w => w.length > 2); // Ignore short words
+              const normalizedVariation = removeMacrons(variation);
+              const normalizedVariationWords = normalizedVariation.split(/\s+/).filter(w => w.length > 2);
               
               match = nzDestinations.find((dest: any) => {
                 const destName = (dest.destinationName || dest.name || dest.title || "").toLowerCase().trim();
+                const normalizedDestName = removeMacrons(destName);
                 
-                // Check if destination contains all significant words from variation
+                // Check if destination contains all significant words from variation (with and without macrons)
                 const hasAllWords = variationWords.length > 0 && variationWords.every(word => destName.includes(word));
+                const hasAllWordsNormalized = normalizedVariationWords.length > 0 && normalizedVariationWords.every(word => normalizedDestName.includes(word));
                 
-                // Or check if variation contains the main part of destination name
+                // Or check if variation contains the main part of destination name (with and without macrons)
                 const destMainPart = destName.split(',')[0].trim();
+                const normalizedDestMainPart = normalizedDestName.split(',')[0].trim();
                 const variationMainPart = variation.split(',')[0].trim();
-                const containsMainPart = destName.includes(variationMainPart) || variation.includes(destMainPart);
+                const normalizedVariationMainPart = normalizedVariation.split(',')[0].trim();
+                const containsMainPart = destName.includes(variationMainPart) || variation.includes(destMainPart) ||
+                                         normalizedDestName.includes(normalizedVariationMainPart) || normalizedVariation.includes(normalizedDestMainPart);
                 
                 // Also check if destination starts with variation (for "Queenstown" matching "Queenstown, New Zealand")
                 const startsWithVariation = destName.startsWith(variation);
@@ -309,7 +344,7 @@ export async function GET(req: Request) {
             }
           } else {
             console.log(`[Viator API] ❌ No destination match found for ${locationName}`);
-            console.log(`[Viator API] Tried variations:`, searchVariations);
+            console.log(`[Viator API] Tried variations:`, uniqueVariations);
             
             // Log all NZ destinations that might be relevant (containing key words)
             const keyWords = mainLocation.toLowerCase().split(/\s+/).filter(w => w.length > 3);

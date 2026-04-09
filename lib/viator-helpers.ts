@@ -17,6 +17,9 @@ export type ExperienceItem = {
   latitude: number | null;
   longitude: number | null;
   type: "walking" | "viator";
+  // Destination info (Viator-specific, but kept here for caching)
+  destinationId?: number;
+  destinationName?: string;
   // Walking experience specific fields
   difficulty?: string | null;
   completion_time?: string | null;
@@ -103,6 +106,11 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
       imageUrl = sortedVariants[0].url;
     }
   }
+
+  // Get destination information (prefer primaryDestination)
+  const destinationSource = product.primaryDestination || product.destination;
+  const destinationId = destinationSource?.destinationId;
+  const destinationName = destinationSource?.destinationName;
 
   // Get price
   let price: string | undefined;
@@ -192,6 +200,15 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
       }
     }
   }
+  
+  // Debug logging for first few products
+  if (tagIds && tagIds.length > 0) {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has ${tagIds.length} tags:`, tagIds.slice(0, 10));
+  } else if (!product.tags) {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has no tags property`);
+  } else {
+    console.log(`[transformViatorProduct] Product "${product.title?.substring(0, 50)}" has empty tags array`);
+  }
 
   return {
     id: `viator-${product.productCode}`,
@@ -202,6 +219,8 @@ export function transformViatorProduct(product: ViatorProduct): ExperienceItem {
     latitude: product.coordinates?.latitude || null,
     longitude: product.coordinates?.longitude || null,
     type: "viator",
+    destinationId,
+    destinationName,
     productCode: product.productCode,
     rating: rating ? Number(rating) : undefined,
     totalReviews: totalReviews ? Number(totalReviews) : undefined,
@@ -238,8 +257,12 @@ export async function fetchViatorProductsForLocation(
     });
     
     // Add location name if provided (helps with destination ID lookup)
+    // Normalize to remove macrons for better matching (e.g., "Wānaka" -> "Wanaka")
     if (locationName) {
-      params.append("locationName", locationName);
+      const { removeMacrons } = await import("@/lib/trip-planner/utils");
+      const normalizedName = removeMacrons(locationName);
+      // Pass both original and normalized for maximum compatibility
+      params.append("locationName", normalizedName);
     }
 
     // Add exclude tag IDs if provided

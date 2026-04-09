@@ -20,4 +20,6 @@ export {
   searchPlacesByName,
   findPlacesNearby,
   clearPlacesCache,
+  getPrimaryPlaceImageUrls,
+  placeKeyFromOsm,
 } from "@/lib/places";

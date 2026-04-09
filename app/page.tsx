@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MapPin, Calendar, Compass, Sparkles, Route, BookOpen, Star } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Calendar, Compass, Route, BookOpen, Star, Menu, Heart, Leaf } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,233 +14,384 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="space-y-16 md:space-y-24">
+    <div>
       {/* Hero Section */}
-      <section className="card p-8 md:p-12 lg:p-16 mt-6 md:mt-8" style={{ background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)" }}>
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 text-sm font-medium text-blue-700 shadow-sm">
-            <Sparkles className="w-4 h-4" />
-            <span>Plan your perfect New Zealand journey</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mt-6 font-[family-name:var(--font-plus-jakarta)]">
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Discover New Zealand
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
-              Your Way
-            </span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-slate-700 max-w-2xl mx-auto font-medium">
-            <span style={{ display: 'none' }}>Impact-Site-Verification: 321bf81b-5895-4010-9e67-52c4f2342cc0</span>
-            Plan your journey across Aotearoa with our intelligent trip planner. 
-            Book events and attractions along the way, and create the perfect itinerary 
-            tailored to your travel style.
-          </p>
-          
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-            <Link
-              href="/trip-planner"
-              className="px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-              style={{ 
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-              }}
-            >
-              Start Planning Your Trip
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="card p-8 md:p-12">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-plus-jakarta)] text-slate-800">How It Works</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-              Planning your New Zealand adventure is simple and intuitive
+      <section className="relative w-full h-[600px] md:h-[700px] lg:h-[800px] -mt-[120px] overflow-hidden">
+            <Image
+              src="/Main_Page_Pic.jpg"
+              alt="New Zealand Landscape"
+              fill
+              priority
+              className="object-cover brightness-130"
+              sizes="100vw"
+            />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        {/* Text content */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 md:px-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight font-[family-name:var(--font-plus-jakarta)] text-white">
+              <span className="bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 bg-clip-text text-transparent">
+                Discover New Zealand
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent italic">
+                Your Way
+              </span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-lg">
+              <span style={{ display: 'none' }}>Impact-Site-Verification: 321bf81b-5895-4010-9e67-52c4f2342cc0</span>
+              Plan your journey across Aotearoa with our trip planner. 
+              Book events and attractions along the way, and create your itinerary 
+              tailored to your style.
             </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center space-y-4 p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                <Route className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Plan Your Route</h3>
-              <p className="text-slate-600">
-                Choose your start and end destinations, add places to visit, and let our 
-                intelligent planner create the perfect route for your journey.
-              </p>
-            </div>
             
-            <div className="text-center space-y-4 p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Book Events & Attractions</h3>
-              <p className="text-slate-600">
-                Discover and book exciting events, activities, and attractions along your route. 
-                From adventure sports to cultural experiences, find it all in one place.
-              </p>
-            </div>
-            
-            <div className="text-center space-y-4 p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
-                <Compass className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Explore & Enjoy</h3>
-              <p className="text-slate-600">
-                Get your personalized itinerary with driving times, recommended stops, 
-                and all your booked activities. Hit the road and make memories!
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="card p-8 md:p-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-plus-jakarta)] text-slate-800">Everything You Need</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-              Powerful tools to make your New Zealand journey unforgettable
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 shadow-md">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Smart Route Planning</h3>
-              <p className="text-slate-600">
-                Our intelligent system calculates the best route between destinations, 
-                factoring in realistic driving times and scenic stops.
-              </p>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 shadow-md">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Book Activities</h3>
-              <p className="text-slate-600">
-                Browse and book events, tours, and attractions directly through your itinerary. 
-                Everything organized in one place.
-              </p>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4 shadow-md">
-                <Star className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Curated Recommendations</h3>
-              <p className="text-slate-600">
-                Get personalized suggestions for places to visit and things to do based on 
-                your route and travel preferences.
-              </p>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-4 shadow-md">
-                <Route className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Flexible Itineraries</h3>
-              <p className="text-slate-600">
-                Easily adjust your trip - add or remove stops, change dates, and modify 
-                your journey as your plans evolve.
-              </p>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-pink-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mb-4 shadow-md">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">Day-by-Day Planning</h3>
-              <p className="text-slate-600">
-                See your entire trip broken down day by day with suggested activities, 
-                accommodation options, and travel times.
-              </p>
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-teal-300 hover:shadow-lg transition-all">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center mb-4 shadow-md">
-                <Compass className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 font-[family-name:var(--font-plus-jakarta)]">New Zealand Focused</h3>
-              <p className="text-slate-600">
-                Built specifically for exploring Aotearoa, with comprehensive coverage of 
-                cities, towns, and scenic stops across both islands.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Destinations */}
-      <section className="card p-8 md:p-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-plus-jakarta)] text-slate-800">Popular Destinations</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-              Start your journey from these popular New Zealand destinations
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { name: "Auckland", region: "North Island", description: "City of Sails", color: "from-blue-500 to-cyan-500" },
-              { name: "Wellington", region: "North Island", description: "Capital City", color: "from-purple-500 to-pink-500" },
-              { name: "Christchurch", region: "South Island", description: "Garden City", color: "from-emerald-500 to-teal-500" },
-              { name: "Queenstown", region: "South Island", description: "Adventure Capital", color: "from-orange-500 to-amber-500" },
-            ].map((destination) => (
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
               <Link
-                key={destination.name}
                 href="/trip-planner"
-                className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-xl transition-all group relative overflow-hidden"
+                className="px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                style={{ 
+                  background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${destination.color} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
-                <div className="relative">
-                  <h3 className="text-xl font-bold mb-1 group-hover:text-indigo-600 transition-colors font-[family-name:var(--font-plus-jakarta)] text-slate-800">
-                    {destination.name}
-                  </h3>
-                  <p className="text-sm text-slate-500 mb-2 font-medium">{destination.region}</p>
-                  <p className="text-slate-600 text-sm">{destination.description}</p>
-                </div>
+                Start Planning Your Trip
               </Link>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="card p-12 md:p-16 lg:p-20 text-center" style={{ background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)" }}>
-        <div className="max-w-3xl mx-auto space-y-6">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-[family-name:var(--font-plus-jakarta)] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Ready to Plan Your Adventure?
-          </h2>
-          <p className="text-lg md:text-xl text-slate-700 font-medium">
-            Start creating your perfect New Zealand journey today. Plan your route, 
-            discover amazing places, and book unforgettable experiences.
-          </p>
-          <div className="pt-4">
-            <Link
-              href="/trip-planner"
-              className="inline-flex items-center gap-2 px-10 py-5 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl"
-              style={{ 
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)",
-              }}
-            >
-              <Compass className="w-5 h-5" />
-              Start Planning Now
-            </Link>
+      {/* Everything You Need */}
+      <section className="card p-8 md:p-12" style={{ borderRadius: 0 }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-plus-jakarta)] text-slate-800">Everything You <span className="italic">Need</span></h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left: Personal Concierge Card */}
+            <div className="relative rounded-2xl p-8 md:p-10 bg-slate-800 text-white overflow-hidden">
+              {/* Background decorative shapes */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-10 right-10 w-32 h-32 rounded-full bg-green-300 blur-3xl"></div>
+                <div className="absolute bottom-10 left-10 w-24 h-24 rounded-full bg-green-200 blur-2xl"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 flex flex-col h-full">
+                {/* Icon */}
+                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center mb-6">
+                  <Menu className="w-5 h-5 text-white" />
+                </div>
+                
+                {/* Title */}
+                <h3 className="text-2xl md:text-3xl font-bold mb-4 font-[family-name:var(--font-plus-jakarta)]">
+                  Your Personal Concierge
+                </h3>
+                
+              </div>
+            </div>
+            
+            {/* Right: Feature Cards */}
+            <div className="flex flex-col gap-6">
+              {/* Activity Booking Card */}
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                     <h3 className="text-base font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)] leading-tight">
+                       Activity and event booking
+                     </h3>
+                  </div>
+                  {/* Activity Image Placeholder */}
+                  <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-amber-50 border border-amber-200 flex flex-col items-center justify-center p-2">
+                    <div className="w-10 h-10 flex items-end justify-center mb-1">
+                      {/* Person walking silhouette */}
+                      <div className="w-3 h-3 rounded-full bg-slate-700 mb-1"></div>
+                      <div className="w-4 h-6 bg-slate-700 rounded-sm ml-0.5"></div>
+                    </div>
+                    <span className="text-[8px] text-slate-600 font-medium">ACTIVITY</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Bottom two cards side-by-side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Smart Recommendations Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-purple-600 flex-shrink-0 border border-slate-200">
+                      <Heart className="w-5 h-5 fill-current" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)] leading-tight">
+                        Smart Recommendations
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Digital Travel Journal Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 flex-shrink-0 border border-slate-200">
+                      <MapPin className="w-5 h-5 fill-current" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)] leading-tight">
+                        Digital Travel Journal
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Escape Down Under */}
+      <section className="p-8 md:p-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-left mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]" style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)' }}>
+              Escape <span className="italic">Down</span>
+              <br />
+              <span className="italic">Under</span>
+            </h2>
+          </div>
+          
+          <div className="relative">
+            {/* Image */}
+            <div className="relative rounded-2xl overflow-visible aspect-[16/9] max-w-3xl">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                <Image
+                  src="/wanakatree.jpg"
+                  alt="Wānaka"
+                  fill
+                  className="object-cover rounded-2xl"
+                  sizes="(max-width: 768px) 100vw, 66vw"
+                />
+              </div>
+              
+              {/* Content Card overlay - half on image, half off */}
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full md:w-[50%] md:-mr-[25%] z-20 hidden md:block">
+                <div className="bg-white rounded-2xl p-5 md:px-8 md:py-5 border border-slate-200 shadow-lg">
+                  <div className="space-y-2">
+                    {/* Subtitle */}
+                    <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
+                      SOUTHERN ALPS
+                    </p>
+                    
+                    {/* Main Title */}
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">
+                      Wānaka
+                    </h3>
+                    
+                    {/* Description/Quote */}
+                    <p className="text-slate-600 leading-relaxed text-xs">
+                      A stunning resort town home to the Rhythm and Alps festival and a number of Gold Medal winning athletes. Hit the slopes at Cardrona Ski Field, check out the Cardrona Hotel or take a swim in the stunning Wānaka lake while you overlook the gorgeous Southern Alps
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mobile: Content Card below image */}
+            <div className="md:hidden mt-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-lg">
+                <div className="space-y-2">
+                  {/* Subtitle */}
+                  <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
+                    SOUTHERN ALPS
+                  </p>
+                  
+                  {/* Main Title */}
+                  <h3 className="text-xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">
+                    Wānaka
+                  </h3>
+                  
+                  {/* Description/Quote */}
+                  <p className="text-slate-600 leading-relaxed text-xs">
+                    A stunning resort town home to the Rhythm and Alps festival and a number of Gold Medal winning athletes. Hit the slopes at Cardrona Ski Field, check out the Cardrona Hotel or take a swim in the stunning Wānaka lake while you overlook the gorgeous Southern Alps
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Second Destination - Swapped Layout */}
+          <div className="relative mt-12">
+            {/* Image on Right */}
+            <div className="relative rounded-2xl overflow-visible aspect-[16/9] max-w-3xl ml-auto">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden">
+                <Image
+                  src="/Bayofislands.jpg"
+                  alt="Bay of Islands"
+                  fill
+                  className="object-cover rounded-2xl"
+                  sizes="(max-width: 768px) 100vw, 66vw"
+                />
+              </div>
+              
+              {/* Content Card overlay - left side, half on image, half off */}
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full md:w-[50%] md:-ml-[25%] z-20 hidden md:block">
+                <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 md:px-8 md:py-5 border border-slate-200/50 shadow-lg">
+                  <div className="space-y-2">
+                    {/* Subtitle */}
+                    <p className="text-[10px] font-semibold text-purple-500 uppercase tracking-wide">
+                      NORTHLAND
+                    </p>
+                    
+                    {/* Main Title */}
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">
+                      Bay of Islands
+                    </h3>
+                    
+                    {/* Description/Quote */}
+                    <p className="text-slate-600 leading-relaxed text-xs">
+                      A subtropical micro-region known for its stunning beauty and history. 144 islands to explore by sail or air.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mobile: Content Card below image */}
+            <div className="md:hidden mt-4">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 border border-slate-200/50 shadow-lg">
+                <div className="space-y-2">
+                  {/* Subtitle */}
+                  <p className="text-[10px] font-semibold text-purple-500 uppercase tracking-wide">
+                    NORTHLAND
+                  </p>
+                  
+                  {/* Main Title */}
+                  <h3 className="text-xl font-bold text-slate-800 font-[family-name:var(--font-plus-jakarta)]">
+                    Bay of Islands
+                  </h3>
+                  
+                  {/* Description/Quote */}
+                  <p className="text-slate-600 leading-relaxed text-xs">
+                    A subtropical micro-region known for its stunning beauty and history. 144 islands to explore by sail or air.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Next big Event */}
+      <section className="card p-8 md:p-12 mt-16 md:mt-24" style={{ borderRadius: 0 }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 font-[family-name:var(--font-plus-jakarta)] text-blue-900">
+              Next big <span className="italic">Event</span>
+            </h2>
+          </div>
+          
+          <div className="space-y-8">
+            {/* First Event - Image 01 on Left, Text on Right */}
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              <div className="relative rounded-2xl overflow-hidden w-full">
+                <div className="relative w-full">
+                  <img
+                    src="/gunsnrosesbanner.jpg"
+                    alt="Guns N' Roses World Tour 2026"
+                    className="w-full h-auto object-contain rounded-2xl"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex flex-col justify-center text-center md:text-left h-full">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)]">
+                  Guns N' Roses : World Tour 2026
+                </h3>
+                <p className="text-slate-600 text-sm mb-3 leading-relaxed">
+                  Guns N' Roses return to the stage for the first time since 2022. Don't miss it!
+                </p>
+                <ul className="space-y-1.5 text-slate-600 text-sm">
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Date:</span> 17th December</span>
+                  </li>
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Venue:</span> Eden Park, Auckland</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* Second Event - Text on Left, Image 02 on Right (Small) */}
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Mobile: Image first, Desktop: Text first */}
+              <div className="order-2 md:order-1 flex flex-col justify-center text-center md:text-left">
+                <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)]">
+                  DHL Super Rugby Pacific Super Round
+                </h3>
+                <p className="text-slate-600 text-sm mb-3 leading-relaxed">
+                  Super Round 2026 brings three days of world-class rugby and family-friendly fun to Ōtautahi, Christchurch
+                </p>
+                <ul className="space-y-1.5 text-slate-600 text-sm">
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Date:</span> 24-26th April</span>
+                  </li>
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Venue:</span> One NZ Stadium, Christchurch</span>
+                  </li>
+                </ul>
+              </div>
+              {/* Mobile: Image second, Desktop: Image second */}
+              <div className="order-1 md:order-2 relative rounded-2xl overflow-hidden w-full max-w-[240px] mx-auto md:mx-0">
+                <div className="relative w-full">
+                  <img
+                    src="/superrugbysuperround.jpg"
+                    alt="DHL Super Rugby Pacific Super Round"
+                    className="w-full h-auto object-contain rounded-2xl"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Third Event - Image 03 on Left, Text on Right (Medium size) */}
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              <div className="relative rounded-2xl overflow-hidden w-full">
+                <div className="relative w-full">
+                  <img
+                    src="/jazzfestival.jpg"
+                    alt="2026 National Jazz Festival"
+                    className="w-full h-auto object-contain rounded-2xl"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col justify-center text-center md:text-left h-full">
+                <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-2 font-[family-name:var(--font-plus-jakarta)]">
+                  2026 National Jazz Festival
+                </h3>
+                <p className="text-slate-600 text-sm mb-3 leading-relaxed">
+                  The National Jazz Festival stretches across eleven vibrant days, filling Tauranga and Mount Maunganui with world-class jazz, unforgettable performances, and a city-wide celebration of music and community
+                </p>
+                <ul className="space-y-1.5 text-slate-600 text-sm">
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Dates:</span> 27th March - 7th April</span>
+                  </li>
+                  <li className="flex items-center justify-center md:justify-start">
+                    <span className="w-2 h-2 bg-blue-600 mr-2 flex-shrink-0"></span>
+                    <span><span className="font-semibold">Venue:</span> Various Across Mt Maunganui and Tauranga</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

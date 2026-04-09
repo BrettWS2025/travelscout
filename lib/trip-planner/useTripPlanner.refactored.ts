@@ -139,6 +139,7 @@ export function useTripPlanner() {
     state.legs,
     state.startSectorType,
     state.endSectorType,
+    state.hasSubmitted,
     state.setStartCityId,
     state.setEndCityId,
     state.setStartDate,

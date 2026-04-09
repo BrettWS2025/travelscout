@@ -9,7 +9,6 @@ import type { ExperienceItem } from "@/lib/viator-helpers";
 import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planner/utils";
 import {
   formatShortRangeDate,
-  formatDisplayDate,
   makeDayKey,
   addDaysToIsoDate,
 } from "@/lib/trip-planner/utils";
@@ -78,6 +77,15 @@ export default function AddToItineraryModal({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  // Match sidebar day format: "AUG 12"
+  const formatDayDate = (dateStr: string): string => {
+    const d = new Date(dateStr + "T00:00:00");
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const day = d.getDate();
+    return `${month} ${day}`;
+  };
 
   // Determine which section should be expanded based on location
   const defaultExpandedSection = useMemo(() => {
@@ -397,7 +405,7 @@ export default function AddToItineraryModal({
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-slate-800 mb-1">
-              Add to itinerary
+              Add to trip
             </h2>
             <p className="text-sm text-slate-600 truncate">
               {activityText}
@@ -446,7 +454,7 @@ export default function AddToItineraryModal({
                       e.preventDefault();
                       handleAddToRoadSector(routeStops.length > 1 ? 1 : 0);
                     }}
-                    className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                    className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -505,18 +513,18 @@ export default function AddToItineraryModal({
                             e.preventDefault();
                             handleAddToDay(d.date, d.location);
                           }}
-                            className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                            className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs font-semibold text-slate-900">
-                                  Day {d.dayNumber}
+                                <div className="font-bold text-[11px] md:text-[12px] text-slate-900 mb-0.5">
+                                  {formatDayDate(d.date)}
                                 </div>
-                                <div className="text-[10px] text-slate-600 mt-0.5">
-                                  {formatDisplayDate(d.date)}
+                                <div className="text-[9px] md:text-[10px] text-slate-500">
+                                  DAY {d.dayNumber}
                                 </div>
                               </div>
-                              <div className="text-[10px] text-indigo-600 font-medium">
+                              <div className="text-[10px] text-indigo-600 font-medium shrink-0">
                                 Add here
                               </div>
                             </div>
@@ -559,7 +567,7 @@ export default function AddToItineraryModal({
                         e.preventDefault();
                         handleAddToRoadSector(stopGroups[0].stopIndex);
                       }}
-                      className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                      className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -611,7 +619,7 @@ export default function AddToItineraryModal({
                         e.preventDefault();
                         handleAddToRoadSector(routeStops.length - 1);
                       }}
-                      className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                      className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -675,7 +683,7 @@ export default function AddToItineraryModal({
                             e.preventDefault();
                             handleAddToRoadSector(group.stopIndex);
                           }}
-                          className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                          className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
@@ -734,18 +742,18 @@ export default function AddToItineraryModal({
                             e.preventDefault();
                             handleAddToDay(d.date, d.location);
                           }}
-                          className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                          className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs font-semibold text-slate-900">
-                                Day {d.dayNumber}
+                              <div className="font-bold text-[11px] md:text-[12px] text-slate-900 mb-0.5">
+                                {formatDayDate(d.date)}
                               </div>
-                              <div className="text-[10px] text-slate-600 mt-0.5">
-                                {formatDisplayDate(d.date)}
+                              <div className="text-[9px] md:text-[10px] text-slate-500">
+                                DAY {d.dayNumber}
                               </div>
                             </div>
-                            <div className="text-[10px] text-indigo-600 font-medium">
+                            <div className="text-[10px] text-indigo-600 font-medium shrink-0">
                               Add here
                             </div>
                           </div>
@@ -790,7 +798,7 @@ export default function AddToItineraryModal({
                     e.preventDefault();
                     handleAddToRoadSector(routeStops.length - 1);
                   }}
-                  className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                  className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -846,7 +854,7 @@ export default function AddToItineraryModal({
                       e.preventDefault();
                       handleAddToRoadSector(routeStops.length - 1);
                     }}
-                    className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                    className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -904,18 +912,18 @@ export default function AddToItineraryModal({
                           e.preventDefault();
                           handleAddToDay(d.date, d.location);
                         }}
-                        className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                        className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-slate-900">
-                              Day {d.dayNumber}
+                            <div className="font-bold text-[11px] md:text-[12px] text-slate-900 mb-0.5">
+                              {formatDayDate(d.date)}
                             </div>
-                            <div className="text-[10px] text-slate-600 mt-0.5">
-                              {formatDisplayDate(d.date)}
+                            <div className="text-[9px] md:text-[10px] text-slate-500">
+                              DAY {d.dayNumber}
                             </div>
                           </div>
-                          <div className="text-[10px] text-indigo-600 font-medium">
+                          <div className="text-[10px] text-indigo-600 font-medium shrink-0">
                             Add here
                           </div>
                         </div>
@@ -962,7 +970,7 @@ export default function AddToItineraryModal({
                           e.stopPropagation();
                           handleAddToRoadSector(routeStops.length - 1);
                         }}
-                        className="w-full text-left rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 p-3 transition-colors"
+                        className="w-full text-left rounded-lg border border-slate-200 bg-white hover:shadow-sm hover:border-slate-300 transition-all duration-200 py-2 px-3"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex-1 min-w-0">

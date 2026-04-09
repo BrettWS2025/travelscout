@@ -9,11 +9,7 @@ export const metadata: Metadata = {
 
 export default function TripPlannerPage() {
   return (
-    <main className="mx-auto max-w-5xl p-6 text-center">
-      <h1 className="mb-8 text-3xl font-semibold">
-        Start your journey
-      </h1>
-
+    <main className="mx-auto w-full max-w-5xl px-[5px] pt-[5px] pb-6 md:p-6 text-center">
       <TripPlanner />
     </main>
   );

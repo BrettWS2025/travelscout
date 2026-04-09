@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Edit3 } from "lucide-react";
 import WhereWhenPicker from "@/components/trip-planner/WhereWhenPicker";
 import DraftItinerary from "@/components/trip-planner/DraftItinerary";
-import RouteOverview from "@/components/trip-planner/RouteOverview";
-import TripSummary from "@/components/trip-planner/TripSummary";
 import LoadingScreen from "@/components/trip-planner/LoadingScreen";
 import CitySelectionModal from "@/components/trip-planner/CitySelectionModal";
 import PlacesThingsModal from "@/components/trip-planner/PlacesThingsModal";
@@ -14,7 +12,7 @@ import AddToItineraryModal from "@/components/trip-planner/AddToItineraryModal";
 import { useTripPlanner } from "@/lib/trip-planner/useTripPlanner";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/AuthModal";
-import type { TripInput } from "@/lib/itinerary";
+import type { TripInput, TripPlan } from "@/lib/itinerary";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
@@ -45,11 +43,15 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
+  const [isFormMinimized, setIsFormMinimized] = useState(false);
+  const prevPlanRef = useRef<TripPlan | null>(null);
   
   // Pending actions (to execute after authentication)
   const [pendingAddToItinerary, setPendingAddToItinerary] = useState<{
     experience: WalkingExperience | ExperienceItem;
     location: string;
+    dayDate?: string;
+    dayLocation?: string;
   } | null>(null);
   const [pendingPinEvent, setPendingPinEvent] = useState<{
     event: Event;
@@ -93,6 +95,37 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     }
   }, [initialItinerary, itineraryLoaded, tp]);
 
+  // Auto-minimize form whenever a new plan is generated after submission
+  useEffect(() => {
+    // Check if this is a new plan (different from the previous one)
+    const isNewPlan = tp.plan !== null && tp.plan !== prevPlanRef.current;
+    
+    // Minimize when a new plan is generated after submission
+    if (isNewPlan && tp.hasSubmitted) {
+      setIsFormMinimized(true);
+      // Save state to localStorage so navbar can detect it
+      tp.saveStateToLocalStorage();
+      // Dispatch custom event to notify navbar that plan was created
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("tripPlanCreated"));
+      }
+    }
+    
+    // Update the previous plan reference
+    prevPlanRef.current = tp.plan;
+  }, [tp.plan, tp.hasSubmitted, tp]);
+
+  // Listen for expand form event from navbar
+  useEffect(() => {
+    const handleExpandForm = () => {
+      setIsFormMinimized(false);
+    };
+    window.addEventListener("expandTripPlannerForm", handleExpandForm);
+    return () => {
+      window.removeEventListener("expandTripPlannerForm", handleExpandForm);
+    };
+  }, []);
+
   // After auth modal closes, wait for user to be available, then show title dialog
   useEffect(() => {
     if (pendingSave && !showAuthModal && user) {
@@ -118,7 +151,9 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
         setPendingAddToItinerary(null); // Clear immediately to prevent re-execution
         proceedWithAddToItinerary(
           action.experience,
-          action.location
+          action.location,
+          action.dayDate,
+          action.dayLocation
         );
       }
       
@@ -214,56 +249,93 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   };
 
   // Handle adding experience to itinerary
-  const handleAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
+  const handleAddToItinerary = async (
+    experience: WalkingExperience | ExperienceItem,
+    location: string,
+    dayDate?: string,
+    dayLocation?: string
+  ) => {
     // Check if user is authenticated
     if (!user) {
       // Store the pending action and show auth modal
-      setPendingAddToItinerary({ experience, location });
+      setPendingAddToItinerary({ experience, location, dayDate, dayLocation });
       setAuthModalContext("add-to-itinerary");
       setShowAuthModal(true);
       return;
     }
 
     // User is authenticated, proceed with adding to itinerary
-    await proceedWithAddToItinerary(experience, location);
+    await proceedWithAddToItinerary(experience, location, dayDate, dayLocation);
   };
 
   // Internal function to actually add to itinerary (called after auth or if already authenticated)
-  const proceedWithAddToItinerary = async (experience: WalkingExperience | ExperienceItem, location: string) => {
-    // Handle Viator products
-    if ('type' in experience && experience.type === 'viator') {
-      // Save to cache first
-      const { saveViatorProductToCache } = await import("@/lib/viator.api");
-      const result = await saveViatorProductToCache(experience);
-      
-      if (!result.success) {
-        console.error('Failed to save Viator product to cache:', result.error);
+  const proceedWithAddToItinerary = async (
+    experience: WalkingExperience | ExperienceItem,
+    location: string,
+    dayDate?: string,
+    dayLocation?: string
+  ) => {
+    // If a specific day is provided (timeline view), add directly to that day
+    if (dayDate && dayLocation) {
+      if ("type" in experience && experience.type === "viator") {
+        const { saveViatorProductToCache } = await import("@/lib/viator.api");
+        const result = await saveViatorProductToCache(experience);
+
+        if (!result.success) {
+          console.error("Failed to save Viator product to cache:", result.error);
+          return;
+        }
+
+        tp.addViatorProductToDay(dayDate, dayLocation, experience);
         return;
       }
-      
+
+      // Handle walking experiences (ExperienceItem or WalkingExperience)
+      let walkingExp: WalkingExperience;
+      if ("type" in experience && experience.type === "walking") {
+        const converted = transformExperienceItemToWalking(experience);
+        if (!converted) {
+          console.error("Failed to convert ExperienceItem to WalkingExperience");
+          return;
+        }
+        walkingExp = converted;
+      } else {
+        walkingExp = experience as WalkingExperience;
+      }
+
+      tp.addExperienceToDay(dayDate, dayLocation, walkingExp);
+      return;
+    }
+
+    // No specific day: open modal so user can choose where to add
+    if ("type" in experience && experience.type === "viator") {
+      const { saveViatorProductToCache } = await import("@/lib/viator.api");
+      const result = await saveViatorProductToCache(experience);
+
+      if (!result.success) {
+        console.error("Failed to save Viator product to cache:", result.error);
+        return;
+      }
+
       setSelectedViatorProduct(experience);
       setSelectedExperience(null);
       setSelectedExperienceLocation(location);
       setShowAddToItineraryModal(true);
       return;
     }
-    
-    // Handle walking experiences
-    // Convert ExperienceItem to WalkingExperience if needed
+
     let walkingExp: WalkingExperience;
-    if ('type' in experience && experience.type === 'walking') {
-      // It's an ExperienceItem, convert it back to WalkingExperience
+    if ("type" in experience && experience.type === "walking") {
       const converted = transformExperienceItemToWalking(experience);
       if (!converted) {
-        console.error('Failed to convert ExperienceItem to WalkingExperience');
+        console.error("Failed to convert ExperienceItem to WalkingExperience");
         return;
       }
       walkingExp = converted;
     } else {
-      // It's already a WalkingExperience
       walkingExp = experience as WalkingExperience;
     }
-    
+
     setSelectedExperience(walkingExp);
     setSelectedViatorProduct(null);
     setSelectedExperienceLocation(location);
@@ -378,79 +450,84 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   return (
     <div className="space-y-8">
       <LoadingScreen isLoading={tp.legsLoading} />
-      <form
-        onSubmit={tp.handleSubmit}
-        className="p-4 md:p-6 space-y-6"
-        style={{ color: "var(--text)" }}
-      >
-        <WhereWhenPicker
-          whereRef={tp.whereRef}
-          whenRef={tp.whenRef}
-          activePill={tp.activePill}
-          showWherePopover={tp.showWherePopover}
-          showCalendar={tp.showCalendar}
-          mobileSheetOpen={tp.mobileSheetOpen}
-          mobileActive={tp.mobileActive}
-          startQuery={tp.startQuery}
-          endQuery={tp.endQuery}
-          destinationsQuery={tp.destinationsQuery}
-          destinationsResults={tp.destinationsResults}
-          recent={tp.recent}
-          suggested={tp.suggested}
-          startResults={tp.startResults}
-          endResults={tp.endResults}
-          startCityId={tp.startCityId}
-          endCityId={tp.endCityId}
-          destinationIds={tp.destinationIds}
-          dateRange={tp.dateRange}
-          calendarMonth={tp.calendarMonth}
-          startSummary={tp.whereSummary}
-          destinationsSummary={tp.destinationsSummary}
-          whenLabel={tp.whenLabel}
-          setMobileActive={tp.setMobileActive}
-          setShowCalendar={tp.setShowCalendar}
-          setActivePill={tp.setActivePill}
-          setStartQuery={tp.setStartQuery}
-          setEndQuery={tp.setEndQuery}
-          setDestinationsQuery={tp.setDestinationsQuery}
-          openMobileSheet={tp.openMobileSheet}
-          closeMobileSheet={tp.closeMobileSheet}
-          openWhereDesktop={tp.openWhereDesktop}
-          openWhenDesktop={tp.openWhenDesktop}
-          selectStartCity={tp.selectStartCity}
-          selectEndCity={tp.selectEndCity}
-          selectReturnToStart={tp.selectReturnToStart}
-          selectDestination={tp.selectDestination}
-          removeDestination={tp.removeDestination}
-          clearEndCity={tp.clearEndCity}
-          handleDateRangeChange={tp.handleDateRangeChange}
-          setDateRange={tp.setDateRange}
-          setCalendarMonth={tp.setCalendarMonth}
-          clearDates={() => {
-            tp.setDateRange(undefined);
-            tp.setStartDate("");
-            tp.setEndDate("");
-            tp.setCalendarMonth(new Date());
-          }}
-          onOpenCityModal={handleOpenCityModal}
-          onOpenReturnQuestion={handleOpenReturnQuestion}
-        />
+      
 
-
-        {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
-
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
-            style={{ 
-              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+      {/* Full form - shown when not minimized or when no plan exists */}
+      {(!isFormMinimized || !tp.plan) && (
+        <form
+          onSubmit={tp.handleSubmit}
+          className="p-4 md:p-6 space-y-6"
+          style={{ color: "var(--text)" }}
+        >
+          <WhereWhenPicker
+            whereRef={tp.whereRef}
+            whenRef={tp.whenRef}
+            activePill={tp.activePill}
+            showWherePopover={tp.showWherePopover}
+            showCalendar={tp.showCalendar}
+            mobileSheetOpen={tp.mobileSheetOpen}
+            mobileActive={tp.mobileActive}
+            startQuery={tp.startQuery}
+            endQuery={tp.endQuery}
+            destinationsQuery={tp.destinationsQuery}
+            destinationsResults={tp.destinationsResults}
+            recent={tp.recent}
+            suggested={tp.suggested}
+            startResults={tp.startResults}
+            endResults={tp.endResults}
+            startCityId={tp.startCityId}
+            endCityId={tp.endCityId}
+            destinationIds={tp.destinationIds}
+            dateRange={tp.dateRange}
+            calendarMonth={tp.calendarMonth}
+            startSummary={tp.whereSummary}
+            destinationsSummary={tp.destinationsSummary}
+            whenLabel={tp.whenLabel}
+            setMobileActive={tp.setMobileActive}
+            setShowCalendar={tp.setShowCalendar}
+            setActivePill={tp.setActivePill}
+            setStartQuery={tp.setStartQuery}
+            setEndQuery={tp.setEndQuery}
+            setDestinationsQuery={tp.setDestinationsQuery}
+            openMobileSheet={tp.openMobileSheet}
+            closeMobileSheet={tp.closeMobileSheet}
+            openWhereDesktop={tp.openWhereDesktop}
+            openWhenDesktop={tp.openWhenDesktop}
+            selectStartCity={tp.selectStartCity}
+            selectEndCity={tp.selectEndCity}
+            selectReturnToStart={tp.selectReturnToStart}
+            selectDestination={tp.selectDestination}
+            removeDestination={tp.removeDestination}
+            clearEndCity={tp.clearEndCity}
+            handleDateRangeChange={tp.handleDateRangeChange}
+            setDateRange={tp.setDateRange}
+            setCalendarMonth={tp.setCalendarMonth}
+            clearDates={() => {
+              tp.setDateRange(undefined);
+              tp.setStartDate("");
+              tp.setEndDate("");
+              tp.setCalendarMonth(new Date());
             }}
-          >
-            Create your journey
-          </button>
-        </div>
-      </form>
+            onOpenCityModal={handleOpenCityModal}
+            onOpenReturnQuestion={handleOpenReturnQuestion}
+          />
+
+
+          {tp.error && <p className="text-sm text-red-400">{tp.error}</p>}
+
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-white hover:brightness-110 transition shadow-lg hover:shadow-xl"
+              style={{ 
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              }}
+            >
+              Create your journey
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Results */}
       {tp.hasSubmitted && !tp.plan && !tp.error && (
@@ -500,6 +577,7 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onReorderStops={tp.handleReorderStops}
             onAddToItinerary={handleAddToItinerary}
             endDate={tp.endDate}
+            legs={tp.legs}
           />
         </>
       )}
@@ -615,16 +693,6 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
           </div>
         </div>
       )}
-
-      <RouteOverview mapPoints={tp.mapPoints} legs={tp.legs} legsLoading={tp.legsLoading} />
-
-      <TripSummary
-        routeStops={tp.routeStops}
-        nightsPerStop={tp.nightsPerStop}
-        totalTripDays={tp.totalTripDays}
-        startDate={tp.startDate}
-        endDate={tp.endDate}
-      />
 
       {tp.plan && tp.plan.days.length > 0 && (
         <div className="flex flex-col items-center gap-3 pt-4">
