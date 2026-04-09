@@ -99,8 +99,8 @@ export default function DraftItineraryDayContent({
   const [ticketStubTop, setTicketStubTop] = useState<number | null>(null);
   const [hotelIconTop, setHotelIconTop] = useState<number | null>(null);
   const [nearbyPlacesIconTop, setNearbyPlacesIconTop] = useState<number | null>(null);
-  /** Hotels map vs full day timeline (only when the day timeline is shown). */
-  const [dayItineraryView, setDayItineraryView] = useState<"timeline" | "hotelsMap">("timeline");
+  /** Switches only the hotel section between cards and map. */
+  const [hotelViewMode, setHotelViewMode] = useState<"cards" | "map">("cards");
 
   const selectedLocation = selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
   // Show the main day timeline for all non-road stops, including Day 1 once the start has been converted
@@ -236,7 +236,7 @@ export default function DraftItineraryDayContent({
   const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
 
   useEffect(() => {
-    setDayItineraryView("timeline");
+    setHotelViewMode("cards");
   }, [selectedDay.date, selectedDay.location, selectedLocationIndex]);
 
   const getEventDurationNights = (event: Event): number | null => {
@@ -310,7 +310,7 @@ export default function DraftItineraryDayContent({
     nearbyHotels.length,
     nearbyRestaurantsLoading,
     nearbyRestaurants.length,
-    dayItineraryView,
+    hotelViewMode,
     topExperiences.length,
   ]);
 
@@ -362,33 +362,6 @@ export default function DraftItineraryDayContent({
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">{formatDisplayDate(selectedDay.date)}</h2>
             <p className="text-sm text-slate-600 mt-1">{locationName}</p>
           </div>
-          {shouldShowTimeline && selectedLocation && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setDayItineraryView("timeline")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  dayItineraryView === "timeline"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                Timeline
-              </button>
-              <button
-                type="button"
-                onClick={() => setDayItineraryView("hotelsMap")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  dayItineraryView === "hotelsMap"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5" aria-hidden />
-                Hotels map
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -405,30 +378,7 @@ export default function DraftItineraryDayContent({
       )}
 
       <div className="space-y-9">
-        {shouldShowTimeline && selectedLocation && dayItineraryView === "hotelsMap" && canLoadNearbyPlaces && (
-          <div className="space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-900 mb-1">Hotels near {destinationName}</h3>
-              <p className="text-xs text-slate-500 mb-3">
-                Up to 20 nearby lodging results from Google Places (8 km radius). Tap a pin for details and directions.
-              </p>
-              {nearbyHotelsLoading ? (
-                <div className="text-xs text-slate-600 text-center py-12">Loading hotels…</div>
-              ) : nearbyHotelsError ? (
-                <div className="text-xs text-slate-500 text-center py-12">{nearbyHotelsError}</div>
-              ) : destinationLocationCoords ? (
-                <NearbyHotelsMap
-                  places={nearbyHotels}
-                  centerLat={destinationLocationCoords.lat}
-                  centerLng={destinationLocationCoords.lng}
-                  locationLabel={destinationName}
-                />
-              ) : null}
-            </div>
-          </div>
-        )}
-
-        {shouldShowTimeline && selectedLocation && dayItineraryView === "timeline" && (
+        {shouldShowTimeline && selectedLocation && (
           <div ref={timelineRowRef} className="flex gap-2 sm:gap-4 relative">
             <div className="flex flex-col items-center relative self-stretch w-10 flex-shrink-0">
               <div className="w-10 h-10 aspect-square rounded-full bg-white border-2 border-indigo-600 flex items-center justify-center shrink-0 z-10">
@@ -771,22 +721,50 @@ export default function DraftItineraryDayContent({
 
               {shouldShowTimeline && selectedLocation && (
                 <div ref={hotelCardRef} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                  <div className="flex items-center mb-3">
-                    <Bed className="w-4 h-4 text-indigo-600 shrink-0" aria-hidden />
-                    <h4 className="text-sm font-semibold text-slate-900">Where to stay</h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Bed className="w-4 h-4 text-indigo-600 shrink-0" aria-hidden />
+                      <h4 className="text-sm font-semibold text-slate-900">Where to stay</h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHotelViewMode((prev) => (prev === "cards" ? "map" : "cards"))}
+                      disabled={!canLoadNearbyPlaces}
+                      title={!canLoadNearbyPlaces ? "Location not ready yet" : undefined}
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                      <MapPin className="w-3.5 h-3.5" aria-hidden />
+                      {hotelViewMode === "map" ? "Top hotels" : "Map view"}
+                    </button>
                   </div>
                   {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
                     <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
                   ) : nearbyHotelsError ? (
                     <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
+                  ) : hotelViewMode === "map" ? (
+                    destinationLocationCoords ? (
+                      <NearbyHotelsMap
+                        places={nearbyHotels}
+                        centerLat={destinationLocationCoords.lat}
+                        centerLng={destinationLocationCoords.lng}
+                        locationLabel={destinationName}
+                      />
+                    ) : (
+                      <div className="text-xs text-slate-500 text-center py-4">Map unavailable for this area.</div>
+                    )
                   ) : topRatedHotelsNearby.length > 0 ? (
-                    <NearbyPlacesCarousel
-                      places={topRatedHotelsNearby}
-                      title="Top nearby hotels"
-                      size="compact"
-                      showUserRatingCount
-                      showDirectionsLink
-                    />
+                    <>
+                      <p className="text-xs text-slate-500 mb-2">
+                        Top nearby hotels by rating and review count.
+                      </p>
+                      <NearbyPlacesCarousel
+                        places={topRatedHotelsNearby}
+                        title="Top nearby hotels"
+                        size="compact"
+                        showUserRatingCount
+                        showDirectionsLink
+                      />
+                    </>
                   ) : (
                     <div className="text-xs text-slate-500 text-center py-4">No nearby hotels found for this area.</div>
                   )}

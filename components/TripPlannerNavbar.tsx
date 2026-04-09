@@ -2,13 +2,38 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Edit3 } from "lucide-react";
+
+const TRIP_PLANNER_DRAFT_KEY = "tripPlanner_draft";
+const TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY = "tripPlanner_restore_after_auth";
 
 export function TripPlannerNavbar() {
   const pathname = usePathname();
-  const isTripPlanner = pathname?.includes("/trip-planner");
+  const isTripPlanner = pathname?.startsWith("/trip-planner");
   const [hasJourney, setHasJourney] = useState(false);
+  const wasOnTripPlannerRef = useRef(false);
+
+  // Clear draft when leaving trip planner routes so returning later starts fresh.
+  // Keep draft only for explicit auth-restore flows.
+  useEffect(() => {
+    const wasOnTripPlanner = wasOnTripPlannerRef.current;
+    const isOnTripPlanner = Boolean(isTripPlanner);
+
+    if (wasOnTripPlanner && !isOnTripPlanner) {
+      try {
+        const shouldRestoreAfterAuth =
+          localStorage.getItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY) === "1";
+        if (!shouldRestoreAfterAuth) {
+          localStorage.removeItem(TRIP_PLANNER_DRAFT_KEY);
+        }
+      } catch (err) {
+        console.error("Error clearing trip planner draft:", err);
+      }
+    }
+
+    wasOnTripPlannerRef.current = isOnTripPlanner;
+  }, [isTripPlanner]);
 
   // Check if a journey has been created by checking localStorage for a plan
   useEffect(() => {
@@ -19,7 +44,7 @@ export function TripPlannerNavbar() {
 
     const checkForJourney = () => {
       try {
-        const saved = localStorage.getItem("tripPlanner_draft");
+        const saved = localStorage.getItem(TRIP_PLANNER_DRAFT_KEY);
         if (saved) {
           const state = JSON.parse(saved);
           // Check if there's a plan with days, or if hasSubmitted is true (journey was created)
@@ -51,7 +76,7 @@ export function TripPlannerNavbar() {
 
     // Also listen for storage events (when plan is saved from another tab/window)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "tripPlanner_draft") {
+      if (e.key === TRIP_PLANNER_DRAFT_KEY) {
         checkForJourney();
       }
     };
