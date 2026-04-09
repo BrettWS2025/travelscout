@@ -118,8 +118,18 @@ export async function GET(req: Request) {
       
       if (locationName) {
         try {
-          // Check cache for destination ID first
-          const destinationCacheKey = `viator:destination:${locationName.toLowerCase().trim()}`;
+          // Check cache for destination ID first.
+          // IMPORTANT: cache key must include region scope to avoid collisions
+          // between same-name destinations in different countries (e.g., Wellington NZ vs elsewhere).
+          const normalizedLocation = locationName.toLowerCase().trim();
+          const isLikelyNewZealandSearch =
+            searchLat >= -48 &&
+            searchLat <= -34 &&
+            searchLng >= 166 &&
+            searchLng <= 179;
+          const destinationRegionScope = isLikelyNewZealandSearch ? "nz" : "global";
+          // v2 key invalidates any previously cached bad IDs from older matching logic
+          const destinationCacheKey = `viator:destination:v2:${destinationRegionScope}:${normalizedLocation}`;
           const redis = getRedisClient();
           let cachedDestinationId: number | null = null;
           
@@ -129,7 +139,9 @@ export async function GET(req: Request) {
               if (cached) {
                 cachedDestinationId = parseInt(cached, 10);
                 if (!isNaN(cachedDestinationId) && cachedDestinationId > 0) {
-                  console.log(`[Viator API] ✅ Found cached destination ID: ${cachedDestinationId} for ${locationName}`);
+                  console.log(
+                    `[Viator API] ✅ Found cached destination ID: ${cachedDestinationId} for ${locationName} (scope: ${destinationRegionScope})`
+                  );
                   foundDestinationId = cachedDestinationId;
                 }
               }
@@ -190,9 +202,11 @@ export async function GET(req: Request) {
           // Filter to New Zealand destinations first (but keep all destinations as fallback)
           const nzDestinations = destinations.filter((dest: any) => {
             const destName = (dest.destinationName || dest.name || dest.title || "").toLowerCase();
-            const isNZ = destName.includes("new zealand") || destName.includes("nz") || 
-                   dest.countryCode === "NZ" || dest.country === "New Zealand" ||
-                   dest.countryCode === "nz" || dest.countryCode === "NZL";
+            const countryName = (dest.country || dest.countryName || "").toLowerCase();
+            const countryCode = (dest.countryCode || "").toUpperCase();
+            const isNZ = destName.includes("new zealand") || destName.endsWith(", nz") || 
+                   countryCode === "NZ" || countryCode === "NZL" ||
+                   countryName === "new zealand" || countryName.includes("new zealand");
             return isNZ;
           });
           
@@ -241,8 +255,10 @@ export async function GET(req: Request) {
             }
           }
           
-          // If no exact match in NZ, try in all destinations (for edge cases)
-          if (!match) {
+          // If no exact match in NZ, try in all destinations (for edge cases).
+          // For likely NZ searches, do NOT fall back globally, as duplicate city names
+          // can resolve to the wrong country (e.g., Wellington).
+          if (!match && !isLikelyNewZealandSearch) {
             for (const variation of uniqueVariations) {
               const normalizedVariation = removeMacrons(variation);
               match = destinations.find((dest: any) => {
@@ -260,6 +276,83 @@ export async function GET(req: Request) {
               if (match) {
                 console.log(`[Viator API] ✅ Exact match found in all destinations with variation: "${variation}"`);
                 break;
+              }
+            }
+          }
+
+          // NZ disambiguation path:
+          // Some Viator destinations have missing/incorrect country metadata, which means
+          // strict NZ filtering can miss valid NZ city matches (e.g., Wellington).
+          // If we have multiple exact-name candidates globally, pick the candidate that
+          // returns the largest product catalog.
+          if (!match && isLikelyNewZealandSearch) {
+            const exactCandidates = destinations.filter((dest: any) => {
+              const destName = (dest.destinationName || dest.name || dest.title || "").toLowerCase().trim();
+              const normalizedDestName = removeMacrons(destName);
+              return uniqueVariations.some((variation) => {
+                const normalizedVariation = removeMacrons(variation);
+                return (
+                  destName === variation ||
+                  normalizedDestName === normalizedVariation ||
+                  destName === `${variation}, new zealand` ||
+                  normalizedDestName === `${normalizedVariation}, new zealand` ||
+                  destName === `${variation}, nz` ||
+                  normalizedDestName === `${normalizedVariation}, nz` ||
+                  destName.startsWith(`${variation},`) ||
+                  normalizedDestName.startsWith(`${normalizedVariation},`)
+                );
+              });
+            });
+
+            if (exactCandidates.length > 0) {
+              console.log(
+                `[Viator API] NZ disambiguation: found ${exactCandidates.length} exact candidates for "${locationName}", selecting by product count`
+              );
+
+              let bestCandidate: any = null;
+              let bestTotalCount = -1;
+
+              for (const candidate of exactCandidates.slice(0, 6)) {
+                const candidateId = parseInt(
+                  String(candidate.destinationId || candidate.id || candidate.destId || ""),
+                  10
+                );
+                if (!candidateId || isNaN(candidateId)) continue;
+
+                try {
+                  const probeResult = await client.searchProducts({
+                    destinationId: candidateId,
+                    start: 0,
+                    count: 1,
+                    sortBy: "PRICE",
+                    sortOrder: "DESC",
+                    currencyCode,
+                  });
+                  const totalCount = probeResult.totalCount || 0;
+                  const candidateName = candidate.destinationName || candidate.name || candidate.title || "Unknown";
+                  console.log(
+                    `[Viator API] NZ disambiguation probe: ${candidateName} (${candidateId}) => total ${totalCount}`
+                  );
+
+                  if (totalCount > bestTotalCount) {
+                    bestTotalCount = totalCount;
+                    bestCandidate = candidate;
+                  }
+                } catch (probeError) {
+                  console.warn(
+                    `[Viator API] NZ disambiguation probe failed for destination ${candidateId}:`,
+                    probeError
+                  );
+                }
+              }
+
+              if (bestCandidate) {
+                match = bestCandidate;
+                const matchName = bestCandidate.destinationName || bestCandidate.name || bestCandidate.title || "Unknown";
+                const matchId = bestCandidate.destinationId || bestCandidate.id || bestCandidate.destId;
+                console.log(
+                  `[Viator API] ✅ NZ disambiguation selected destination: ${matchName} (ID: ${matchId}, total products: ${bestTotalCount})`
+                );
               }
             }
           }
@@ -301,8 +394,9 @@ export async function GET(req: Request) {
             }
           }
           
-          // Last resort: try partial match in all destinations
-          if (!match) {
+          // Last resort: try partial match in all destinations.
+          // For likely NZ searches, keep matching constrained to NZ destinations.
+          if (!match && !isLikelyNewZealandSearch) {
             for (const variation of searchVariations) {
               const variationWords = variation.split(/\s+/).filter(w => w.length > 2);
               
@@ -322,6 +416,23 @@ export async function GET(req: Request) {
             }
           }
           
+          if (isLikelyNewZealandSearch) {
+            const wellingtonCandidates = destinations
+              .filter((d: any) => {
+                const name = (d.destinationName || d.name || d.title || "").toLowerCase();
+                return name.includes("wellington");
+              })
+              .slice(0, 10)
+              .map((d: any) => ({
+                name: d.destinationName || d.name || d.title,
+                id: d.destinationId || d.id || d.destId,
+                country: d.country || d.countryName || d.countryCode || null,
+              }));
+            if (wellingtonCandidates.length > 0 && mainLocation.toLowerCase().includes("wellington")) {
+              console.log(`[Viator API] DEBUG Wellington candidates:`, wellingtonCandidates);
+            }
+          }
+
           if (match) {
             const destId = match.destinationId || match.id || match.destId;
             if (destId) {
@@ -336,7 +447,9 @@ export async function GET(req: Request) {
               if (redis && foundDestinationId) {
                 try {
                   await redis.setex(destinationCacheKey, 86400, foundDestinationId.toString());
-                  console.log(`[Viator API] ✅ Cached destination ID for future requests`);
+                  console.log(
+                    `[Viator API] ✅ Cached destination ID for future requests (scope: ${destinationRegionScope})`
+                  );
                 } catch (cacheError) {
                   console.warn("[Viator API] Redis cache write error for destination:", cacheError);
                 }
@@ -439,7 +552,7 @@ export async function GET(req: Request) {
     }
 
     // Generate cache key from query parameters
-    const cacheKey = `viator:${crypto
+    const cacheKey = `viator:v3:${crypto
       .createHash("sha256")
       .update(JSON.stringify(searchParams_obj))
       .digest("hex")}`;
