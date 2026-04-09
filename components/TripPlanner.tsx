@@ -39,7 +39,6 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [saveTitle, setSaveTitle] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [itineraryLoaded, setItineraryLoaded] = useState(false);
-  const [stateRestored, setStateRestored] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [authModalContext, setAuthModalContext] = useState<"add-to-itinerary" | "pin-event" | "save-itinerary">("save-itinerary");
@@ -73,15 +72,16 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const [selectedViatorProduct, setSelectedViatorProduct] = useState<ExperienceItem | null>(null);
   const [selectedExperienceLocation, setSelectedExperienceLocation] = useState<string>("");
 
-  // Restore state from localStorage on mount (if not loading initialItinerary)
+  // Fresh start on each visit to the main planner: do not restore prior drafts from localStorage.
+  // (Saved itineraries opened via /trip-planner/[id] use `initialItinerary` instead.)
   useEffect(() => {
-    if (!initialItinerary && !stateRestored) {
-      const restored = tp.restoreStateFromLocalStorage();
-      if (restored) {
-        setStateRestored(true);
-      }
+    if (initialItinerary) return;
+    try {
+      localStorage.removeItem("tripPlanner_draft");
+    } catch (err) {
+      console.error("Failed to clear trip planner draft:", err);
     }
-  }, [initialItinerary, stateRestored, tp]);
+  }, [initialItinerary]);
 
   // Load initial itinerary if provided
   useEffect(() => {
