@@ -19,6 +19,7 @@ import { transformWalkingExperience, type ExperienceItem } from "@/lib/viator-he
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
+import NearbyRestaurantsMapPanel from "@/components/trip-planner/NearbyRestaurantsMapPanel";
 import DraftItineraryDayContent from "@/components/trip-planner/DraftItineraryDayContent";
 import type { DraftItineraryProps } from "@/components/trip-planner/DraftItinerary.types";
 
@@ -204,7 +205,13 @@ export default function DraftItinerary(props: Props) {
   const [selectedLocationIndex, setSelectedLocationIndex] = useState<number>(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [showAllThingsToDo, setShowAllThingsToDo] = useState<boolean>(false);
+  const [showNearbyRestaurantsMap, setShowNearbyRestaurantsMap] = useState<boolean>(false);
   const [mobileDaysCollapsed, setMobileDaysCollapsed] = useState<boolean>(true);
+
+  useEffect(() => {
+    setShowNearbyRestaurantsMap(false);
+    setShowAllThingsToDo(false);
+  }, [selectedLocationIndex]);
   
   // Prefetch "Things to do" data for all route stops when the itinerary is generated
   // This ensures data is ready immediately when users switch to the "Things to do" tab
@@ -532,12 +539,13 @@ export default function DraftItinerary(props: Props) {
               selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
             const showAllLocationString = selectedLocation?.cityName ?? "";
             const selectedDayForLabel = selectedLocationDays[selectedDayIndex]?.day;
+            const hideDaySidebar = showAllThingsToDo || showNearbyRestaurantsMap;
 
             return (
               <div className="p-2 sm:p-4 md:p-6">
                 <div className="flex flex-row gap-3 md:gap-6">
-                  {/* Left Sidebar - Day Navigation (hidden when Show all is active) */}
-                  {!showAllThingsToDo && (
+                  {/* Left Sidebar - Day Navigation (hidden when Show all or restaurants map is active) */}
+                  {!hideDaySidebar && (
                     <>
                       {/* Desktop sidebar */}
                       <div className="hidden md:block flex-shrink-0 w-[141px] pr-4">
@@ -627,8 +635,14 @@ export default function DraftItinerary(props: Props) {
                     </>
                   )}
 
-                  {/* Main Content Area - Show All panel or Selected Day Details */}
-                  {showAllThingsToDo ? (
+                  {/* Main Content Area - full panels or selected day */}
+                  {showNearbyRestaurantsMap && selectedLocation ? (
+                    <NearbyRestaurantsMapPanel
+                      cityId={selectedLocation.cityId}
+                      cityName={selectedLocation.cityName}
+                      onBack={() => setShowNearbyRestaurantsMap(false)}
+                    />
+                  ) : showAllThingsToDo ? (
                     <div className="flex-1 min-w-0">
                       <div className="space-y-6">
                         <button
@@ -661,7 +675,14 @@ export default function DraftItinerary(props: Props) {
                         topExperiences={topExperiences}
                         walkingExperiences={walkingExperiences}
                         viatorProducts={viatorProducts}
-                        onShowAllThingsToDo={() => setShowAllThingsToDo(true)}
+                        onShowAllThingsToDo={() => {
+                          setShowNearbyRestaurantsMap(false);
+                          setShowAllThingsToDo(true);
+                        }}
+                        onShowNearbyRestaurantsMap={() => {
+                          setShowAllThingsToDo(false);
+                          setShowNearbyRestaurantsMap(true);
+                        }}
                         onAddToItinerary={onAddToItinerary}
                         onRemoveExperienceFromDay={onRemoveExperienceFromDay}
                         onRemoveViatorProductFromDay={onRemoveViatorProductFromDay}

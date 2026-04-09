@@ -7,6 +7,7 @@ export type NearbyPlace = {
   name: string;
   address?: string;
   rating?: number | null;
+  userRatingCount?: number | null;
   lat?: number;
   lng?: number;
   googleMapsUri?: string;
@@ -32,6 +33,7 @@ async function fetchNearbyPlaces(params: {
   radiusMeters: number;
   maxPlaces: number;
   includedType: string;
+  sortBy: "distance" | "rating";
 }): Promise<NearbyPlace[]> {
   const sp = new URLSearchParams();
   sp.set("lat", params.lat.toString());
@@ -39,6 +41,7 @@ async function fetchNearbyPlaces(params: {
   sp.set("radiusMeters", params.radiusMeters.toString());
   sp.set("maxPlaces", params.maxPlaces.toString());
   sp.set("includedType", params.includedType);
+  sp.set("sortBy", params.sortBy);
 
   const res = await fetch(`/api/google-places-nearby?${sp.toString()}`);
   if (!res.ok) {
@@ -77,13 +80,15 @@ export function useNearbyPlaces(params: {
   radiusMeters?: number;
   maxPlaces?: number;
   includedType?: string;
+  sortBy?: "distance" | "rating";
 }): UseNearbyPlacesResult {
   const radiusMeters = params.radiusMeters ?? 5000;
-  const maxPlaces = params.maxPlaces ?? 10;
+  const maxPlaces = params.maxPlaces ?? 7;
   const includedType = params.includedType ?? "restaurant";
+  const sortBy = params.sortBy ?? "distance";
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["googlePlacesNearby", params.lat, params.lng, radiusMeters, maxPlaces, includedType],
+    queryKey: ["googlePlacesNearby", params.lat, params.lng, radiusMeters, maxPlaces, includedType, sortBy],
     queryFn: () => {
       if (params.lat === undefined || params.lng === undefined) return Promise.resolve([]);
       return fetchNearbyPlaces({
@@ -92,6 +97,7 @@ export function useNearbyPlaces(params: {
         radiusMeters,
         maxPlaces,
         includedType,
+        sortBy,
       });
     },
     enabled: params.lat !== undefined && params.lng !== undefined,

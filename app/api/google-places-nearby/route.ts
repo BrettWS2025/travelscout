@@ -9,6 +9,8 @@ type NearbyGooglePlace = {
   name: string;
   address?: string;
   rating?: number | null;
+  /** Google Maps user rating count (Nearby Search Enterprise field). */
+  userRatingCount?: number | null;
   lat?: number;
   lng?: number;
   googleMapsUri?: string;
@@ -82,11 +84,16 @@ export async function GET(req: Request) {
     // Cost-control knobs.
     const radiusMetersRaw = parseInt(searchParams.get("radiusMeters") || "5000", 10); // 5km is usually enough for top 10 in a city center.
     const radiusMeters = Math.max(100, Math.min(radiusMetersRaw, 50000));
-    const maxPlaces = Math.min(parseInt(searchParams.get("maxPlaces") || "7", 10), 7); // capped to 7 to control API usage/cost.
+    const maxParsed = parseInt(searchParams.get("maxPlaces") || "7", 10);
+    const maxPlaces = Math.max(1, Math.min(Number.isFinite(maxParsed) ? maxParsed : 7, 20)); // Nearby Search (New) allows up to 20.
 
     // Default to restaurants because you have a dedicated "Dinner at ..." card in the UI.
     // You can change this later (e.g., tourist_attraction) without changing the integration shape.
     const includedType = (searchParams.get("includedType") || "restaurant").trim();
+
+    /** `distance` (default): nearest first. `rating`: best-reviewed in the result set (rating, then review count, then distance). */
+    const sortByRaw = (searchParams.get("sortBy") || "distance").trim().toLowerCase();
+    const sortBy = sortByRaw === "rating" ? "rating" : "distance";
 
     const apiKey =
       process.env.GOOGLE_PLACES_API_KEY ||
@@ -107,7 +114,7 @@ export async function GET(req: Request) {
     // Cache to avoid repeated billed requests for the same city center.
     const cacheKey = `google-places-nearby:${crypto
       .createHash("sha256")
-      .update(JSON.stringify({ lat: +lat.toFixed(5), lng: +lng.toFixed(5), radiusMeters, maxPlaces, includedType }))
+      .update(JSON.stringify({ lat: +lat.toFixed(5), lng: +lng.toFixed(5), radiusMeters, maxPlaces, includedType, sortBy }))
       .digest("hex")}`;
 
     const redis = getRedisClient();
@@ -144,7 +151,7 @@ export async function GET(req: Request) {
     // Prefer field masks to reduce payload / billing exposure.
     // If Google rejects the mask, we'll retry without it (fail open).
     const fieldMask =
-      "places.id,places.displayName,places.formattedAddress,places.rating,places.location,places.photos,places.googleMapsUri";
+      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.photos,places.googleMapsUri";
 
     const doFetch = async (useFieldMask: boolean) => {
       const headers: Record<string, string> = {
@@ -190,6 +197,9 @@ export async function GET(req: Request) {
         const rating: number | null | undefined =
           typeof p?.rating === "number" ? p.rating : p?.rating ?? null;
 
+        const userRatingCount: number | null | undefined =
+          typeof p?.userRatingCount === "number" ? p.userRatingCount : p?.userRatingCount ?? null;
+
         const address: string | undefined =
           p?.formattedAddress || p?.shortFormattedAddress || p?.vicinity || undefined;
 
@@ -210,6 +220,7 @@ export async function GET(req: Request) {
             name,
             address,
             rating,
+            userRatingCount,
             lat: locationLat,
             lng: locationLng,
             googleMapsUri,
@@ -224,6 +235,7 @@ export async function GET(req: Request) {
           name,
           address,
           rating,
+          userRatingCount,
           lat: locationLat,
           lng: locationLng,
           googleMapsUri,
@@ -234,13 +246,30 @@ export async function GET(req: Request) {
       })
       .filter((p) => p.name && p.name.trim().length > 0);
 
-    transformed.sort((a, b) => a._distanceKm - b._distanceKm);
+    if (sortBy === "rating") {
+      transformed.sort((a, b) => {
+        const hasA = typeof a.rating === "number";
+        const hasB = typeof b.rating === "number";
+        if (hasA && !hasB) return -1;
+        if (!hasA && hasB) return 1;
+        const ra = a.rating ?? 0;
+        const rb = b.rating ?? 0;
+        if (ra !== rb) return rb - ra;
+        const ca = a.userRatingCount ?? 0;
+        const cb = b.userRatingCount ?? 0;
+        if (ca !== cb) return cb - ca;
+        return a._distanceKm - b._distanceKm;
+      });
+    } else {
+      transformed.sort((a, b) => a._distanceKm - b._distanceKm);
+    }
 
     const places = transformed.slice(0, maxPlaces).map((p) => ({
       id: p.id,
       name: p.name,
       address: p.address,
       rating: p.rating,
+      userRatingCount: p.userRatingCount,
       lat: p.lat,
       lng: p.lng,
       googleMapsUri: p.googleMapsUri,

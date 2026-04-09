@@ -13,6 +13,10 @@ type Props = {
   onPinEvent?: (event: Event) => void; // Called when heart is clicked to pin event to current day
   pinnedEventIds?: Set<number>; // Events already pinned to this day
   onRequireAuth?: (event: Event) => void; // Called when authentication is required
+  /**
+   * `compact`: narrower tiles; on `md+` equal-width columns so ~3 items fit without horizontal scroll.
+   */
+  size?: "default" | "compact";
 };
 
 /** Format event start as "Sat, Jun 13, 2:30pm" using datetime_start when available. */
@@ -49,8 +53,18 @@ function formatEventDateWithTime(event: Event, targetDate?: string): string {
   return `${datePart}, ${timePart}`;
 }
 
-export default function EventsAttractionsCarousel({ events = [], targetDate, onPinEvent, pinnedEventIds, onRequireAuth }: Props) {
+export default function EventsAttractionsCarousel({
+  events = [],
+  targetDate,
+  onPinEvent,
+  pinnedEventIds,
+  onRequireAuth,
+  size = "default",
+}: Props) {
   const { user } = useAuth();
+  const isCompact = size === "compact";
+  /** More than three: keep fixed-width tiles so ~3 fit in view and the rest scroll; otherwise equal flex columns. */
+  const scrollOnMd = isCompact && events.length > 3;
 
   // Track which events are hearted (saved to cache) - combine with pinned events
   const [heartedEvents, setHeartedEvents] = useState<Set<number>>(new Set());
@@ -125,22 +139,33 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
 
   return (
     <div className="relative">
-      {/* Scroll container - same max-width and card size as Things to do carousel */}
       <div
         className={[
-          "flex gap-0 md:gap-4 overflow-x-auto pb-2 scroll-smooth",
-          "w-full snap-x snap-mandatory",
+          "flex pb-2 scroll-smooth w-full snap-x snap-mandatory overflow-x-auto",
+          isCompact ? "gap-2 md:gap-3" : "gap-0 md:gap-4",
+          isCompact && !scrollOnMd ? "md:overflow-x-visible md:snap-none" : "",
         ].join(" ")}
       >
         {events.map((event) => (
           <div
             key={event.id}
             data-carousel-item
-            className="flex-shrink-0 w-full md:w-56 snap-start"
+            className={[
+              "flex-shrink-0 snap-start min-w-0",
+              isCompact
+                ? scrollOnMd
+                  ? "w-[min(82vw,200px)] sm:w-44 md:w-44"
+                  : "w-[min(82vw,200px)] sm:w-44 md:w-auto md:flex-1 md:max-w-none"
+                : "w-full md:w-56",
+            ].join(" ")}
           >
             <div className="flex flex-col flex-shrink-0 h-full rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all">
-              {/* Image - same fixed height as Things to do cards */}
-              <div className="relative mx-1 mt-1 h-20 md:h-24 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden">
+              <div
+                className={[
+                  "relative mx-1 mt-1 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden",
+                  isCompact ? "h-16 md:h-[4.25rem]" : "h-20 md:h-24",
+                ].join(" ")}
+              >
                 {event.imageUrl ? (
                   <img
                     src={event.imageUrl}
@@ -168,7 +193,8 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
                   onClick={(e) => handleHeartClick(event, e)}
                   disabled={savingEventId === event.id}
                   className={[
-                    "absolute top-1 right-1 p-1 rounded-full transition-all",
+                    "absolute rounded-full transition-all",
+                    isCompact ? "top-0.5 right-0.5 p-0.5" : "top-1 right-1 p-1",
                     "bg-white/90 backdrop-blur-sm shadow-sm",
                     "hover:bg-white hover:scale-110",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -180,15 +206,25 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
                 >
                   <Heart
                     className={[
-                      "w-3 h-3 transition-all",
+                      "transition-all",
+                      isCompact ? "w-2.5 h-2.5" : "w-3 h-3",
                       allHeartedEvents.has(event.id) ? "fill-current" : "",
                     ].join(" ")}
                   />
                 </button>
               </div>
-              {/* Content - fixed height so all cards align; title + date + description slot */}
-              <div className="p-2 flex flex-col min-w-0 min-h-[72px] md:min-h-[76px]">
-                <h4 className="font-semibold text-slate-900 text-xs md:text-sm mb-0.5 text-left line-clamp-2">
+              <div
+                className={[
+                  "p-2 flex flex-col min-w-0",
+                  isCompact ? "min-h-[4.5rem]" : "min-h-[72px] md:min-h-[76px]",
+                ].join(" ")}
+              >
+                <h4
+                  className={[
+                    "font-semibold text-slate-900 mb-0.5 text-left line-clamp-2",
+                    isCompact ? "text-[11px] leading-tight" : "text-xs md:text-sm",
+                  ].join(" ")}
+                >
                   <a
                     href={event.url}
                     target="_blank"
@@ -198,15 +234,26 @@ export default function EventsAttractionsCarousel({ events = [], targetDate, onP
                     {event.name}
                   </a>
                 </h4>
-                <p className="text-[10px] text-slate-600 mb-1 flex-shrink-0 min-h-[14px]">
+                <p className="text-[10px] text-slate-600 mb-1 flex-shrink-0 min-h-[14px] leading-snug">
                   {formatEventDateWithTime(event, targetDate) || event.datetime_summary || "\u00A0"}
                 </p>
                 {event.description ? (
-                  <p className="text-[10px] text-slate-500 line-clamp-2 min-h-[2.5rem]">
+                  <p
+                    className={[
+                      "text-slate-500 line-clamp-2",
+                      isCompact ? "text-[10px] leading-snug min-h-[2.25rem]" : "text-[10px] min-h-[2.5rem]",
+                    ].join(" ")}
+                  >
                     {event.description}
                   </p>
                 ) : (
-                  <p className="text-[10px] text-slate-500 line-clamp-2 min-h-[2.5rem]" aria-hidden />
+                  <p
+                    className={[
+                      "text-slate-500 line-clamp-2",
+                      isCompact ? "text-[10px] min-h-[2.25rem]" : "text-[10px] min-h-[2.5rem]",
+                    ].join(" ")}
+                    aria-hidden
+                  />
                 )}
               </div>
             </div>

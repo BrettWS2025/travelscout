@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useMemo } from "react";
-import { Car, Star, Plus, Compass, Ticket, Bed, Utensils, Zap, X, Home } from "lucide-react";
+import { Car, Star, Compass, Ticket, Bed, Utensils, Zap, X, Home, MapPin } from "lucide-react";
 import type { TripPlan, TripLeg } from "@/lib/itinerary";
 import type { DayDetail } from "@/lib/trip-planner/utils";
 import { formatDisplayDate, makeDayKey } from "@/lib/trip-planner/utils";
@@ -12,6 +12,7 @@ import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
+import NearbyHotelsMap from "@/components/trip-planner/NearbyHotelsMap";
 
 export type LocationBox = {
   stopIndex: number;
@@ -35,6 +36,8 @@ export type DraftItineraryDayContentProps = {
   walkingExperiences: WalkingExperience[];
   viatorProducts: ExperienceItem[];
   onShowAllThingsToDo: () => void;
+  /** Opens full-width nearby restaurants map (same data as carousel; cached). */
+  onShowNearbyRestaurantsMap?: () => void;
   onAddToItinerary?: (
     experience: WalkingExperience | ExperienceItem,
     location: string,
@@ -68,6 +71,7 @@ export default function DraftItineraryDayContent({
   walkingExperiences,
   viatorProducts,
   onShowAllThingsToDo,
+  onShowNearbyRestaurantsMap,
   onAddToItinerary,
   onRemoveExperienceFromDay,
   onRemoveViatorProductFromDay,
@@ -90,9 +94,13 @@ export default function DraftItineraryDayContent({
   const hotelCardRef = useRef<HTMLDivElement>(null);
   const nearbyPlacesCardRef = useRef<HTMLDivElement>(null);
   const contentColumnRef = useRef<HTMLDivElement>(null);
+  /** Row that contains the timeline rail + content; used for icon offset math (not CSS .gap-4 — we use gap-2 sm:gap-4). */
+  const timelineRowRef = useRef<HTMLDivElement>(null);
   const [ticketStubTop, setTicketStubTop] = useState<number | null>(null);
   const [hotelIconTop, setHotelIconTop] = useState<number | null>(null);
   const [nearbyPlacesIconTop, setNearbyPlacesIconTop] = useState<number | null>(null);
+  /** Hotels map vs full day timeline (only when the day timeline is shown). */
+  const [dayItineraryView, setDayItineraryView] = useState<"timeline" | "hotelsMap">("timeline");
 
   const selectedLocation = selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
   // Show the main day timeline for all non-road stops, including Day 1 once the start has been converted
@@ -192,19 +200,44 @@ export default function DraftItineraryDayContent({
   // Initial implementation: nearby places ranked by distance from the selected city's coordinates.
   // Later, we'll swap this input to use hotel/venue coordinates instead.
   const {
-    places: nearbyPlaces,
-    loading: nearbyPlacesLoading,
-    error: nearbyPlacesError,
+    places: nearbyRestaurants,
+    loading: nearbyRestaurantsLoading,
+    error: nearbyRestaurantsError,
   } = useNearbyPlaces({
     lat: destinationLocationCoords?.lat,
     lng: destinationLocationCoords?.lng,
     radiusMeters: 5000,
-    maxPlaces: 7,
+    maxPlaces: 20,
     includedType: "restaurant",
+    sortBy: "rating",
+  });
+
+  const topRestaurantsNearby = useMemo(() => nearbyRestaurants.slice(0, 3), [nearbyRestaurants]);
+
+  /** When more than 3 experience tiles, use fixed md width so ~3 show with horizontal scroll. */
+  const thingsToDoScrollOnMd = topExperiences.length > 3;
+
+  const {
+    places: nearbyHotels,
+    loading: nearbyHotelsLoading,
+    error: nearbyHotelsError,
+  } = useNearbyPlaces({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    radiusMeters: 8000,
+    maxPlaces: 20,
+    includedType: "lodging",
+    sortBy: "rating",
   });
 
   const canLoadNearbyPlaces =
     destinationLocationCoords?.lat !== undefined && destinationLocationCoords?.lng !== undefined;
+
+  const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
+
+  useEffect(() => {
+    setDayItineraryView("timeline");
+  }, [selectedDay.date, selectedDay.location, selectedLocationIndex]);
 
   const getEventDurationNights = (event: Event): number | null => {
     if (!event.datetime_start) return null;
@@ -244,17 +277,17 @@ export default function DraftItineraryDayContent({
 
   useEffect(() => {
     const measureIconPositions = () => {
-      const parent = eventsCarouselRef.current?.closest(".flex.gap-4") ?? hotelCardRef.current?.closest(".flex.gap-4") ?? nearbyPlacesCardRef.current?.closest(".flex.gap-4");
+      const parent = timelineRowRef.current;
       if (!parent) return;
-      if (showEventsCarousel && selectedLocation?.stopIndex !== 0 && eventsCarouselRef.current) {
+      if (showEventsCarousel && eventsCarouselRef.current) {
         const rect = eventsCarouselRef.current.getBoundingClientRect();
         setTicketStubTop(rect.top - parent.getBoundingClientRect().top);
       } else setTicketStubTop(null);
-      if (selectedLocation?.stopIndex !== 0 && hotelCardRef.current) {
+      if (hotelCardRef.current) {
         const rect = hotelCardRef.current.getBoundingClientRect();
         setHotelIconTop(rect.top - parent.getBoundingClientRect().top);
       } else setHotelIconTop(null);
-      if (selectedLocation?.stopIndex !== 0 && nearbyPlacesCardRef.current) {
+      if (nearbyPlacesCardRef.current) {
         const rect = nearbyPlacesCardRef.current.getBoundingClientRect();
         setNearbyPlacesIconTop(rect.top - parent.getBoundingClientRect().top);
       } else setNearbyPlacesIconTop(null);
@@ -266,7 +299,20 @@ export default function DraftItineraryDayContent({
     const observer = new ResizeObserver(runAfterLayout);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [showEventsCarousel, selectedLocation, selectedDayIndex, eventsLoading, allEvents.length, topExperiences.length]);
+  }, [
+    showEventsCarousel,
+    selectedLocation,
+    selectedDayIndex,
+    eventsLoading,
+    allEvents.length,
+    topExperiences.length,
+    nearbyHotelsLoading,
+    nearbyHotels.length,
+    nearbyRestaurantsLoading,
+    nearbyRestaurants.length,
+    dayItineraryView,
+    topExperiences.length,
+  ]);
 
   let fromLocationName = "";
   if (isDrivingDay && selectedLocation) {
@@ -316,10 +362,33 @@ export default function DraftItineraryDayContent({
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">{formatDisplayDate(selectedDay.date)}</h2>
             <p className="text-sm text-slate-600 mt-1">{locationName}</p>
           </div>
-          <div className="flex gap-2">
-            <button type="button" className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium">Timeline</button>
-            <button type="button" className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50">Map View</button>
-          </div>
+          {shouldShowTimeline && selectedLocation && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDayItineraryView("timeline")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  dayItineraryView === "timeline"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                Timeline
+              </button>
+              <button
+                type="button"
+                onClick={() => setDayItineraryView("hotelsMap")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  dayItineraryView === "hotelsMap"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" aria-hidden />
+                Hotels map
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -330,14 +399,37 @@ export default function DraftItineraryDayContent({
             onClick={onConvertStartToRoad}
             className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition"
           >
-            Revert to driving day
+            Revert to travel day
           </button>
         </div>
       )}
 
       <div className="space-y-9">
-        {shouldShowTimeline && selectedLocation && (
-          <div className="flex gap-2 sm:gap-4 relative">
+        {shouldShowTimeline && selectedLocation && dayItineraryView === "hotelsMap" && canLoadNearbyPlaces && (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900 mb-1">Hotels near {destinationName}</h3>
+              <p className="text-xs text-slate-500 mb-3">
+                Up to 20 nearby lodging results from Google Places (8 km radius). Tap a pin for details and directions.
+              </p>
+              {nearbyHotelsLoading ? (
+                <div className="text-xs text-slate-600 text-center py-12">Loading hotels…</div>
+              ) : nearbyHotelsError ? (
+                <div className="text-xs text-slate-500 text-center py-12">{nearbyHotelsError}</div>
+              ) : destinationLocationCoords ? (
+                <NearbyHotelsMap
+                  places={nearbyHotels}
+                  centerLat={destinationLocationCoords.lat}
+                  centerLng={destinationLocationCoords.lng}
+                  locationLabel={destinationName}
+                />
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {shouldShowTimeline && selectedLocation && dayItineraryView === "timeline" && (
+          <div ref={timelineRowRef} className="flex gap-2 sm:gap-4 relative">
             <div className="flex flex-col items-center relative self-stretch w-10 flex-shrink-0">
               <div className="w-10 h-10 aspect-square rounded-full bg-white border-2 border-indigo-600 flex items-center justify-center shrink-0 z-10">
                 {isDrivingDay ? <Car className="w-5 h-5 text-indigo-600" /> : <Zap className="w-5 h-5 text-indigo-600" />}
@@ -512,31 +604,41 @@ export default function DraftItineraryDayContent({
                   </div>
                   {topExperiences.length > 0 ? (
                     <div className="overflow-hidden">
-                      <div className="flex w-full gap-0 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                      <div
+                        className={[
+                          "flex w-full gap-2 md:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth",
+                          thingsToDoScrollOnMd ? "" : "md:overflow-x-visible md:snap-none",
+                        ].join(" ")}
+                      >
                         {topExperiences.map((experience) => (
                           <div
                             key={experience.id}
-                            className="flex flex-col flex-shrink-0 w-full md:w-56 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                            className={[
+                              "flex flex-col flex-shrink-0 snap-start min-w-0 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer",
+                              thingsToDoScrollOnMd
+                                ? "w-[min(82vw,200px)] sm:w-44 md:w-44"
+                                : "w-[min(82vw,200px)] sm:w-44 md:w-auto md:flex-1 md:max-w-none",
+                            ].join(" ")}
                           >
-                            <div className="relative mx-1 mt-1 h-20 md:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                            <div className="relative mx-1 mt-1 h-16 md:h-[4.25rem] bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
                               {experience.imageUrl ? (
                                 <img src={experience.imageUrl} alt={experience.title} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center"><span className="text-2xl">{experience.type === "viator" ? "🎫" : "🏔️"}</span></div>
+                                <div className="w-full h-full flex items-center justify-center"><span className="text-xl">{experience.type === "viator" ? "🎫" : "🏔️"}</span></div>
                               )}
                             </div>
-                            <div className="p-2 flex flex-col flex-1">
-                              <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-1 text-left line-clamp-2">{experience.title}</h3>
+                            <div className="p-2 flex flex-col flex-1 min-w-0 min-h-[4.5rem]">
+                              <h3 className="font-semibold text-slate-900 text-[11px] leading-tight mb-1 text-left line-clamp-2">{experience.title}</h3>
                               {experience.rating && (
                                 <div className="flex items-center gap-1 text-[10px] text-slate-600 mb-1">
-                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />
                                   <span>{experience.rating}</span>
-                                  {experience.totalReviews && <span className="text-slate-400">({experience.totalReviews})</span>}
+                                  {experience.totalReviews && <span className="text-slate-400 truncate">({experience.totalReviews})</span>}
                                 </div>
                               )}
-                              {experience.price && <div className="text-[10px] text-slate-600 mb-1">{experience.price}</div>}
+                              {experience.price && <div className="text-[10px] text-slate-600 mb-1 line-clamp-1">{experience.price}</div>}
                               {onAddToItinerary && (
-                                <div className="flex items-center gap-2 mt-auto">
+                                <div className="flex flex-col gap-1 mt-auto w-full">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -553,7 +655,7 @@ export default function DraftItineraryDayContent({
                                         );
                                       }
                                     }}
-                                    className="inline-flex flex-1 items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                    className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                                   >
                                     Add to Trip
                                   </button>
@@ -563,7 +665,7 @@ export default function DraftItineraryDayContent({
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => e.stopPropagation()}
-                                      className="inline-flex flex-1 items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity"
+                                      className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
                                     >
                                       Book now
                                     </a>
@@ -654,6 +756,7 @@ export default function DraftItineraryDayContent({
                       <EventsAttractionsCarousel
                         events={allEvents}
                         targetDate={selectedDay.date}
+                        size="compact"
                         onPinEvent={(event) => onEventHearted?.(event, selectedDay.date, selectedDay.location)}
                         pinnedEventIds={detail?.events ? new Set(detail.events.map((e) => e.id)) : undefined}
                         onRequireAuth={(event) => onRequireAuth?.(event, selectedDay.date, selectedDay.location)}
@@ -667,35 +770,61 @@ export default function DraftItineraryDayContent({
               )}
 
               {shouldShowTimeline && selectedLocation && (
-                <div ref={hotelCardRef} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
-                  <div className="flex">
-                    <div className="w-32 md:w-40 h-32 md:h-40 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0"><span className="text-3xl">🏨</span></div>
-                    <div className="flex-1 p-4 flex flex-col">
-                      <div className="text-xs text-indigo-600 font-medium mb-1">02:00 PM (CHECK-IN)</div>
-                      <h3 className="text-base font-semibold text-slate-900 mb-1">Sample Hotel Name</h3>
-                      <p className="text-sm text-slate-600 mb-3">123 Sample Street, {destinationName}</p>
-                      <div className="flex gap-2 mt-auto">
-                        <button type="button" className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200">Details</button>
-                        <button type="button" className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200">Directions</button>
-                      </div>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-green-50 text-green-700 text-[10px] font-medium px-2 py-1 rounded flex items-center gap-1"><span>✓</span><span>CONFIRMED</span></div>
+                <div ref={hotelCardRef} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <Bed className="w-4 h-4 text-indigo-600 shrink-0" aria-hidden />
+                    <h4 className="text-sm font-semibold text-slate-900">Where to stay</h4>
                   </div>
+                  {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
+                    <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
+                  ) : nearbyHotelsError ? (
+                    <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
+                  ) : topRatedHotelsNearby.length > 0 ? (
+                    <NearbyPlacesCarousel
+                      places={topRatedHotelsNearby}
+                      title="Top nearby hotels"
+                      size="compact"
+                      showUserRatingCount
+                      showDirectionsLink
+                    />
+                  ) : (
+                    <div className="text-xs text-slate-500 text-center py-4">No nearby hotels found for this area.</div>
+                  )}
                 </div>
               )}
 
               {shouldShowTimeline && selectedLocation && (
                 <div ref={nearbyPlacesCardRef} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                  <div className="flex items-center mb-3">
-                    <Utensils className="w-4 h-4 text-indigo-600" />
-                    <h4 className="text-sm font-semibold text-slate-900">Nearby places to eat</h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Utensils className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <h4 className="text-sm font-semibold text-slate-900">Nearby places to eat</h4>
+                    </div>
+                    {onShowNearbyRestaurantsMap && (
+                      <button
+                        type="button"
+                        onClick={onShowNearbyRestaurantsMap}
+                        disabled={!canLoadNearbyPlaces}
+                        title={!canLoadNearbyPlaces ? "Location not ready yet" : undefined}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        <MapPin className="w-3.5 h-3.5" aria-hidden />
+                        Map view
+                      </button>
+                    )}
                   </div>
-                  {!canLoadNearbyPlaces || nearbyPlacesLoading ? (
+                  {!canLoadNearbyPlaces || nearbyRestaurantsLoading ? (
                     <div className="text-xs text-slate-600 text-center py-4">Loading places...</div>
-                  ) : nearbyPlacesError ? (
-                    <div className="text-xs text-slate-500 text-center py-4">{nearbyPlacesError}</div>
-                  ) : nearbyPlaces.length > 0 ? (
-                    <NearbyPlacesCarousel places={nearbyPlaces} title="Nearby places to eat" />
+                  ) : nearbyRestaurantsError ? (
+                    <div className="text-xs text-slate-500 text-center py-4">{nearbyRestaurantsError}</div>
+                  ) : topRestaurantsNearby.length > 0 ? (
+                    <NearbyPlacesCarousel
+                      places={topRestaurantsNearby}
+                      title="Nearby places to eat"
+                      size="compact"
+                      showUserRatingCount
+                      showDirectionsLink
+                    />
                   ) : (
                     <div className="text-xs text-slate-500 text-center py-4">No nearby places found</div>
                   )}
