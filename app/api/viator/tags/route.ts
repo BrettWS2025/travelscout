@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getRedisClient } from "@/lib/redis/client";
-import crypto from "crypto";
+import {
+  parseTagMetadata,
+  parentTagIdsFromMetadata,
+} from "@/lib/viator/tag-metadata";
 
 export const dynamic = "force-dynamic";
-
-// Cache TTL: 1 hour (3600 seconds) - tags don't change frequently
-const CACHE_TTL_SECONDS = 3600;
 
 /**
  * Get Viator Tags API Route
@@ -41,26 +40,7 @@ export async function GET(req: Request) {
     const productTagIdsParam = searchParams.get("productTagIds"); // Comma-separated list of tag IDs from products
     const tagIdsParam = searchParams.get("tagIds"); // Comma-separated list of specific tag IDs to fetch (for building child-to-parent map)
 
-    // Generate cache key from query parameters
-    const cacheKey = `viator:tags:${crypto
-      .createHash("sha256")
-      .update(JSON.stringify({ category, group, productTagIdsParam, tagIdsParam }))
-      .digest("hex")}`;
-
-    // Try to get cached response
-    const redis = getRedisClient();
-    if (redis) {
-      try {
-        const cached = await redis.get(cacheKey);
-        if (cached) {
-          const cachedData = JSON.parse(cached);
-          return NextResponse.json(cachedData);
-        }
-      } catch (cacheError) {
-        // Log but don't fail - continue to database query
-        console.warn("Redis cache read error:", cacheError);
-      }
-    }
+    // No Redis cache: responses depend on viator_tags (updated by sync). Hour-long cache caused stale chips after sync.
 
     // Debug: Test basic access first
     console.log(`[Viator Tags API] Testing database access...`);
@@ -240,34 +220,14 @@ export async function GET(req: Request) {
     let tagsWithMetadata = 0;
     let tagsWithParentIds = 0;
     
-    finalTags.forEach(tag => {
-      // Handle metadata - it might be null, a string, or already an object
-      let metadata = tag.metadata;
-      if (metadata === null || metadata === undefined) {
-        return;
-      }
-      
-      if (typeof metadata === 'string') {
-        try {
-          metadata = JSON.parse(metadata);
-        } catch (e) {
-          // Skip tags with invalid JSON metadata
-          return;
-        }
-      }
-      
-      if (metadata) {
-        tagsWithMetadata++;
-        const parentTagIds = metadata.parentTagIds;
-        if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
-          tagsWithParentIds++;
-          parentTagIds.forEach((id: any) => {
-            const numId = typeof id === 'string' ? parseInt(id, 10) : Number(id);
-            if (!isNaN(numId) && numId > 0) {
-              allParentTagIds.add(numId);
-            }
-          });
-        }
+    finalTags.forEach((tag) => {
+      const metadata = parseTagMetadata(tag.metadata);
+      if (!metadata) return;
+      tagsWithMetadata++;
+      const parentIds = parentTagIdsFromMetadata(metadata);
+      if (parentIds.length > 0) {
+        tagsWithParentIds++;
+        parentIds.forEach((numId) => allParentTagIds.add(numId));
       }
     });
 
@@ -296,42 +256,43 @@ export async function GET(req: Request) {
         const { data: productTagsData } = await productTagsQuery;
         
         if (productTagsData && productTagsData.length > 0) {
+          const parentTagsBeforeProductFilter = parentTags;
           // Collect all parent tag IDs referenced by product tags
           const referencedParentTagIds = new Set<number>();
-          productTagsData.forEach(productTag => {
-            let metadata = productTag.metadata;
-            if (typeof metadata === 'string') {
-              try {
-                metadata = JSON.parse(metadata);
-              } catch (e) {
-                return;
-              }
-            }
-            const parentTagIds = metadata?.parentTagIds;
-            if (Array.isArray(parentTagIds)) {
-              parentTagIds.forEach((id: any) => {
-                const numId = typeof id === 'string' ? parseInt(id, 10) : Number(id);
-                if (!isNaN(numId) && numId > 0) {
-                  referencedParentTagIds.add(numId);
-                }
-              });
-            }
+          productTagsData.forEach((productTag) => {
+            const metadata = parseTagMetadata(productTag.metadata);
+            parentTagIdsFromMetadata(metadata).forEach((numId) =>
+              referencedParentTagIds.add(numId)
+            );
           });
-          
+
           // Also include parent tags that directly match product tag IDs (in case products have parent tags directly)
-          productTagIds.forEach(id => {
+          productTagIds.forEach((id) => {
             if (allParentTagIds.has(id)) {
               referencedParentTagIds.add(id);
             }
           });
-          
+
           // Filter parent tags to only those referenced by products
-          parentTags = parentTags.filter(tag => {
+          parentTags = parentTags.filter((tag) => {
             const tagId = Number(tag.tag_id);
             return allParentTagIds.has(tagId) && referencedParentTagIds.has(tagId);
           });
-          
-          console.log(`[Viator Tags API] Filtered to ${parentTags.length} applicable parent tags from ${productTagIds.length} product tags`);
+
+          if (
+            parentTags.length === 0 &&
+            parentTagsBeforeProductFilter.length > 0 &&
+            referencedParentTagIds.size === 0
+          ) {
+            console.warn(
+              "[Viator Tags API] No parentTagIds on product tags; showing all parent tags for this view"
+            );
+            parentTags = parentTagsBeforeProductFilter;
+          }
+
+          console.log(
+            `[Viator Tags API] Filtered to ${parentTags.length} applicable parent tags from ${productTagIds.length} product tags`
+          );
         }
       }
     }
@@ -435,16 +396,6 @@ export async function GET(req: Request) {
       tags: parentTags,
       ...(allTagsForMap.length > 0 && { allTags: allTagsForMap }),
     };
-
-    // Cache the response
-    if (redis) {
-      try {
-        await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(responseData));
-      } catch (cacheError) {
-        // Log but don't fail - response is still valid
-        console.warn("Redis cache write error:", cacheError);
-      }
-    }
 
     return NextResponse.json(responseData);
   } catch (error) {
