@@ -20,6 +20,10 @@ import {
   fetchAllViatorProductsProgressive,
   type ExperienceItem,
 } from "@/lib/viator-helpers";
+import {
+  parseTagMetadata,
+  parentTagIdsFromMetadata,
+} from "@/lib/viator/tag-metadata";
 
 // Tags to exclude from Viator product searches
 // 12044 = "Airport & Hotel Transfers"
@@ -361,24 +365,10 @@ async function fetchTags(productTagIds: number[]): Promise<TagsResult> {
       const childTagsData = await childTagsResponse.json();
       if (childTagsData.success && childTagsData.allTags) {
         childTagsData.allTags.forEach((tag: any) => {
-          let metadata = tag.metadata;
-          if (typeof metadata === "string") {
-            try {
-              metadata = JSON.parse(metadata);
-            } catch (e) {
-              return;
-            }
-          }
-          const parentTagIds = metadata?.parentTagIds;
-          if (Array.isArray(parentTagIds) && parentTagIds.length > 0) {
-            const parentIds = parentTagIds
-              .map((id: any) =>
-                typeof id === "string" ? parseInt(id, 10) : Number(id)
-              )
-              .filter((id: number) => !isNaN(id) && id > 0);
-            if (parentIds.length > 0) {
-              childTagToParentsMap.set(tag.tag_id, parentIds);
-            }
+          const metadata = parseTagMetadata(tag.metadata);
+          const parentIds = parentTagIdsFromMetadata(metadata);
+          if (parentIds.length > 0) {
+            childTagToParentsMap.set(tag.tag_id, parentIds);
           }
         });
       }
