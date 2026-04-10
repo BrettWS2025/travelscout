@@ -3,6 +3,8 @@ import { createViatorClient } from "@/lib/viator";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
+/** Viator tag sync does many DB round-trips; default Vercel limit is too low. Pro supports up to 300s. */
+export const maxDuration = 300;
 
 /**
  * Sync Viator Tags API Route
@@ -107,39 +109,51 @@ export async function GET(req: Request) {
       console.log("[Viator Tags Sync] Sample tag structure:", JSON.stringify(tags[0], null, 2));
     }
 
-    // Process and upsert tags
+    // Process and upsert tags (batched parallel RPCs to avoid serverless timeouts)
+    const BATCH_SIZE = 20;
     let successCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
 
-    for (const tag of tags) {
+    const processOne = async (tag: any): Promise<{ ok: boolean; err?: string }> => {
       try {
-        // Extract tag fields (handle different possible structures)
         const tagId = tag.tagId || tag.id || tag.tag_id;
         const tagName = tag.tagName || tag.name || tag.tag_name || tag.title || String(tagId);
         const description = tag.description || tag.desc || null;
         const category = tag.category || tag.categoryName || tag.category_name || null;
         const groupName = tag.group || tag.groupName || tag.group_name || null;
-        
-        // Store any additional fields in metadata
-        const metadata: any = {};
-        Object.keys(tag).forEach(key => {
-          if (!['tagId', 'id', 'tag_id', 'tagName', 'name', 'tag_name', 'title', 
-                'description', 'desc', 'category', 'categoryName', 'category_name',
-                'group', 'groupName', 'group_name'].includes(key)) {
+
+        const metadata: Record<string, unknown> = {};
+        Object.keys(tag).forEach((key) => {
+          if (
+            ![
+              "tagId",
+              "id",
+              "tag_id",
+              "tagName",
+              "name",
+              "tag_name",
+              "title",
+              "description",
+              "desc",
+              "category",
+              "categoryName",
+              "category_name",
+              "group",
+              "groupName",
+              "group_name",
+            ].includes(key)
+          ) {
             metadata[key] = tag[key];
           }
         });
 
         if (!tagId) {
           console.warn("[Viator Tags Sync] Skipping tag without ID:", tag);
-          errorCount++;
-          errors.push(`Tag missing ID: ${JSON.stringify(tag)}`);
-          continue;
+          return { ok: false, err: `Tag missing ID: ${JSON.stringify(tag)}` };
         }
 
-        // Upsert tag using the database function
-        const { error: upsertError } = await supabase.rpc('upsert_viator_tags', {
+        const { error: upsertError } = await supabase.rpc("upsert_viator_tags", {
           p_tag_id: parseInt(String(tagId), 10),
           p_tag_name: String(tagName),
           p_description: description,
@@ -150,15 +164,27 @@ export async function GET(req: Request) {
 
         if (upsertError) {
           console.error(`[Viator Tags Sync] Error upserting tag ${tagId}:`, upsertError);
-          errorCount++;
-          errors.push(`Tag ${tagId}: ${upsertError.message}`);
-        } else {
-          successCount++;
+          return { ok: false, err: `Tag ${tagId}: ${upsertError.message}` };
         }
+        return { ok: true };
       } catch (tagError) {
         console.error(`[Viator Tags Sync] Error processing tag:`, tagError);
-        errorCount++;
-        errors.push(`Tag processing error: ${tagError instanceof Error ? tagError.message : String(tagError)}`);
+        return {
+          ok: false,
+          err: `Tag processing error: ${tagError instanceof Error ? tagError.message : String(tagError)}`,
+        };
+      }
+    };
+
+    for (let i = 0; i < tags.length; i += BATCH_SIZE) {
+      const slice = tags.slice(i, i + BATCH_SIZE);
+      const outcomes = await Promise.all(slice.map((t) => processOne(t)));
+      for (const o of outcomes) {
+        if (o.ok) successCount++;
+        else {
+          errorCount++;
+          if (o.err) errors.push(o.err);
+        }
       }
     }
 
