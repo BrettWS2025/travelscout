@@ -316,12 +316,41 @@ export async function GET(req: Request) {
       }
     }
 
-    // Final validation: ensure ALL returned tags are actually parent tags
-    const validatedParentTags = parentTags.filter(tag => allParentTagIds.has(Number(tag.tag_id)));
-    if (validatedParentTags.length !== parentTags.length) {
-      console.warn(`[Viator Tags API] WARNING: Filtered out ${parentTags.length - validatedParentTags.length} non-parent tags!`);
+    // If Viator metadata does not expose parent links, fall back to direct product tags
+    // so chips still render instead of showing an empty filter bar.
+    let usingDirectProductTagFallback = false;
+    if (parentTags.length === 0 && productTagIdsParam) {
+      const productTagIds = new Set(
+        productTagIdsParam
+          .split(",")
+          .map((id) => parseInt(id.trim(), 10))
+          .filter((id) => !isNaN(id))
+      );
+      if (productTagIds.size > 0) {
+        const directTags = finalTags.filter((tag) => productTagIds.has(Number(tag.tag_id)));
+        if (directTags.length > 0) {
+          usingDirectProductTagFallback = true;
+          parentTags = directTags;
+          console.warn(
+            `[Viator Tags API] Falling back to direct product tags: ${parentTags.length} tags`
+          );
+        }
+      }
     }
-    parentTags = validatedParentTags;
+
+    // Final validation: ensure returned tags are parent tags, unless we are using
+    // direct product-tag fallback for providers that do not supply parentTagIds metadata.
+    if (!usingDirectProductTagFallback) {
+      const validatedParentTags = parentTags.filter((tag) =>
+        allParentTagIds.has(Number(tag.tag_id))
+      );
+      if (validatedParentTags.length !== parentTags.length) {
+        console.warn(
+          `[Viator Tags API] WARNING: Filtered out ${parentTags.length - validatedParentTags.length} non-parent tags!`
+        );
+      }
+      parentTags = validatedParentTags;
+    }
 
     // Debug logging - detailed breakdown
     console.log(`[Viator Tags API] Processing results:`);
