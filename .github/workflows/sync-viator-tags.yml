@@ -44,14 +44,16 @@ jobs:
         env:
           # Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # Optional: override base URL (default https://travelscout.co.nz — Production in your setup)
+          SYNC_VIATOR_TAGS_BASE_URL: ${{ vars.SYNC_VIATOR_TAGS_BASE_URL }}
           FORCE_SYNC: ${{ github.event.inputs.force == 'true' }}
         run: |
-          # On Vercel (Production for travelscout.vercel.app), set:
+          # On Vercel Production (your custom domain), set:
           #   VIATOR_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
           # GitHub secrets are not sent with this curl — only Vercel env is visible to the route.
-          # Use curl to call the sync endpoint
-          # Note: This requires the app to be deployed. For local/CI runs, you can use the script version.
-          API_URL="${VERCEL_URL:-https://travelscout.vercel.app}"
+          # Default is Production domain; travelscout.vercel.app may point at Preview/Dev in your project.
+          # Override: set GitHub variable or secret SYNC_VIATOR_TAGS_BASE_URL (e.g. https://travelscout.co.nz)
+          API_URL="${SYNC_VIATOR_TAGS_BASE_URL:-${VERCEL_URL:-https://travelscout.co.nz}}"
           
           # If VERCEL_URL is set but doesn't start with http, prepend https://
           if [[ ! "$API_URL" =~ ^https?:// ]]; then
