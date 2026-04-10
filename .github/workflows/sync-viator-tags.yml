@@ -44,6 +44,8 @@ jobs:
           VIATOR_API_KEY: ${{ secrets.VIATOR_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Same value as Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           FORCE_SYNC: ${{ github.event.inputs.force == 'true' }}
         run: |
           # Use curl to call the sync endpoint
@@ -62,10 +64,16 @@ jobs:
           
           echo "Syncing Viator tags from: ${API_URL}/api/viator/tags/sync${FORCE_FLAG}"
           
+          # Vercel Deployment Protection (Vercel Authentication) blocks bare curl unless bypassed.
+          # Set GitHub secret VERCEL_AUTOMATION_BYPASS_SECRET to your project's automation bypass token.
+          CURL_ARGS=(-s -w "\n%{http_code}" -H "Content-Type: application/json")
+          if [ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            CURL_ARGS+=(-H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}")
+          fi
+          
           # Try to call the API endpoint (requires deployment)
           # If the app is not deployed, this will fail gracefully
-          response=$(curl -s -w "\n%{http_code}" \
-            -H "Content-Type: application/json" \
+          response=$(curl "${CURL_ARGS[@]}" \
             "${API_URL}/api/viator/tags/sync${FORCE_FLAG}" || echo -e "\n000")
           
           http_code=$(echo "$response" | tail -n1)
@@ -74,7 +82,7 @@ jobs:
           echo "Response HTTP Code: $http_code"
           echo "Response Body:"
           if command -v jq &> /dev/null; then
-            echo "$body" | jq '.' || echo "$body"
+            echo "$body" | jq '.' 2>/dev/null || echo "$body"
           else
             echo "$body"
           fi
@@ -88,6 +96,10 @@ jobs:
             echo "   1. Deploy the app and ensure the endpoint is accessible"
             echo "   2. Run the sync script locally: npm run sync:viator-tags"
             exit 0  # Don't fail the workflow if API is not available
+          elif [ "$http_code" == "401" ] && [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            echo "❌ HTTP 401: Vercel Deployment Protection is blocking this request."
+            echo "   Add repository secret VERCEL_AUTOMATION_BYPASS_SECRET (Vercel → Project → Deployment Protection → Protection Bypass for Automation)."
+            exit 1
           else
             echo "❌ Tag sync failed with HTTP $http_code"
             exit 1
