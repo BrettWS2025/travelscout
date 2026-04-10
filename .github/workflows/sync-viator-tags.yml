@@ -39,15 +39,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Calls the deployed Next.js route; Supabase/Viator env must exist on Vercel (not GitHub).
       - name: Sync Viator Tags
         env:
-          VIATOR_API_KEY: ${{ secrets.VIATOR_API_KEY }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Same value as Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation
+          # Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           FORCE_SYNC: ${{ github.event.inputs.force == 'true' }}
         run: |
+          # On Vercel (Production for travelscout.vercel.app), set:
+          #   VIATOR_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+          # GitHub secrets are not sent with this curl — only Vercel env is visible to the route.
           # Use curl to call the sync endpoint
           # Note: This requires the app to be deployed. For local/CI runs, you can use the script version.
           API_URL="${VERCEL_URL:-https://travelscout.vercel.app}"
