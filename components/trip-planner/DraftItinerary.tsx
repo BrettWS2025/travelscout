@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { Calendar, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta } from "@/lib/trip-planner/utils";
-import { formatShortRangeDate, addDaysToIsoDate, formatDisplayDate } from "@/lib/trip-planner/utils";
+import { addDaysToIsoDate } from "@/lib/trip-planner/utils";
 import {
   getCityById,
   NZ_CITIES,
@@ -21,6 +31,9 @@ import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractio
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 import NearbyRestaurantsMapPanel from "@/components/trip-planner/NearbyRestaurantsMapPanel";
 import DraftItineraryDayContent from "@/components/trip-planner/DraftItineraryDayContent";
+import SortableLocationStripCard, {
+  LocationStripCardFace,
+} from "@/components/trip-planner/SortableLocationStripCard";
 import type { DraftItineraryProps } from "@/components/trip-planner/DraftItinerary.types";
 
 type Props = DraftItineraryProps;
@@ -199,6 +212,7 @@ export default function DraftItinerary(props: Props) {
     onConvertStartToItinerary,
     onConvertStartToRoad,
     onAddToItinerary,
+    onReorderStops,
     legs,
   } = props;
   // State for selected location and day in the new sidebar view
@@ -207,6 +221,8 @@ export default function DraftItinerary(props: Props) {
   const [showAllThingsToDo, setShowAllThingsToDo] = useState<boolean>(false);
   const [showNearbyRestaurantsMap, setShowNearbyRestaurantsMap] = useState<boolean>(false);
   const [mobileDaysCollapsed, setMobileDaysCollapsed] = useState<boolean>(true);
+  const preserveStripSelectionStopRef = useRef<number | null>(null);
+  const [stripDragActiveId, setStripDragActiveId] = useState<number | null>(null);
 
   useEffect(() => {
     setShowNearbyRestaurantsMap(false);
@@ -286,8 +302,82 @@ export default function DraftItinerary(props: Props) {
       .filter((box): box is NonNullable<typeof box> => box !== null);
   }, [plan, routeStops, nightsPerStop, dayStopMeta]);
 
+  const sortableStripIds = useMemo(
+    () => locationBoxes.map((b) => b.stopIndex),
+    [locationBoxes]
+  );
+
+  const stripSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
+
+  const handleStripDragStart = useCallback((event: DragStartEvent) => {
+    setStripDragActiveId(Number(event.active.id));
+  }, []);
+
+  const handleStripDragCancel = useCallback(() => {
+    setStripDragActiveId(null);
+  }, []);
+
+  const handleLocationStripDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setStripDragActiveId(null);
+
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = sortableStripIds.indexOf(Number(active.id));
+      const newIndex = sortableStripIds.indexOf(Number(over.id));
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+
+      const fromStop = locationBoxes[oldIndex].stopIndex;
+      const toStop = locationBoxes[newIndex].stopIndex;
+      if (fromStop === toStop) return;
+
+      const keep = locationBoxes[selectedLocationIndex]?.stopIndex;
+      if (keep !== undefined) {
+        preserveStripSelectionStopRef.current = keep;
+      }
+
+      onReorderStops(fromStop, toStop);
+    },
+    [
+      locationBoxes,
+      onReorderStops,
+      selectedLocationIndex,
+      sortableStripIds,
+    ]
+  );
+
+  useEffect(() => {
+    const stop = preserveStripSelectionStopRef.current;
+    if (stop === null) return;
+    preserveStripSelectionStopRef.current = null;
+    const j = locationBoxes.findIndex((b) => b.stopIndex === stop);
+    setSelectedLocationIndex(j >= 0 ? j : 0);
+  }, [locationBoxes]);
+
   // Image URLs for the currently selected trip locations.
   const [placeImageUrls, setPlaceImageUrls] = useState<Record<string, string>>({});
+
+  const stripDragOverlay = useMemo(() => {
+    if (stripDragActiveId == null) return null;
+    const loc = locationBoxes.find((b) => b.stopIndex === stripDragActiveId);
+    if (!loc) return null;
+    return {
+      loc,
+      overlaySelected:
+        locationBoxes[selectedLocationIndex]?.stopIndex === loc.stopIndex,
+      imgUrl: placeImageUrls[loc.cityId],
+    };
+  }, [
+    stripDragActiveId,
+    locationBoxes,
+    selectedLocationIndex,
+    placeImageUrls,
+  ]);
 
   useEffect(() => {
     const names = locationBoxes.map((l) => l.cityId);
@@ -438,98 +528,47 @@ export default function DraftItinerary(props: Props) {
           {/* Location boxes - horizontal layout */}
           {locationBoxes.length > 0 && (
             <div className="p-2 sm:p-4 md:p-6">
-              <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
-                {locationBoxes.map((location, idx) => {
-                  const isActive = idx === selectedLocationIndex;
-                  const imgUrl = placeImageUrls[location.cityId];
-                  return (
-                    <button
-                      key={`location-box-${location.stopIndex}`}
-                      onClick={() => setSelectedLocationIndex(idx)}
-                      className={`
-                        relative flex flex-col flex-shrink-0 w-52 md:w-56 rounded-xl overflow-hidden snap-start
-                        bg-white border transition-all duration-200 cursor-pointer
-                        ${isActive ? "border-indigo-500 shadow-md" : "border-slate-200 shadow-sm hover:shadow-md"}
-                      `}
-                    >
-                      {/* Image container - slightly inset with rounded corners */}
-                      <div className="relative mx-1 mt-1 h-20 md:h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
-                        <div
-                          className="w-full h-full flex items-center justify-center"
-                          data-placeholder="true"
-                          style={{ display: imgUrl ? "none" : "flex" }}
-                        >
-                          <div className="text-slate-400 text-xs">Image</div>
-                        </div>
-
-                        {imgUrl ? (
-                          <img
-                            src={imgUrl}
-                            alt={location.cityName}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                              const placeholder = target.parentElement?.querySelector('[data-placeholder="true"]') as HTMLElement | null;
-                              if (placeholder) placeholder.style.display = "flex";
-                            }}
-                          />
-                        ) : null}
-                        {/* Active indicator */}
-                        {isActive && (
-                          <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[10px] font-medium px-1.5 py-0.5 rounded z-10">
-                            ACTIVE
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content container */}
-                      <div className="p-2">
-                        {/* Location name */}
-                        <h3 className="font-semibold text-slate-900 text-xs md:text-sm mb-0.5 text-left">
-                          {location.cityName}
-                        </h3>
-
-                        {/* Date and nights */}
-                        {location.arrivalDate && location.departureDate && (
-                          <div className="flex items-center gap-1 text-[10px] md:text-xs text-slate-600">
-                            <Calendar className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">
-                              {formatShortRangeDate(location.arrivalDate)} – {formatShortRangeDate(location.departureDate)}
-                            </span>
-                            <span className="text-slate-400">•</span>
-                            <div className="flex items-center gap-1">
-                              <span className="text-slate-500">
-                                {location.nights} {location.nights === 1 ? "Night" : "Nights"}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onChangeNights(location.stopIndex, location.nights - 1);
-                                }}
-                                className="w-4 h-4 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded border border-slate-200 transition-all duration-200 text-[10px]"
-                              >
-                                −
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onChangeNights(location.stopIndex, location.nights + 1);
-                                }}
-                                className="w-4 h-4 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded border border-slate-200 transition-all duration-200 text-[10px]"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <DndContext
+                sensors={stripSensors}
+                onDragStart={handleStripDragStart}
+                onDragCancel={handleStripDragCancel}
+                onDragEnd={handleLocationStripDragEnd}
+              >
+                <SortableContext
+                  items={sortableStripIds}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth [touch-action:pan-x]">
+                    {locationBoxes.map((location, idx) => {
+                      const isActive = idx === selectedLocationIndex;
+                      const imgUrl = placeImageUrls[location.cityId];
+                      return (
+                        <SortableLocationStripCard
+                          key={`location-box-${location.stopIndex}`}
+                          location={location}
+                          routeStopsLength={routeStops.length}
+                          isActive={isActive}
+                          imgUrl={imgUrl}
+                          onSelect={() => setSelectedLocationIndex(idx)}
+                          onChangeNights={onChangeNights}
+                        />
+                      );
+                    })}
+                  </div>
+                </SortableContext>
+                <DragOverlay dropAnimation={null}>
+                  {stripDragOverlay ? (
+                    <div className="w-52 md:w-56 rotate-1">
+                      <LocationStripCardFace
+                        location={stripDragOverlay.loc}
+                        isActive={stripDragOverlay.overlaySelected}
+                        imgUrl={stripDragOverlay.imgUrl}
+                        presentation="overlay"
+                      />
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </div>
           )}
 
