@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getRedisClient } from "@/lib/redis/client";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,9 @@ function extractFirstUsablePhotoUrl(photo: any): string | undefined {
 
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "googlePlaces");
+    if (limited) return limited;
+
     const { searchParams } = new URL(req.url);
 
     const latRaw = searchParams.get("lat");

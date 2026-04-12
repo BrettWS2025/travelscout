@@ -32,6 +32,15 @@ export type NearbyHotelsMapProps = {
   markerEmoji?: string;
   /** Used in empty-state copy, e.g. "hotels" or "restaurants". */
   placeTypePlural?: string;
+  /**
+   * Search origin (e.g. manual hotel). Shown as a distinct pin from `markerEmoji` place markers
+   * so the anchor stays visible on the restaurants map.
+   */
+  searchOriginPin?: {
+    lat: number;
+    lng: number;
+    label?: string;
+  };
 };
 
 export default function NearbyHotelsMap({
@@ -41,9 +50,11 @@ export default function NearbyHotelsMap({
   locationLabel,
   markerEmoji = "🏨",
   placeTypePlural = "hotels",
+  searchOriginPin,
 }: NearbyHotelsMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [popupPlace, setPopupPlace] = useState<NearbyPlace | null>(null);
+  const [popupOriginOpen, setPopupOriginOpen] = useState(false);
 
   const withCoords = useMemo(
     () =>
@@ -58,7 +69,13 @@ export default function NearbyHotelsMap({
   );
 
   const bounds = useMemo(() => {
-    const pts = [...withCoords.map((p) => ({ lat: p.lat, lng: p.lng })), { lat: centerLat, lng: centerLng }];
+    const pts: { lat: number; lng: number }[] = [
+      ...withCoords.map((p) => ({ lat: p.lat, lng: p.lng })),
+      { lat: centerLat, lng: centerLng },
+    ];
+    if (searchOriginPin) {
+      pts.push({ lat: searchOriginPin.lat, lng: searchOriginPin.lng });
+    }
     const lats = pts.map((p) => p.lat);
     const lngs = pts.map((p) => p.lng);
     return {
@@ -67,7 +84,7 @@ export default function NearbyHotelsMap({
       minLng: Math.min(...lngs),
       maxLng: Math.max(...lngs),
     };
-  }, [withCoords, centerLat, centerLng]);
+  }, [withCoords, centerLat, centerLng, searchOriginPin]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -97,7 +114,7 @@ export default function NearbyHotelsMap({
     );
   }
 
-  if (withCoords.length === 0) {
+  if (withCoords.length === 0 && !searchOriginPin) {
     return (
       <div className="w-full min-h-[200px] flex items-center justify-center bg-slate-50 rounded-xl border border-slate-200 px-4">
         <p className="text-xs text-slate-500 text-center">
@@ -121,6 +138,41 @@ export default function NearbyHotelsMap({
         reuseMaps
       >
         <NavigationControl position="top-right" />
+        {searchOriginPin &&
+          Number.isFinite(searchOriginPin.lat) &&
+          Number.isFinite(searchOriginPin.lng) && (
+            <Marker
+              longitude={searchOriginPin.lng}
+              latitude={searchOriginPin.lat}
+              anchor="bottom"
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                setPopupPlace(null);
+                setPopupOriginOpen(true);
+              }}
+            >
+              <div
+                className="cursor-pointer flex flex-col items-center"
+                role="button"
+                tabIndex={0}
+                aria-label={searchOriginPin.label || "Your hotel"}
+                onKeyDown={(ev) => {
+                  if (ev.key === "Enter" || ev.key === " ") {
+                    ev.preventDefault();
+                    setPopupPlace(null);
+                    setPopupOriginOpen(true);
+                  }
+                }}
+              >
+                <span
+                  className="text-2xl drop-shadow-md ring-2 ring-amber-400/90 rounded-full bg-white/90 p-0.5"
+                  aria-hidden
+                >
+                  🏨
+                </span>
+              </div>
+            </Marker>
+          )}
         {withCoords.map((place) => (
           <Marker
             key={place.id}
@@ -129,6 +181,7 @@ export default function NearbyHotelsMap({
             anchor="bottom"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
+              setPopupOriginOpen(false);
               setPopupPlace(place);
             }}
           >
@@ -139,6 +192,21 @@ export default function NearbyHotelsMap({
             </div>
           </Marker>
         ))}
+        {popupOriginOpen && searchOriginPin && (
+          <Popup
+            longitude={searchOriginPin.lng}
+            latitude={searchOriginPin.lat}
+            anchor="top"
+            onClose={() => setPopupOriginOpen(false)}
+            closeOnClick={false}
+            maxWidth="280px"
+          >
+            <div className="text-xs space-y-1 p-0.5">
+              <div className="font-semibold text-slate-900 pr-6">{searchOriginPin.label || "Your hotel"}</div>
+              <div className="text-slate-500">Search center for nearby restaurants</div>
+            </div>
+          </Popup>
+        )}
         {popupPlace &&
           typeof popupPlace.lat === "number" &&
           typeof popupPlace.lng === "number" && (

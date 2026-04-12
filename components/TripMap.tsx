@@ -265,7 +265,14 @@ async function fetchToiletsAlongRoute(routeGeometry: [number, number][]): Promis
   }
 }
 
-export default function TripMap({ points }: { points: TripMapPoint[] }) {
+export default function TripMap({
+  points,
+  poiMarkers = [],
+}: {
+  points: TripMapPoint[];
+  /** Extra stops (e.g. manual bookings) — shown on the map but not used for the driving route line. */
+  poiMarkers?: TripMapPoint[];
+}) {
   const mapRef = useRef<MapRef>(null);
   const [selectedPoint, setSelectedPoint] = useState<TripMapPoint | null>(null);
   const [popupLocation, setPopupLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -293,11 +300,13 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
     }
   }, [showToilets]);
 
-  // Fit map bounds to all points
+  // Fit map bounds to route points plus optional POIs (manual bookings)
   useEffect(() => {
-    if (!mapRef.current || points.length === 0) return;
+    if (!mapRef.current) return;
+    const combined = [...points, ...poiMarkers];
+    if (combined.length === 0) return;
 
-    const bounds = points.reduce(
+    const bounds = combined.reduce(
       (acc, point) => {
         return {
           minLng: Math.min(acc.minLng, point.lng),
@@ -307,10 +316,10 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
         };
       },
       {
-        minLng: points[0].lng,
-        maxLng: points[0].lng,
-        minLat: points[0].lat,
-        maxLat: points[0].lat,
+        minLng: combined[0].lng,
+        maxLng: combined[0].lng,
+        minLat: combined[0].lat,
+        maxLat: combined[0].lat,
       }
     );
 
@@ -324,7 +333,7 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
         duration: 1000,
       }
     );
-  }, [points]);
+  }, [points, poiMarkers]);
 
   if (!points || points.length === 0) return null;
 
@@ -528,6 +537,45 @@ export default function TripMap({ points }: { points: TripMapPoint[] }) {
           </Marker>
         );
       })}
+
+      {/* Manual / extra booking markers (not part of driving route order) */}
+      {poiMarkers.map((p, i) => (
+        <Marker
+          key={`poi-${p.lat}-${p.lng}-${i}`}
+          longitude={p.lng}
+          latitude={p.lat}
+          anchor="center"
+          onClick={(e) => {
+            e.originalEvent.stopPropagation();
+            setSelectedPoint(p);
+            setSelectedToilet(null);
+            setPopupLocation({ lat: p.lat, lng: p.lng });
+          }}
+        >
+          <div
+            className="cursor-pointer"
+            style={{
+              width: "26px",
+              height: "26px",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 32 32"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+            >
+              <circle cx="16" cy="16" r="14" fill="white" opacity="0.95" />
+              <circle cx="16" cy="16" r="14" fill="none" stroke="#0B1B2F" strokeWidth="1.5" />
+              <circle cx="16" cy="16" r="10" fill="#F59E0B" />
+              <circle cx="16" cy="16" r="6" fill="#D97706" />
+              <circle cx="14" cy="14" r="2" fill="white" opacity="0.85" />
+            </svg>
+          </div>
+        </Marker>
+      ))}
 
       {/* Toilet markers */}
       {showToilets && toilets.map((toilet) => (

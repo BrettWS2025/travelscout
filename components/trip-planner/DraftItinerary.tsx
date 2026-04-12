@@ -14,7 +14,8 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta } from "@/lib/trip-planner/utils";
-import { addDaysToIsoDate } from "@/lib/trip-planner/utils";
+import { addDaysToIsoDate, makeDayKey } from "@/lib/trip-planner/utils";
+import { getResolvedHotelPin } from "@/lib/trip-planner/manualEntry";
 import {
   getCityById,
   NZ_CITIES,
@@ -30,6 +31,7 @@ import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 import NearbyRestaurantsMapPanel from "@/components/trip-planner/NearbyRestaurantsMapPanel";
+import NearbyHotelsMapPanel from "@/components/trip-planner/NearbyHotelsMapPanel";
 import DraftItineraryDayContent from "@/components/trip-planner/DraftItineraryDayContent";
 import SortableLocationStripCard, {
   LocationStripCardFace,
@@ -52,30 +54,18 @@ type LocationBoxForSidebar = {
  */
 function SidebarDayItem({
   day,
-  dayIndex,
-  idx,
   selectedLocation,
-  locationBoxes,
-  selectedLocationIndex,
-  routeStops,
   formatDayDate,
   isSelected,
   onSelect,
 }: {
   day: TripPlan["days"][number];
-  dayIndex: number;
-  idx: number;
   selectedLocation: LocationBoxForSidebar;
-  locationBoxes: LocationBoxForSidebar[];
-  selectedLocationIndex: number;
-  routeStops: string[];
   formatDayDate: (dateStr: string) => string;
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const isDrivingDay = idx === 0;
-
-  // Resolve destination coords (for all days)
+  // Resolve destination coords — same scope as day content (destination city only).
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
   useEffect(() => {
     if (!selectedLocation.cityId) {
@@ -100,48 +90,6 @@ function SidebarDayItem({
     }).catch(() => setDestCoords(undefined));
   }, [selectedLocation.cityId, selectedLocation.cityName]);
 
-  // Resolve "from" location for driving days
-  const fromLocationName = useMemo(() => {
-    if (!isDrivingDay) return "";
-    if (selectedLocationIndex > 0 && locationBoxes[selectedLocationIndex - 1]) {
-      return locationBoxes[selectedLocationIndex - 1].cityName;
-    }
-    const startId = routeStops[0];
-    return getCityById(startId)?.name || startId;
-  }, [isDrivingDay, selectedLocationIndex, locationBoxes, routeStops]);
-
-  const fromLocationId = useMemo(() => {
-    if (!isDrivingDay) return "";
-    if (selectedLocationIndex > 0 && locationBoxes[selectedLocationIndex - 1]) {
-      return locationBoxes[selectedLocationIndex - 1].cityId;
-    }
-    return routeStops[0] ?? "";
-  }, [isDrivingDay, selectedLocationIndex, locationBoxes, routeStops]);
-
-  const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
-  useEffect(() => {
-    if (!isDrivingDay || !fromLocationId) {
-      setFromCoords(undefined);
-      return;
-    }
-    const city = getCityById(fromLocationId);
-    if (city) {
-      setFromCoords({ lat: city.lat, lng: city.lng });
-      return;
-    }
-    const place = NZ_CITIES.find((p: NzCity) =>
-      p.name.toLowerCase() === fromLocationName.toLowerCase()
-    );
-    if (place) {
-      setFromCoords({ lat: place.lat, lng: place.lng });
-      return;
-    }
-    searchPlacesByName(fromLocationName, 1).then((results) => {
-      if (results.length > 0) setFromCoords({ lat: results[0].lat, lng: results[0].lng });
-      else setFromCoords(undefined);
-    }).catch(() => setFromCoords(undefined));
-  }, [isDrivingDay, fromLocationId, fromLocationName]);
-
   const { events: destinationEvents } = useEvents(
     day.date,
     selectedLocation.cityName,
@@ -149,22 +97,7 @@ function SidebarDayItem({
     destCoords?.lng
   );
 
-  const { events: fromLocationEvents } = useEvents(
-    day.date,
-    fromLocationName,
-    fromCoords?.lat,
-    fromCoords?.lng
-  );
-
-  const eventCount = useMemo(() => {
-    if (isDrivingDay && fromLocationEvents && destinationEvents) {
-      const seen = new Set<number>();
-      fromLocationEvents.forEach((e) => seen.add(e.id));
-      destinationEvents.forEach((e) => seen.add(e.id));
-      return seen.size;
-    }
-    return destinationEvents?.length ?? 0;
-  }, [isDrivingDay, fromLocationEvents, destinationEvents]);
+  const eventCount = destinationEvents?.length ?? 0;
 
   return (
     <button
@@ -214,18 +147,22 @@ export default function DraftItinerary(props: Props) {
     onAddToItinerary,
     onReorderStops,
     legs,
+    onAddManualTripEntry,
+    onRemoveManualTripEntry,
   } = props;
   // State for selected location and day in the new sidebar view
   const [selectedLocationIndex, setSelectedLocationIndex] = useState<number>(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [showAllThingsToDo, setShowAllThingsToDo] = useState<boolean>(false);
   const [showNearbyRestaurantsMap, setShowNearbyRestaurantsMap] = useState<boolean>(false);
+  const [showNearbyHotelsMap, setShowNearbyHotelsMap] = useState<boolean>(false);
   const [mobileDaysCollapsed, setMobileDaysCollapsed] = useState<boolean>(true);
   const preserveStripSelectionStopRef = useRef<number | null>(null);
   const [stripDragActiveId, setStripDragActiveId] = useState<number | null>(null);
 
   useEffect(() => {
     setShowNearbyRestaurantsMap(false);
+    setShowNearbyHotelsMap(false);
     setShowAllThingsToDo(false);
   }, [selectedLocationIndex]);
   
@@ -439,6 +376,34 @@ export default function DraftItinerary(props: Props) {
     }));
   }, [plan, locationBoxes, selectedLocationIndex]);
 
+  const selectedDayForRestaurantMap = selectedLocationDays[selectedDayIndex]?.day;
+  const restaurantMapAnchor = useMemo(() => {
+    if (!selectedDayForRestaurantMap) {
+      return {
+        anchorLat: undefined as number | undefined,
+        anchorLng: undefined as number | undefined,
+        suppressNearbySearch: false,
+        anchorLabel: undefined as string | undefined,
+      };
+    }
+    const key = makeDayKey(selectedDayForRestaurantMap.date, selectedDayForRestaurantMap.location);
+    const detail = dayDetails[key];
+    const hotelPin = getResolvedHotelPin(detail);
+    const hasManualHotel = detail?.manualEntries?.some((e) => e.section === "hotel");
+    if (hasManualHotel && !hotelPin) {
+      return { anchorLat: undefined, anchorLng: undefined, suppressNearbySearch: true, anchorLabel: undefined };
+    }
+    if (hotelPin) {
+      return {
+        anchorLat: hotelPin.lat,
+        anchorLng: hotelPin.lng,
+        suppressNearbySearch: false,
+        anchorLabel: hotelPin.label,
+      };
+    }
+    return { anchorLat: undefined, anchorLng: undefined, suppressNearbySearch: false, anchorLabel: undefined };
+  }, [selectedDayForRestaurantMap, dayDetails]);
+
   // Reset selected day index when location changes
   useEffect(() => {
     if (selectedLocationDays.length > 0) {
@@ -447,26 +412,14 @@ export default function DraftItinerary(props: Props) {
     }
   }, [selectedLocationIndex, selectedLocationDays.length]);
 
-  // Get location string for things to do (for carousel)
+  // Get location string for things to do (for carousel). Always use the destination
+  // stop's city so we never fetch "along the route" (which mixed in the departure city).
   const thingsToDoLocation = useMemo(() => {
     if (selectedLocationIndex >= locationBoxes.length) return "";
     const selectedLocation = locationBoxes[selectedLocationIndex];
     if (!selectedLocation) return "";
-
-    const isStartLocation = selectedLocation.stopIndex === 0;
-    const isDrivingDay = selectedDayIndex === 0 && startSectorType === "road";
-
-    if (isDrivingDay && !isStartLocation) {
-      // For driving days between start and another stop: use route name
-      const startLocationId = routeStops[0];
-      const startCity = getCityById(startLocationId);
-      const startLocationName = startCity?.name || startLocationId;
-      return `${startLocationName} to ${selectedLocation.cityName}`;
-    }
-
-    // For non-driving days (including start when staying overnight): use location name
     return selectedLocation.cityName;
-  }, [selectedDayIndex, selectedLocationIndex, locationBoxes, routeStops, startSectorType]);
+  }, [selectedLocationIndex, locationBoxes]);
 
   // Fetch things to do data
   const { data: thingsToDoData } = useThingsToDo(thingsToDoLocation);
@@ -578,7 +531,8 @@ export default function DraftItinerary(props: Props) {
               selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
             const showAllLocationString = selectedLocation?.cityName ?? "";
             const selectedDayForLabel = selectedLocationDays[selectedDayIndex]?.day;
-            const hideDaySidebar = showAllThingsToDo || showNearbyRestaurantsMap;
+            const hideDaySidebar =
+              showAllThingsToDo || showNearbyRestaurantsMap || showNearbyHotelsMap;
 
             return (
               <div className="p-2 sm:p-4 md:p-6">
@@ -594,12 +548,7 @@ export default function DraftItinerary(props: Props) {
                               <SidebarDayItem
                                 key={`day-nav-${dayIndex}`}
                                 day={day}
-                                dayIndex={dayIndex}
-                                idx={idx}
                                 selectedLocation={selectedLocation}
-                                locationBoxes={locationBoxes}
-                                selectedLocationIndex={selectedLocationIndex}
-                                routeStops={routeStops}
                                 formatDayDate={formatDayDate}
                                 isSelected={idx === selectedDayIndex}
                                 onSelect={() => setSelectedDayIndex(idx)}
@@ -657,12 +606,7 @@ export default function DraftItinerary(props: Props) {
                                 <SidebarDayItem
                                   key={`day-nav-mobile-${dayIndex}`}
                                   day={day}
-                                  dayIndex={dayIndex}
-                                  idx={idx}
                                   selectedLocation={selectedLocation}
-                                  locationBoxes={locationBoxes}
-                                  selectedLocationIndex={selectedLocationIndex}
-                                  routeStops={routeStops}
                                   formatDayDate={formatDayDate}
                                   isSelected={idx === selectedDayIndex}
                                   onSelect={() => setSelectedDayIndex(idx)}
@@ -679,7 +623,17 @@ export default function DraftItinerary(props: Props) {
                     <NearbyRestaurantsMapPanel
                       cityId={selectedLocation.cityId}
                       cityName={selectedLocation.cityName}
+                      anchorLat={restaurantMapAnchor.anchorLat}
+                      anchorLng={restaurantMapAnchor.anchorLng}
+                      anchorLabel={restaurantMapAnchor.anchorLabel}
+                      suppressNearbySearch={restaurantMapAnchor.suppressNearbySearch}
                       onBack={() => setShowNearbyRestaurantsMap(false)}
+                    />
+                  ) : showNearbyHotelsMap && selectedLocation ? (
+                    <NearbyHotelsMapPanel
+                      cityId={selectedLocation.cityId}
+                      cityName={selectedLocation.cityName}
+                      onBack={() => setShowNearbyHotelsMap(false)}
                     />
                   ) : showAllThingsToDo ? (
                     <div className="flex-1 min-w-0">
@@ -716,11 +670,18 @@ export default function DraftItinerary(props: Props) {
                         viatorProducts={viatorProducts}
                         onShowAllThingsToDo={() => {
                           setShowNearbyRestaurantsMap(false);
+                          setShowNearbyHotelsMap(false);
                           setShowAllThingsToDo(true);
                         }}
                         onShowNearbyRestaurantsMap={() => {
                           setShowAllThingsToDo(false);
+                          setShowNearbyHotelsMap(false);
                           setShowNearbyRestaurantsMap(true);
+                        }}
+                        onShowNearbyHotelsMap={() => {
+                          setShowAllThingsToDo(false);
+                          setShowNearbyRestaurantsMap(false);
+                          setShowNearbyHotelsMap(true);
                         }}
                         onAddToItinerary={onAddToItinerary}
                         onRemoveExperienceFromDay={onRemoveExperienceFromDay}
@@ -732,6 +693,8 @@ export default function DraftItinerary(props: Props) {
                         onConvertStartToItinerary={onConvertStartToItinerary}
                         onConvertStartToRoad={onConvertStartToRoad}
                         legs={legs}
+                        onAddManualTripEntry={onAddManualTripEntry}
+                        onRemoveManualTripEntry={onRemoveManualTripEntry}
                       />
                     </div>
                   ) : null}

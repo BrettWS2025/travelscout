@@ -3,6 +3,7 @@ import type { DayDetail, DayStopMeta, RoadSectorDetail } from "@/lib/trip-planne
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import type { Event } from "@/lib/hooks/useEvents";
+import type { ManualTripEntry } from "@/lib/trip-planner/utils";
 
 export type DraftItineraryProps = {
   plan: TripPlan;
@@ -63,6 +64,9 @@ export type DraftItineraryProps = {
 
   // Optional driving legs, used for showing dynamic distance/time on driving modules
   legs?: TripLeg[];
+
+  onAddManualTripEntry?: (date: string, location: string, entry: ManualTripEntry) => void;
+  onRemoveManualTripEntry?: (date: string, location: string, id: string) => void;
 };
 
 export type Group = {

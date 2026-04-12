@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createViatorClient } from "@/lib/viator";
 import { createClient } from "@supabase/supabase-js";
+import { requireViatorTagsSyncAuth } from "@/lib/viator-tags-sync-auth";
 
 export const dynamic = "force-dynamic";
 /** Viator tag sync does many DB round-trips; default Vercel limit is too low. Pro supports up to 300s. */
@@ -14,9 +15,15 @@ export const maxDuration = 300;
  * 
  * Query parameters:
  * - force: set to "true" to force sync even if recently synced (optional)
+ *
+ * Authentication: set `VIATOR_TAGS_SYNC_SECRET` on the server and send
+ * `Authorization: Bearer <secret>` or `x-viator-tags-sync-secret: <secret>`.
  */
 export async function GET(req: Request) {
   try {
+    const authErr = requireViatorTagsSyncAuth(req);
+    if (authErr) return authErr;
+
     console.log("[Viator Tags Sync] Starting sync process...");
     
     // Get API key from environment
