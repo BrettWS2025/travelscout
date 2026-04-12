@@ -12,7 +12,6 @@ import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
-import NearbyHotelsMap from "@/components/trip-planner/NearbyHotelsMap";
 
 export type LocationBox = {
   stopIndex: number;
@@ -38,6 +37,8 @@ export type DraftItineraryDayContentProps = {
   onShowAllThingsToDo: () => void;
   /** Opens full-width nearby restaurants map (same data as carousel; cached). */
   onShowNearbyRestaurantsMap?: () => void;
+  /** Opens full-width nearby hotels map (same data as carousel; cached). */
+  onShowNearbyHotelsMap?: () => void;
   onAddToItinerary?: (
     experience: WalkingExperience | ExperienceItem,
     location: string,
@@ -72,6 +73,7 @@ export default function DraftItineraryDayContent({
   viatorProducts,
   onShowAllThingsToDo,
   onShowNearbyRestaurantsMap,
+  onShowNearbyHotelsMap,
   onAddToItinerary,
   onRemoveExperienceFromDay,
   onRemoveViatorProductFromDay,
@@ -99,9 +101,6 @@ export default function DraftItineraryDayContent({
   const [ticketStubTop, setTicketStubTop] = useState<number | null>(null);
   const [hotelIconTop, setHotelIconTop] = useState<number | null>(null);
   const [nearbyPlacesIconTop, setNearbyPlacesIconTop] = useState<number | null>(null);
-  /** Switches only the hotel section between cards and map. */
-  const [hotelViewMode, setHotelViewMode] = useState<"cards" | "map">("cards");
-
   const selectedLocation = selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
   // Show the main day timeline for all non-road stops, including Day 1 once the start has been converted
   const shouldShowTimeline =
@@ -115,52 +114,13 @@ export default function DraftItineraryDayContent({
   const isStartLocation = selectedLocation?.stopIndex === 0;
   const isDrivingDay = selectedDayIndex === 0 && (!isStartLocation || !!isStartRoadSector);
 
-  let eventsFromLocationName = "";
-  let eventsFromLocationId = "";
   let eventsDestinationName = selectedLocation?.cityName || "";
   let eventsDestinationId = selectedLocation?.cityId || "";
 
   if (showEventsCarousel && selectedLocation) {
-    if (isDrivingDay) {
-      if (selectedLocationIndex > 0) {
-        const previousLocation = locationBoxes[selectedLocationIndex - 1];
-        eventsFromLocationName = previousLocation.cityName;
-        eventsFromLocationId = previousLocation.cityId;
-      } else {
-        const startLocationId = routeStops[0];
-        const startCity = getCityById(startLocationId);
-        eventsFromLocationName = startCity?.name || startLocationId;
-        eventsFromLocationId = startLocationId;
-      }
-      eventsDestinationName = selectedLocation.cityName;
-      eventsDestinationId = selectedLocation.cityId;
-    } else {
-      eventsDestinationName = selectedLocation.cityName;
-      eventsDestinationId = selectedLocation.cityId;
-    }
+    eventsDestinationName = selectedLocation.cityName;
+    eventsDestinationId = selectedLocation.cityId;
   }
-
-  const [fromLocationCoords, setFromLocationCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
-  useEffect(() => {
-    if (!isDrivingDay || !eventsFromLocationId) {
-      setFromLocationCoords(undefined);
-      return;
-    }
-    const c = getCityById(eventsFromLocationId);
-    if (c) {
-      setFromLocationCoords({ lat: c.lat, lng: c.lng });
-      return;
-    }
-    const place = NZ_CITIES.find((p: NzCity) => p.name.toLowerCase() === eventsFromLocationName.toLowerCase());
-    if (place) {
-      setFromLocationCoords({ lat: place.lat, lng: place.lng });
-      return;
-    }
-    searchPlacesByName(eventsFromLocationName, 1).then((results) => {
-      if (results.length > 0) setFromLocationCoords({ lat: results[0].lat, lng: results[0].lng });
-      else setFromLocationCoords(undefined);
-    }).catch(() => setFromLocationCoords(undefined));
-  }, [isDrivingDay, eventsFromLocationId, eventsFromLocationName]);
 
   const [destinationLocationCoords, setDestinationLocationCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
   useEffect(() => {
@@ -184,12 +144,6 @@ export default function DraftItineraryDayContent({
     }).catch(() => setDestinationLocationCoords(undefined));
   }, [eventsDestinationId, eventsDestinationName]);
 
-  const { events: fromLocationEvents, loading: fromLocationLoading } = useEvents(
-    selectedDay.date,
-    eventsFromLocationName,
-    fromLocationCoords?.lat,
-    fromLocationCoords?.lng
-  );
   const { events: destinationEvents, loading: destinationLoading } = useEvents(
     selectedDay.date,
     eventsDestinationName,
@@ -235,10 +189,6 @@ export default function DraftItineraryDayContent({
 
   const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
 
-  useEffect(() => {
-    setHotelViewMode("cards");
-  }, [selectedDay.date, selectedDay.location, selectedLocationIndex]);
-
   const getEventDurationNights = (event: Event): number | null => {
     if (!event.datetime_start) return null;
     if (!event.datetime_end) return 0;
@@ -260,20 +210,12 @@ export default function DraftItineraryDayContent({
       return (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase());
     });
 
-  const allEvents = useMemo(() => {
-    let combined: Event[] = [];
-    if (isDrivingDay && fromLocationEvents && destinationEvents) {
-      const eventMap = new Map<number, Event>();
-      fromLocationEvents.forEach((e) => eventMap.set(e.id, e));
-      destinationEvents.forEach((e) => eventMap.set(e.id, e));
-      combined = Array.from(eventMap.values());
-    } else {
-      combined = destinationEvents || [];
-    }
-    return sortEventsByPriority(combined);
-  }, [isDrivingDay, fromLocationEvents, destinationEvents]);
+  const allEvents = useMemo(
+    () => sortEventsByPriority(destinationEvents || []),
+    [destinationEvents]
+  );
 
-  const eventsLoading = isDrivingDay ? (fromLocationLoading || destinationLoading) : destinationLoading;
+  const eventsLoading = destinationLoading;
 
   useEffect(() => {
     const measureIconPositions = () => {
@@ -310,8 +252,6 @@ export default function DraftItineraryDayContent({
     nearbyHotels.length,
     nearbyRestaurantsLoading,
     nearbyRestaurants.length,
-    hotelViewMode,
-    topExperiences.length,
   ]);
 
   let fromLocationName = "";
@@ -539,7 +479,9 @@ export default function DraftItineraryDayContent({
                     <div className="flex items-center gap-2 min-w-0">
                       {isDrivingDay ? <Compass className="w-4 h-4 text-indigo-600" /> : <Zap className="w-4 h-4 text-indigo-600" />}
                       <h4 className="text-sm font-semibold text-slate-900 min-w-0 break-words">
-                        {isDrivingDay ? "Discover along the route" : "Things to do"}
+                        {destinationName
+                          ? `Things to do in ${destinationName}`
+                          : "Things to do"}
                       </h4>
                     </div>
                     {topExperiences.length > 0 && (
@@ -726,32 +668,23 @@ export default function DraftItineraryDayContent({
                       <Bed className="w-4 h-4 text-indigo-600 shrink-0" aria-hidden />
                       <h4 className="text-sm font-semibold text-slate-900">Where to stay</h4>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setHotelViewMode((prev) => (prev === "cards" ? "map" : "cards"))}
-                      disabled={!canLoadNearbyPlaces}
-                      title={!canLoadNearbyPlaces ? "Location not ready yet" : undefined}
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                      <MapPin className="w-3.5 h-3.5" aria-hidden />
-                      {hotelViewMode === "map" ? "Top hotels" : "Map view"}
-                    </button>
+                    {onShowNearbyHotelsMap && (
+                      <button
+                        type="button"
+                        onClick={onShowNearbyHotelsMap}
+                        disabled={!canLoadNearbyPlaces}
+                        title={!canLoadNearbyPlaces ? "Location not ready yet" : undefined}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        <MapPin className="w-3.5 h-3.5" aria-hidden />
+                        Map view
+                      </button>
+                    )}
                   </div>
                   {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
                     <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
                   ) : nearbyHotelsError ? (
                     <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
-                  ) : hotelViewMode === "map" ? (
-                    destinationLocationCoords ? (
-                      <NearbyHotelsMap
-                        places={nearbyHotels}
-                        centerLat={destinationLocationCoords.lat}
-                        centerLng={destinationLocationCoords.lng}
-                        locationLabel={destinationName}
-                      />
-                    ) : (
-                      <div className="text-xs text-slate-500 text-center py-4">Map unavailable for this area.</div>
-                    )
                   ) : topRatedHotelsNearby.length > 0 ? (
                     <>
                       <p className="text-xs text-slate-500 mb-2">
