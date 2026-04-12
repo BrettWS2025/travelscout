@@ -4,9 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Edit3 } from "lucide-react";
-
-const TRIP_PLANNER_DRAFT_KEY = "tripPlanner_draft";
-const TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY = "tripPlanner_restore_after_auth";
+import {
+  getTripPlannerDraft,
+  TRIP_PLANNER_DRAFT_KEY,
+  removeTripPlannerDraft,
+  TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY,
+  shouldClearTripPlannerDraftForPath,
+} from "@/lib/trip-planner/draftStorage";
 
 export function TripPlannerNavbar() {
   const pathname = usePathname();
@@ -14,8 +18,9 @@ export function TripPlannerNavbar() {
   const [hasJourney, setHasJourney] = useState(false);
   const wasOnTripPlannerRef = useRef(false);
 
-  // Clear draft when leaving trip planner routes so returning later starts fresh.
-  // Keep draft only for explicit auth-restore flows.
+  // Clear draft only when leaving trip planner for the home page (fresh start from nav).
+  // Account, auth, and profile routes keep the draft so users can return to the planner.
+  // Skip when the user is mid auth redirect so the draft can be restored after login.
   useEffect(() => {
     const wasOnTripPlanner = wasOnTripPlannerRef.current;
     const isOnTripPlanner = Boolean(isTripPlanner);
@@ -24,8 +29,8 @@ export function TripPlannerNavbar() {
       try {
         const shouldRestoreAfterAuth =
           localStorage.getItem(TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY) === "1";
-        if (!shouldRestoreAfterAuth) {
-          localStorage.removeItem(TRIP_PLANNER_DRAFT_KEY);
+        if (!shouldRestoreAfterAuth && shouldClearTripPlannerDraftForPath(pathname)) {
+          removeTripPlannerDraft();
         }
       } catch (err) {
         console.error("Error clearing trip planner draft:", err);
@@ -33,9 +38,9 @@ export function TripPlannerNavbar() {
     }
 
     wasOnTripPlannerRef.current = isOnTripPlanner;
-  }, [isTripPlanner]);
+  }, [isTripPlanner, pathname]);
 
-  // Check if a journey has been created by checking localStorage for a plan
+  // Check if a journey has been created by reading the session draft
   useEffect(() => {
     if (!isTripPlanner) {
       setHasJourney(false);
@@ -44,7 +49,7 @@ export function TripPlannerNavbar() {
 
     const checkForJourney = () => {
       try {
-        const saved = localStorage.getItem(TRIP_PLANNER_DRAFT_KEY);
+        const saved = getTripPlannerDraft();
         if (saved) {
           const state = JSON.parse(saved);
           // Check if there's a plan with days, or if hasSubmitted is true (journey was created)

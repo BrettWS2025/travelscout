@@ -12,6 +12,11 @@ import {
   type MapPoint,
   type StartEndSectorType,
 } from "@/lib/trip-planner/utils";
+import {
+  getTripPlannerDraft,
+  removeTripPlannerDraft,
+  setTripPlannerDraft,
+} from "@/lib/trip-planner/draftStorage";
 import { syncDayDetailsFromPlan } from "@/lib/trip-planner/useTripPlanner.utils";
 import type { Place } from "@/lib/nzCities";
 import type { User } from "@supabase/supabase-js";
@@ -20,7 +25,7 @@ import type { DayDetail } from "@/lib/trip-planner/utils";
 
 /**
  * Persistence logic for saving and loading trip plans
- * Handles both Supabase (server) and localStorage (client) persistence
+ * Handles both Supabase (server) and session draft storage (client)
  */
 export function useTripPlannerPersistence(
   // State values
@@ -303,7 +308,7 @@ export function useTripPlannerPersistence(
   }
 
   /**
-   * Save current state to localStorage for persistence across navigation
+   * Save current draft (sessionStorage) for persistence across client navigation
    */
   function saveStateToLocalStorage(): void {
     try {
@@ -338,18 +343,18 @@ export function useTripPlannerPersistence(
         } : null,
       };
 
-      localStorage.setItem("tripPlanner_draft", JSON.stringify(state));
+      setTripPlannerDraft(JSON.stringify(state));
     } catch (err) {
       console.error("Failed to save trip planner state:", err);
     }
   }
 
   /**
-   * Restore state from localStorage
+   * Restore state from the session draft (see draftStorage)
    */
   function restoreStateFromLocalStorage(): boolean {
     try {
-      const saved = localStorage.getItem("tripPlanner_draft");
+      const saved = getTripPlannerDraft();
       if (!saved) return false;
 
       const state = JSON.parse(saved);
@@ -452,11 +457,11 @@ export function useTripPlannerPersistence(
   }
 
   /**
-   * Clear saved state from localStorage
+   * Clear saved draft from session + legacy local key
    */
   function clearSavedState(): void {
     try {
-      localStorage.removeItem("tripPlanner_draft");
+      removeTripPlannerDraft();
     } catch (err) {
       console.error("Failed to clear saved state:", err);
     }

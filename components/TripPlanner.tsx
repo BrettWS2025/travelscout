@@ -17,6 +17,7 @@ import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
 import type { Event } from "@/lib/hooks/useEvents";
+import { TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY } from "@/lib/trip-planner/draftStorage";
 
 type ItineraryData = {
   id: string;
@@ -29,8 +30,6 @@ type ItineraryData = {
 type TripPlannerProps = {
   initialItinerary?: ItineraryData | null;
 };
-
-const TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY = "tripPlanner_restore_after_auth";
 
 function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   const tp = useTripPlanner();

@@ -1,11 +1,74 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   parseTagMetadata,
   parentTagIdsFromMetadata,
 } from "@/lib/viator/tag-metadata";
 
 export const dynamic = "force-dynamic";
+
+/** PostgREST returns at most 1000 rows per request unless paginated. */
+const PAGE_SIZE = 1000;
+
+/** Batch `.in()` lists so request URLs stay well under proxy limits. */
+const IN_CHUNK_SIZE = 100;
+
+type ViatorTagRow = {
+  tag_id: number;
+  tag_name: string;
+  description: string | null;
+  category: string | null;
+  group_name: string | null;
+  metadata: unknown;
+};
+
+/**
+ * Load every row from viator_tags (optionally filtered). Uses tag_id order so
+ * pagination is stable; tag_name is often numeric strings and sorts badly.
+ */
+async function fetchAllViatorTags(
+  supabase: SupabaseClient,
+  category: string | null,
+  group: string | null
+): Promise<{ data: ViatorTagRow[]; error: { message: string } | null }> {
+  const rows: ViatorTagRow[] = [];
+  let from = 0;
+  for (;;) {
+    let q = supabase
+      .from("viator_tags")
+      .select("tag_id, tag_name, description, category, group_name, metadata")
+      .order("tag_id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (category) q = q.eq("category", category);
+    if (group) q = q.eq("group_name", group);
+    const { data, error } = await q;
+    if (error) return { data: [], error };
+    if (!data?.length) break;
+    rows.push(...(data as ViatorTagRow[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return { data: rows, error: null };
+}
+
+async function fetchViatorTagsByIds(
+  supabase: SupabaseClient,
+  ids: number[],
+  select: string
+): Promise<{ data: any[]; error: { message: string } | null }> {
+  if (ids.length === 0) return { data: [], error: null };
+  const out: any[] = [];
+  for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + IN_CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("viator_tags")
+      .select(select)
+      .in("tag_id", chunk);
+    if (error) return { data: [], error };
+    if (data?.length) out.push(...data);
+  }
+  return { data: out, error: null };
+}
 
 /**
  * Get Viator Tags API Route
@@ -107,71 +170,30 @@ export async function GET(req: Request) {
     // Execute the SQL query using Supabase RPC or direct query
     // Since we can't use raw SQL easily with the client, we'll fetch all and filter
     // But let's use a more efficient approach
-    
-    // Test: Try fetching with metadata to see if that's the issue
-    console.log(`[Viator Tags API] Testing query with metadata field...`);
-    const testWithMetadata = supabase
-      .from("viator_tags")
-      .select("tag_id, tag_name, metadata")
-      .limit(5);
-    const { data: testMetadata, error: testMetadataError } = await testWithMetadata;
-    console.log(`[Viator Tags API] Test query with metadata:`, {
-      hasData: !!testMetadata,
-      dataLength: testMetadata?.length || 0,
-      error: testMetadataError ? {
-        message: testMetadataError.message,
-        details: testMetadataError.details,
-        hint: testMetadataError.hint,
-        code: testMetadataError.code
-      } : null
-    });
-    
-    // Try fetching without order first to see if that's the issue
-    console.log(`[Viator Tags API] Fetching all tags...`);
-    let query = supabase
-      .from("viator_tags")
-      .select("tag_id, tag_name, description, category, group_name, metadata");
 
-    if (category) {
-      query = query.eq("category", category);
-    }
-    if (group) {
-      query = query.eq("group_name", group);
-    }
+    console.log(`[Viator Tags API] Fetching all tags (paginated, max ${PAGE_SIZE} per request)...`);
+    const { data: allTagsRows, error: fetchAllError } = await fetchAllViatorTags(
+      supabase,
+      category,
+      group
+    );
 
-    // Try without order first
-    const { data: allTagsNoOrder, error: errorNoOrder } = await query;
-    console.log(`[Viator Tags API] Query without order:`, {
-      hasData: !!allTagsNoOrder,
-      dataLength: allTagsNoOrder?.length || 0,
-      error: errorNoOrder
-    });
-
-    // Now try with order
-    query = query.order("tag_name", { ascending: true });
-    const { data: allTags, error } = await query;
-    
-    console.log(`[Viator Tags API] Query with order:`, {
-      hasData: !!allTags,
-      dataLength: allTags?.length || 0,
-      error: error
-    });
-    
-    // Use the result that worked
-    const finalTags = allTags && allTags.length > 0 ? allTags : (allTagsNoOrder || []);
-
-    if (error) {
-      console.error("[Viator Tags API] Error fetching tags:", error);
-      console.error("[Viator Tags API] Error details:", JSON.stringify(error, null, 2));
+    if (fetchAllError) {
+      console.error("[Viator Tags API] Error fetching tags:", fetchAllError);
       return NextResponse.json(
         {
           error: "Failed to fetch tags",
-          message: error.message,
-          details: error,
+          message: fetchAllError.message,
+          details: fetchAllError,
         },
         { status: 500 }
       );
     }
+
+    const finalTags = allTagsRows;
+    const error = null;
+
+    console.log(`[Viator Tags API] Loaded ${finalTags.length} tag rows total`);
 
     // Filter to only parent tags (tags that are referenced in other tags' parentTagIds)
     if (!finalTags || finalTags.length === 0) {
@@ -248,12 +270,11 @@ export async function GET(req: Request) {
         
         // Get metadata for the product tags to find their parentTagIds
         // If tagIdsParam is also provided, we'll combine the queries
-        const productTagsQuery = supabase
-          .from("viator_tags")
-          .select("tag_id, metadata")
-          .in("tag_id", productTagIds);
-        
-        const { data: productTagsData } = await productTagsQuery;
+        const { data: productTagsData, error: productTagsLookupError } =
+          await fetchViatorTagsByIds(supabase, productTagIds, "tag_id, metadata");
+        if (productTagsLookupError) {
+          console.error("[Viator Tags API] Product tag lookup failed:", productTagsLookupError);
+        }
         
         if (productTagsData && productTagsData.length > 0) {
           const parentTagsBeforeProductFilter = parentTags;
@@ -304,14 +325,17 @@ export async function GET(req: Request) {
       tagIds.forEach(id => tagIdsToFetch.add(id));
     }
 
-    // Fetch all needed tags in a single query if we have any tag IDs to fetch
+    // Fetch all needed tags if we have any tag IDs to fetch (chunked .in)
     if (tagIdsToFetch.size > 0) {
-      const allTagsQuery = supabase
-        .from("viator_tags")
-        .select("tag_id, tag_name, metadata")
-        .in("tag_id", Array.from(tagIdsToFetch));
-      const { data: allTagsData } = await allTagsQuery;
-      if (allTagsData) {
+      const { data: allTagsData, error: mapLookupError } = await fetchViatorTagsByIds(
+        supabase,
+        Array.from(tagIdsToFetch),
+        "tag_id, tag_name, metadata"
+      );
+      if (mapLookupError) {
+        console.error("[Viator Tags API] Child/parent tag map lookup failed:", mapLookupError);
+      }
+      if (allTagsData?.length) {
         allTagsForMap = allTagsData;
       }
     }
