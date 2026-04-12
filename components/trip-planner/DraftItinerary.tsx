@@ -14,7 +14,8 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TripPlan } from "@/lib/itinerary";
 import type { DayDetail, DayStopMeta } from "@/lib/trip-planner/utils";
-import { addDaysToIsoDate } from "@/lib/trip-planner/utils";
+import { addDaysToIsoDate, makeDayKey } from "@/lib/trip-planner/utils";
+import { getResolvedHotelPin } from "@/lib/trip-planner/manualEntry";
 import {
   getCityById,
   NZ_CITIES,
@@ -146,6 +147,8 @@ export default function DraftItinerary(props: Props) {
     onAddToItinerary,
     onReorderStops,
     legs,
+    onAddManualTripEntry,
+    onRemoveManualTripEntry,
   } = props;
   // State for selected location and day in the new sidebar view
   const [selectedLocationIndex, setSelectedLocationIndex] = useState<number>(0);
@@ -373,6 +376,34 @@ export default function DraftItinerary(props: Props) {
     }));
   }, [plan, locationBoxes, selectedLocationIndex]);
 
+  const selectedDayForRestaurantMap = selectedLocationDays[selectedDayIndex]?.day;
+  const restaurantMapAnchor = useMemo(() => {
+    if (!selectedDayForRestaurantMap) {
+      return {
+        anchorLat: undefined as number | undefined,
+        anchorLng: undefined as number | undefined,
+        suppressNearbySearch: false,
+        anchorLabel: undefined as string | undefined,
+      };
+    }
+    const key = makeDayKey(selectedDayForRestaurantMap.date, selectedDayForRestaurantMap.location);
+    const detail = dayDetails[key];
+    const hotelPin = getResolvedHotelPin(detail);
+    const hasManualHotel = detail?.manualEntries?.some((e) => e.section === "hotel");
+    if (hasManualHotel && !hotelPin) {
+      return { anchorLat: undefined, anchorLng: undefined, suppressNearbySearch: true, anchorLabel: undefined };
+    }
+    if (hotelPin) {
+      return {
+        anchorLat: hotelPin.lat,
+        anchorLng: hotelPin.lng,
+        suppressNearbySearch: false,
+        anchorLabel: hotelPin.label,
+      };
+    }
+    return { anchorLat: undefined, anchorLng: undefined, suppressNearbySearch: false, anchorLabel: undefined };
+  }, [selectedDayForRestaurantMap, dayDetails]);
+
   // Reset selected day index when location changes
   useEffect(() => {
     if (selectedLocationDays.length > 0) {
@@ -592,6 +623,10 @@ export default function DraftItinerary(props: Props) {
                     <NearbyRestaurantsMapPanel
                       cityId={selectedLocation.cityId}
                       cityName={selectedLocation.cityName}
+                      anchorLat={restaurantMapAnchor.anchorLat}
+                      anchorLng={restaurantMapAnchor.anchorLng}
+                      anchorLabel={restaurantMapAnchor.anchorLabel}
+                      suppressNearbySearch={restaurantMapAnchor.suppressNearbySearch}
                       onBack={() => setShowNearbyRestaurantsMap(false)}
                     />
                   ) : showNearbyHotelsMap && selectedLocation ? (
@@ -658,6 +693,8 @@ export default function DraftItinerary(props: Props) {
                         onConvertStartToItinerary={onConvertStartToItinerary}
                         onConvertStartToRoad={onConvertStartToRoad}
                         legs={legs}
+                        onAddManualTripEntry={onAddManualTripEntry}
+                        onRemoveManualTripEntry={onRemoveManualTripEntry}
                       />
                     </div>
                   ) : null}

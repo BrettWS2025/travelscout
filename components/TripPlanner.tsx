@@ -18,6 +18,7 @@ import type { ExperienceItem } from "@/lib/viator-helpers";
 import { transformExperienceItemToWalking } from "@/lib/viator-helpers";
 import type { Event } from "@/lib/hooks/useEvents";
 import { TRIP_PLANNER_RESTORE_AFTER_AUTH_KEY } from "@/lib/trip-planner/draftStorage";
+import { defaultItinerarySaveTitle } from "@/lib/trip-planner/utils";
 
 type ItineraryData = {
   id: string;
@@ -165,9 +166,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
   useEffect(() => {
     if (pendingSave && !showAuthModal && user) {
       // User has logged in, show title dialog
-      const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
-        ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
-        : "My Trip");
+      const defaultTitle =
+        initialItinerary?.title || defaultItinerarySaveTitle(tp.routeStops, tp.nightsPerStop);
       setSaveTitle(defaultTitle);
       setShowSaveDialog(true);
       setSaveSuccess(false);
@@ -454,9 +454,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
 
   const showTitleDialog = () => {
     // Use existing title if editing, otherwise generate default
-    const defaultTitle = initialItinerary?.title || (tp.startCity && tp.endCity
-      ? `Trip from ${tp.startCity.name} to ${tp.endCity.name}`
-      : "My Trip");
+    const defaultTitle =
+      initialItinerary?.title || defaultItinerarySaveTitle(tp.routeStops, tp.nightsPerStop);
     setSaveTitle(defaultTitle);
     setShowSaveDialog(true);
     setSaveSuccess(false);
@@ -620,6 +619,8 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
             onAddToItinerary={handleAddToItinerary}
             endDate={tp.endDate}
             legs={tp.legs}
+            onAddManualTripEntry={tp.addManualTripEntry}
+            onRemoveManualTripEntry={tp.removeManualTripEntry}
           />
         </>
       )}

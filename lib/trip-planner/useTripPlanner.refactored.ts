@@ -96,6 +96,7 @@ export function useTripPlanner() {
     state.mapPoints,
     state.roadSectorDetails,
     state.openStops,
+    state.plan,
     state.setPlan,
     state.setError,
     state.setHasSubmitted,

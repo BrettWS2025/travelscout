@@ -26,6 +26,7 @@ export function syncDayDetailsFromPlan(
       experiences: [],
       events: [],
       viatorProducts: [],
+      manualEntries: [],
     };
     // Preserve events if they exist, otherwise initialize as empty array
     if (!next[key].events) {
@@ -34,6 +35,9 @@ export function syncDayDetailsFromPlan(
     // Preserve viatorProducts if they exist, otherwise initialize as empty array
     if (!next[key].viatorProducts) {
       next[key].viatorProducts = [];
+    }
+    if (!next[key].manualEntries) {
+      next[key].manualEntries = [];
     }
   }
   return next;

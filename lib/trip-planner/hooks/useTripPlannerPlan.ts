@@ -20,6 +20,7 @@ import {
   addDaysToIsoDate,
   type DayDetail,
   type DayStopMeta,
+  type ManualTripEntry,
   type MapPoint,
   type RoadSectorDetail,
   type StartEndSectorType,
@@ -49,6 +50,8 @@ export function useTripPlannerPlan(
   mapPoints: MapPoint[],
   roadSectorDetails: Record<number, RoadSectorDetail>,
   openStops: Record<number, boolean>,
+  /** Current itinerary; used to replicate manual hotel entries across every day at the same stop. */
+  tripPlan: TripPlan | null,
   // State setters
   setPlan: (plan: TripPlan | null) => void,
   setError: (error: string | null) => void,
@@ -775,7 +778,18 @@ export function useTripPlannerPlan(
     setDayDetails((prev) => {
       const existing = prev[key];
       if (!existing) {
-        return { ...prev, [key]: { notes: "", accommodation: "", isOpen: true, experiences: [] } };
+        return {
+          ...prev,
+          [key]: {
+            notes: "",
+            accommodation: "",
+            isOpen: true,
+            experiences: [],
+            events: [],
+            viatorProducts: [],
+            manualEntries: [],
+          },
+        };
       }
       return { ...prev, [key]: { ...existing, isOpen: !existing.isOpen } };
     });
@@ -783,28 +797,46 @@ export function useTripPlannerPlan(
 
   function updateDayNotes(date: string, location: string, notes: string) {
     const key = makeDayKey(date, location);
-    setDayDetails((prev) => ({
-      ...prev,
-      [key]: {
-        notes,
-        accommodation: prev[key]?.accommodation ?? "",
-        isOpen: prev[key]?.isOpen ?? true,
-        experiences: prev[key]?.experiences ?? [],
-      },
-    }));
+    setDayDetails((prev) => {
+      const cur = prev[key];
+      if (!cur) {
+        return {
+          ...prev,
+          [key]: {
+            notes,
+            accommodation: "",
+            isOpen: true,
+            experiences: [],
+            events: [],
+            viatorProducts: [],
+            manualEntries: [],
+          },
+        };
+      }
+      return { ...prev, [key]: { ...cur, notes } };
+    });
   }
 
   function updateDayAccommodation(date: string, location: string, accommodation: string) {
     const key = makeDayKey(date, location);
-    setDayDetails((prev) => ({
-      ...prev,
-      [key]: {
-        notes: prev[key]?.notes ?? "",
-        accommodation,
-        isOpen: prev[key]?.isOpen ?? true,
-        experiences: prev[key]?.experiences ?? [],
-      },
-    }));
+    setDayDetails((prev) => {
+      const cur = prev[key];
+      if (!cur) {
+        return {
+          ...prev,
+          [key]: {
+            notes: "",
+            accommodation,
+            isOpen: true,
+            experiences: [],
+            events: [],
+            viatorProducts: [],
+            manualEntries: [],
+          },
+        };
+      }
+      return { ...prev, [key]: { ...cur, accommodation } };
+    });
   }
 
   function addExperienceToDay(date: string, location: string, experience: import("@/lib/walkingExperiences").WalkingExperience) {
@@ -825,6 +857,7 @@ export function useTripPlannerPlan(
           experiences: [...currentExperiences, experience],
           events: existing?.events ?? [],
           viatorProducts: existing?.viatorProducts ?? [],
+          manualEntries: existing?.manualEntries ?? [],
         },
       };
     });
@@ -864,6 +897,7 @@ export function useTripPlannerPlan(
           experiences: existing?.experiences ?? [],
           events: [...currentEvents, event],
           viatorProducts: existing?.viatorProducts ?? [],
+          manualEntries: existing?.manualEntries ?? [],
         },
       };
     });
@@ -903,6 +937,89 @@ export function useTripPlannerPlan(
           experiences: existing?.experiences ?? [],
           events: existing?.events ?? [],
           viatorProducts: [...currentProducts, product],
+          manualEntries: existing?.manualEntries ?? [],
+        },
+      };
+    });
+  }
+
+  function dayKeysForLocationStop(location: string): string[] {
+    if (!tripPlan?.days?.length) return [];
+    const keys = new Set<string>();
+    for (const d of tripPlan.days) {
+      if (d.location === location) keys.add(makeDayKey(d.date, d.location));
+    }
+    return keys.size > 0 ? [...keys] : [];
+  }
+
+  function addManualTripEntry(date: string, location: string, entry: ManualTripEntry) {
+    let keysToUpdate =
+      entry.section === "hotel" ? dayKeysForLocationStop(location) : [makeDayKey(date, location)];
+
+    if (keysToUpdate.length === 0) {
+      keysToUpdate = [makeDayKey(date, location)];
+    }
+
+    setDayDetails((prev) => {
+      let next = { ...prev };
+      for (const key of keysToUpdate) {
+        const existing = next[key];
+        let list = [...(existing?.manualEntries ?? [])];
+        if (entry.section === "hotel") {
+          list = list.filter((e) => e.section !== "hotel");
+        }
+        list.push(entry);
+        next = {
+          ...next,
+          [key]: {
+            notes: existing?.notes ?? "",
+            accommodation: existing?.accommodation ?? "",
+            isOpen: existing?.isOpen ?? true,
+            experiences: existing?.experiences ?? [],
+            events: existing?.events ?? [],
+            viatorProducts: existing?.viatorProducts ?? [],
+            manualEntries: list,
+          },
+        };
+      }
+      return next;
+    });
+  }
+
+  function removeManualTripEntry(date: string, location: string, id: string) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      const removed = existing?.manualEntries?.find((e) => e.id === id);
+      const isHotel = removed?.section === "hotel";
+
+      const keysToTouch =
+        isHotel && tripPlan?.days?.length
+          ? dayKeysForLocationStop(location)
+          : [key];
+
+      let next = { ...prev };
+      for (const k of keysToTouch) {
+        const ex = next[k];
+        if (!ex) continue;
+        const list = (ex.manualEntries ?? []).filter((e) => e.id !== id);
+        next = { ...next, [k]: { ...ex, manualEntries: list } };
+      }
+      return next;
+    });
+  }
+
+  function updateManualTripEntry(date: string, location: string, id: string, patch: Partial<ManualTripEntry>) {
+    const key = makeDayKey(date, location);
+    setDayDetails((prev) => {
+      const existing = prev[key];
+      if (!existing) return prev;
+      const list = (existing.manualEntries ?? []).map((e) => (e.id === id ? { ...e, ...patch } : e));
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          manualEntries: list,
         },
       };
     });
@@ -1140,6 +1257,9 @@ export function useTripPlannerPlan(
     removeEventFromDay,
     addViatorProductToDay,
     removeViatorProductFromDay,
+    addManualTripEntry,
+    removeManualTripEntry,
+    updateManualTripEntry,
     toggleRoadSectorOpen,
     updateRoadSectorActivities,
     addExperienceToRoadSector,

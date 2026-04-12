@@ -5,6 +5,10 @@ import type { NearbyPlace } from "@/lib/hooks/useNearbyPlaces";
 
 type Props = {
   places?: NearbyPlace[];
+  /** When set with `places` length 1, shows a confirmation link beside Directions (manual bookings). */
+  confirmationUrl?: string;
+  /** Plain-text confirmation reference when `confirmationUrl` is not used. */
+  confirmationRef?: string;
   /**
    * Optional label used for accessibility and empty states.
    * Example: "Nearby restaurants"
@@ -28,6 +32,8 @@ function directionsUrl(place: NearbyPlace): string | null {
 
 export default function NearbyPlacesCarousel({
   places = [],
+  confirmationUrl,
+  confirmationRef,
   title,
   size = "default",
   showUserRatingCount = false,
@@ -153,15 +159,33 @@ export default function NearbyPlacesCarousel({
                     />
                   )}
 
-                  {dirHref ? (
-                    <a
-                      href={dirHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
-                    >
-                      Directions
-                    </a>
+                  {dirHref || confirmationUrl || confirmationRef ? (
+                    <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+                      {dirHref ? (
+                        <a
+                          href={dirHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          Directions
+                        </a>
+                      ) : null}
+                      {confirmationUrl ? (
+                        <a
+                          href={confirmationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
+                        >
+                          Confirmation
+                        </a>
+                      ) : confirmationRef ? (
+                        <span className="text-[10px] font-medium text-slate-600" title="Booking reference">
+                          Ref: {confirmationRef}
+                        </span>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
               </div>

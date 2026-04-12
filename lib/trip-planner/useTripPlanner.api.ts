@@ -2,6 +2,7 @@ import { getPlaceById, searchPlacesByName, type Place } from "@/lib/nzCities";
 import { getCityById } from "@/lib/nzCities";
 import { supabase } from "@/lib/supabase/client";
 import type { TripInput, TripPlan } from "@/lib/itinerary";
+import { defaultItinerarySaveTitle } from "@/lib/trip-planner/utils";
 
 export async function fetchPlaceCoordinates(
   placeId: string,
@@ -36,8 +37,12 @@ export async function saveItineraryToSupabase(
   extendedTripPlan: any,
   itineraryId?: string
 ): Promise<{ success: boolean; error?: string }> {
+  const routeStops = extendedTripPlan?.routeStops as string[] | undefined;
+  const nightsPerStop = extendedTripPlan?.nightsPerStop as number[] | undefined;
   const itineraryData = {
-    title: title || `Trip from ${tripInput.startCity.name} to ${tripInput.endCity.name}`,
+    title:
+      title ||
+      defaultItinerarySaveTitle(routeStops ?? [], nightsPerStop ?? []),
     trip_input: tripInput,
     trip_plan: extendedTripPlan,
   };

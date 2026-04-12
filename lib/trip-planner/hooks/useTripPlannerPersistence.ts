@@ -7,6 +7,7 @@ import { NZ_STOPS } from "@/lib/nzStops";
 import { saveItineraryToSupabase } from "@/lib/trip-planner/useTripPlanner.api";
 import {
   buildDayStopMeta,
+  defaultItinerarySaveTitle,
   fromIsoDate,
   type DayStopMeta,
   type MapPoint,
@@ -143,7 +144,7 @@ export function useTripPlannerPersistence(
 
       const result = await saveItineraryToSupabase(
         user.id,
-        title || `Trip from ${startCity.name} to ${endCity.name}`,
+        title || defaultItinerarySaveTitle(routeStops, nightsPerStop),
         trip_input,
         extended_trip_plan,
         itineraryId
@@ -274,6 +275,7 @@ export function useTripPlannerPersistence(
               experiences: saved.experiences ?? synced?.experiences ?? [],
               events: saved.events ?? synced?.events ?? [],
               viatorProducts: saved.viatorProducts ?? synced?.viatorProducts ?? [],
+              manualEntries: saved.manualEntries ?? synced?.manualEntries ?? [],
             };
           }
           // Also include any synced days that weren't in saved dayDetails
@@ -428,6 +430,7 @@ export function useTripPlannerPersistence(
                 experiences: saved.experiences ?? synced?.experiences ?? [],
                 events: saved.events ?? synced?.events ?? [],
                 viatorProducts: saved.viatorProducts ?? synced?.viatorProducts ?? [],
+                manualEntries: saved.manualEntries ?? synced?.manualEntries ?? [],
               };
             }
             // Also include any synced days that weren't in saved dayDetails

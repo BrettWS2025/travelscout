@@ -10,16 +10,44 @@ type Props = {
   cityId: string;
   cityName: string;
   onBack: () => void;
+  /** When set (e.g. manual hotel resolved in Places), restaurant search matches the day carousel anchored here. */
+  anchorLat?: number;
+  anchorLng?: number;
+  /** Manual hotel present but not resolved — do not fall back to city center for restaurants. */
+  suppressNearbySearch?: boolean;
+  /** Display name for the hotel pin on the map (when anchored to a resolved hotel). */
+  anchorLabel?: string;
 };
 
 /**
  * Full-width panel: map of nearby restaurants for the selected trip stop.
  * Uses the same `useNearbyPlaces` query params as the day carousel so React Query serves cache (no extra Places calls).
  */
-export default function NearbyRestaurantsMapPanel({ cityId, cityName, onBack }: Props) {
+export default function NearbyRestaurantsMapPanel({
+  cityId,
+  cityName,
+  onBack,
+  anchorLat,
+  anchorLng,
+  anchorLabel,
+  suppressNearbySearch,
+}: Props) {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
   useEffect(() => {
+    if (suppressNearbySearch) {
+      setCoords(undefined);
+      return;
+    }
+    if (
+      typeof anchorLat === "number" &&
+      typeof anchorLng === "number" &&
+      Number.isFinite(anchorLat) &&
+      Number.isFinite(anchorLng)
+    ) {
+      setCoords({ lat: anchorLat, lng: anchorLng });
+      return;
+    }
     if (!cityId) {
       setCoords(undefined);
       return;
@@ -40,7 +68,7 @@ export default function NearbyRestaurantsMapPanel({ cityId, cityName, onBack }: 
         else setCoords(undefined);
       })
       .catch(() => setCoords(undefined));
-  }, [cityId, cityName]);
+  }, [cityId, cityName, anchorLat, anchorLng, suppressNearbySearch]);
 
   const { places, loading, error } = useNearbyPlaces({
     lat: coords?.lat,
@@ -51,7 +79,13 @@ export default function NearbyRestaurantsMapPanel({ cityId, cityName, onBack }: 
     sortBy: "rating",
   });
 
-  const canLoad = coords !== undefined;
+  const anchoredToHotel =
+    typeof anchorLat === "number" &&
+    typeof anchorLng === "number" &&
+    Number.isFinite(anchorLat) &&
+    Number.isFinite(anchorLng);
+  const mapLocationLabel = anchoredToHotel ? "your hotel" : cityName;
+  const canLoad = coords !== undefined && !suppressNearbySearch;
 
   return (
     <div className="flex-1 min-w-0">
@@ -70,9 +104,21 @@ export default function NearbyRestaurantsMapPanel({ cityId, cityName, onBack }: 
             <h4 className="text-sm font-semibold text-slate-900">Places to eat — map</h4>
           </div>
           <p className="text-xs text-slate-500 mb-3">
-            Up to 20 restaurants within 5 km of {cityName}, sorted by rating (same search as the day view carousel).
+            {suppressNearbySearch ? (
+              <>
+                Choose your hotel from Google search on the day view first. Nearby restaurants are anchored to the
+                hotel once it resolves to a place—we don’t use the city center for this section until then.
+              </>
+            ) : (
+              <>
+                Up to 20 restaurants within 5 km of {mapLocationLabel}, sorted by rating (same search as the day view
+                carousel).
+              </>
+            )}
           </p>
-          {!canLoad || loading ? (
+          {suppressNearbySearch ? (
+            <div className="text-xs text-slate-500 text-center py-12">No map until the hotel is resolved.</div>
+          ) : !canLoad || loading ? (
             <div className="text-xs text-slate-600 text-center py-12">Loading restaurants…</div>
           ) : error ? (
             <div className="text-xs text-slate-500 text-center py-12">{error}</div>
@@ -81,9 +127,14 @@ export default function NearbyRestaurantsMapPanel({ cityId, cityName, onBack }: 
               places={places}
               centerLat={coords.lat}
               centerLng={coords.lng}
-              locationLabel={cityName}
+              locationLabel={mapLocationLabel}
               markerEmoji="🍽️"
               placeTypePlural="restaurants"
+              searchOriginPin={
+                anchoredToHotel
+                  ? { lat: coords.lat, lng: coords.lng, label: anchorLabel }
+                  : undefined
+              }
             />
           ) : null}
         </div>

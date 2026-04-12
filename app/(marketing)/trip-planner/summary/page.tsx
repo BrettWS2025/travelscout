@@ -8,6 +8,8 @@ import type { MapPoint } from "@/lib/trip-planner/utils";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
 import { getTripPlannerDraft } from "@/lib/trip-planner/draftStorage";
+import { collectManualMapPoints } from "@/lib/trip-planner/manualEntry";
+import type { DayDetail } from "@/lib/trip-planner/utils";
 
 type SavedPlan = {
   routeStops?: string[];
@@ -15,6 +17,7 @@ type SavedPlan = {
   mapPoints?: MapPoint[];
   legs?: TripLeg[];
   days?: unknown[];
+  dayDetails?: Record<string, DayDetail>;
 };
 
 type SavedState = {
@@ -58,6 +61,7 @@ export default function TripPlannerSummaryPage() {
   const routeStops = state?.plan?.routeStops ?? [];
   const nightsPerStop = state?.plan?.nightsPerStop ?? [];
   const mapPoints = state?.plan?.mapPoints ?? [];
+  const manualPoiMarkers = collectManualMapPoints(state?.plan?.dayDetails);
   const legs = state?.plan?.legs ?? [];
   const startDate = state?.startDate ?? "";
   const endDate = state?.endDate ?? "";
@@ -101,6 +105,7 @@ export default function TripPlannerSummaryPage() {
       <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
         <RouteOverview
           mapPoints={mapPoints}
+          manualPoiMarkers={manualPoiMarkers}
           legs={legs}
           legsLoading={false}
         />

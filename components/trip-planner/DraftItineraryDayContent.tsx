@@ -3,8 +3,10 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { Car, Star, Compass, Ticket, Bed, Utensils, Zap, X, Home, MapPin } from "lucide-react";
 import type { TripPlan, TripLeg } from "@/lib/itinerary";
-import type { DayDetail } from "@/lib/trip-planner/utils";
+import type { DayDetail, ManualTripEntry } from "@/lib/trip-planner/utils";
+import ManualEntryInline from "@/components/trip-planner/ManualEntryInline";
 import { formatDisplayDate, makeDayKey } from "@/lib/trip-planner/utils";
+import { getResolvedHotelCoords } from "@/lib/trip-planner/manualEntry";
 import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
@@ -58,6 +60,8 @@ export type DraftItineraryDayContentProps = {
   onConvertStartToRoad?: () => void;
   /** Optional driving legs for dynamic distance/time */
   legs?: TripLeg[];
+  onAddManualTripEntry?: (date: string, location: string, entry: ManualTripEntry) => void;
+  onRemoveManualTripEntry?: (date: string, location: string, id: string) => void;
 };
 
 export default function DraftItineraryDayContent({
@@ -84,11 +88,19 @@ export default function DraftItineraryDayContent({
   onConvertStartToItinerary,
   onConvertStartToRoad,
   legs,
+  onAddManualTripEntry,
+  onRemoveManualTripEntry,
 }: DraftItineraryDayContentProps) {
   // Use the same key helper as the rest of the trip planner to ensure
   // we read the exact same dayDetails entry that "Added Experiences and Events" uses.
   const dayKey = makeDayKey(selectedDay.date, selectedDay.location);
   const detail = dayDetails[dayKey] || {};
+  const manualEntries = detail.manualEntries ?? [];
+  const manualThings = manualEntries.filter((m) => m.section === "thingsToDo");
+  const manualEvents = manualEntries.filter((m) => m.section === "events");
+  const manualHotels = manualEntries.filter((m) => m.section === "hotel");
+  const manualRestaurants = manualEntries.filter((m) => m.section === "restaurant");
+  const hasManualHotel = manualHotels.length > 0;
   const city = getCityById(selectedDay.location);
   const locationName = city?.name || selectedDay.location;
 
@@ -144,6 +156,13 @@ export default function DraftItineraryDayContent({
     }).catch(() => setDestinationLocationCoords(undefined));
   }, [eventsDestinationId, eventsDestinationName]);
 
+  const resolvedHotelCoords = useMemo(() => getResolvedHotelCoords(detail), [detail]);
+  /** City center when no manual hotel; hotel coordinates when manual hotel resolved in Places. */
+  const restaurantSearchCoords = useMemo(() => {
+    if (hasManualHotel) return resolvedHotelCoords ?? undefined;
+    return destinationLocationCoords;
+  }, [hasManualHotel, resolvedHotelCoords, destinationLocationCoords]);
+
   const { events: destinationEvents, loading: destinationLoading } = useEvents(
     selectedDay.date,
     eventsDestinationName,
@@ -158,8 +177,8 @@ export default function DraftItineraryDayContent({
     loading: nearbyRestaurantsLoading,
     error: nearbyRestaurantsError,
   } = useNearbyPlaces({
-    lat: destinationLocationCoords?.lat,
-    lng: destinationLocationCoords?.lng,
+    lat: restaurantSearchCoords?.lat,
+    lng: restaurantSearchCoords?.lng,
     radiusMeters: 5000,
     maxPlaces: 20,
     includedType: "restaurant",
@@ -186,6 +205,10 @@ export default function DraftItineraryDayContent({
 
   const canLoadNearbyPlaces =
     destinationLocationCoords?.lat !== undefined && destinationLocationCoords?.lng !== undefined;
+
+  const canLoadRestaurantNearbySearch = hasManualHotel
+    ? resolvedHotelCoords !== undefined
+    : canLoadNearbyPlaces;
 
   const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
 
@@ -572,6 +595,17 @@ export default function DraftItineraryDayContent({
                   ) : (
                     <div className="text-sm text-slate-500 text-center py-4">No experiences found</div>
                   )}
+                  {onAddManualTripEntry && onRemoveManualTripEntry && (
+                    <div className="mt-3 pt-3 border-t border-slate-100/90">
+                      <ManualEntryInline
+                        section="thingsToDo"
+                        entries={manualThings}
+                        locationBias={destinationLocationCoords}
+                        onAdd={(e) => onAddManualTripEntry(selectedDay.date, selectedDay.location, e)}
+                        onRemove={(id) => onRemoveManualTripEntry(selectedDay.date, selectedDay.location, id)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -656,6 +690,17 @@ export default function DraftItineraryDayContent({
                     ) : (
                       <div className="text-xs text-slate-500 text-center py-4">No events found for this day</div>
                     )}
+                    {onAddManualTripEntry && onRemoveManualTripEntry && (
+                      <div className="mt-3 pt-3 border-t border-slate-100/90">
+                        <ManualEntryInline
+                          section="events"
+                          entries={manualEvents}
+                          locationBias={destinationLocationCoords}
+                          onAdd={(e) => onAddManualTripEntry(selectedDay.date, selectedDay.location, e)}
+                          onRemove={(id) => onRemoveManualTripEntry(selectedDay.date, selectedDay.location, id)}
+                        />
+                      </div>
+                    )}
                   </div>
 
                 </>
@@ -681,25 +726,52 @@ export default function DraftItineraryDayContent({
                       </button>
                     )}
                   </div>
-                  {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
-                    <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
-                  ) : nearbyHotelsError ? (
-                    <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
-                  ) : topRatedHotelsNearby.length > 0 ? (
-                    <>
-                      <p className="text-xs text-slate-500 mb-2">
-                        Top nearby hotels by rating and review count.
-                      </p>
-                      <NearbyPlacesCarousel
-                        places={topRatedHotelsNearby}
-                        title="Top nearby hotels"
-                        size="compact"
-                        showUserRatingCount
-                        showDirectionsLink
+                  {hasManualHotel ? (
+                    onAddManualTripEntry && onRemoveManualTripEntry ? (
+                      <ManualEntryInline
+                        section="hotel"
+                        entries={manualHotels}
+                        locationBias={destinationLocationCoords}
+                        onAdd={(e) => onAddManualTripEntry(selectedDay.date, selectedDay.location, e)}
+                        onRemove={(id) => onRemoveManualTripEntry(selectedDay.date, selectedDay.location, id)}
                       />
-                    </>
+                    ) : null
                   ) : (
-                    <div className="text-xs text-slate-500 text-center py-4">No nearby hotels found for this area.</div>
+                    <>
+                      {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
+                        <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
+                      ) : nearbyHotelsError ? (
+                        <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
+                      ) : topRatedHotelsNearby.length > 0 ? (
+                        <>
+                          <p className="text-xs text-slate-500 mb-2">
+                            Top nearby hotels by rating and review count.
+                          </p>
+                          <NearbyPlacesCarousel
+                            places={topRatedHotelsNearby}
+                            title="Top nearby hotels"
+                            size="compact"
+                            showUserRatingCount
+                            showDirectionsLink
+                          />
+                        </>
+                      ) : (
+                        <div className="text-xs text-slate-500 text-center py-4">
+                          No nearby hotels found for this area.
+                        </div>
+                      )}
+                      {onAddManualTripEntry && onRemoveManualTripEntry && (
+                        <div className="mt-3 pt-3 border-t border-slate-100/90">
+                          <ManualEntryInline
+                            section="hotel"
+                            entries={manualHotels}
+                            locationBias={destinationLocationCoords}
+                            onAdd={(e) => onAddManualTripEntry(selectedDay.date, selectedDay.location, e)}
+                            onRemove={(id) => onRemoveManualTripEntry(selectedDay.date, selectedDay.location, id)}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -715,8 +787,14 @@ export default function DraftItineraryDayContent({
                       <button
                         type="button"
                         onClick={onShowNearbyRestaurantsMap}
-                        disabled={!canLoadNearbyPlaces}
-                        title={!canLoadNearbyPlaces ? "Location not ready yet" : undefined}
+                        disabled={!canLoadRestaurantNearbySearch}
+                        title={
+                          !canLoadRestaurantNearbySearch
+                            ? hasManualHotel
+                              ? "Pick your hotel from search so we can anchor restaurants"
+                              : "Location not ready yet"
+                            : undefined
+                        }
                         className="shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                       >
                         <MapPin className="w-3.5 h-3.5" aria-hidden />
@@ -724,7 +802,12 @@ export default function DraftItineraryDayContent({
                       </button>
                     )}
                   </div>
-                  {!canLoadNearbyPlaces || nearbyRestaurantsLoading ? (
+                  {hasManualHotel && !resolvedHotelCoords ? (
+                    <div className="text-xs text-slate-500 text-center py-4">
+                      Nearby places to eat open once your hotel is chosen from Google search—we anchor the list to that
+                      spot.
+                    </div>
+                  ) : !canLoadRestaurantNearbySearch || nearbyRestaurantsLoading ? (
                     <div className="text-xs text-slate-600 text-center py-4">Loading places...</div>
                   ) : nearbyRestaurantsError ? (
                     <div className="text-xs text-slate-500 text-center py-4">{nearbyRestaurantsError}</div>
@@ -738,6 +821,17 @@ export default function DraftItineraryDayContent({
                     />
                   ) : (
                     <div className="text-xs text-slate-500 text-center py-4">No nearby places found</div>
+                  )}
+                  {onAddManualTripEntry && onRemoveManualTripEntry && (
+                    <div className="mt-3 pt-3 border-t border-slate-100/90">
+                      <ManualEntryInline
+                        section="restaurant"
+                        entries={manualRestaurants}
+                        locationBias={destinationLocationCoords}
+                        onAdd={(e) => onAddManualTripEntry(selectedDay.date, selectedDay.location, e)}
+                        onRemove={(id) => onRemoveManualTripEntry(selectedDay.date, selectedDay.location, id)}
+                      />
+                    </div>
                   )}
                 </div>
               )}

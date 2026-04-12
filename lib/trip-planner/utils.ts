@@ -1,14 +1,48 @@
 import { buildLegsFromPoints, type TripLeg } from "@/lib/itinerary";
-import { NZ_CITIES } from "@/lib/nzCities";
+import { NZ_CITIES, getCityById } from "@/lib/nzCities";
 import { getPlacesCache } from "@/lib/places";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { Event } from "@/lib/hooks/useEvents";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 
+/** Subset of Google/Nearby place fields stored on a manual entry (serializable). */
+export type ManualPlaceSnapshot = {
+  id: string;
+  name: string;
+  address?: string;
+  rating?: number | null;
+  userRatingCount?: number | null;
+  lat?: number;
+  lng?: number;
+  googleMapsUri?: string;
+  imageUrl?: string;
+  photoName?: string;
+};
+
 export type MapPoint = {
   lat: number;
   lng: number;
   name?: string;
+};
+
+/** User-added booking / plan item (not from site inventory). */
+export type ManualEntrySection = "thingsToDo" | "events" | "hotel" | "restaurant";
+
+export type ManualTripEntry = {
+  id: string;
+  section: ManualEntrySection;
+  /** Title: event, hotel, restaurant, activity… */
+  name?: string;
+  /** Address or venue description */
+  locationText?: string;
+  /** Confirmation number or booking link */
+  confirmation?: string;
+  /** After geocode / Places resolve */
+  lat?: number;
+  lng?: number;
+  /** Rich data when resolved via Google (esp. lodging) */
+  place?: ManualPlaceSnapshot;
+  resolveError?: string;
 };
 
 export type DayDetail = {
@@ -18,6 +52,8 @@ export type DayDetail = {
   experiences?: WalkingExperience[];
   events?: Event[];
   viatorProducts?: ExperienceItem[];
+  /** User-added bookings not sourced from the site (per day). */
+  manualEntries?: ManualTripEntry[];
 };
 
 export type RoadSectorDetail = {
@@ -241,6 +277,43 @@ export function safeReadRecent(): CityLite[] {
   } catch {
     return [];
   }
+}
+
+/**
+ * City names for route stops with at least one night (same basis as DraftItinerary location strip).
+ */
+export function getOvernightStayCityNames(routeStops: string[], nightsPerStop: number[]): string[] {
+  return routeStops
+    .map((stopId, stopIndex) => {
+      const nights = nightsPerStop[stopIndex] ?? 0;
+      if (nights < 1) return null;
+      const city = getCityById(stopId);
+      const name = (city?.name || stopId).trim();
+      return name || null;
+    })
+    .filter((n): n is string => n !== null);
+}
+
+/**
+ * Default save title: "Trip to X", "Trip to X and Y", or "Trip to X, Y, and Z".
+ * Falls back to all route stop names if no overnight stays are found.
+ */
+export function defaultItinerarySaveTitle(routeStops: string[], nightsPerStop: number[]): string {
+  let names = getOvernightStayCityNames(routeStops, nightsPerStop);
+  if (names.length === 0 && routeStops.length > 0) {
+    names = routeStops
+      .map((id) => {
+        const city = getCityById(id);
+        return (city?.name || id).trim();
+      })
+      .filter(Boolean);
+  }
+  if (names.length === 0) return "My Trip";
+  if (names.length === 1) return `Trip to ${names[0]}`;
+  if (names.length === 2) return `Trip to ${names[0]} and ${names[1]}`;
+  const allButLast = names.slice(0, -1).join(", ");
+  const last = names[names.length - 1];
+  return `Trip to ${allButLast}, and ${last}`;
 }
 
 export function safeWriteRecent(items: CityLite[]) {

@@ -9,11 +9,13 @@ const TripMap = dynamic(() => import("@/components/TripMap"), { ssr: false });
 
 type Props = {
   mapPoints: MapPoint[];
+  /** Manual bookings with coordinates — extra pins; driving line still follows `mapPoints` only. */
+  manualPoiMarkers?: MapPoint[];
   legs: TripLeg[];
   legsLoading: boolean;
 };
 
-export default function RouteOverview({ mapPoints, legs, legsLoading }: Props) {
+export default function RouteOverview({ mapPoints, manualPoiMarkers, legs, legsLoading }: Props) {
   if (!mapPoints || mapPoints.length < 2) return null;
 
   return (
@@ -21,7 +23,7 @@ export default function RouteOverview({ mapPoints, legs, legsLoading }: Props) {
       <h2 className="text-lg font-semibold text-slate-900">Route overview</h2>
 
       <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-slate-100/50">
-        <TripMap points={mapPoints} />
+        <TripMap points={mapPoints} poiMarkers={manualPoiMarkers ?? []} />
       </div>
 
       {legs.length > 0 && (

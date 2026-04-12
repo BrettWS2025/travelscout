@@ -127,6 +127,7 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
         [],
         {},
         {},
+        null,
         ...Object.values(mockSetters)
       )
     );
@@ -174,6 +175,7 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
         [],
         {},
         {},
+        null,
         ...Object.values(mockSetters)
       )
     );
@@ -234,6 +236,7 @@ describe('useTripPlannerPlan - Return Trip Logic', () => {
         [],
         {},
         {},
+        null,
         ...Object.values(mockSetters)
       )
     );
