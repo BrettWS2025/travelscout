@@ -4,6 +4,7 @@ import {
   parseTagMetadata,
   parentTagIdsFromMetadata,
 } from "@/lib/viator/tag-metadata";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,9 @@ async function fetchViatorTagsByIds(
  */
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "viatorTags");
+    if (limited) return limited;
+
     // Get Supabase credentials (using anon key for read-only access)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

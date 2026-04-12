@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchTicketmasterEvents } from "@/lib/ticketmaster";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "ticketmaster");
+    if (limited) return limited;
+
     const { searchParams } = new URL(req.url);
 
     const latStr = searchParams.get("lat");

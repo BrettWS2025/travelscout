@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,9 @@ function extractFirstUsablePhotoUrl(photo: unknown): string | undefined {
  */
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "googlePlaces");
+    if (limited) return limited;
+
     const { searchParams } = new URL(req.url);
     const textQuery = (searchParams.get("textQuery") || "").trim();
     if (!textQuery) {

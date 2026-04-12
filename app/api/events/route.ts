@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRedisClient } from "@/lib/redis/client";
 import crypto from "crypto";
 import { searchTicketmasterEvents } from "@/lib/ticketmaster";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,9 @@ interface EventfindaResponse {
  */
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "events");
+    if (limited) return limited;
+
     const { searchParams } = new URL(req.url);
 
     // Get credentials from environment

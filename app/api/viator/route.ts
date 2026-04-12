@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createViatorClient, type ViatorSearchParams } from "@/lib/viator";
 import { getRedisClient } from "@/lib/redis/client";
 import crypto from "crypto";
+import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,9 @@ const CACHE_TTL_SECONDS = 21600;
  */
 export async function GET(req: Request) {
   try {
+    const limited = await enforceBffRateLimit(req, "viator");
+    if (limited) return limited;
+
     console.log("[Viator API] Request received");
     const { searchParams } = new URL(req.url);
     console.log("[Viator API] Query params:", Object.fromEntries(searchParams.entries()));
