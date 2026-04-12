@@ -7,8 +7,7 @@ import type { TripLeg } from "@/lib/itinerary";
 import type { MapPoint } from "@/lib/trip-planner/utils";
 import RouteOverview from "@/components/trip-planner/RouteOverview";
 import TripSummary from "@/components/trip-planner/TripSummary";
-
-const STORAGE_KEY = "tripPlanner_draft";
+import { getTripPlannerDraft } from "@/lib/trip-planner/draftStorage";
 
 type SavedPlan = {
   routeStops?: string[];
@@ -35,7 +34,7 @@ export default function TripPlannerSummaryPage() {
   useEffect(() => {
     if (!mounted) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = getTripPlannerDraft();
       if (!raw) {
         setState(null);
         return;

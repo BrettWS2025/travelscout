@@ -87,12 +87,13 @@ describe('useTripPlannerPersistence', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Clear localStorage
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   afterEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe('saveItinerary', () => {
@@ -386,8 +387,8 @@ describe('useTripPlannerPersistence', () => {
     });
   });
 
-  describe('localStorage persistence', () => {
-    it('should save state to localStorage', () => {
+  describe('session draft persistence', () => {
+    it('should save state to sessionStorage', () => {
       const { result } = renderHook(() =>
         useTripPlannerPersistence(
           mockUser,
@@ -435,7 +436,7 @@ describe('useTripPlannerPersistence', () => {
 
       result.current.saveStateToLocalStorage();
 
-      const saved = localStorage.getItem('tripPlanner_draft');
+      const saved = sessionStorage.getItem('tripPlanner_draft');
       expect(saved).toBeTruthy();
 
       const parsed = JSON.parse(saved!);
@@ -493,11 +494,11 @@ describe('useTripPlannerPersistence', () => {
 
       result.current.saveStateToLocalStorage();
 
-      const saved = localStorage.getItem('tripPlanner_draft');
+      const saved = sessionStorage.getItem('tripPlanner_draft');
       expect(saved).toBeNull();
     });
 
-    it('should restore state from localStorage', () => {
+    it('should restore state from sessionStorage (or migrate legacy localStorage)', () => {
       const state = {
         startCityId: 'akl',
         endCityId: 'wlg',
@@ -566,8 +567,8 @@ describe('useTripPlannerPersistence', () => {
       expect(mockSetters.setEndDate).toHaveBeenCalledWith('2025-01-05');
     });
 
-    it('should return false for invalid localStorage data', () => {
-      localStorage.setItem('tripPlanner_draft', 'invalid-json');
+    it('should return false for invalid draft data', () => {
+      sessionStorage.setItem('tripPlanner_draft', 'invalid-json');
 
       const { result } = renderHook(() =>
         useTripPlannerPersistence(
@@ -622,6 +623,7 @@ describe('useTripPlannerPersistence', () => {
     });
 
     it('should clear saved state', () => {
+      sessionStorage.setItem('tripPlanner_draft', JSON.stringify({ test: 'data' }));
       localStorage.setItem('tripPlanner_draft', JSON.stringify({ test: 'data' }));
 
       const { result } = renderHook(() =>
@@ -671,8 +673,8 @@ describe('useTripPlannerPersistence', () => {
 
       result.current.clearSavedState();
 
-      const saved = localStorage.getItem('tripPlanner_draft');
-      expect(saved).toBeNull();
+      expect(sessionStorage.getItem('tripPlanner_draft')).toBeNull();
+      expect(localStorage.getItem('tripPlanner_draft')).toBeNull();
     });
   });
 });
