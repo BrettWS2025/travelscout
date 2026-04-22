@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Calendar, Compass, Route, BookOpen, Star, Menu, Heart, Leaf } from "lucide-react";
+import { MapPin, Menu, Heart } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,55 +16,49 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative w-full h-[600px] md:h-[700px] lg:h-[800px] -mt-[120px] overflow-hidden">
+      <section className="relative w-screen min-h-[78vh] md:min-h-screen -mt-[120px] -mb-px overflow-hidden ml-[calc(50%-50vw)]">
             <Image
               src="/Main_Page_Pic.jpg"
               alt="New Zealand Landscape"
               fill
               priority
-              className="object-cover brightness-130"
+              className="object-cover brightness-125"
               sizes="100vw"
             />
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/35"></div>
+        <div className="absolute inset-x-0 bottom-0 h-24 md:h-36 bg-gradient-to-b from-transparent via-slate-100/40 to-[#f8fafc]"></div>
         
         {/* Text content */}
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 md:px-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight font-[family-name:var(--font-plus-jakarta)] text-white">
-              <span className="bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 bg-clip-text text-transparent">
-                Discover New Zealand
-              </span>
+        <div className="relative z-10 min-h-[78vh] md:min-h-screen pt-28 md:pt-28">
+          <div className="container h-full flex items-center px-4 md:px-0">
+            <div className="max-w-3xl space-y-4 md:space-y-6 text-left translate-y-10 md:translate-y-14">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight font-[family-name:var(--font-plus-jakarta)] text-white">
+              Discover New Zealand.
               <br />
-              <span className="bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent italic">
-                Your Way
-              </span>
-            </h1>
+              Your way.
+              </h1>
             
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-lg">
-              <span style={{ display: 'none' }}>Impact-Site-Verification: 321bf81b-5895-4010-9e67-52c4f2342cc0</span>
-              Plan your journey across Aotearoa with our trip planner. 
-              Book events and attractions along the way, and create your itinerary 
-              tailored to your style.
-            </p>
+              <p className="text-lg md:text-xl text-white/90 max-w-2xl font-medium">
+                <span style={{ display: 'none' }}>Impact-Site-Verification: 321bf81b-5895-4010-9e67-52c4f2342cc0</span>
+                Plan it. Map it. Price it. Live it.
+              </p>
             
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-              <Link
-                href="/trip-planner"
-                className="px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-                style={{ 
-                  background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                }}
-              >
-                Start Planning Your Trip
-              </Link>
+              <div className="pt-1">
+                <Link
+                  href="/trip-planner"
+                  className="inline-flex items-center gap-2 text-white text-lg md:text-lg font-medium border-b border-white/80 pb-1 hover:border-white transition-colors"
+                >
+                  Plan your Trip
+                  <span aria-hidden>›</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Everything You Need */}
-      <section className="card p-8 md:p-12" style={{ borderRadius: 0 }}>
+      <section className="mt-0 md:mt-2 p-8 md:p-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-plus-jakarta)] text-slate-800">Everything You <span className="italic">Need</span></h2>
@@ -150,6 +144,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <div className="px-8 md:px-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="w-2/3 md:w-1/2 h-px bg-slate-300/70 mx-auto"></div>
+        </div>
+      </div>
 
       {/* Escape Down Under */}
       <section className="p-8 md:p-12">

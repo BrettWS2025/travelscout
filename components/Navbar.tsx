@@ -229,8 +229,8 @@ function ProfileMenu({
               onMouseEnter={() => setOpen(true)}
               onMouseLeave={() => setOpen(false)}
             >
-              <div className="card p-2" style={{ color: "var(--text)" }}>
-              <ul className="space-y-1 text-sm">
+              <div className="card p-2" style={{ color: "#1e293b" }}>
+                <ul className="space-y-1 text-sm">
                 <li>
                   <Link
                     href="/account/profile"
@@ -260,7 +260,7 @@ function ProfileMenu({
                     <span>Sign out</span>
                   </button>
                 </li>
-              </ul>
+                </ul>
               </div>
             </div>
           )}
@@ -278,6 +278,8 @@ export function Navbar() {
   );
   const pathname = usePathname();
   const isTripPlanner = pathname?.includes("/trip-planner");
+  const isHome = pathname === "/";
+  const navTextColor = isHome ? "#ffffff" : "var(--text)";
 
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -299,21 +301,22 @@ export function Navbar() {
 
   return (
     <header
-      className="relative z-[1000] py-3 overflow-visible"
+      className="relative z-[1000] py-2 md:py-3 overflow-visible"
       style={{
-        background: "rgba(255, 255, 255, 0.6)",
-        WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        backdropFilter: "saturate(180%) blur(20px)",
-        borderBottom: isTripPlanner ? "none" : "1px solid rgba(148, 163, 184, 0.2)",
-        color: "var(--text)",
-        boxShadow: isTripPlanner ? "none" : "0 1px 3px rgba(0, 0, 0, 0.05)",
+        ["--text" as any]: navTextColor,
+        background: isHome ? "transparent" : "rgba(255, 255, 255, 0.6)",
+        WebkitBackdropFilter: isHome ? "none" : "saturate(180%) blur(20px)",
+        backdropFilter: isHome ? "none" : "saturate(180%) blur(20px)",
+        borderBottom: isTripPlanner || isHome ? "none" : "1px solid rgba(148, 163, 184, 0.2)",
+        color: navTextColor,
+        boxShadow: isTripPlanner || isHome ? "none" : "0 1px 3px rgba(0, 0, 0, 0.05)",
       }}
     >
       <div className="container navbar-responsive flex items-center justify-between overflow-visible">
         <Link
           href="/"
           className="relative flex items-center min-w-0 shrink py-0"
-          style={{ color: "var(--text)" }}
+          style={{ color: navTextColor }}
         >
           <Image
             src="/TravelscoutLogo2Cropped.png"
@@ -321,7 +324,7 @@ export function Navbar() {
             width={200}
             height={60}
             priority
-            className="h-[64px] md:h-[80px] w-auto select-none pointer-events-none"
+            className={`h-[54px] md:h-[80px] w-auto select-none pointer-events-none ${isHome ? "brightness-0 invert" : ""}`}
             sizes="(max-width: 768px) calc(100vw - 72px), 200px"
           />
           <span className="sr-only">TravelScout</span>
@@ -337,7 +340,7 @@ export function Navbar() {
                   key={section.key}
                   href={section.href}
                   className="group flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
-                  style={{ color: "var(--text)" }}
+                  style={{ color: navTextColor }}
                 >
                   <Icon className="w-4 h-4" />
                   {section.label}
@@ -350,11 +353,14 @@ export function Navbar() {
         </nav>
 
         <button
-          className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-lg hover:bg-slate-100 transition-colors font-bold text-xl"
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors font-bold text-xl"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={mobileOpen}
-          style={{ color: "var(--text)" }}
+          style={{
+            color: navTextColor,
+            background: isHome ? "rgba(15, 23, 42, 0.28)" : "transparent",
+          }}
         >
           ☰
         </button>
@@ -362,7 +368,7 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden container pb-4">
-          <div className="card p-2" style={{ color: "var(--text)" }}>
+          <div className="card p-2" style={{ color: "#111827" }}>
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
               // Trip Planner should be a simple link, not a dropdown
@@ -375,7 +381,7 @@ export function Navbar() {
                     <Link
                       href={section.href}
                       className="flex items-center gap-2 px-3 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium"
-                      style={{ color: "var(--text)" }}
+                      style={{ color: "#111827" }}
                       onClick={closeMobileMenu}
                     >
                       <Icon className="w-4 h-4" />
@@ -399,7 +405,7 @@ export function Navbar() {
                       }))
                     }
                     aria-expanded={isOpen}
-                    style={{ color: "var(--text)" }}
+                    style={{ color: "#111827" }}
                   >
                     <span className="flex items-center gap-2">
                       <Icon className="w-4 h-4" /> {section.label}
@@ -430,7 +436,7 @@ export function Navbar() {
                               <Link
                                 className="block"
                                 href={it.href ?? "#"}
-                                style={{ color: "var(--text)" }}
+                                style={{ color: "#111827" }}
                                 onClick={closeMobileMenu}
                               >
                                 {it.label}
@@ -453,7 +459,7 @@ export function Navbar() {
                                 }))
                               }
                               aria-expanded={open}
-                              style={{ color: "var(--text)" }}
+                              style={{ color: "#111827" }}
                             >
                               <span>{it.label}</span>
                               <ChevronDown
@@ -469,7 +475,7 @@ export function Navbar() {
                                     <Link
                                       className="block hover:text-indigo-600 transition-colors"
                                       href={child.href ?? "#"}
-                                      style={{ color: "var(--text)" }}
+                                      style={{ color: "#111827" }}
                                       onClick={closeMobileMenu}
                                     >
                                       {child.label}
