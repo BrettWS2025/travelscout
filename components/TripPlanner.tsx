@@ -151,16 +151,18 @@ function TripPlannerContent({ initialItinerary }: TripPlannerProps = {}) {
     prevPlanRef.current = tp.plan;
   }, [tp.plan, tp.hasSubmitted, tp]);
 
-  // Listen for expand form event from navbar
+  // Toggle form state from "Edit your journey" in the planner navbar.
   useEffect(() => {
-    const handleExpandForm = () => {
-      setIsFormMinimized(false);
+    const handleToggleForm = () => {
+      // Only toggle when a plan exists; otherwise keep the full form visible.
+      if (!tp.plan) return;
+      setIsFormMinimized((prev) => !prev);
     };
-    window.addEventListener("expandTripPlannerForm", handleExpandForm);
+    window.addEventListener("toggleTripPlannerForm", handleToggleForm);
     return () => {
-      window.removeEventListener("expandTripPlannerForm", handleExpandForm);
+      window.removeEventListener("toggleTripPlannerForm", handleToggleForm);
     };
-  }, []);
+  }, [tp.plan]);
 
   // After auth modal closes, wait for user to be available, then show title dialog
   useEffect(() => {

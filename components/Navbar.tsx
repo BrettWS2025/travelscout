@@ -367,8 +367,9 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden container pb-4">
-          <div className="card p-2" style={{ color: "#111827" }}>
+        <div className="md:hidden absolute inset-x-0 top-full z-[1001]">
+          <div className="container pt-2 pb-4">
+            <div className="card p-2" style={{ color: "#111827" }}>
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
               // Trip Planner should be a simple link, not a dropdown
@@ -534,6 +535,7 @@ export function Navbar() {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}

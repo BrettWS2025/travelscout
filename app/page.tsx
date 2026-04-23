@@ -32,10 +32,10 @@ export default function Home() {
         <div className="relative z-10 min-h-[78vh] md:min-h-screen pt-28 md:pt-28">
           <div className="container h-full flex items-center px-4 md:px-0">
             <div className="max-w-3xl space-y-4 md:space-y-6 text-left translate-y-10 md:translate-y-14">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight font-[family-name:var(--font-plus-jakarta)] text-white">
-              Discover New Zealand.
-              <br />
-              Your way.
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight font-[family-name:var(--font-plus-jakarta)] text-white">
+                Discover New Zealand.
+                <br />
+                <span className="italic">Your way.</span>
               </h1>
             
               <p className="text-lg md:text-xl text-white/90 max-w-2xl font-medium">
