@@ -633,6 +633,8 @@ export default function DraftItinerary(props: Props) {
                     <NearbyHotelsMapPanel
                       cityId={selectedLocation.cityId}
                       cityName={selectedLocation.cityName}
+                      checkin={selectedLocation.arrivalDate}
+                      checkout={selectedLocation.departureDate}
                       onBack={() => setShowNearbyHotelsMap(false)}
                     />
                   ) : showAllThingsToDo ? (

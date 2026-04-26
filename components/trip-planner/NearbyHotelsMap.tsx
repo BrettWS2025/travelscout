@@ -229,7 +229,18 @@ export default function NearbyHotelsMap({
                       : ""}
                   </div>
                 )}
+                {popupPlace.priceLabel && <div className="text-slate-600">{popupPlace.priceLabel}</div>}
                 <div className="flex flex-wrap gap-2 pt-1">
+                  {popupPlace.bookingUrl && (
+                    <a
+                      href={popupPlace.bookingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 font-medium hover:underline"
+                    >
+                      Book now
+                    </a>
+                  )}
                   {popupPlace.googleMapsUri && (
                     <a
                       href={popupPlace.googleMapsUri}

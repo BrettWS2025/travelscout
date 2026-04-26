@@ -6,12 +6,13 @@ import type { TripPlan, TripLeg } from "@/lib/itinerary";
 import type { DayDetail, ManualTripEntry } from "@/lib/trip-planner/utils";
 import ManualEntryInline from "@/components/trip-planner/ManualEntryInline";
 import { formatDisplayDate, makeDayKey } from "@/lib/trip-planner/utils";
-import { getResolvedHotelCoords } from "@/lib/trip-planner/manualEntry";
+import { createManualEntryId, getResolvedHotelCoords } from "@/lib/trip-planner/manualEntry";
 import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
+import { useLiteApiHotels } from "@/lib/hooks/useLiteApiHotels";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
 
@@ -190,19 +191,6 @@ export default function DraftItineraryDayContent({
   /** When more than 3 experience tiles, use fixed md width so ~3 show with horizontal scroll. */
   const thingsToDoScrollOnMd = topExperiences.length > 3;
 
-  const {
-    places: nearbyHotels,
-    loading: nearbyHotelsLoading,
-    error: nearbyHotelsError,
-  } = useNearbyPlaces({
-    lat: destinationLocationCoords?.lat,
-    lng: destinationLocationCoords?.lng,
-    radiusMeters: 8000,
-    maxPlaces: 20,
-    includedType: "lodging",
-    sortBy: "rating",
-  });
-
   const canLoadNearbyPlaces =
     destinationLocationCoords?.lat !== undefined && destinationLocationCoords?.lng !== undefined;
 
@@ -210,7 +198,42 @@ export default function DraftItineraryDayContent({
     ? resolvedHotelCoords !== undefined
     : canLoadNearbyPlaces;
 
-  const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
+  const stayCheckin = selectedLocation?.arrivalDate;
+  const stayCheckout = selectedLocation?.departureDate;
+  const stayNights = Math.max(1, selectedLocation?.nights ?? 1);
+  const {
+    hotels: availableHotels,
+    loading: availableHotelsLoading,
+    error: availableHotelsError,
+  } = useLiteApiHotels({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    checkin: stayCheckin,
+    checkout: stayCheckout,
+    nights: stayNights,
+    limit: 8,
+    radiusKm: 12,
+    currency: "NZD",
+    guestNationality: "NZ",
+  });
+  const topAvailableHotels = useMemo(() => availableHotels.slice(0, 3), [availableHotels]);
+  const {
+    places: nearbyHotelsFallback,
+    loading: nearbyHotelsFallbackLoading,
+    error: nearbyHotelsFallbackError,
+  } = useNearbyPlaces({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    radiusMeters: 20000,
+    maxPlaces: 30,
+    includedType: "lodging",
+    sortBy: "rating",
+  });
+  const topNearbyHotelsFallback = useMemo(() => nearbyHotelsFallback.slice(0, 3), [nearbyHotelsFallback]);
+  const shouldUseGoogleHotelFallback =
+    !availableHotelsLoading &&
+    !availableHotelsError &&
+    topAvailableHotels.length === 0;
 
   const getEventDurationNights = (event: Event): number | null => {
     if (!event.datetime_start) return null;
@@ -271,8 +294,8 @@ export default function DraftItineraryDayContent({
     eventsLoading,
     allEvents.length,
     topExperiences.length,
-    nearbyHotelsLoading,
-    nearbyHotels.length,
+    availableHotelsLoading,
+    availableHotels.length,
     nearbyRestaurantsLoading,
     nearbyRestaurants.length,
   ]);
@@ -738,26 +761,199 @@ export default function DraftItineraryDayContent({
                     ) : null
                   ) : (
                     <>
-                      {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
+                      {!canLoadNearbyPlaces ||
+                      !stayCheckin ||
+                      !stayCheckout ||
+                      availableHotelsLoading ||
+                      (shouldUseGoogleHotelFallback && nearbyHotelsFallbackLoading) ? (
                         <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
-                      ) : nearbyHotelsError ? (
-                        <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
-                      ) : topRatedHotelsNearby.length > 0 ? (
+                      ) : availableHotelsError ? (
+                        <div className="text-xs text-slate-500 text-center py-4">{availableHotelsError}</div>
+                      ) : topAvailableHotels.length > 0 ? (
                         <>
-                          <p className="text-xs text-slate-500 mb-2">
-                            Top nearby hotels by rating and review count.
-                          </p>
-                          <NearbyPlacesCarousel
-                            places={topRatedHotelsNearby}
-                            title="Top nearby hotels"
-                            size="compact"
-                            showUserRatingCount
-                            showDirectionsLink
-                          />
+                          <div className="overflow-hidden">
+                            <div className="flex w-full gap-2 md:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                              {topAvailableHotels.map((hotel) => {
+                                const rateLabel =
+                                  hotel.maxRate > hotel.minRate
+                                    ? `${hotel.currency} ${hotel.minRate.toFixed(0)} - ${hotel.maxRate.toFixed(0)}`
+                                    : `${hotel.currency} ${hotel.minRate.toFixed(0)}`;
+                                const locationLabel = [hotel.address, hotel.city].filter(Boolean).join(" • ");
+                                const mapsUrl =
+                                  hotel.latitude !== undefined && hotel.longitude !== undefined
+                                    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                        `${hotel.latitude},${hotel.longitude}`
+                                      )}`
+                                    : undefined;
+
+                                return (
+                                  <div
+                                    key={hotel.id}
+                                    className="flex flex-col flex-shrink-0 snap-start w-[min(82vw,220px)] sm:w-48 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all"
+                                  >
+                                    <div className="relative mx-1 mt-1 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                                      {hotel.imageUrl ? (
+                                        <img
+                                          src={hotel.imageUrl}
+                                          alt={hotel.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.style.display = "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <span className="text-lg">🏨</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-2 flex flex-col flex-1 min-h-[6rem]">
+                                      <h3 className="font-semibold text-slate-900 text-[11px] leading-tight mb-1 line-clamp-2">
+                                        {hotel.name}
+                                      </h3>
+                                      {locationLabel ? (
+                                        <p className="text-[10px] text-slate-600 line-clamp-2 mb-1">{locationLabel}</p>
+                                      ) : null}
+                                      {hotel.rating ? (
+                                        <p className="text-[10px] text-slate-600 mb-1">★ {hotel.rating.toFixed(1)}</p>
+                                      ) : null}
+                                      <p className="text-[10px] font-semibold text-slate-900 mb-2">
+                                        From {rateLabel}
+                                      </p>
+                                      <div className="flex flex-col gap-1 mt-auto">
+                                        {onAddManualTripEntry && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const locationText = [hotel.address, hotel.city, hotel.countryCode]
+                                                .filter(Boolean)
+                                                .join(", ");
+                                              onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+                                                id: createManualEntryId(),
+                                                section: "hotel",
+                                                name: hotel.name,
+                                                locationText: locationText || undefined,
+                                                confirmation: hotel.bookingUrl,
+                                                lat: hotel.latitude,
+                                                lng: hotel.longitude,
+                                                place: {
+                                                  id: hotel.id,
+                                                  name: hotel.name,
+                                                  address: hotel.address,
+                                                  rating: hotel.rating ?? undefined,
+                                                  lat: hotel.latitude,
+                                                  lng: hotel.longitude,
+                                                  googleMapsUri: mapsUrl,
+                                                  imageUrl: hotel.imageUrl,
+                                                },
+                                              });
+                                            }}
+                                            className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                          >
+                                            Add to itinerary
+                                          </button>
+                                        )}
+                                        <a
+                                          href={hotel.bookingUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
+                                        >
+                                          Book now
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </>
+                      ) : shouldUseGoogleHotelFallback ? (
+                        topNearbyHotelsFallback.length > 0 ? (
+                          <>
+                            <p className="text-xs text-slate-500 mb-2">
+                              No live LiteAPI availability for these dates. Showing nearby hotels from Google Places.
+                            </p>
+                            <div className="overflow-hidden">
+                              <div className="flex w-full gap-2 md:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                                {topNearbyHotelsFallback.map((hotel) => (
+                                  <div
+                                    key={hotel.id}
+                                    className="flex flex-col flex-shrink-0 snap-start w-[min(82vw,220px)] sm:w-48 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all"
+                                  >
+                                    <div className="relative mx-1 mt-1 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                                      {hotel.imageUrl ? (
+                                        <img
+                                          src={hotel.imageUrl}
+                                          alt={hotel.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.style.display = "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <span className="text-lg">🏨</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-2 flex flex-col flex-1 min-h-[6rem]">
+                                      <h3 className="font-semibold text-slate-900 text-[11px] leading-tight mb-1 line-clamp-2">
+                                        {hotel.name}
+                                      </h3>
+                                      {hotel.address ? (
+                                        <p className="text-[10px] text-slate-600 line-clamp-2 mb-1">{hotel.address}</p>
+                                      ) : null}
+                                      {typeof hotel.rating === "number" ? (
+                                        <p className="text-[10px] text-slate-600 mb-2">★ {hotel.rating.toFixed(1)}</p>
+                                      ) : null}
+                                      {onAddManualTripEntry && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+                                              id: createManualEntryId(),
+                                              section: "hotel",
+                                              name: hotel.name,
+                                              locationText: hotel.address || undefined,
+                                              lat: hotel.lat,
+                                              lng: hotel.lng,
+                                              place: {
+                                                id: hotel.id,
+                                                name: hotel.name,
+                                                address: hotel.address,
+                                                rating: hotel.rating ?? undefined,
+                                                userRatingCount: hotel.userRatingCount ?? undefined,
+                                                lat: hotel.lat,
+                                                lng: hotel.lng,
+                                                googleMapsUri: hotel.googleMapsUri,
+                                                imageUrl: hotel.imageUrl,
+                                                photoName: hotel.photoName,
+                                              },
+                                            });
+                                          }}
+                                          className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors mt-auto"
+                                        >
+                                          Add to itinerary
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        ) : nearbyHotelsFallbackError ? (
+                          <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsFallbackError}</div>
+                        ) : (
+                          <div className="text-xs text-slate-500 text-center py-4">
+                            No nearby hotels found for this area.
+                          </div>
+                        )
                       ) : (
                         <div className="text-xs text-slate-500 text-center py-4">
-                          No nearby hotels found for this area.
+                          No hotels with live availability found for these dates.
                         </div>
                       )}
                       {onAddManualTripEntry && onRemoveManualTripEntry && (

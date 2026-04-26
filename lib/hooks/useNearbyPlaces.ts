@@ -13,6 +13,8 @@ export type NearbyPlace = {
   googleMapsUri?: string;
   imageUrl?: string;
   photoName?: string;
+  bookingUrl?: string;
+  priceLabel?: string;
 };
 
 type UseNearbyPlacesResult = {
