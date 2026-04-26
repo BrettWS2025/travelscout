@@ -286,8 +286,8 @@ export async function GET(req: Request) {
           if (id) minRateByHotelId.set(id, r);
         }
 
-        const hotels: LiteApiHotelCard[] = hotelsRaw
-          .map((hotel) => {
+        const hotels = hotelsRaw
+          .map<LiteApiHotelCard | null>((hotel) => {
             const hotelId = toString(hotel.hotelId) || toString(hotel.id);
             if (!hotelId) return null;
 
@@ -326,7 +326,7 @@ export async function GET(req: Request) {
               currency,
               offerId,
               bookingUrl,
-            } satisfies LiteApiHotelCard;
+            };
           })
           .filter((h): h is LiteApiHotelCard => h !== null)
           .sort((a, b) => a.minRate - b.minRate)
