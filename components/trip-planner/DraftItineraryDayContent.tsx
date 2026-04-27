@@ -875,7 +875,7 @@ export default function DraftItineraryDayContent({
                                             }}
                                             className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                                           >
-                                            Add to itinerary
+                                            Add to trip
                                           </button>
                                         )}
                                         <a
@@ -1009,7 +1009,7 @@ export default function DraftItineraryDayContent({
                                           }}
                                           className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors mt-auto"
                                         >
-                                          Add to itinerary
+                                          Add to trip
                                         </button>
                                       )}
                                     </div>

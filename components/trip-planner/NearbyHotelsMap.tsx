@@ -231,19 +231,17 @@ export default function NearbyHotelsMap({
                   </div>
                 )}
                 {popupPlace.priceLabel && <div className="text-slate-600">{popupPlace.priceLabel}</div>}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {popupPlace.bookingUrl && (
-                    <a
-                      href={popupPlace.bookingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                <div className="pt-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <button
+                      type="button"
                       onClick={() => {
                         void saveHotelSelectionEvent({
                           provider: popupPlace.provider || "google_places",
-                          actionType: "book_now",
+                          actionType: "add_to_itinerary",
                           hotelName: popupPlace.name,
                           address: popupPlace.address,
-                          city: popupPlace.city,
+                          city: popupPlace.city || locationLabel,
                           rating: popupPlace.rating ?? null,
                           averageNightlyRate: popupPlace.averageNightlyRate ?? null,
                           currencyCode: popupPlace.currencyCode,
@@ -260,29 +258,64 @@ export default function NearbyHotelsMap({
                           },
                         });
                       }}
-                      className="text-emerald-600 font-medium hover:underline"
+                      className="text-indigo-600 font-medium hover:underline"
                     >
-                      Book now
-                    </a>
-                  )}
-                  {popupPlace.googleMapsUri && (
+                      Add to trip
+                    </button>
+                    {popupPlace.bookingUrl && (
+                      <a
+                        href={popupPlace.bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          void saveHotelSelectionEvent({
+                            provider: popupPlace.provider || "google_places",
+                            actionType: "book_now",
+                            hotelName: popupPlace.name,
+                            address: popupPlace.address,
+                            city: popupPlace.city,
+                            rating: popupPlace.rating ?? null,
+                            averageNightlyRate: popupPlace.averageNightlyRate ?? null,
+                            currencyCode: popupPlace.currencyCode,
+                            searchCheckin: popupPlace.searchCheckin,
+                            searchCheckout: popupPlace.searchCheckout,
+                            productId: popupPlace.productId,
+                            hotelId: popupPlace.id,
+                            bookingUrl: popupPlace.bookingUrl,
+                            googleMapsUri: popupPlace.googleMapsUri,
+                            latitude: popupPlace.lat ?? null,
+                            longitude: popupPlace.lng ?? null,
+                            metadata: {
+                              sourceSurface: "nearby_hotels_map_popup",
+                            },
+                          });
+                        }}
+                        className="text-emerald-600 font-medium hover:underline"
+                      >
+                        Book now
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {popupPlace.googleMapsUri && (
+                      <a
+                        href={popupPlace.googleMapsUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 font-medium hover:underline"
+                      >
+                        Open in Maps
+                      </a>
+                    )}
                     <a
-                      href={popupPlace.googleMapsUri}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${popupPlace.lat},${popupPlace.lng}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-indigo-600 font-medium hover:underline"
                     >
-                      Open in Maps
+                      Directions
                     </a>
-                  )}
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${popupPlace.lat},${popupPlace.lng}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 font-medium hover:underline"
-                  >
-                    Directions
-                  </a>
+                  </div>
                 </div>
               </div>
             </Popup>
