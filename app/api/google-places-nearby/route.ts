@@ -15,6 +15,7 @@ type NearbyGooglePlace = {
   lat?: number;
   lng?: number;
   googleMapsUri?: string;
+  websiteUri?: string;
   imageUrl?: string; // If we can derive a usable URL directly from search response.
   photoName?: string; // Resource name used with our photo proxy route.
 };
@@ -155,7 +156,7 @@ export async function GET(req: Request) {
     // Prefer field masks to reduce payload / billing exposure.
     // If Google rejects the mask, we'll retry without it (fail open).
     const fieldMask =
-      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.photos,places.googleMapsUri";
+      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.photos,places.googleMapsUri,places.websiteUri";
 
     const doFetch = async (useFieldMask: boolean) => {
       const headers: Record<string, string> = {
@@ -211,6 +212,7 @@ export async function GET(req: Request) {
         const locationLng: number | undefined = p?.location?.longitude ?? p?.location?.lng;
 
         const googleMapsUri: string | undefined = p?.googleMapsUri;
+        const websiteUri: string | undefined = p?.websiteUri;
 
         // photos may be: [{ name, widthPx, heightPx, ... (sometimes includes mediaUri fields) }]
         const firstPhoto = Array.isArray(p?.photos) && p.photos.length > 0 ? p.photos[0] : undefined;
@@ -228,6 +230,7 @@ export async function GET(req: Request) {
             lat: locationLat,
             lng: locationLng,
             googleMapsUri,
+            websiteUri,
             imageUrl,
             photoName,
             _distanceKm: Number.POSITIVE_INFINITY,
@@ -243,6 +246,7 @@ export async function GET(req: Request) {
           lat: locationLat,
           lng: locationLng,
           googleMapsUri,
+          websiteUri,
           imageUrl,
           photoName,
           _distanceKm: haversineDistanceKm(lat, lng, locationLat, locationLng),
@@ -277,6 +281,7 @@ export async function GET(req: Request) {
       lat: p.lat,
       lng: p.lng,
       googleMapsUri: p.googleMapsUri,
+      websiteUri: p.websiteUri,
       imageUrl: p.imageUrl,
       photoName: p.photoName,
     }));

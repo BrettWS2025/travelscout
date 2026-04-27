@@ -102,6 +102,15 @@ export default function DraftItineraryDayContent({
   const manualEvents = manualEntries.filter((m) => m.section === "events");
   const manualHotels = manualEntries.filter((m) => m.section === "hotel");
   const manualRestaurants = manualEntries.filter((m) => m.section === "restaurant");
+  const interestedRestaurantPlaceIds = useMemo(
+    () =>
+      new Set(
+        manualRestaurants
+          .map((entry) => entry.place?.id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      ),
+    [manualRestaurants]
+  );
   const hasManualHotel = manualHotels.length > 0;
   const city = getCityById(selectedDay.location);
   const locationName = city?.name || selectedDay.location;
@@ -188,6 +197,34 @@ export default function DraftItineraryDayContent({
   });
 
   const topRestaurantsNearby = useMemo(() => nearbyRestaurants.slice(0, 3), [nearbyRestaurants]);
+
+  const handleRestaurantInterested = (place: (typeof topRestaurantsNearby)[number]) => {
+    if (!onAddManualTripEntry) return;
+    if (interestedRestaurantPlaceIds.has(place.id)) return;
+
+    onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+      id: createManualEntryId(),
+      section: "restaurant",
+      name: place.name,
+      locationText: place.address || undefined,
+      confirmation: place.websiteUri,
+      lat: place.lat,
+      lng: place.lng,
+      place: {
+        id: place.id,
+        name: place.name,
+        address: place.address,
+        rating: place.rating ?? undefined,
+        userRatingCount: place.userRatingCount ?? undefined,
+        lat: place.lat,
+        lng: place.lng,
+        googleMapsUri: place.googleMapsUri,
+        websiteUri: place.websiteUri,
+        imageUrl: place.imageUrl,
+        photoName: place.photoName,
+      },
+    });
+  };
 
   /** When more than 3 experience tiles, use fixed md width so ~3 show with horizontal scroll. */
   const thingsToDoScrollOnMd = topExperiences.length > 3;
@@ -577,7 +614,7 @@ export default function DraftItineraryDayContent({
                               )}
                               {experience.price && <div className="text-[10px] text-slate-600 mb-1 line-clamp-1">{experience.price}</div>}
                               {onAddToItinerary && (
-                                <div className="flex flex-col gap-1 mt-auto w-full">
+                                <div className="flex items-center gap-2 mt-auto w-full">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -594,7 +631,7 @@ export default function DraftItineraryDayContent({
                                         );
                                       }
                                     }}
-                                    className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                    className="inline-flex flex-1 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
                                   >
                                     Add to Trip
                                   </button>
@@ -604,7 +641,7 @@ export default function DraftItineraryDayContent({
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => e.stopPropagation()}
-                                      className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
+                                      className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors text-center"
                                     >
                                       Book now
                                     </a>
@@ -821,7 +858,7 @@ export default function DraftItineraryDayContent({
                                       <p className="text-[10px] font-semibold text-slate-900 mb-2">
                                         From {rateLabel}
                                       </p>
-                                      <div className="flex flex-col gap-1 mt-auto">
+                                      <div className="flex items-center gap-2 mt-auto">
                                         {onAddManualTripEntry && (
                                           <button
                                             type="button"
@@ -873,7 +910,7 @@ export default function DraftItineraryDayContent({
                                                 },
                                               });
                                             }}
-                                            className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                            className="inline-flex flex-1 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
                                           >
                                             Add to trip
                                           </button>
@@ -908,7 +945,7 @@ export default function DraftItineraryDayContent({
                                               },
                                             });
                                           }}
-                                          className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
+                                          className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors text-center"
                                         >
                                           Book now
                                         </a>
@@ -1007,7 +1044,7 @@ export default function DraftItineraryDayContent({
                                               },
                                             });
                                           }}
-                                          className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors mt-auto"
+                                          className="inline-flex w-full items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors mt-auto"
                                         >
                                           Add to trip
                                         </button>
@@ -1087,7 +1124,8 @@ export default function DraftItineraryDayContent({
                       title="Nearby places to eat"
                       size="compact"
                       showUserRatingCount
-                      showDirectionsLink
+                      onInterestedPlace={onAddManualTripEntry ? handleRestaurantInterested : undefined}
+                      interestedPlaceIds={interestedRestaurantPlaceIds}
                     />
                   ) : (
                     <div className="text-xs text-slate-500 text-center py-4">No nearby places found</div>

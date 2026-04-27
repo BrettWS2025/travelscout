@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
 import type { Event } from "@/lib/hooks/useEvents";
 import { saveEventToCache } from "@/lib/events.api";
 import { useAuth } from "@/components/AuthProvider";
@@ -10,8 +9,8 @@ type Props = {
   events?: Event[];
   /** Itinerary day (YYYY-MM-DD). When provided, we can display this day as the date while keeping the event start time. */
   targetDate?: string;
-  onPinEvent?: (event: Event) => void; // Called when heart is clicked to pin event to current day
-  pinnedEventIds?: Set<number>; // Events already pinned to this day
+  onPinEvent?: (event: Event) => void; // Called when Interested is clicked to pin event to current day
+  pinnedEventIds?: Set<number>; // Events already marked interested for this day
   onRequireAuth?: (event: Event) => void; // Called when authentication is required
   /**
    * `compact`: narrower tiles; on `md+` equal-width columns so ~3 items fit without horizontal scroll.
@@ -66,15 +65,15 @@ export default function EventsAttractionsCarousel({
   /** More than three: keep fixed-width tiles so ~3 fit in view and the rest scroll; otherwise equal flex columns. */
   const scrollOnMd = isCompact && events.length > 3;
 
-  // Track which events are hearted (saved to cache) - combine with pinned events
-  const [heartedEvents, setHeartedEvents] = useState<Set<number>>(new Set());
+  // Track locally interested events (saved to cache), merged with pinned events from props.
+  const [interestedEvents, setInterestedEvents] = useState<Set<number>>(new Set());
   const [savingEventId, setSavingEventId] = useState<number | null>(null);
 
-  // When user removes an event from the day (X button), revert its heart in the carousel
+  // When user removes an event from the day (X button), revert its local interested state.
   const pinnedIdsSerialized = [...(pinnedEventIds || [])].sort((a, b) => a - b).join(",");
   useEffect(() => {
     if (!pinnedEventIds) return;
-    setHeartedEvents((prev) => {
+    setInterestedEvents((prev) => {
       let changed = false;
       const next = new Set(prev);
       next.forEach((id) => {
@@ -87,9 +86,9 @@ export default function EventsAttractionsCarousel({
     });
   }, [pinnedIdsSerialized]);
 
-  // Combine local hearted events with pinned events from props
-  const allHeartedEvents = new Set([
-    ...heartedEvents,
+  // Combine local interested events with pinned events from props.
+  const allInterestedEvents = new Set([
+    ...interestedEvents,
     ...(pinnedEventIds || [])
   ]);
 
@@ -98,12 +97,11 @@ export default function EventsAttractionsCarousel({
     return null;
   }
 
-  const handleHeartClick = async (event: Event, e: React.MouseEvent) => {
+  const handleInterestedClick = async (event: Event, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // If already hearted or pinned, don't do anything (or could allow un-hearting later)
-    if (allHeartedEvents.has(event.id)) {
+    if (allInterestedEvents.has(event.id)) {
       return;
     }
 
@@ -121,7 +119,7 @@ export default function EventsAttractionsCarousel({
     try {
       const result = await saveEventToCache(event);
       if (result.success) {
-        setHeartedEvents((prev) => new Set(prev).add(event.id));
+        setInterestedEvents((prev) => new Set(prev).add(event.id));
         // Pin event to the current day
         if (onPinEvent) {
           onPinEvent(event);
@@ -135,6 +133,17 @@ export default function EventsAttractionsCarousel({
     } finally {
       setSavingEventId(null);
     }
+  };
+
+  const handleFindTicketsClick = (event: Event) => {
+    // Best-effort cache write so ticket-clicked events are also present in cached_events.
+    void saveEventToCache(event).then((result) => {
+      if (!result.success) {
+        console.error("Failed to cache event on Find Tickets click:", result.error);
+      }
+    }).catch((err) => {
+      console.error("Error caching event on Find Tickets click:", err);
+    });
   };
 
   return (
@@ -187,41 +196,16 @@ export default function EventsAttractionsCarousel({
                 >
                   <span className="text-[10px] text-slate-500">No image</span>
                 </div>
-                {/* Heart icon overlay */}
-                <button
-                  type="button"
-                  onClick={(e) => handleHeartClick(event, e)}
-                  disabled={savingEventId === event.id}
-                  className={[
-                    "absolute rounded-full transition-all",
-                    isCompact ? "top-0.5 right-0.5 p-0.5" : "top-1 right-1 p-1",
-                    "bg-white/90 backdrop-blur-sm shadow-sm",
-                    "hover:bg-white hover:scale-110",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    allHeartedEvents.has(event.id)
-                      ? "text-red-500"
-                      : "text-slate-600 hover:text-red-500",
-                  ].join(" ")}
-                  aria-label={allHeartedEvents.has(event.id) ? "Event saved" : "Save event"}
-                >
-                  <Heart
-                    className={[
-                      "transition-all",
-                      isCompact ? "w-2.5 h-2.5" : "w-3 h-3",
-                      allHeartedEvents.has(event.id) ? "fill-current" : "",
-                    ].join(" ")}
-                  />
-                </button>
               </div>
               <div
                 className={[
-                  "p-2 flex flex-col min-w-0",
+                  "p-2 flex flex-col flex-1 min-w-0",
                   isCompact ? "min-h-[4.5rem]" : "min-h-[72px] md:min-h-[76px]",
                 ].join(" ")}
               >
                 <h4
                   className={[
-                    "font-semibold text-slate-900 mb-0.5 text-left line-clamp-2",
+                    "font-semibold text-slate-900 mb-0.5 text-left line-clamp-2 min-h-[2rem]",
                     isCompact ? "text-[11px] leading-tight" : "text-xs md:text-sm",
                   ].join(" ")}
                 >
@@ -255,6 +239,31 @@ export default function EventsAttractionsCarousel({
                     aria-hidden
                   />
                 )}
+                <div className="mt-auto pt-2 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => handleInterestedClick(event, e)}
+                    disabled={savingEventId === event.id || allInterestedEvents.has(event.id)}
+                    className={[
+                      "inline-flex items-center justify-center rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors",
+                      "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
+                      "disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed",
+                    ].join(" ")}
+                  >
+                    Interested
+                  </button>
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleFindTicketsClick(event)}
+                      className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    >
+                      Find Tickets
+                    </a>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

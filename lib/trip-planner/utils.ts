@@ -15,6 +15,7 @@ export type ManualPlaceSnapshot = {
   lat?: number;
   lng?: number;
   googleMapsUri?: string;
+  websiteUri?: string;
   imageUrl?: string;
   photoName?: string;
 };

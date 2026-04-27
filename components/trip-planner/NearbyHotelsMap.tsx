@@ -56,6 +56,7 @@ export default function NearbyHotelsMap({
   const mapRef = useRef<MapRef>(null);
   const [popupPlace, setPopupPlace] = useState<NearbyPlace | null>(null);
   const [popupOriginOpen, setPopupOriginOpen] = useState(false);
+  const addActionLabel = placeTypePlural === "restaurants" ? "Interested" : "Add to trip";
 
   const withCoords = useMemo(
     () =>
@@ -260,7 +261,7 @@ export default function NearbyHotelsMap({
                       }}
                       className="text-indigo-600 font-medium hover:underline"
                     >
-                      Add to trip
+                      {addActionLabel}
                     </button>
                     {popupPlace.bookingUrl && (
                       <a

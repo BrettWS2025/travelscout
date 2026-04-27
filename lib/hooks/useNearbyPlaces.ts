@@ -12,6 +12,7 @@ export type NearbyPlace = {
   lat?: number;
   lng?: number;
   googleMapsUri?: string;
+  websiteUri?: string;
   imageUrl?: string;
   photoName?: string;
   bookingUrl?: string;
