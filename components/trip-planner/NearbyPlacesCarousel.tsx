@@ -6,6 +6,7 @@ import type { NearbyPlace } from "@/lib/hooks/useNearbyPlaces";
 type Props = {
   places?: NearbyPlace[];
   onInterestedPlace?: (place: NearbyPlace) => void;
+  onCheckOutPlace?: (place: NearbyPlace) => void;
   interestedPlaceIds?: Set<string>;
   /** When set with `places` length 1, shows a confirmation link beside Directions (manual bookings). */
   confirmationUrl?: string;
@@ -35,6 +36,7 @@ function directionsUrl(place: NearbyPlace): string | null {
 export default function NearbyPlacesCarousel({
   places = [],
   onInterestedPlace,
+  onCheckOutPlace,
   interestedPlaceIds,
   confirmationUrl,
   confirmationRef,
@@ -186,6 +188,7 @@ export default function NearbyPlacesCarousel({
                           href={websiteHref}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => onCheckOutPlace?.(place)}
                           className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                         >
                           Check it out

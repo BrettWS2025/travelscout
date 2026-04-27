@@ -14,6 +14,7 @@ import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
 import { useLiteApiHotels } from "@/lib/hooks/useLiteApiHotels";
 import { saveHotelSelectionEvent } from "@/lib/hotels.api";
+import { saveRestaurantSelectionToCache } from "@/lib/restaurants.api";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
 
@@ -199,6 +200,25 @@ export default function DraftItineraryDayContent({
   const topRestaurantsNearby = useMemo(() => nearbyRestaurants.slice(0, 3), [nearbyRestaurants]);
 
   const handleRestaurantInterested = (place: (typeof topRestaurantsNearby)[number]) => {
+    void saveRestaurantSelectionToCache({
+      placeId: place.id,
+      name: place.name,
+      location: place.address,
+      city: selectedLocation?.cityName || destinationName || undefined,
+      rating: place.rating ?? null,
+      userRatingCount: place.userRatingCount ?? null,
+      googleMapsUri: place.googleMapsUri,
+      websiteUri: place.websiteUri,
+      latitude: place.lat ?? null,
+      longitude: place.lng ?? null,
+      selectedAction: "interested",
+      tripDayDate: selectedDay.date,
+      tripLocation: selectedDay.location,
+      metadata: {
+        sourceSurface: "day_content_restaurant_carousel",
+      },
+    });
+
     if (!onAddManualTripEntry) return;
     if (interestedRestaurantPlaceIds.has(place.id)) return;
 
@@ -222,6 +242,27 @@ export default function DraftItineraryDayContent({
         websiteUri: place.websiteUri,
         imageUrl: place.imageUrl,
         photoName: place.photoName,
+      },
+    });
+  };
+
+  const handleRestaurantCheckItOut = (place: (typeof topRestaurantsNearby)[number]) => {
+    void saveRestaurantSelectionToCache({
+      placeId: place.id,
+      name: place.name,
+      location: place.address,
+      city: selectedLocation?.cityName || destinationName || undefined,
+      rating: place.rating ?? null,
+      userRatingCount: place.userRatingCount ?? null,
+      googleMapsUri: place.googleMapsUri,
+      websiteUri: place.websiteUri,
+      latitude: place.lat ?? null,
+      longitude: place.lng ?? null,
+      selectedAction: "check_it_out",
+      tripDayDate: selectedDay.date,
+      tripLocation: selectedDay.location,
+      metadata: {
+        sourceSurface: "day_content_restaurant_carousel",
       },
     });
   };
@@ -1125,6 +1166,7 @@ export default function DraftItineraryDayContent({
                       size="compact"
                       showUserRatingCount
                       onInterestedPlace={onAddManualTripEntry ? handleRestaurantInterested : undefined}
+                      onCheckOutPlace={handleRestaurantCheckItOut}
                       interestedPlaceIds={interestedRestaurantPlaceIds}
                     />
                   ) : (
