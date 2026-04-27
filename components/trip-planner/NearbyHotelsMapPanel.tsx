@@ -79,16 +79,30 @@ export default function NearbyHotelsMapPanel({ cityId, cityName, checkin, checko
         id: h.id,
         name: h.name,
         address: [h.address, h.city].filter(Boolean).join(" • ") || undefined,
+        city: h.city,
         rating: h.rating ?? undefined,
         lat: h.latitude,
         lng: h.longitude,
         priceLabel: rateLabel,
         bookingUrl: h.bookingUrl,
+        provider: "liteapi",
+        productId: h.offerId,
+        averageNightlyRate: h.minRate,
+        currencyCode: h.currency,
+        searchCheckin: checkin,
+        searchCheckout: checkout,
         googleMapsUri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${h.latitude},${h.longitude}`)}`,
       };
     });
+  const googleFallbackPlaces: NearbyPlace[] = googleFallbackHotels.map((place) => ({
+    ...place,
+    city: cityName,
+    provider: "google_places",
+    searchCheckin: checkin,
+    searchCheckout: checkout,
+  }));
   const shouldUseGoogleFallback = !loading && !error && liteApiPlaces.length === 0;
-  const places = shouldUseGoogleFallback ? googleFallbackHotels : liteApiPlaces;
+  const places = shouldUseGoogleFallback ? googleFallbackPlaces : liteApiPlaces;
 
   const canLoad = coords !== undefined && !!checkin && !!checkout;
   const mapLoading = !canLoad || loading || (shouldUseGoogleFallback && googleFallbackLoading);

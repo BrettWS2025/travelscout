@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MapRef } from "react-map-gl/mapbox";
 import type { NearbyPlace } from "@/lib/hooks/useNearbyPlaces";
+import { saveHotelSelectionEvent } from "@/lib/hotels.api";
 
 const Map = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.Map), {
   ssr: false,
@@ -236,6 +237,29 @@ export default function NearbyHotelsMap({
                       href={popupPlace.bookingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        void saveHotelSelectionEvent({
+                          provider: popupPlace.provider || "google_places",
+                          actionType: "book_now",
+                          hotelName: popupPlace.name,
+                          address: popupPlace.address,
+                          city: popupPlace.city,
+                          rating: popupPlace.rating ?? null,
+                          averageNightlyRate: popupPlace.averageNightlyRate ?? null,
+                          currencyCode: popupPlace.currencyCode,
+                          searchCheckin: popupPlace.searchCheckin,
+                          searchCheckout: popupPlace.searchCheckout,
+                          productId: popupPlace.productId,
+                          hotelId: popupPlace.id,
+                          bookingUrl: popupPlace.bookingUrl,
+                          googleMapsUri: popupPlace.googleMapsUri,
+                          latitude: popupPlace.lat ?? null,
+                          longitude: popupPlace.lng ?? null,
+                          metadata: {
+                            sourceSurface: "nearby_hotels_map_popup",
+                          },
+                        });
+                      }}
                       className="text-emerald-600 font-medium hover:underline"
                     >
                       Book now

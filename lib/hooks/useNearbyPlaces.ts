@@ -6,6 +6,7 @@ export type NearbyPlace = {
   id: string;
   name: string;
   address?: string;
+  city?: string;
   rating?: number | null;
   userRatingCount?: number | null;
   lat?: number;
@@ -15,6 +16,12 @@ export type NearbyPlace = {
   photoName?: string;
   bookingUrl?: string;
   priceLabel?: string;
+  provider?: "liteapi" | "google_places";
+  productId?: string;
+  averageNightlyRate?: number;
+  currencyCode?: string;
+  searchCheckin?: string;
+  searchCheckout?: string;
 };
 
 type UseNearbyPlacesResult = {

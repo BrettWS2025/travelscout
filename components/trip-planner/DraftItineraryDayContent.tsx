@@ -13,6 +13,7 @@ import type { ExperienceItem } from "@/lib/viator-helpers";
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
 import { useLiteApiHotels } from "@/lib/hooks/useLiteApiHotels";
+import { saveHotelSelectionEvent } from "@/lib/hotels.api";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
 
@@ -825,6 +826,30 @@ export default function DraftItineraryDayContent({
                                           <button
                                             type="button"
                                             onClick={() => {
+                                              void saveHotelSelectionEvent({
+                                                provider: "liteapi",
+                                                actionType: "add_to_itinerary",
+                                                hotelName: hotel.name,
+                                                address: hotel.address,
+                                                city: hotel.city,
+                                                rating: hotel.rating ?? null,
+                                                averageNightlyRate: hotel.minRate,
+                                                currencyCode: hotel.currency,
+                                                searchCheckin: stayCheckin,
+                                                searchCheckout: stayCheckout,
+                                                searchNights: stayNights,
+                                                productId: hotel.offerId,
+                                                hotelId: hotel.id,
+                                                bookingUrl: hotel.bookingUrl,
+                                                googleMapsUri: mapsUrl,
+                                                latitude: hotel.latitude ?? null,
+                                                longitude: hotel.longitude ?? null,
+                                                tripDayDate: selectedDay.date,
+                                                tripLocation: selectedDay.location,
+                                                metadata: {
+                                                  sourceSurface: "day_content_hotel_card",
+                                                },
+                                              });
                                               const locationText = [hotel.address, hotel.city, hotel.countryCode]
                                                 .filter(Boolean)
                                                 .join(", ");
@@ -857,6 +882,32 @@ export default function DraftItineraryDayContent({
                                           href={hotel.bookingUrl}
                                           target="_blank"
                                           rel="noopener noreferrer"
+                                          onClick={() => {
+                                            void saveHotelSelectionEvent({
+                                              provider: "liteapi",
+                                              actionType: "book_now",
+                                              hotelName: hotel.name,
+                                              address: hotel.address,
+                                              city: hotel.city,
+                                              rating: hotel.rating ?? null,
+                                              averageNightlyRate: hotel.minRate,
+                                              currencyCode: hotel.currency,
+                                              searchCheckin: stayCheckin,
+                                              searchCheckout: stayCheckout,
+                                              searchNights: stayNights,
+                                              productId: hotel.offerId,
+                                              hotelId: hotel.id,
+                                              bookingUrl: hotel.bookingUrl,
+                                              googleMapsUri: mapsUrl,
+                                              latitude: hotel.latitude ?? null,
+                                              longitude: hotel.longitude ?? null,
+                                              tripDayDate: selectedDay.date,
+                                              tripLocation: selectedDay.location,
+                                              metadata: {
+                                                sourceSurface: "day_content_hotel_card",
+                                              },
+                                            });
+                                          }}
                                           className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
                                         >
                                           Book now
@@ -912,6 +963,29 @@ export default function DraftItineraryDayContent({
                                         <button
                                           type="button"
                                           onClick={() => {
+                                            void saveHotelSelectionEvent({
+                                              provider: "google_places",
+                                              actionType: "add_to_itinerary",
+                                              hotelName: hotel.name,
+                                              address: hotel.address,
+                                              city: selectedLocation.cityName,
+                                              rating: hotel.rating ?? null,
+                                              searchCheckin: stayCheckin,
+                                              searchCheckout: stayCheckout,
+                                              searchNights: stayNights,
+                                              productId: hotel.id,
+                                              hotelId: hotel.id,
+                                              bookingUrl: hotel.bookingUrl,
+                                              googleMapsUri: hotel.googleMapsUri,
+                                              latitude: hotel.lat ?? null,
+                                              longitude: hotel.lng ?? null,
+                                              tripDayDate: selectedDay.date,
+                                              tripLocation: selectedDay.location,
+                                              metadata: {
+                                                sourceSurface: "day_content_hotel_card_google_fallback",
+                                                userRatingCount: hotel.userRatingCount ?? null,
+                                              },
+                                            });
                                             onAddManualTripEntry(selectedDay.date, selectedDay.location, {
                                               id: createManualEntryId(),
                                               section: "hotel",
