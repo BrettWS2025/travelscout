@@ -19,11 +19,6 @@ export function Footer() {
           <ul className="space-y-1">
             <li><a className="link" href="#">Instagram</a></li>
             <li><a className="link" href="#">YouTube</a></li>
-            <li>
-              <Link className="link" href="/ai-visibility">
-                LLM visibility Check
-              </Link>
-            </li>
           </ul>
         </div>
       </div>
