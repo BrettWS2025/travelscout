@@ -28,7 +28,9 @@ import { usePrefetchThingsToDo } from "@/lib/hooks/usePrefetchThingsToDo";
 import { useThingsToDo } from "@/lib/hooks/useThingsToDo";
 import { transformWalkingExperience, type ExperienceItem } from "@/lib/viator-helpers";
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
+import { useDailyWeather } from "@/lib/hooks/useDailyWeather";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
+import DayWeatherIcon from "@/components/trip-planner/DayWeatherIcon";
 import ThingsToDoList from "@/components/trip-planner/Things_todo/ThingsToDoList";
 import NearbyRestaurantsMapPanel from "@/components/trip-planner/NearbyRestaurantsMapPanel";
 import NearbyHotelsMapPanel from "@/components/trip-planner/NearbyHotelsMapPanel";
@@ -58,12 +60,16 @@ function SidebarDayItem({
   formatDayDate,
   isSelected,
   onSelect,
+  weatherStartDate,
+  weatherEndDate,
 }: {
   day: TripPlan["days"][number];
   selectedLocation: LocationBoxForSidebar;
   formatDayDate: (dateStr: string) => string;
   isSelected: boolean;
   onSelect: () => void;
+  weatherStartDate?: string;
+  weatherEndDate?: string;
 }) {
   // Resolve destination coords — same scope as day content (destination city only).
   const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | undefined>(undefined);
@@ -97,6 +103,14 @@ function SidebarDayItem({
     destCoords?.lng
   );
 
+  const { weatherByDate } = useDailyWeather({
+    lat: destCoords?.lat,
+    lng: destCoords?.lng,
+    startDate: weatherStartDate,
+    endDate: weatherEndDate,
+  });
+  const dayWeather = weatherByDate[day.date];
+
   const eventCount = destinationEvents?.length ?? 0;
 
   return (
@@ -104,24 +118,36 @@ function SidebarDayItem({
       type="button"
       onClick={onSelect}
       className={`
-        w-full rounded-lg transition-all duration-200 text-center
+        w-full rounded-lg transition-all duration-200
         ${isSelected
           ? "bg-indigo-600 text-white shadow-md"
           : "bg-white text-slate-700 hover:shadow-sm"
         }
       `}
     >
-      <div className="py-1 px-1.5 md:py-1.5 md:px-2">
-        <div
-          className={`font-bold text-[10px] md:text-[12px] mb-0 ${isSelected ? "text-white" : "text-slate-900"}`}
-        >
-          {formatDayDate(day.date)}
-        </div>
-        <div className={`text-[8px] md:text-[10px] leading-tight ${isSelected ? "text-indigo-100" : "text-slate-500"}`}>
-          DAY {day.dayNumber}
-        </div>
-        <div className={`text-[7px] md:text-[9px] mt-0.5 leading-tight ${isSelected ? "text-indigo-100" : "text-slate-500"}`}>
-          {eventCount} {eventCount === 1 ? "Event" : "Events"}
+      <div className="flex items-center gap-1 py-1 pl-1 pr-1.5 md:py-1.5 md:pl-1.5 md:pr-2">
+        <span className="flex-shrink-0 w-4 h-4 md:w-5 md:h-5 flex items-center justify-center">
+          {dayWeather ? (
+            <DayWeatherIcon
+              kind={dayWeather.icon}
+              description={dayWeather.description}
+              selected={isSelected}
+              className="w-4 h-4 md:w-[18px] md:h-[18px]"
+            />
+          ) : null}
+        </span>
+        <div className="min-w-0 flex-1 text-center">
+          <div
+            className={`font-bold text-[10px] md:text-[12px] mb-0 ${isSelected ? "text-white" : "text-slate-900"}`}
+          >
+            {formatDayDate(day.date)}
+          </div>
+          <div className={`text-[8px] md:text-[10px] leading-tight ${isSelected ? "text-indigo-100" : "text-slate-500"}`}>
+            DAY {day.dayNumber}
+          </div>
+          <div className={`text-[7px] md:text-[9px] mt-0.5 leading-tight ${isSelected ? "text-indigo-100" : "text-slate-500"}`}>
+            {eventCount} {eventCount === 1 ? "Event" : "Events"}
+          </div>
         </div>
       </div>
     </button>
@@ -531,6 +557,8 @@ export default function DraftItinerary(props: Props) {
               selectedLocationIndex < locationBoxes.length ? locationBoxes[selectedLocationIndex] : null;
             const showAllLocationString = selectedLocation?.cityName ?? "";
             const selectedDayForLabel = selectedLocationDays[selectedDayIndex]?.day;
+            const weatherStartDate = selectedLocationDays[0]?.day.date;
+            const weatherEndDate = selectedLocationDays[selectedLocationDays.length - 1]?.day.date;
             const hideDaySidebar =
               showAllThingsToDo || showNearbyRestaurantsMap || showNearbyHotelsMap;
 
@@ -552,6 +580,8 @@ export default function DraftItinerary(props: Props) {
                                 formatDayDate={formatDayDate}
                                 isSelected={idx === selectedDayIndex}
                                 onSelect={() => setSelectedDayIndex(idx)}
+                                weatherStartDate={weatherStartDate}
+                                weatherEndDate={weatherEndDate}
                               />
                             ))}
                         </div>
@@ -610,6 +640,8 @@ export default function DraftItinerary(props: Props) {
                                   formatDayDate={formatDayDate}
                                   isSelected={idx === selectedDayIndex}
                                   onSelect={() => setSelectedDayIndex(idx)}
+                                  weatherStartDate={weatherStartDate}
+                                  weatherEndDate={weatherEndDate}
                                 />
                               ))}
                           </div>
