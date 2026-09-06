@@ -4,6 +4,7 @@ import {
   buildDailyWeatherByDate,
   clampToForecastWindow,
   daysInclusive,
+  formatForecastTemps,
   isIsoDate,
   utcIsoDate,
   weatherCodeToMeta,
@@ -65,11 +66,39 @@ describe("weather", () => {
       );
       expect(byDate["2026-09-11"]?.icon).toBe("clear");
       expect(byDate["2026-09-12"]?.icon).toBe("rain");
+      expect(byDate["2026-09-11"]?.tempMax).toBeNull();
+      expect(byDate["2026-09-11"]?.tempMin).toBeNull();
+    });
+
+    it("includes daily high and low temperatures when provided", () => {
+      const byDate = buildDailyWeatherByDate(
+        ["2026-09-11"],
+        [2],
+        [18.4],
+        [6.7]
+      );
+      expect(byDate["2026-09-11"]).toMatchObject({
+        icon: "partlyCloudy",
+        description: "Partly cloudy",
+        tempMax: 18.4,
+        tempMin: 6.7,
+      });
     });
 
     it("skips malformed rows", () => {
       expect(buildDailyWeatherByDate(["nope"], [0])).toEqual({});
       expect(buildDailyWeatherByDate(["2026-09-11"], [null])).toEqual({});
+    });
+  });
+
+  describe("formatForecastTemps", () => {
+    it("rounds highs and lows as high / low", () => {
+      expect(formatForecastTemps(18.4, 6.7)).toBe("18° / 7°");
+    });
+
+    it("returns null when a bound is missing", () => {
+      expect(formatForecastTemps(18, null)).toBeNull();
+      expect(formatForecastTemps(undefined, 7)).toBeNull();
     });
   });
 

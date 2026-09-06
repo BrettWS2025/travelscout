@@ -729,6 +729,8 @@ export default function DraftItinerary(props: Props) {
                         legs={legs}
                         onAddManualTripEntry={onAddManualTripEntry}
                         onRemoveManualTripEntry={onRemoveManualTripEntry}
+                        weatherStartDate={weatherStartDate}
+                        weatherEndDate={weatherEndDate}
                       />
                     </div>
                   ) : null}

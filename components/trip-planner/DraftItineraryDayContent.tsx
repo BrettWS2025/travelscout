@@ -17,6 +17,8 @@ import { saveHotelSelectionEvent } from "@/lib/hotels.api";
 import { saveRestaurantSelectionToCache } from "@/lib/restaurants.api";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
+import DayWeatherSummary from "@/components/trip-planner/DayWeatherSummary";
+import { useDailyWeather } from "@/lib/hooks/useDailyWeather";
 
 export type LocationBox = {
   stopIndex: number;
@@ -65,6 +67,8 @@ export type DraftItineraryDayContentProps = {
   legs?: TripLeg[];
   onAddManualTripEntry?: (date: string, location: string, entry: ManualTripEntry) => void;
   onRemoveManualTripEntry?: (date: string, location: string, id: string) => void;
+  weatherStartDate?: string;
+  weatherEndDate?: string;
 };
 
 export default function DraftItineraryDayContent({
@@ -93,6 +97,8 @@ export default function DraftItineraryDayContent({
   legs,
   onAddManualTripEntry,
   onRemoveManualTripEntry,
+  weatherStartDate,
+  weatherEndDate,
 }: DraftItineraryDayContentProps) {
   // Use the same key helper as the rest of the trip planner to ensure
   // we read the exact same dayDetails entry that "Added Experiences and Events" uses.
@@ -181,6 +187,14 @@ export default function DraftItineraryDayContent({
     destinationLocationCoords?.lat,
     destinationLocationCoords?.lng
   );
+
+  const { weatherByDate } = useDailyWeather({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    startDate: weatherStartDate ?? selectedDay.date,
+    endDate: weatherEndDate ?? selectedDay.date,
+  });
+  const dayWeather = weatherByDate[selectedDay.date];
 
   // Initial implementation: nearby places ranked by distance from the selected city's coordinates.
   // Later, we'll swap this input to use hotel/venue coordinates instead.
@@ -421,12 +435,15 @@ export default function DraftItineraryDayContent({
 
   return (
     <div className="flex-1 rounded-xl bg-slate-50/50 p-2 sm:p-3 md:p-6">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">{formatDisplayDate(selectedDay.date)}</h2>
-            <p className="text-sm text-slate-600 mt-1">{locationName}</p>
+      <div className="mb-6 text-left">
+        <div className="mb-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 whitespace-nowrap">
+              {formatDisplayDate(selectedDay.date)}
+            </h2>
+            {dayWeather ? <DayWeatherSummary weather={dayWeather} /> : null}
           </div>
+          <p className="text-sm text-slate-600 mt-1">{locationName}</p>
         </div>
       </div>
 

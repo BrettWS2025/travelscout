@@ -40,6 +40,8 @@ type Props = {
   description: string;
   selected?: boolean;
   className?: string;
+  /** Hide from assistive tech when the description is shown as visible text. */
+  decorative?: boolean;
 };
 
 export default function DayWeatherIcon({
@@ -47,13 +49,15 @@ export default function DayWeatherIcon({
   description,
   selected = false,
   className = "w-4 h-4",
+  decorative = false,
 }: Props) {
   const Icon = ICONS[kind];
   const colorClass = selected ? "text-white" : DEFAULT_COLOR[kind];
   return (
     <Icon
       className={`${className} ${colorClass} flex-shrink-0`}
-      aria-label={description}
+      aria-label={decorative ? undefined : description}
+      aria-hidden={decorative || undefined}
       strokeWidth={2}
     />
   );

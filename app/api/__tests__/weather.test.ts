@@ -48,6 +48,8 @@ describe("/api/weather", () => {
         daily: {
           time: [start, end],
           weather_code: [0, 61],
+          temperature_2m_max: [18.4, 14.1],
+          temperature_2m_min: [6.7, 5.2],
         },
       })
     );
@@ -60,10 +62,14 @@ describe("/api/weather", () => {
     expect(data.success).toBe(true);
     expect(data.days[start].icon).toBe("clear");
     expect(data.days[end].icon).toBe("rain");
+    expect(data.days[start].tempMax).toBe(18.4);
+    expect(data.days[start].tempMin).toBe(6.7);
     expect(fetch).toHaveBeenCalledTimes(1);
     const calledUrl = String((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
     expect(calledUrl).toContain("api.open-meteo.com/v1/forecast");
-    expect(calledUrl).toContain("daily=weather_code");
+    expect(calledUrl).toContain("weather_code");
+    expect(calledUrl).toContain("temperature_2m_max");
+    expect(calledUrl).toContain("temperature_2m_min");
   });
 
   it("retries with Open-Meteo's allowed range when the first request is out of bounds", async () => {

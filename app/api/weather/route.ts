@@ -50,7 +50,8 @@ async function fetchOpenMeteoDaily(
   const url = new URL(OPEN_METEO_URL);
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lng));
-  url.searchParams.set("daily", "weather_code");
+  url.searchParams.set("daily", "weather_code,temperature_2m_max,temperature_2m_min");
+  url.searchParams.set("temperature_unit", "celsius");
   url.searchParams.set("timezone", "auto");
   url.searchParams.set("start_date", window.startDate);
   url.searchParams.set("end_date", window.endDate);
@@ -108,7 +109,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, days: {} } satisfies WeatherResponse);
     }
 
-    const cacheKey = `weather:${crypto
+    const cacheKey = `weather:v2:${crypto
       .createHash("sha256")
       .update(
         JSON.stringify({
@@ -157,7 +158,9 @@ export async function GET(req: Request) {
           const daily = retryResult.body?.daily ?? {};
           const days = buildDailyWeatherByDate(
             daily.time,
-            daily.weather_code ?? daily.weathercode
+            daily.weather_code ?? daily.weathercode,
+            daily.temperature_2m_max,
+            daily.temperature_2m_min
           );
           return NextResponse.json({ success: true, days } satisfies WeatherResponse);
         }
@@ -169,7 +172,9 @@ export async function GET(req: Request) {
     const daily = openMeteo?.daily ?? {};
     const days = buildDailyWeatherByDate(
       daily.time,
-      daily.weather_code ?? daily.weathercode
+      daily.weather_code ?? daily.weathercode,
+      daily.temperature_2m_max,
+      daily.temperature_2m_min
     );
     const payload: WeatherResponse = { success: true, days };
 

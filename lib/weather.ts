@@ -15,6 +15,8 @@ export type DailyWeather = {
   weatherCode: number;
   icon: WeatherIconKind;
   description: string;
+  tempMax: number | null;
+  tempMin: number | null;
 };
 
 const FORECAST_PAST_DAYS = 92;
@@ -99,11 +101,32 @@ export function weatherCodeToMeta(code: number): {
   return { icon: "overcast", description: "Cloudy" };
 }
 
+function parseOptionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** High / low, e.g. "18° / 7°". Returns null when either bound is missing. */
+export function formatForecastTemps(
+  tempMax: number | null | undefined,
+  tempMin: number | null | undefined
+): string | null {
+  if (tempMax == null || tempMin == null) return null;
+  if (!Number.isFinite(tempMax) || !Number.isFinite(tempMin)) return null;
+  return `${Math.round(tempMax)}° / ${Math.round(tempMin)}°`;
+}
+
 export function buildDailyWeatherByDate(
   times: unknown,
-  codes: unknown
+  codes: unknown,
+  maxTemps?: unknown,
+  minTemps?: unknown
 ): Record<string, DailyWeather> {
   if (!Array.isArray(times) || !Array.isArray(codes)) return {};
+
+  const maxArr = Array.isArray(maxTemps) ? maxTemps : [];
+  const minArr = Array.isArray(minTemps) ? minTemps : [];
 
   const byDate: Record<string, DailyWeather> = {};
   for (let i = 0; i < times.length; i++) {
@@ -119,6 +142,8 @@ export function buildDailyWeatherByDate(
       weatherCode,
       icon: meta.icon,
       description: meta.description,
+      tempMax: parseOptionalNumber(maxArr[i]),
+      tempMin: parseOptionalNumber(minArr[i]),
     };
   }
   return byDate;
