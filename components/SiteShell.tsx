@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { TripPlannerNavbar } from "@/components/TripPlannerNavbar";
 import { Footer } from "@/components/Footer";
 import { OperatorSiteChrome } from "@/components/OperatorSiteChrome";
+import { MarketingMain } from "@/components/MarketingMain";
 import { SURFACE_HEADER, type SiteSurface } from "@/lib/hosts";
 
 function getSurface(): SiteSurface {
@@ -27,7 +28,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     <>
       <Navbar />
       <TripPlannerNavbar />
-      <main className="container pt-[120px] pb-10">{children}</main>
+      <MarketingMain>{children}</MarketingMain>
       <Footer />
     </>
   );
