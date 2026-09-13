@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import { operatorHref } from "@/lib/hosts";
 import { createOrganization } from "@/lib/marketplace/client";
 import type { BookingProvider } from "@/lib/marketplace/types";
 
@@ -16,6 +18,7 @@ const PROVIDERS: { value: BookingProvider; label: string }[] = [
 export default function NewOrganizationPage() {
   const router = useRouter();
   const { session } = useAuth();
+  const onOperatorHost = useOnOperatorHost();
   const [name, setName] = useState("");
   const [region, setRegion] = useState("");
   const [website, setWebsite] = useState("");
@@ -44,7 +47,9 @@ export default function NewOrganizationPage() {
         },
         session?.access_token
       );
-      router.push(`/operator/organizations/${organization.id}`);
+      router.push(
+        operatorHref(`/operator/organizations/${organization.id}`, onOperatorHost)
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create organization.");
       setLoading(false);

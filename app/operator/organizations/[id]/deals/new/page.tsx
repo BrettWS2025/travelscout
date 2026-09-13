@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import { operatorHref } from "@/lib/hosts";
 import { createDeal } from "@/lib/marketplace/client";
 import type { BookingProvider, DealStatus } from "@/lib/marketplace/types";
 
@@ -23,6 +25,7 @@ export default function NewDealPage() {
   const params = useParams<{ id: string }>();
   const organizationId = params.id;
   const { session } = useAuth();
+  const onOperatorHost = useOnOperatorHost();
 
   const defaultDeparture = useMemo(() => {
     const d = new Date();
@@ -71,7 +74,10 @@ export default function NewDealPage() {
         session?.access_token
       );
       router.push(
-        `/operator/organizations/${organizationId}/deals/${deal.id}`
+        operatorHref(
+          `/operator/organizations/${organizationId}/deals/${deal.id}`,
+          onOperatorHost
+        )
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create deal.");

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { OperatorLink } from "@/components/OperatorLink";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { listMyOrganizations } from "@/lib/marketplace/client";
@@ -46,7 +46,7 @@ export default function OperatorDashboardPage() {
             Organizations own last-minute deals. Set one up, then publish
             discounted activities departing within 3 days.
           </p>
-          <Link
+          <OperatorLink
             href="/operator/organizations/new"
             className="inline-flex rounded-lg px-4 py-2 text-white font-medium"
             style={{
@@ -54,12 +54,12 @@ export default function OperatorDashboardPage() {
             }}
           >
             Create organization
-          </Link>
+          </OperatorLink>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {organizations.map((org) => (
-            <Link
+            <OperatorLink
               key={org.id}
               href={`/operator/organizations/${org.id}`}
               className="card p-5 hover:shadow-lg transition-shadow block"
@@ -84,7 +84,7 @@ export default function OperatorDashboardPage() {
                   {org.website}
                 </p>
               )}
-            </Link>
+            </OperatorLink>
           ))}
         </div>
       )}

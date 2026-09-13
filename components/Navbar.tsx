@@ -247,14 +247,6 @@ function ProfileMenu({
                     <span>Itineraries</span>
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/operator"
-                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                  >
-                    <span>Operator</span>
-                  </Link>
-                </li>
                 <li className="border-t border-slate-200 mt-1 pt-1">
                   <button
                     type="button"
@@ -528,13 +520,6 @@ export function Navbar() {
                     onClick={closeMobileMenu}
                   >
                     <span>Itineraries</span>
-                  </Link>
-                  <Link
-                    href="/operator"
-                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                    onClick={closeMobileMenu}
-                  >
-                    <span>Operator</span>
                   </Link>
                   <button
                     type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { OperatorLink } from "@/components/OperatorLink";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -91,13 +91,13 @@ export default function OrganizationDetailPage() {
               .join(" · ")}
           </p>
         </div>
-        <Link
+        <OperatorLink
           href={`/operator/organizations/${organization.id}/deals/new`}
           className="inline-flex rounded-lg px-4 py-2 text-white font-medium"
           style={{ background: "linear-gradient(to right, #3b82f6, #6366f1)" }}
         >
           New deal
-        </Link>
+        </OperatorLink>
       </div>
 
       <div className="space-y-3">
@@ -110,7 +110,7 @@ export default function OrganizationDetailPage() {
         ) : (
           <div className="space-y-3">
             {deals.map((deal) => (
-              <Link
+              <OperatorLink
                 key={deal.id}
                 href={`/operator/organizations/${organization.id}/deals/${deal.id}`}
                 className="card p-4 block hover:shadow-md transition-shadow"
@@ -141,7 +141,7 @@ export default function OrganizationDetailPage() {
                     )}
                   </div>
                 </div>
-              </Link>
+              </OperatorLink>
             ))}
           </div>
         )}

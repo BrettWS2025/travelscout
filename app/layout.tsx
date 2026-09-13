@@ -4,9 +4,7 @@ import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { Navbar } from "@/components/Navbar";
-import { TripPlannerNavbar } from "@/components/TripPlannerNavbar";
-import { Footer } from "@/components/Footer";
+import { SiteShell } from "@/components/SiteShell";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"; // optional
 import { AuthProvider } from "@/components/AuthProvider"; // 👈 NEW
@@ -130,10 +128,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* 👇 Everything that needs to know about auth lives inside here */}
         <QueryProvider>
           <AuthProvider>
-            <Navbar />
-            <TripPlannerNavbar />
-            <main className="container pt-[120px] pb-10">{children}</main>
-            <Footer />
+            <SiteShell>{children}</SiteShell>
             {isProd && <Analytics />}
             {isProd && <SpeedInsights />}
           </AuthProvider>
