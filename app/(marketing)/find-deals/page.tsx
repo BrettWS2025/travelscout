@@ -5,10 +5,16 @@ import { Search, MapPin, Compass } from "lucide-react";
 export const metadata: Metadata = {
   title: "Find Deals",
   description:
-    "Search travel deals by location across New Zealand. Destination search is coming soon on TravelScout.",
+    "Search travel deals by region across New Zealand. Destination search is coming soon on TravelScout.",
 };
 
-export default function FindDealsPage() {
+type Props = {
+  searchParams?: { region?: string };
+};
+
+export default function FindDealsPage({ searchParams }: Props) {
+  const region = (searchParams?.region ?? "").trim();
+
   return (
     <div className="ts-page min-h-screen">
       <section className="relative overflow-hidden px-4 pb-20 pt-28 md:px-8 md:pt-36">
@@ -31,43 +37,46 @@ export default function FindDealsPage() {
           </p>
           <h1 className="max-w-3xl font-[family-name:var(--font-instrument)] text-5xl leading-[1.05] tracking-tight text-[var(--ts-ink)] md:text-7xl">
             Search New Zealand{" "}
-            <span className="italic text-[var(--ts-teal)]">by place</span>
+            <span className="italic text-[var(--ts-teal)]">by region</span>
           </h1>
           <p className="mt-6 max-w-xl font-[family-name:var(--font-sora)] text-lg text-[var(--ts-muted)] md:text-xl">
-            Location-aware deal search is on the way. Soon you&apos;ll filter
-            experiences, stays, and events for the exact region you want to
-            explore.
+            {region
+              ? `Looking for deals in ${region}. Live operator results will appear here soon — for now this page holds your search ready.`
+              : "Pick a region to start. Live operator results will land here soon; for now this is the home of place-based deal search."}
           </p>
 
           <div className="mt-10">
-            <label htmlFor="deal-location" className="sr-only">
-              Search by location
+            <label htmlFor="deal-region" className="sr-only">
+              Search by region
             </label>
-            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ts-ink)]/10 bg-white/80 p-3 shadow-[0_24px_60px_rgba(16,36,28,0.08)] backdrop-blur-md sm:flex-row sm:items-center">
+            <form
+              action="/find-deals"
+              method="get"
+              className="flex flex-col gap-3 rounded-2xl border border-[var(--ts-ink)]/10 bg-white/80 p-3 shadow-[0_24px_60px_rgba(16,36,28,0.08)] backdrop-blur-md sm:flex-row sm:items-center"
+            >
               <div className="flex flex-1 items-center gap-3 px-3 py-2">
                 <MapPin className="h-5 w-5 shrink-0 text-[var(--ts-teal)]" />
                 <input
-                  id="deal-location"
-                  name="location"
+                  id="deal-region"
+                  name="region"
                   type="text"
-                  placeholder="Queenstown, Bay of Islands, Rotorua…"
-                  disabled
-                  className="w-full bg-transparent font-[family-name:var(--font-sora)] text-base text-[var(--ts-ink)] outline-none placeholder:text-[var(--ts-muted)] disabled:cursor-not-allowed disabled:opacity-70"
+                  defaultValue={region}
+                  placeholder="Queenstown, Bay of Plenty, Rotorua…"
+                  className="w-full bg-transparent font-[family-name:var(--font-sora)] text-base text-[var(--ts-ink)] outline-none placeholder:text-[var(--ts-muted)]"
                 />
               </div>
               <button
-                type="button"
-                disabled
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--ts-ink)] px-6 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-white opacity-70"
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--ts-ink)] px-6 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-white transition hover:bg-[var(--ts-teal)]"
               >
                 <Search className="h-4 w-4" />
                 Search deals
               </button>
-            </div>
+            </form>
           </div>
 
           <p className="mt-4 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-            Placeholder — search will go live with location filters next.
+            Placeholder results — operator deals will populate this view next.
           </p>
         </div>
       </section>
@@ -77,7 +86,7 @@ export default function FindDealsPage() {
           {[
             {
               icon: MapPin,
-              title: "Pick a place",
+              title: "Pick a region",
               copy: "Start with a town, region, or landmark across Aotearoa.",
             },
             {

@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation";
 
 export function MarketingMain({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isFullBleed = pathname === "/" || pathname === "/find-deals";
+  const isFullBleed =
+    pathname === "/" ||
+    pathname === "/find-deals" ||
+    pathname === "/how-it-works";
 
   if (isFullBleed) {
     return <main className="relative z-0 overflow-x-hidden pb-0 pt-0">{children}</main>;

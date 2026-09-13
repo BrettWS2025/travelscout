@@ -3,29 +3,29 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { DiagonalMarquee } from "@/components/home/DiagonalMarquee";
 import { Reveal } from "@/components/home/Reveal";
+import { HeroRegionSearch } from "@/components/home/HeroRegionSearch";
 
 export const metadata: Metadata = {
   title: "TravelScout | Discover New Zealand",
   description:
-    "A showcase of New Zealand travel — destinations, events, and deals worth chasing. Search specific locations on Find a Deal.",
+    "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   openGraph: {
     title: "TravelScout | Discover New Zealand",
     description:
-      "A showcase of New Zealand travel — destinations, events, and deals worth chasing.",
+      "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   },
 };
 
 export default function Home() {
   return (
     <div className="ts-page">
-      {/* Hero — one composition: brand, headline, line, CTA, full-bleed image */}
       <section className="relative min-h-[100svh] w-full overflow-hidden">
         <Image
           src="/Main_Page_Pic.jpg"
           alt="New Zealand landscape"
           fill
           priority
-          className="object-cover object-center scale-105 animate-hero-drift"
+          className="animate-hero-drift scale-105 object-cover object-center"
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
@@ -42,17 +42,11 @@ export default function Home() {
               <span className="italic text-[var(--ts-lime)]">matter</span>
             </h1>
             <p className="mt-6 max-w-lg font-[family-name:var(--font-sora)] text-base text-white/85 md:text-lg">
-              A curated look at New Zealand — then hunt the offer that fits your
-              place and pace.
+              A curated look at New Zealand — then search the region that fits
+              your pace.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-5">
-              <Link
-                href="/find-deals"
-                className="inline-flex items-center gap-2 bg-[var(--ts-lime)] px-6 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:brightness-105"
-              >
-                Find a deal
-                <span aria-hidden>→</span>
-              </Link>
+            <HeroRegionSearch />
+            <div className="mt-5">
               <a
                 href="#escape"
                 className="font-[family-name:var(--font-sora)] text-sm font-medium text-white/80 underline decoration-white/30 underline-offset-4 transition hover:text-white hover:decoration-white"
@@ -66,7 +60,6 @@ export default function Home() {
 
       <DiagonalMarquee />
 
-      {/* Editorial statement — Creativeans-style big type */}
       <section className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16">
         <div className="mx-auto max-w-6xl">
           <Reveal>
@@ -78,15 +71,14 @@ export default function Home() {
               <span className="italic text-[var(--ts-teal)]"> Worth taking.</span>
             </h2>
             <p className="mt-6 max-w-2xl font-[family-name:var(--font-sora)] text-lg text-[var(--ts-muted)]">
-              The home page is the showcase — destinations, atmosphere, and the
-              moments that pull you south. When you&apos;re ready to go specific,
-              Find a Deal is where the search lives.
+              Home is the showcase — destinations and deals on display. When
+              you&apos;re ready to go specific, search by region and Find Deals
+              takes it from there.
             </p>
           </Reveal>
         </div>
       </section>
 
-      {/* Destinations showcase */}
       <section
         id="escape"
         className="relative overflow-hidden px-5 py-8 md:px-10 md:py-12 lg:px-16"
@@ -118,10 +110,10 @@ export default function Home() {
                   or chase festival nights when the Southern Alps glow.
                 </p>
                 <Link
-                  href="/find-deals"
+                  href="/find-deals?region=W%C4%81naka"
                   className="mt-6 inline-flex items-center gap-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:text-[var(--ts-teal)]"
                 >
-                  Find deals nearby
+                  Find deals in Wānaka
                   <span aria-hidden>→</span>
                 </Link>
               </div>
@@ -138,14 +130,14 @@ export default function Home() {
                   Bay of Islands
                 </h3>
                 <p className="mt-4 font-[family-name:var(--font-sora)] text-sm leading-relaxed text-[var(--ts-muted)] md:text-base">
-                  A subtropical scatter of 144 islands — sail, fly, and wander
-                  through history wrapped in turquoise water.
+                  A subtropical scatter of islands — sail, fly, and wander through
+                  history wrapped in turquoise water.
                 </p>
                 <Link
-                  href="/find-deals"
+                  href="/find-deals?region=Northland"
                   className="mt-6 inline-flex items-center gap-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:text-[var(--ts-teal)]"
                 >
-                  Find deals nearby
+                  Find deals in Northland
                   <span aria-hidden>→</span>
                 </Link>
               </div>
@@ -165,86 +157,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Events — one job */}
-      <section className="mt-20 bg-[var(--ts-ink)] px-5 py-20 text-white md:mt-28 md:px-10 md:py-28 lg:px-16">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ts-lime)]">
-              On the calendar
-            </p>
-            <h2 className="mt-3 font-[family-name:var(--font-instrument)] text-4xl md:text-6xl">
-              Next big <span className="italic">moments</span>
-            </h2>
-          </Reveal>
-
-          <div className="mt-14 space-y-16">
-            <Reveal>
-              <article className="grid items-center gap-8 md:grid-cols-2">
-                <div className="relative overflow-hidden">
-                  <img
-                    src="/gunsnrosesbanner.jpg"
-                    alt="Guns N' Roses World Tour 2026"
-                    className="h-auto w-full object-contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-[family-name:var(--font-instrument)] text-3xl md:text-4xl">
-                    Guns N&apos; Roses · World Tour 2026
-                  </h3>
-                  <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-white/70">
-                    Back on stage for the first time since 2022 — Eden Park,
-                    Auckland, 17 December.
-                  </p>
-                </div>
-              </article>
-            </Reveal>
-
-            <Reveal delayMs={60}>
-              <article className="grid items-center gap-8 md:grid-cols-2">
-                <div className="order-2 md:order-1">
-                  <h3 className="font-[family-name:var(--font-instrument)] text-2xl md:text-3xl">
-                    DHL Super Rugby Pacific Super Round
-                  </h3>
-                  <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-white/70">
-                    Three days of world-class rugby in Ōtautahi — 24–26 April at
-                    One NZ Stadium, Christchurch.
-                  </p>
-                </div>
-                <div className="order-1 mx-auto w-full max-w-[240px] md:order-2 md:mx-0 md:justify-self-end">
-                  <img
-                    src="/superrugbysuperround.jpg"
-                    alt="DHL Super Rugby Pacific Super Round"
-                    className="h-auto w-full object-contain"
-                  />
-                </div>
-              </article>
-            </Reveal>
-
-            <Reveal delayMs={90}>
-              <article className="grid items-center gap-8 md:grid-cols-2">
-                <div className="relative overflow-hidden">
-                  <img
-                    src="/jazzfestival.jpg"
-                    alt="2026 National Jazz Festival"
-                    className="h-auto w-full object-contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-[family-name:var(--font-instrument)] text-2xl md:text-3xl">
-                    2026 National Jazz Festival
-                  </h3>
-                  <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-white/70">
-                    Eleven days of jazz across Tauranga and Mount Maunganui —
-                    27 March to 7 April.
-                  </p>
-                </div>
-              </article>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* Closing CTA */}
       <section className="relative overflow-hidden px-5 py-24 md:px-10 md:py-32 lg:px-16">
         <div className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full bg-[var(--ts-lime)]/25 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[var(--ts-teal)]/20 blur-3xl" />
@@ -254,7 +166,7 @@ export default function Home() {
               Ready when you are
             </h2>
             <p className="mx-auto mt-4 max-w-xl font-[family-name:var(--font-sora)] text-[var(--ts-muted)]">
-              Skip the scroll — search the places you care about and surface the
+              Skip the scroll — search the region you care about and surface the
               deals that belong there.
             </p>
             <Link
