@@ -140,9 +140,9 @@ export function TripPlannerNavbar() {
               <button
                 type="button"
                 onClick={() => {
-                  // Dispatch custom event to expand the form
+                  // Toggle the planner form visibility from the secondary navbar.
                   if (typeof window !== "undefined") {
-                    window.dispatchEvent(new CustomEvent("expandTripPlannerForm"));
+                    window.dispatchEvent(new CustomEvent("toggleTripPlannerForm"));
                   }
                 }}
                 className="inline-flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium text-xs"

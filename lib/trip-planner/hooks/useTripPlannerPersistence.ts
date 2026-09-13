@@ -38,6 +38,7 @@ export function useTripPlannerPersistence(
   endCityId: string,
   startDate: string,
   endDate: string,
+  destinationIds: string[],
   selectedPlaceIds: string[],
   selectedThingIds: string[],
   selectedPlaces: Place[],
@@ -58,6 +59,7 @@ export function useTripPlannerPersistence(
   setEndDate: (date: string) => void,
   setDateRange: (range: { from: Date; to: Date } | undefined) => void,
   setCalendarMonth: (month: Date) => void,
+  setDestinationIds: (ids: string[]) => void,
   setSelectedPlaceIds: (ids: string[]) => void,
   setSelectedThingIds: (ids: string[]) => void,
   setRouteStops: (stops: string[]) => void,
@@ -323,6 +325,7 @@ export function useTripPlannerPersistence(
         endCityId,
         startDate,
         endDate,
+        destinationIds,
         selectedPlaceIds,
         selectedThingIds,
         routeStops,
@@ -380,6 +383,9 @@ export function useTripPlannerPersistence(
       }
 
       // Restore selected places and things
+      if (state.destinationIds) {
+        setDestinationIds(state.destinationIds);
+      }
       if (state.selectedPlaceIds) {
         setSelectedPlaceIds(state.selectedPlaceIds);
       }

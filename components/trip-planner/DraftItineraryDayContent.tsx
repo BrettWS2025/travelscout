@@ -6,14 +6,19 @@ import type { TripPlan, TripLeg } from "@/lib/itinerary";
 import type { DayDetail, ManualTripEntry } from "@/lib/trip-planner/utils";
 import ManualEntryInline from "@/components/trip-planner/ManualEntryInline";
 import { formatDisplayDate, makeDayKey } from "@/lib/trip-planner/utils";
-import { getResolvedHotelCoords } from "@/lib/trip-planner/manualEntry";
+import { createManualEntryId, getResolvedHotelCoords } from "@/lib/trip-planner/manualEntry";
 import { getCityById, NZ_CITIES, searchPlacesByName, type NzCity } from "@/lib/nzCities";
 import type { WalkingExperience } from "@/lib/walkingExperiences";
 import type { ExperienceItem } from "@/lib/viator-helpers";
 import { useEvents, type Event } from "@/lib/hooks/useEvents";
 import { useNearbyPlaces } from "@/lib/hooks/useNearbyPlaces";
+import { useLiteApiHotels } from "@/lib/hooks/useLiteApiHotels";
+import { saveHotelSelectionEvent } from "@/lib/hotels.api";
+import { saveRestaurantSelectionToCache } from "@/lib/restaurants.api";
 import EventsAttractionsCarousel from "@/components/trip-planner/EventsAttractionsCarousel";
 import NearbyPlacesCarousel from "@/components/trip-planner/NearbyPlacesCarousel";
+import DayWeatherSummary from "@/components/trip-planner/DayWeatherSummary";
+import { useDailyWeather } from "@/lib/hooks/useDailyWeather";
 
 export type LocationBox = {
   stopIndex: number;
@@ -62,6 +67,8 @@ export type DraftItineraryDayContentProps = {
   legs?: TripLeg[];
   onAddManualTripEntry?: (date: string, location: string, entry: ManualTripEntry) => void;
   onRemoveManualTripEntry?: (date: string, location: string, id: string) => void;
+  weatherStartDate?: string;
+  weatherEndDate?: string;
 };
 
 export default function DraftItineraryDayContent({
@@ -90,6 +97,8 @@ export default function DraftItineraryDayContent({
   legs,
   onAddManualTripEntry,
   onRemoveManualTripEntry,
+  weatherStartDate,
+  weatherEndDate,
 }: DraftItineraryDayContentProps) {
   // Use the same key helper as the rest of the trip planner to ensure
   // we read the exact same dayDetails entry that "Added Experiences and Events" uses.
@@ -100,6 +109,15 @@ export default function DraftItineraryDayContent({
   const manualEvents = manualEntries.filter((m) => m.section === "events");
   const manualHotels = manualEntries.filter((m) => m.section === "hotel");
   const manualRestaurants = manualEntries.filter((m) => m.section === "restaurant");
+  const interestedRestaurantPlaceIds = useMemo(
+    () =>
+      new Set(
+        manualRestaurants
+          .map((entry) => entry.place?.id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      ),
+    [manualRestaurants]
+  );
   const hasManualHotel = manualHotels.length > 0;
   const city = getCityById(selectedDay.location);
   const locationName = city?.name || selectedDay.location;
@@ -170,6 +188,14 @@ export default function DraftItineraryDayContent({
     destinationLocationCoords?.lng
   );
 
+  const { weatherByDate } = useDailyWeather({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    startDate: weatherStartDate ?? selectedDay.date,
+    endDate: weatherEndDate ?? selectedDay.date,
+  });
+  const dayWeather = weatherByDate[selectedDay.date];
+
   // Initial implementation: nearby places ranked by distance from the selected city's coordinates.
   // Later, we'll swap this input to use hotel/venue coordinates instead.
   const {
@@ -187,21 +213,76 @@ export default function DraftItineraryDayContent({
 
   const topRestaurantsNearby = useMemo(() => nearbyRestaurants.slice(0, 3), [nearbyRestaurants]);
 
+  const handleRestaurantInterested = (place: (typeof topRestaurantsNearby)[number]) => {
+    void saveRestaurantSelectionToCache({
+      placeId: place.id,
+      name: place.name,
+      location: place.address,
+      city: selectedLocation?.cityName || destinationName || undefined,
+      rating: place.rating ?? null,
+      userRatingCount: place.userRatingCount ?? null,
+      googleMapsUri: place.googleMapsUri,
+      websiteUri: place.websiteUri,
+      latitude: place.lat ?? null,
+      longitude: place.lng ?? null,
+      selectedAction: "interested",
+      tripDayDate: selectedDay.date,
+      tripLocation: selectedDay.location,
+      metadata: {
+        sourceSurface: "day_content_restaurant_carousel",
+      },
+    });
+
+    if (!onAddManualTripEntry) return;
+    if (interestedRestaurantPlaceIds.has(place.id)) return;
+
+    onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+      id: createManualEntryId(),
+      section: "restaurant",
+      name: place.name,
+      locationText: place.address || undefined,
+      confirmation: place.websiteUri,
+      lat: place.lat,
+      lng: place.lng,
+      place: {
+        id: place.id,
+        name: place.name,
+        address: place.address,
+        rating: place.rating ?? undefined,
+        userRatingCount: place.userRatingCount ?? undefined,
+        lat: place.lat,
+        lng: place.lng,
+        googleMapsUri: place.googleMapsUri,
+        websiteUri: place.websiteUri,
+        imageUrl: place.imageUrl,
+        photoName: place.photoName,
+      },
+    });
+  };
+
+  const handleRestaurantCheckItOut = (place: (typeof topRestaurantsNearby)[number]) => {
+    void saveRestaurantSelectionToCache({
+      placeId: place.id,
+      name: place.name,
+      location: place.address,
+      city: selectedLocation?.cityName || destinationName || undefined,
+      rating: place.rating ?? null,
+      userRatingCount: place.userRatingCount ?? null,
+      googleMapsUri: place.googleMapsUri,
+      websiteUri: place.websiteUri,
+      latitude: place.lat ?? null,
+      longitude: place.lng ?? null,
+      selectedAction: "check_it_out",
+      tripDayDate: selectedDay.date,
+      tripLocation: selectedDay.location,
+      metadata: {
+        sourceSurface: "day_content_restaurant_carousel",
+      },
+    });
+  };
+
   /** When more than 3 experience tiles, use fixed md width so ~3 show with horizontal scroll. */
   const thingsToDoScrollOnMd = topExperiences.length > 3;
-
-  const {
-    places: nearbyHotels,
-    loading: nearbyHotelsLoading,
-    error: nearbyHotelsError,
-  } = useNearbyPlaces({
-    lat: destinationLocationCoords?.lat,
-    lng: destinationLocationCoords?.lng,
-    radiusMeters: 8000,
-    maxPlaces: 20,
-    includedType: "lodging",
-    sortBy: "rating",
-  });
 
   const canLoadNearbyPlaces =
     destinationLocationCoords?.lat !== undefined && destinationLocationCoords?.lng !== undefined;
@@ -210,7 +291,42 @@ export default function DraftItineraryDayContent({
     ? resolvedHotelCoords !== undefined
     : canLoadNearbyPlaces;
 
-  const topRatedHotelsNearby = useMemo(() => nearbyHotels.slice(0, 3), [nearbyHotels]);
+  const stayCheckin = selectedLocation?.arrivalDate;
+  const stayCheckout = selectedLocation?.departureDate;
+  const stayNights = Math.max(1, selectedLocation?.nights ?? 1);
+  const {
+    hotels: availableHotels,
+    loading: availableHotelsLoading,
+    error: availableHotelsError,
+  } = useLiteApiHotels({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    checkin: stayCheckin,
+    checkout: stayCheckout,
+    nights: stayNights,
+    limit: 8,
+    radiusKm: 12,
+    currency: "NZD",
+    guestNationality: "NZ",
+  });
+  const topAvailableHotels = useMemo(() => availableHotels.slice(0, 3), [availableHotels]);
+  const {
+    places: nearbyHotelsFallback,
+    loading: nearbyHotelsFallbackLoading,
+    error: nearbyHotelsFallbackError,
+  } = useNearbyPlaces({
+    lat: destinationLocationCoords?.lat,
+    lng: destinationLocationCoords?.lng,
+    radiusMeters: 20000,
+    maxPlaces: 30,
+    includedType: "lodging",
+    sortBy: "rating",
+  });
+  const topNearbyHotelsFallback = useMemo(() => nearbyHotelsFallback.slice(0, 3), [nearbyHotelsFallback]);
+  const shouldUseGoogleHotelFallback =
+    !availableHotelsLoading &&
+    !availableHotelsError &&
+    topAvailableHotels.length === 0;
 
   const getEventDurationNights = (event: Event): number | null => {
     if (!event.datetime_start) return null;
@@ -271,8 +387,8 @@ export default function DraftItineraryDayContent({
     eventsLoading,
     allEvents.length,
     topExperiences.length,
-    nearbyHotelsLoading,
-    nearbyHotels.length,
+    availableHotelsLoading,
+    availableHotels.length,
     nearbyRestaurantsLoading,
     nearbyRestaurants.length,
   ]);
@@ -319,12 +435,15 @@ export default function DraftItineraryDayContent({
 
   return (
     <div className="flex-1 rounded-xl bg-slate-50/50 p-2 sm:p-3 md:p-6">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">{formatDisplayDate(selectedDay.date)}</h2>
-            <p className="text-sm text-slate-600 mt-1">{locationName}</p>
+      <div className="mb-6 text-left">
+        <div className="mb-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 whitespace-nowrap">
+              {formatDisplayDate(selectedDay.date)}
+            </h2>
+            {dayWeather ? <DayWeatherSummary weather={dayWeather} /> : null}
           </div>
+          <p className="text-sm text-slate-600 mt-1">{locationName}</p>
         </div>
       </div>
 
@@ -553,7 +672,7 @@ export default function DraftItineraryDayContent({
                               )}
                               {experience.price && <div className="text-[10px] text-slate-600 mb-1 line-clamp-1">{experience.price}</div>}
                               {onAddToItinerary && (
-                                <div className="flex flex-col gap-1 mt-auto w-full">
+                                <div className="flex items-center gap-2 mt-auto w-full">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -570,7 +689,7 @@ export default function DraftItineraryDayContent({
                                         );
                                       }
                                     }}
-                                    className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                    className="inline-flex flex-1 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
                                   >
                                     Add to Trip
                                   </button>
@@ -580,7 +699,7 @@ export default function DraftItineraryDayContent({
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => e.stopPropagation()}
-                                      className="inline-flex w-full items-center justify-center rounded-full px-2 py-1 text-[10px] font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity text-center"
+                                      className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors text-center"
                                     >
                                       Book now
                                     </a>
@@ -738,26 +857,272 @@ export default function DraftItineraryDayContent({
                     ) : null
                   ) : (
                     <>
-                      {!canLoadNearbyPlaces || nearbyHotelsLoading ? (
+                      {!canLoadNearbyPlaces ||
+                      !stayCheckin ||
+                      !stayCheckout ||
+                      availableHotelsLoading ||
+                      (shouldUseGoogleHotelFallback && nearbyHotelsFallbackLoading) ? (
                         <div className="text-xs text-slate-600 text-center py-4">Loading hotels…</div>
-                      ) : nearbyHotelsError ? (
-                        <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsError}</div>
-                      ) : topRatedHotelsNearby.length > 0 ? (
+                      ) : availableHotelsError ? (
+                        <div className="text-xs text-slate-500 text-center py-4">{availableHotelsError}</div>
+                      ) : topAvailableHotels.length > 0 ? (
                         <>
-                          <p className="text-xs text-slate-500 mb-2">
-                            Top nearby hotels by rating and review count.
-                          </p>
-                          <NearbyPlacesCarousel
-                            places={topRatedHotelsNearby}
-                            title="Top nearby hotels"
-                            size="compact"
-                            showUserRatingCount
-                            showDirectionsLink
-                          />
+                          <div className="overflow-hidden">
+                            <div className="flex w-full gap-2 md:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                              {topAvailableHotels.map((hotel) => {
+                                const rateLabel =
+                                  hotel.maxRate > hotel.minRate
+                                    ? `${hotel.currency} ${hotel.minRate.toFixed(0)} - ${hotel.maxRate.toFixed(0)}`
+                                    : `${hotel.currency} ${hotel.minRate.toFixed(0)}`;
+                                const locationLabel = [hotel.address, hotel.city].filter(Boolean).join(" • ");
+                                const mapsUrl =
+                                  hotel.latitude !== undefined && hotel.longitude !== undefined
+                                    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                        `${hotel.latitude},${hotel.longitude}`
+                                      )}`
+                                    : undefined;
+
+                                return (
+                                  <div
+                                    key={hotel.id}
+                                    className="flex flex-col flex-shrink-0 snap-start w-[min(82vw,220px)] sm:w-48 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all"
+                                  >
+                                    <div className="relative mx-1 mt-1 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                                      {hotel.imageUrl ? (
+                                        <img
+                                          src={hotel.imageUrl}
+                                          alt={hotel.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.style.display = "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <span className="text-lg">🏨</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-2 flex flex-col flex-1 min-h-[6rem]">
+                                      <h3 className="font-semibold text-slate-900 text-[11px] leading-tight mb-1 line-clamp-2">
+                                        {hotel.name}
+                                      </h3>
+                                      {locationLabel ? (
+                                        <p className="text-[10px] text-slate-600 line-clamp-2 mb-1">{locationLabel}</p>
+                                      ) : null}
+                                      {hotel.rating ? (
+                                        <p className="text-[10px] text-slate-600 mb-1">★ {hotel.rating.toFixed(1)}</p>
+                                      ) : null}
+                                      <p className="text-[10px] font-semibold text-slate-900 mb-2">
+                                        From {rateLabel}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-auto">
+                                        {onAddManualTripEntry && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              void saveHotelSelectionEvent({
+                                                provider: "liteapi",
+                                                actionType: "add_to_itinerary",
+                                                hotelName: hotel.name,
+                                                address: hotel.address,
+                                                city: hotel.city,
+                                                rating: hotel.rating ?? null,
+                                                averageNightlyRate: hotel.minRate,
+                                                currencyCode: hotel.currency,
+                                                searchCheckin: stayCheckin,
+                                                searchCheckout: stayCheckout,
+                                                searchNights: stayNights,
+                                                productId: hotel.offerId,
+                                                hotelId: hotel.id,
+                                                bookingUrl: hotel.bookingUrl,
+                                                googleMapsUri: mapsUrl,
+                                                latitude: hotel.latitude ?? null,
+                                                longitude: hotel.longitude ?? null,
+                                                tripDayDate: selectedDay.date,
+                                                tripLocation: selectedDay.location,
+                                                metadata: {
+                                                  sourceSurface: "day_content_hotel_card",
+                                                },
+                                              });
+                                              const locationText = [hotel.address, hotel.city, hotel.countryCode]
+                                                .filter(Boolean)
+                                                .join(", ");
+                                              onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+                                                id: createManualEntryId(),
+                                                section: "hotel",
+                                                name: hotel.name,
+                                                locationText: locationText || undefined,
+                                                confirmation: hotel.bookingUrl,
+                                                lat: hotel.latitude,
+                                                lng: hotel.longitude,
+                                                place: {
+                                                  id: hotel.id,
+                                                  name: hotel.name,
+                                                  address: hotel.address,
+                                                  rating: hotel.rating ?? undefined,
+                                                  lat: hotel.latitude,
+                                                  lng: hotel.longitude,
+                                                  googleMapsUri: mapsUrl,
+                                                  imageUrl: hotel.imageUrl,
+                                                },
+                                              });
+                                            }}
+                                            className="inline-flex flex-1 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                          >
+                                            Add to trip
+                                          </button>
+                                        )}
+                                        <a
+                                          href={hotel.bookingUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={() => {
+                                            void saveHotelSelectionEvent({
+                                              provider: "liteapi",
+                                              actionType: "book_now",
+                                              hotelName: hotel.name,
+                                              address: hotel.address,
+                                              city: hotel.city,
+                                              rating: hotel.rating ?? null,
+                                              averageNightlyRate: hotel.minRate,
+                                              currencyCode: hotel.currency,
+                                              searchCheckin: stayCheckin,
+                                              searchCheckout: stayCheckout,
+                                              searchNights: stayNights,
+                                              productId: hotel.offerId,
+                                              hotelId: hotel.id,
+                                              bookingUrl: hotel.bookingUrl,
+                                              googleMapsUri: mapsUrl,
+                                              latitude: hotel.latitude ?? null,
+                                              longitude: hotel.longitude ?? null,
+                                              tripDayDate: selectedDay.date,
+                                              tripLocation: selectedDay.location,
+                                              metadata: {
+                                                sourceSurface: "day_content_hotel_card",
+                                              },
+                                            });
+                                          }}
+                                          className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors text-center"
+                                        >
+                                          Book now
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </>
+                      ) : shouldUseGoogleHotelFallback ? (
+                        topNearbyHotelsFallback.length > 0 ? (
+                          <>
+                            <p className="text-xs text-slate-500 mb-2">
+                              No live LiteAPI availability for these dates. Showing nearby hotels from Google Places.
+                            </p>
+                            <div className="overflow-hidden">
+                              <div className="flex w-full gap-2 md:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
+                                {topNearbyHotelsFallback.map((hotel) => (
+                                  <div
+                                    key={hotel.id}
+                                    className="flex flex-col flex-shrink-0 snap-start w-[min(82vw,220px)] sm:w-48 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all"
+                                  >
+                                    <div className="relative mx-1 mt-1 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden">
+                                      {hotel.imageUrl ? (
+                                        <img
+                                          src={hotel.imageUrl}
+                                          alt={hotel.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.style.display = "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <span className="text-lg">🏨</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-2 flex flex-col flex-1 min-h-[6rem]">
+                                      <h3 className="font-semibold text-slate-900 text-[11px] leading-tight mb-1 line-clamp-2">
+                                        {hotel.name}
+                                      </h3>
+                                      {hotel.address ? (
+                                        <p className="text-[10px] text-slate-600 line-clamp-2 mb-1">{hotel.address}</p>
+                                      ) : null}
+                                      {typeof hotel.rating === "number" ? (
+                                        <p className="text-[10px] text-slate-600 mb-2">★ {hotel.rating.toFixed(1)}</p>
+                                      ) : null}
+                                      {onAddManualTripEntry && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            void saveHotelSelectionEvent({
+                                              provider: "google_places",
+                                              actionType: "add_to_itinerary",
+                                              hotelName: hotel.name,
+                                              address: hotel.address,
+                                              city: selectedLocation.cityName,
+                                              rating: hotel.rating ?? null,
+                                              searchCheckin: stayCheckin,
+                                              searchCheckout: stayCheckout,
+                                              searchNights: stayNights,
+                                              productId: hotel.id,
+                                              hotelId: hotel.id,
+                                              bookingUrl: hotel.bookingUrl,
+                                              googleMapsUri: hotel.googleMapsUri,
+                                              latitude: hotel.lat ?? null,
+                                              longitude: hotel.lng ?? null,
+                                              tripDayDate: selectedDay.date,
+                                              tripLocation: selectedDay.location,
+                                              metadata: {
+                                                sourceSurface: "day_content_hotel_card_google_fallback",
+                                                userRatingCount: hotel.userRatingCount ?? null,
+                                              },
+                                            });
+                                            onAddManualTripEntry(selectedDay.date, selectedDay.location, {
+                                              id: createManualEntryId(),
+                                              section: "hotel",
+                                              name: hotel.name,
+                                              locationText: hotel.address || undefined,
+                                              lat: hotel.lat,
+                                              lng: hotel.lng,
+                                              place: {
+                                                id: hotel.id,
+                                                name: hotel.name,
+                                                address: hotel.address,
+                                                rating: hotel.rating ?? undefined,
+                                                userRatingCount: hotel.userRatingCount ?? undefined,
+                                                lat: hotel.lat,
+                                                lng: hotel.lng,
+                                                googleMapsUri: hotel.googleMapsUri,
+                                                imageUrl: hotel.imageUrl,
+                                                photoName: hotel.photoName,
+                                              },
+                                            });
+                                          }}
+                                          className="inline-flex w-full items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors mt-auto"
+                                        >
+                                          Add to trip
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        ) : nearbyHotelsFallbackError ? (
+                          <div className="text-xs text-slate-500 text-center py-4">{nearbyHotelsFallbackError}</div>
+                        ) : (
+                          <div className="text-xs text-slate-500 text-center py-4">
+                            No nearby hotels found for this area.
+                          </div>
+                        )
                       ) : (
                         <div className="text-xs text-slate-500 text-center py-4">
-                          No nearby hotels found for this area.
+                          No hotels with live availability found for these dates.
                         </div>
                       )}
                       {onAddManualTripEntry && onRemoveManualTripEntry && (
@@ -817,7 +1182,9 @@ export default function DraftItineraryDayContent({
                       title="Nearby places to eat"
                       size="compact"
                       showUserRatingCount
-                      showDirectionsLink
+                      onInterestedPlace={onAddManualTripEntry ? handleRestaurantInterested : undefined}
+                      onCheckOutPlace={handleRestaurantCheckItOut}
+                      interestedPlaceIds={interestedRestaurantPlaceIds}
                     />
                   ) : (
                     <div className="text-xs text-slate-500 text-center py-4">No nearby places found</div>

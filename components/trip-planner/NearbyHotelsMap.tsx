@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MapRef } from "react-map-gl/mapbox";
 import type { NearbyPlace } from "@/lib/hooks/useNearbyPlaces";
+import { saveHotelSelectionEvent } from "@/lib/hotels.api";
 
 const Map = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.Map), {
   ssr: false,
@@ -55,6 +56,7 @@ export default function NearbyHotelsMap({
   const mapRef = useRef<MapRef>(null);
   const [popupPlace, setPopupPlace] = useState<NearbyPlace | null>(null);
   const [popupOriginOpen, setPopupOriginOpen] = useState(false);
+  const addActionLabel = placeTypePlural === "restaurants" ? "Interested" : "Add to trip";
 
   const withCoords = useMemo(
     () =>
@@ -229,25 +231,92 @@ export default function NearbyHotelsMap({
                       : ""}
                   </div>
                 )}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {popupPlace.googleMapsUri && (
+                {popupPlace.priceLabel && <div className="text-slate-600">{popupPlace.priceLabel}</div>}
+                <div className="pt-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void saveHotelSelectionEvent({
+                          provider: popupPlace.provider || "google_places",
+                          actionType: "add_to_itinerary",
+                          hotelName: popupPlace.name,
+                          address: popupPlace.address,
+                          city: popupPlace.city || locationLabel,
+                          rating: popupPlace.rating ?? null,
+                          averageNightlyRate: popupPlace.averageNightlyRate ?? null,
+                          currencyCode: popupPlace.currencyCode,
+                          searchCheckin: popupPlace.searchCheckin,
+                          searchCheckout: popupPlace.searchCheckout,
+                          productId: popupPlace.productId,
+                          hotelId: popupPlace.id,
+                          bookingUrl: popupPlace.bookingUrl,
+                          googleMapsUri: popupPlace.googleMapsUri,
+                          latitude: popupPlace.lat ?? null,
+                          longitude: popupPlace.lng ?? null,
+                          metadata: {
+                            sourceSurface: "nearby_hotels_map_popup",
+                          },
+                        });
+                      }}
+                      className="text-indigo-600 font-medium hover:underline"
+                    >
+                      {addActionLabel}
+                    </button>
+                    {popupPlace.bookingUrl && (
+                      <a
+                        href={popupPlace.bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          void saveHotelSelectionEvent({
+                            provider: popupPlace.provider || "google_places",
+                            actionType: "book_now",
+                            hotelName: popupPlace.name,
+                            address: popupPlace.address,
+                            city: popupPlace.city,
+                            rating: popupPlace.rating ?? null,
+                            averageNightlyRate: popupPlace.averageNightlyRate ?? null,
+                            currencyCode: popupPlace.currencyCode,
+                            searchCheckin: popupPlace.searchCheckin,
+                            searchCheckout: popupPlace.searchCheckout,
+                            productId: popupPlace.productId,
+                            hotelId: popupPlace.id,
+                            bookingUrl: popupPlace.bookingUrl,
+                            googleMapsUri: popupPlace.googleMapsUri,
+                            latitude: popupPlace.lat ?? null,
+                            longitude: popupPlace.lng ?? null,
+                            metadata: {
+                              sourceSurface: "nearby_hotels_map_popup",
+                            },
+                          });
+                        }}
+                        className="text-emerald-600 font-medium hover:underline"
+                      >
+                        Book now
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {popupPlace.googleMapsUri && (
+                      <a
+                        href={popupPlace.googleMapsUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 font-medium hover:underline"
+                      >
+                        Open in Maps
+                      </a>
+                    )}
                     <a
-                      href={popupPlace.googleMapsUri}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${popupPlace.lat},${popupPlace.lng}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-indigo-600 font-medium hover:underline"
                     >
-                      Open in Maps
+                      Directions
                     </a>
-                  )}
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${popupPlace.lat},${popupPlace.lng}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 font-medium hover:underline"
-                  >
-                    Directions
-                  </a>
+                  </div>
                 </div>
               </div>
             </Popup>

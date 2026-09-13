@@ -68,3 +68,42 @@ jobs:
           echo "Pushing database migrations..."
           supabase db push --include-all || supabase db push
 
+      - name: Report Dev database advisors
+        if: always()
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_DEV_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          echo "=== Security advisors ==="
+          curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}/advisors/security?lint=true" \
+            | tee /tmp/security-advisors.json
+          echo
+          echo "=== Performance advisors ==="
+          curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}/advisors/performance?lint=true" \
+            | tee /tmp/performance-advisors.json
+          echo
+          python3 - <<'PY'
+          import json
+          for label, path in [("security","/tmp/security-advisors.json"),("performance","/tmp/performance-advisors.json")]:
+              data=json.load(open(path))
+              lints = data.get("lints") if isinstance(data, dict) else data
+              if not isinstance(lints, list):
+                  print(f"{label}: unexpected payload")
+                  print(json.dumps(data, indent=2)[:5000])
+                  continue
+              print(f"\n{label}: {len(lints)} lint(s)")
+              for lint in lints:
+                  level = lint.get("level") or lint.get("severity") or "?"
+                  name = lint.get("name") or lint.get("title") or "unknown"
+                  detail = lint.get("detail") or lint.get("description") or ""
+                  meta = lint.get("metadata") or {}
+                  print(f"- [{level}] {name}")
+                  if detail:
+                      print(f"  {detail[:800]}")
+                  if meta:
+                      print(f"  metadata={json.dumps(meta)[:500]}")
+          PY
+

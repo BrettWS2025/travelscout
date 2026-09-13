@@ -557,7 +557,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                             onAddToItinerary(experience, location);
                           }
                         }}
-                        className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                        className="inline-flex flex-1 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
                       >
                         Add to trip
                       </button>
@@ -565,7 +565,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                         href={experience.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 transition-opacity"
+                        className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                       >
                         Book now
                       </a>
@@ -580,7 +580,7 @@ export default function ThingsToDoList({ location, onAddToItinerary }: ThingsToD
                           onAddToItinerary(experience, location);
                         }
                       }}
-                      className="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
                     >
                       Add to trip
                     </button>

@@ -7,7 +7,9 @@ export type BffRateLimitBucket =
   | "googlePlaces"
   | "events"
   | "ticketmaster"
-  | "viatorTags";
+  | "viatorTags"
+  | "liteapiHotels"
+  | "weather";
 
 const DEFAULT_MAX: Record<BffRateLimitBucket, number> = {
   viator: 60,
@@ -15,6 +17,8 @@ const DEFAULT_MAX: Record<BffRateLimitBucket, number> = {
   events: 40,
   ticketmaster: 40,
   viatorTags: 120,
+  liteapiHotels: 120,
+  weather: 120,
 };
 
 const ENV_MAX: Record<BffRateLimitBucket, string> = {
@@ -23,6 +27,8 @@ const ENV_MAX: Record<BffRateLimitBucket, string> = {
   events: "BFF_RATE_LIMIT_EVENTS_MAX",
   ticketmaster: "BFF_RATE_LIMIT_TICKETMASTER_MAX",
   viatorTags: "BFF_RATE_LIMIT_VIATOR_TAGS_MAX",
+  liteapiHotels: "BFF_RATE_LIMIT_LITEAPI_HOTELS_MAX",
+  weather: "BFF_RATE_LIMIT_WEATHER_MAX",
 };
 
 export function getClientIp(req: Request): string {
