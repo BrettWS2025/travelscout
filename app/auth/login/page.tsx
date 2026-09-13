@@ -31,11 +31,15 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Get return URL from query params on client side
+  // Get return URL / auth mode from query params on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("returnTo");
+      const modeParam = params.get("mode");
+      if (modeParam === "signup" || modeParam === "login") {
+        setMode(modeParam);
+      }
       if (returnTo) {
         setRedirectTo(decodeURIComponent(returnTo));
       } else if (onOperatorHost) {
