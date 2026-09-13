@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { OperatorLink } from "@/components/OperatorLink";
+import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 
 export default function OperatorLayout({
   children,
@@ -13,13 +14,15 @@ export default function OperatorLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
+  const onOperatorHost = useOnOperatorHost();
 
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
-      router.push(`/auth/login?returnTo=${encodeURIComponent(pathname || "/operator")}`);
+      const returnTo = pathname || (onOperatorHost ? "/" : "/operator");
+      router.push(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [user, isLoading, router, pathname]);
+  }, [user, isLoading, router, pathname, onOperatorHost]);
 
   if (isLoading) {
     return (
@@ -50,13 +53,13 @@ export default function OperatorLayout({
           </p>
         </div>
         <nav className="flex flex-wrap gap-2 text-sm">
-          <Link
+          <OperatorLink
             href="/operator"
             className="rounded-lg px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50"
           >
             Dashboard
-          </Link>
-          <Link
+          </OperatorLink>
+          <OperatorLink
             href="/operator/organizations/new"
             className="rounded-lg px-3 py-2 text-white"
             style={{
@@ -64,7 +67,7 @@ export default function OperatorLayout({
             }}
           >
             New organization
-          </Link>
+          </OperatorLink>
         </nav>
       </div>
       {children}

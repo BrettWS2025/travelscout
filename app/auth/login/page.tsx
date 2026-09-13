@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [redirectTo, setRedirectTo] = useState("/account/itineraries");
+  const onOperatorHost = useOnOperatorHost();
+  const [redirectTo, setRedirectTo] = useState(
+    onOperatorHost ? "/" : "/account/itineraries"
+  );
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
@@ -34,9 +38,11 @@ export default function LoginPage() {
       const returnTo = params.get("returnTo");
       if (returnTo) {
         setRedirectTo(decodeURIComponent(returnTo));
+      } else if (onOperatorHost) {
+        setRedirectTo("/");
       }
     }
-  }, []);
+  }, [onOperatorHost]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,9 +140,13 @@ export default function LoginPage() {
         {mode === "login" ? "Sign in" : "Create an account"}
       </h1>
       <p className="text-sm text-slate-600 mb-6">
-        {mode === "login"
-          ? "Use your email and password to sign in."
-          : "Create an account with your name, email and password."}
+        {onOperatorHost
+          ? mode === "login"
+            ? "Sign in to manage your operator organizations and last-minute deals."
+            : "Create an operator account to publish deals on TravelScout."
+          : mode === "login"
+            ? "Use your email and password to sign in."
+            : "Create an account with your name, email and password."}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4 card p-6">

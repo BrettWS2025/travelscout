@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { OperatorLink } from "@/components/OperatorLink";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import { operatorHref } from "@/lib/hosts";
 import {
   deleteDeal,
   getDeal,
@@ -31,6 +33,7 @@ export default function EditDealPage() {
   const organizationId = params.id;
   const dealId = params.dealId;
   const { session } = useAuth();
+  const onOperatorHost = useOnOperatorHost();
 
   const [deal, setDeal] = useState<Deal | null>(null);
   const [title, setTitle] = useState("");
@@ -125,7 +128,9 @@ export default function EditDealPage() {
     setError(null);
     try {
       await deleteDeal(dealId, session?.access_token);
-      router.push(`/operator/organizations/${organizationId}`);
+      router.push(
+        operatorHref(`/operator/organizations/${organizationId}`, onOperatorHost)
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete deal.");
       setSaving(false);
@@ -150,12 +155,12 @@ export default function EditDealPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Edit deal</h2>
           <p className="text-sm text-slate-600 mt-1">
-            <Link
+            <OperatorLink
               href={`/operator/organizations/${organizationId}`}
               className="text-indigo-600 hover:underline"
             >
               Back to organization
-            </Link>
+            </OperatorLink>
           </p>
         </div>
         <button
