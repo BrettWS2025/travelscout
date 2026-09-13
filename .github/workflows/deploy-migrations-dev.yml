@@ -1,5 +1,6 @@
 name: Deploy Supabase Migrations - Dev
 
+# Re-run to refresh Dev advisor report after marketplace API work.
 on:
   push:
     branches:
