@@ -3,16 +3,24 @@ import "mapbox-gl/dist/mapbox-gl.css"; // Mapbox GL CSS - must be imported globa
 import "../styles/globals.css";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Instrument_Serif, Sora } from "next/font/google";
 import { SiteShell } from "@/components/SiteShell";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"; // optional
 import { AuthProvider } from "@/components/AuthProvider"; // 👈 NEW
 import { QueryProvider } from "@/components/QueryProvider";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
   display: "swap",
 });
 
@@ -21,11 +29,19 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://travelscout.co.nz";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TravelScout | Plan Your New Zealand Journey",
+    default: "TravelScout | Discover New Zealand",
     template: "%s | TravelScout",
   },
-  description: "Plan your journey across Aotearoa with our intelligent trip planner. Book events and attractions along the way, and create the perfect itinerary tailored to your travel style.",
-  keywords: ["New Zealand travel", "trip planner", "NZ road trip", "travel planning", "itinerary", "Aotearoa", "travel guide"],
+  description:
+    "Showcase New Zealand destinations and events, then find deals by place. TravelScout helps you travel smarter across Aotearoa.",
+  keywords: [
+    "New Zealand travel",
+    "travel deals",
+    "NZ destinations",
+    "Aotearoa",
+    "travel guide",
+    "find deals",
+  ],
   authors: [{ name: "TravelScout Ltd" }],
   creator: "TravelScout Ltd",
   publisher: "TravelScout Ltd",
@@ -39,21 +55,23 @@ export const metadata: Metadata = {
     locale: "en_NZ",
     url: siteUrl,
     siteName: "TravelScout",
-    title: "TravelScout | Plan Your New Zealand Journey",
-    description: "Plan your journey across Aotearoa with our intelligent trip planner. Book events and attractions along the way, and create the perfect itinerary tailored to your travel style.",
+    title: "TravelScout | Discover New Zealand",
+    description:
+      "Showcase New Zealand destinations and events, then find deals by place.",
     images: [
       {
         url: "/TravelScout-Main.png",
         width: 1200,
         height: 630,
-        alt: "TravelScout - Plan Your New Zealand Journey",
+        alt: "TravelScout - Discover New Zealand",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TravelScout | Plan Your New Zealand Journey",
-    description: "Plan your journey across Aotearoa with our intelligent trip planner.",
+    title: "TravelScout | Discover New Zealand",
+    description:
+      "Showcase New Zealand destinations and events, then find deals by place.",
     images: ["/TravelScout-Main.png"],
   },
   robots: {
@@ -84,7 +102,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     legalName: "TravelScout Ltd",
     url: siteUrl,
     logo: `${siteUrl}/TravelScout-Main.png`,
-    description: "Plan your journey across Aotearoa with our intelligent trip planner. Book events and attractions along the way, and create the perfect itinerary tailored to your travel style.",
+    description:
+      "Showcase New Zealand destinations and events, then find deals by place across Aotearoa.",
     contactPoint: {
       "@type": "ContactPoint",
       email: "info@travelscout.co.nz",
@@ -100,19 +119,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     "@type": "WebSite",
     name: "TravelScout",
     url: siteUrl,
-    description: "Plan your journey across Aotearoa with our intelligent trip planner.",
+    description:
+      "Showcase New Zealand destinations and events, then find deals by place.",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+        urlTemplate: `${siteUrl}/find-deals?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
   };
 
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
+    <html lang="en" className={`${instrumentSerif.variable} ${sora.variable}`}>
       <head>
         <meta name="impact-site-verification" content="321bf81b-5895-4010-9e67-52c4f2342cc0" />
         <script

@@ -8,7 +8,6 @@ import {
   PanelsTopLeft,
   Compass,
   Percent,
-  Lightbulb,
   ChevronDown,
   ChevronRight,
   Briefcase,
@@ -76,10 +75,18 @@ const MENU: MenuSection[] = [
     icon: Compass,
     items: [{ label: "Plan Your Trip", href: "/trip-planner" }],
   },
+  {
+    key: "find-deals",
+    label: "Find Deals",
+    href: "/find-deals",
+    icon: Percent,
+    items: [],
+  },
 ];
 
-const HIDE_KEYS = new Set<string>(["guides", "compare", "deals"]);
+const HIDE_KEYS = new Set<string>(["guides", "compare", "deals", "trip-planner"]);
 const VISIBLE_MENU = MENU.filter((s) => !HIDE_KEYS.has(s.key));
+const SIMPLE_LINK_KEYS = new Set<string>(["find-deals", "trip-planner"]);
 
 function SubmenuItem({ item }: { item: MenuItem }) {
   const [open, setOpen] = useState(false);
@@ -278,8 +285,8 @@ export function Navbar() {
   );
   const pathname = usePathname();
   const isTripPlanner = pathname?.includes("/trip-planner");
-  const isHome = pathname === "/";
-  const navTextColor = isHome ? "#ffffff" : "var(--text)";
+  const isOverlayNav = pathname === "/";
+  const navTextColor = isOverlayNav ? "#ffffff" : "var(--ts-ink, var(--text))";
 
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -301,15 +308,16 @@ export function Navbar() {
 
   return (
     <header
-      className="relative z-[1000] py-2 md:py-3 overflow-visible"
+      className={`${isOverlayNav ? "absolute inset-x-0 top-0" : "relative"} z-[1000] overflow-visible py-2 md:py-3`}
       style={{
         ["--text" as any]: navTextColor,
-        background: isHome ? "transparent" : "rgba(255, 255, 255, 0.6)",
-        WebkitBackdropFilter: isHome ? "none" : "saturate(180%) blur(20px)",
-        backdropFilter: isHome ? "none" : "saturate(180%) blur(20px)",
-        borderBottom: isTripPlanner || isHome ? "none" : "1px solid rgba(148, 163, 184, 0.2)",
+        background: isOverlayNav ? "transparent" : "rgba(243, 246, 244, 0.82)",
+        WebkitBackdropFilter: isOverlayNav ? "none" : "saturate(160%) blur(18px)",
+        backdropFilter: isOverlayNav ? "none" : "saturate(160%) blur(18px)",
+        borderBottom:
+          isTripPlanner || isOverlayNav ? "none" : "1px solid rgba(16, 36, 28, 0.08)",
         color: navTextColor,
-        boxShadow: isTripPlanner || isHome ? "none" : "0 1px 3px rgba(0, 0, 0, 0.05)",
+        boxShadow: isTripPlanner || isOverlayNav ? "none" : "0 1px 3px rgba(16, 36, 28, 0.04)",
       }}
     >
       <div className="container navbar-responsive flex items-center justify-between overflow-visible">
@@ -324,7 +332,7 @@ export function Navbar() {
             width={200}
             height={60}
             priority
-            className={`h-[54px] md:h-[80px] w-auto select-none pointer-events-none ${isHome ? "brightness-0 invert" : ""}`}
+            className={`pointer-events-none h-[54px] w-auto select-none md:h-[80px] ${isOverlayNav ? "brightness-0 invert" : ""}`}
             sizes="(max-width: 768px) calc(100vw - 72px), 200px"
           />
           <span className="sr-only">TravelScout</span>
@@ -332,17 +340,18 @@ export function Navbar() {
 
         <nav className="hidden md:flex items-center gap-6 overflow-visible">
           {VISIBLE_MENU.map((section) => {
-            // Trip Planner should be a simple link, not a dropdown
-            if (section.key === "trip-planner") {
+            if (SIMPLE_LINK_KEYS.has(section.key)) {
               const Icon = section.icon;
               return (
                 <Link
                   key={section.key}
                   href={section.href}
-                  className="group flex items-center gap-2 transition-colors hover:text-indigo-600 font-medium"
+                  className={`group flex items-center gap-2 font-medium transition-colors ${
+                    isOverlayNav ? "hover:text-[var(--ts-lime)]" : "hover:text-[var(--ts-teal)]"
+                  }`}
                   style={{ color: navTextColor }}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="h-4 w-4" />
                   {section.label}
                 </Link>
               );
@@ -359,7 +368,7 @@ export function Navbar() {
           aria-expanded={mobileOpen}
           style={{
             color: navTextColor,
-            background: isHome ? "rgba(15, 23, 42, 0.28)" : "transparent",
+            background: isOverlayNav ? "rgba(16, 36, 28, 0.28)" : "transparent",
           }}
         >
           ☰
@@ -367,25 +376,24 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden absolute inset-x-0 top-full z-[1001]">
-          <div className="container pt-2 pb-4">
-            <div className="card p-2" style={{ color: "#111827" }}>
+        <div className="absolute inset-x-0 top-full z-[1001] md:hidden">
+          <div className="container pb-4 pt-2">
+            <div className="card p-2" style={{ color: "#10241c" }}>
             {VISIBLE_MENU.map((section) => {
               const Icon = section.icon;
-              // Trip Planner should be a simple link, not a dropdown
-              if (section.key === "trip-planner") {
+              if (SIMPLE_LINK_KEYS.has(section.key)) {
                 return (
                   <div
                     key={section.key}
-                    className="border-b last:border-none border-slate-200"
+                    className="border-b border-slate-200 last:border-none"
                   >
                     <Link
                       href={section.href}
-                      className="flex items-center gap-2 px-3 py-3 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium"
-                      style={{ color: "#111827" }}
+                      className="flex items-center gap-2 px-3 py-3 font-medium transition-colors hover:bg-[var(--ts-mist)] hover:text-[var(--ts-teal)]"
+                      style={{ color: "#10241c" }}
                       onClick={closeMobileMenu}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="h-4 w-4" />
                       {section.label}
                     </Link>
                   </div>

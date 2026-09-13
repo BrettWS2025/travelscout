@@ -1,0 +1,15 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+
+export function MarketingMain({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isFullBleed = pathname === "/" || pathname === "/find-deals";
+
+  if (isFullBleed) {
+    return <main className="relative z-0 overflow-x-hidden pb-0 pt-0">{children}</main>;
+  }
+
+  return <main className="container relative z-0 pb-10 pt-[120px]">{children}</main>;
+}

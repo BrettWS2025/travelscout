@@ -3,23 +3,63 @@
 @tailwind utilities;
 
 :root {
-  --bg:   #f8fafc;
+  --bg: #f3f6f4;
   --card: #ffffff;
-  --text: #1e293b;
-  --muted:#64748b;
-  --accent:#6366f1; /* indigo for links */
-  --brand:#3b82f6;  /* blue for primary buttons */
+  --text: #10241c;
+  --muted: #5c6f67;
+  --accent: #0e7c66;
+  --brand: #0e7c66;
+  --ts-ink: #10241c;
+  --ts-muted: #5c6f67;
+  --ts-teal: #0e7c66;
+  --ts-lime: #d4e643;
+  --ts-mist: #e8efe9;
+  --ts-sand: #dfe7e1;
 }
 
 html, body, #__next { min-height: 100%; height: auto; }
 
 body {
-  background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(212, 230, 67, 0.14), transparent 42%),
+    radial-gradient(ellipse at 90% 10%, rgba(14, 124, 102, 0.1), transparent 45%),
+    linear-gradient(180deg, #f3f6f4 0%, #e8efe9 100%);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-plus-jakarta, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  font-family: var(--font-sora, ui-sans-serif, system-ui, -apple-system, sans-serif);
   min-height: 100vh;
+}
+
+.ts-page {
+  color: var(--ts-ink);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-in,
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-hero-drift,
+  .animate-hero-rise {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
@@ -54,9 +94,9 @@ body {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 4px;
-  color: #6366f1;
+  color: var(--ts-teal);
 }
-.link:hover { color: #4f46e5; }
+.link:hover { color: #0a5f4f; }
 
 header.sticky.top-0 .container { padding-top: 2rem; padding-bottom: 2rem; }
 
@@ -508,7 +548,7 @@ input[type="date"]::-ms-expand {
 
 /* Main container background */
 main {
-  background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+  background: transparent;
   min-height: calc(100vh - 160px);
 }
 
