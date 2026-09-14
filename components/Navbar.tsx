@@ -12,7 +12,7 @@ import { operatorPortalUrl } from "@/lib/hosts";
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const isOverlayNav = pathname === "/";
+  const isOverlayNav = pathname === "/" || pathname === "/operator";
   const { user } = useAuth();
   const isLoggedIn = !!user;
 
