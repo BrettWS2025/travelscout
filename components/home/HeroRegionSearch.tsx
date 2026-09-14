@@ -44,16 +44,16 @@ export function HeroRegionSearch() {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-8 w-full max-w-xl"
+      className="mx-auto w-full max-w-xl"
       aria-label="Search deals by region"
     >
       <label
         htmlFor="hero-region"
-        className="mb-2 block font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.18em] text-white/70"
+        className="mb-2 block text-center font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.18em] text-white/70"
       >
         Search by region
       </label>
-      <div className="flex flex-col gap-2 rounded-2xl border border-white/20 bg-white/12 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.25)] backdrop-blur-md sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 rounded-2xl border border-white/20 bg-white/12 p-2 text-left shadow-[0_20px_50px_rgba(0,0,0,0.25)] backdrop-blur-md sm:flex-row sm:items-center">
         <div className="flex flex-1 items-center gap-3 px-3 py-2">
           <MapPin className="h-5 w-5 shrink-0 text-[var(--ts-lime)]" />
           <input
