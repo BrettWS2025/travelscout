@@ -7,6 +7,7 @@ export function MarketingMain({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isFullBleed =
     pathname === "/" ||
+    pathname === "/operator" ||
     pathname === "/find-deals" ||
     pathname === "/how-it-works";
 
