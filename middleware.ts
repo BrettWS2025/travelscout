@@ -8,7 +8,28 @@ import {
   shouldRewriteToOperatorApp,
   toInternalOperatorPath,
   toPublicOperatorPath,
+  type SiteSurface,
 } from "@/lib/hosts";
+
+function continueWithSurface(
+  request: NextRequest,
+  surface: SiteSurface,
+  prepare?: (url: URL) => "rewrite" | "next"
+) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(SURFACE_HEADER, surface);
+
+  const url = request.nextUrl.clone();
+  const mode = prepare?.(url) ?? "next";
+
+  const response =
+    mode === "rewrite"
+      ? NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+      : NextResponse.next({ request: { headers: requestHeaders } });
+
+  response.headers.set(SURFACE_HEADER, surface);
+  return response;
+}
 
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? request.nextUrl.host;
@@ -25,17 +46,13 @@ export function middleware(request: NextRequest) {
     }
 
     if (shouldRewriteToOperatorApp(pathname)) {
-      const internal = toInternalOperatorPath(pathname);
-      const url = request.nextUrl.clone();
-      url.pathname = internal;
-      const response = NextResponse.rewrite(url);
-      response.headers.set(SURFACE_HEADER, "operator");
-      return response;
+      return continueWithSurface(request, "operator", (url) => {
+        url.pathname = toInternalOperatorPath(pathname);
+        return "rewrite";
+      });
     }
 
-    const response = NextResponse.next();
-    response.headers.set(SURFACE_HEADER, "operator");
-    return response;
+    return continueWithSurface(request, "operator");
   }
 
   if (subdomainOn && (pathname === "/operator" || pathname.startsWith("/operator/"))) {
@@ -49,9 +66,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  const response = NextResponse.next();
-  response.headers.set(SURFACE_HEADER, "main");
-  return response;
+  return continueWithSurface(request, "main");
 }
 
 function normalizeHostOnly(host: string): string {
