@@ -7,14 +7,23 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { operatorPortalUrl } from "@/lib/hosts";
+import { mainSiteUrl, operatorPortalUrl } from "@/lib/hosts";
 
-export function Navbar() {
+type NavbarProps = {
+  /** On the operator subdomain, send traveler nav links to the main site. */
+  travelerLinksToMainSite?: boolean;
+};
+
+export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const isOverlayNav = pathname === "/" || pathname === "/operator";
+  const isOverlayNav =
+    pathname === "/" || pathname === "/operator" || travelerLinksToMainSite;
   const { user } = useAuth();
   const isLoggedIn = !!user;
+
+  const href = (path: string) =>
+    travelerLinksToMainSite ? mainSiteUrl(path) : path;
 
   const signOutUser = async () => {
     try {
@@ -41,7 +50,7 @@ export function Navbar() {
       <div className="container">
         <div className="flex items-center justify-between gap-3 rounded-full bg-black px-3 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:gap-4 md:px-4 md:py-2.5">
           <Link
-            href="/"
+            href={href("/")}
             className="relative flex min-w-0 shrink items-center"
             onClick={closeMobile}
           >
@@ -58,19 +67,19 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-5">
-            <Link href="/find-deals" className={linkClass}>
+            <Link href={href("/find-deals")} className={linkClass}>
               Find Deals
             </Link>
-            <Link href="/how-it-works" className={linkClass}>
+            <Link href={href("/how-it-works")} className={linkClass}>
               How it works
             </Link>
             {!isLoggedIn ? (
               <>
-                <Link href="/auth/login?mode=signup" className={linkClass}>
+                <Link href={href("/auth/login?mode=signup")} className={linkClass}>
                   Sign up
                 </Link>
                 <Link
-                  href="/auth/login"
+                  href={href("/auth/login")}
                   className="rounded-full bg-white/15 px-4 py-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-white transition hover:bg-white/25"
                 >
                   Log in
@@ -78,7 +87,7 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/account/profile" className={linkClass}>
+                <Link href={href("/account/profile")} className={linkClass}>
                   Account
                 </Link>
                 <button
@@ -117,14 +126,14 @@ export function Navbar() {
             <div className="rounded-2xl border border-white/10 bg-black p-3 shadow-lg">
               <div className="flex flex-col gap-1 font-[family-name:var(--font-sora)] text-sm text-white">
                 <Link
-                  href="/find-deals"
+                  href={href("/find-deals")}
                   className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                   onClick={closeMobile}
                 >
                   Find Deals
                 </Link>
                 <Link
-                  href="/how-it-works"
+                  href={href("/how-it-works")}
                   className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                   onClick={closeMobile}
                 >
@@ -133,14 +142,14 @@ export function Navbar() {
                 {!isLoggedIn ? (
                   <>
                     <Link
-                      href="/auth/login?mode=signup"
+                      href={href("/auth/login?mode=signup")}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >
                       Sign up
                     </Link>
                     <Link
-                      href="/auth/login"
+                      href={href("/auth/login")}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >
@@ -150,7 +159,7 @@ export function Navbar() {
                 ) : (
                   <>
                     <Link
-                      href="/account/profile"
+                      href={href("/account/profile")}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >

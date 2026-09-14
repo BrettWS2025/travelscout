@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { operatorPortalUrl } from "@/lib/hosts";
+import { mainSiteUrl, operatorPortalUrl } from "@/lib/hosts";
 
-export function Footer() {
+type FooterProps = {
+  /** On the operator subdomain, send traveler links to the main site. */
+  travelerLinksToMainSite?: boolean;
+};
+
+export function Footer({ travelerLinksToMainSite = false }: FooterProps) {
+  const href = (path: string) =>
+    travelerLinksToMainSite ? mainSiteUrl(path) : path;
+
   return (
     <footer className="mt-0 border-t border-[var(--ts-ink)]/10 bg-[var(--ts-mist)] py-12">
-      <div className="container grid gap-8 text-sm md:grid-cols-3" style={{ color: "var(--ts-muted)" }}>
+      <div
+        className="container grid gap-8 text-sm md:grid-cols-3"
+        style={{ color: "var(--ts-muted)" }}
+      >
         <div>
           <h3 className="mb-2 font-[family-name:var(--font-instrument)] text-lg text-[var(--ts-ink)]">
             TravelScout
@@ -19,12 +30,12 @@ export function Footer() {
           </h3>
           <ul className="space-y-1 font-[family-name:var(--font-sora)]">
             <li>
-              <Link className="link" href="/terms">
+              <Link className="link" href={href("/terms")}>
                 Terms of Service
               </Link>
             </li>
             <li>
-              <Link className="link" href="/privacy">
+              <Link className="link" href={href("/privacy")}>
                 Privacy
               </Link>
             </li>
@@ -51,7 +62,7 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <Link className="link" href="/find-deals">
+              <Link className="link" href={href("/find-deals")}>
                 Find deals
               </Link>
             </li>
