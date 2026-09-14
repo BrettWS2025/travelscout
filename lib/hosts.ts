@@ -76,9 +76,29 @@ export function operatorPortalUrl(publicPath = "/"): string {
 
 /** Traveler-site URL (absolute when NEXT_PUBLIC_SITE_URL is set). */
 export function mainSiteUrl(path = "/"): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   const normalized =
     path === "/" ? "/" : path.startsWith("/") ? path : `/${path}`;
+
+  let base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+
+  // If SITE_URL is unset, derive the traveler host from operators.* so mobile
+  // nav links on the operator subdomain still reach the main site.
+  if (!base) {
+    const operatorHost = getConfiguredOperatorHost();
+    if (operatorHost?.startsWith("operators.")) {
+      const derived = operatorHost.slice("operators.".length);
+      const isLocal = derived.includes("localhost");
+      const protocol = isLocal ? "http" : "https";
+      const port =
+        isLocal && !derived.includes(":")
+          ? ":3000"
+          : derived.includes(":")
+            ? `:${derived.split(":")[1]}`
+            : "";
+      base = `${protocol}://${normalizeHost(derived)}${port}`;
+    }
+  }
+
   return base ? `${base}${normalized}` : normalized;
 }
 
