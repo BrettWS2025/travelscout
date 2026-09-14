@@ -31,29 +31,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col justify-end px-5 pb-16 pt-28 md:px-10 md:pb-24 lg:px-16">
-          <div className="max-w-4xl animate-hero-rise">
-            <p className="mb-5 font-[family-name:var(--font-sora)] text-sm font-semibold uppercase tracking-[0.28em] text-[var(--ts-lime)] md:text-base">
-              TravelScout
-            </p>
-            <h1 className="font-[family-name:var(--font-instrument)] text-5xl leading-[0.98] tracking-tight text-white md:text-7xl lg:text-8xl">
-              Journeys that
-              <br />
-              <span className="italic text-[var(--ts-lime)]">matter</span>
+        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-20 pt-28 md:px-10 md:pb-24 lg:px-16">
+          <div className="w-full max-w-xl animate-hero-rise text-center">
+            <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+              Today, Tomorrow or the next day - always pay less
             </h1>
-            <p className="mt-6 max-w-lg font-[family-name:var(--font-sora)] text-base text-white/85 md:text-lg">
-              A curated look at New Zealand — then search the region that fits
-              your pace.
-            </p>
             <HeroRegionSearch />
-            <div className="mt-5">
-              <a
-                href="#escape"
-                className="font-[family-name:var(--font-sora)] text-sm font-medium text-white/80 underline decoration-white/30 underline-offset-4 transition hover:text-white hover:decoration-white"
-              >
-                Explore the showcase
-              </a>
-            </div>
           </div>
         </div>
       </section>
