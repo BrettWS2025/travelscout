@@ -24,6 +24,8 @@ export default function OperatorLayout({
   const onOperatorHost = useOnOperatorHost();
   const isLanding = isOperatorLandingPath(pathname, onOperatorHost);
 
+  // Landing is always public — no login gate. Org management still requires auth
+  // until the operator dashboard is rebuilt.
   useEffect(() => {
     if (isLoading || isLanding) return;
     if (!user) {
@@ -32,7 +34,7 @@ export default function OperatorLayout({
     }
   }, [user, isLoading, router, pathname, onOperatorHost, isLanding]);
 
-  if (isLanding && !user) {
+  if (isLanding) {
     return <>{children}</>;
   }
 
