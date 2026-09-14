@@ -74,6 +74,14 @@ export function operatorPortalUrl(publicPath = "/"): string {
   return `${protocol}://${hostname}${port}${path}`;
 }
 
+/** Traveler-site URL (absolute when NEXT_PUBLIC_SITE_URL is set). */
+export function mainSiteUrl(path = "/"): string {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const normalized =
+    path === "/" ? "/" : path.startsWith("/") ? path : `/${path}`;
+  return base ? `${base}${normalized}` : normalized;
+}
+
 export function operatorHref(internalOrPublicPath: string, onOperatorHost: boolean): string {
   if (onOperatorHost) {
     if (internalOrPublicPath.startsWith("/operator")) {
