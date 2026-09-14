@@ -6,6 +6,13 @@ import { useAuth } from "@/components/AuthProvider";
 import { OperatorLink } from "@/components/OperatorLink";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 
+function isOperatorLandingPath(pathname: string | null, onOperatorHost: boolean) {
+  if (!pathname) return false;
+  if (pathname === "/operator") return true;
+  if (onOperatorHost && pathname === "/") return true;
+  return false;
+}
+
 export default function OperatorLayout({
   children,
 }: {
@@ -15,14 +22,19 @@ export default function OperatorLayout({
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
   const onOperatorHost = useOnOperatorHost();
+  const isLanding = isOperatorLandingPath(pathname, onOperatorHost);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isLanding) return;
     if (!user) {
       const returnTo = pathname || (onOperatorHost ? "/" : "/operator");
       router.push(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [user, isLoading, router, pathname, onOperatorHost]);
+  }, [user, isLoading, router, pathname, onOperatorHost, isLanding]);
+
+  if (isLanding && !user) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (

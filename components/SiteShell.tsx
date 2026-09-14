@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { TripPlannerNavbar } from "@/components/TripPlannerNavbar";
 import { Footer } from "@/components/Footer";
 import { OperatorSiteChrome } from "@/components/OperatorSiteChrome";
+import { OperatorMain } from "@/components/operator/OperatorMain";
 import { MarketingMain } from "@/components/MarketingMain";
 import { SURFACE_HEADER, type SiteSurface } from "@/lib/hosts";
 
@@ -19,7 +20,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     return (
       <>
         <OperatorSiteChrome />
-        <main className="container py-8">{children}</main>
+        <OperatorMain>{children}</OperatorMain>
       </>
     );
   }
