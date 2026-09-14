@@ -16,5 +16,5 @@ export function OperatorMain({ children }: { children: ReactNode }) {
     );
   }
 
-  return <main className="container py-8">{children}</main>;
+  return <main className="relative z-0">{children}</main>;
 }
