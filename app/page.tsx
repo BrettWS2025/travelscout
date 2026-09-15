@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { DiagonalMarquee } from "@/components/home/DiagonalMarquee";
+import { HeroDealCarousel } from "@/components/home/HeroDealCarousel";
 import { Reveal } from "@/components/home/Reveal";
 import { HeroRegionSearch } from "@/components/home/HeroRegionSearch";
 
@@ -31,7 +32,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-20 pt-28 md:px-10 md:pb-24 lg:px-16">
+        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
           <div className="w-full max-w-xl animate-hero-rise text-center">
             <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
               Today, Tomorrow or the next day - always pay less
@@ -40,6 +41,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <HeroDealCarousel />
 
       <DiagonalMarquee />
 
