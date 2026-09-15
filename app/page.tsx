@@ -20,29 +20,31 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
-      <section className="relative min-h-[100svh] w-full overflow-hidden">
-        <Image
-          src="/Main_Page_Pic.jpg"
-          alt="New Zealand landscape"
-          fill
-          priority
-          className="animate-hero-drift scale-105 object-cover object-center"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
+      <div className="relative">
+        <section className="relative min-h-[100svh] w-full overflow-hidden">
+          <Image
+            src="/Main_Page_Pic.jpg"
+            alt="New Zealand landscape"
+            fill
+            priority
+            className="animate-hero-drift scale-105 object-cover object-center"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
-          <div className="w-full max-w-xl animate-hero-rise text-center">
-            <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
-              Today, Tomorrow or the next day - always pay less
-            </h1>
-            <HeroRegionSearch />
+          <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-40 pt-28 md:px-10 md:pb-48 lg:px-16">
+            <div className="w-full max-w-xl animate-hero-rise text-center">
+              <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+                Today, Tomorrow or the next day - always pay less
+              </h1>
+              <HeroRegionSearch />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <HeroDealCarousel />
+        <HeroDealCarousel />
+      </div>
 
       <DiagonalMarquee />
 

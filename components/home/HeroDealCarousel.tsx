@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 export type OperatorDealCard = {
@@ -121,7 +121,7 @@ function DealCard({ deal }: { deal: OperatorDealCard }) {
 
   return (
     <article
-      className="group flex w-[min(78vw,280px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[var(--ts-ink)]/10 bg-white shadow-[0_20px_50px_rgba(16,36,28,0.18)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(16,36,28,0.22)] md:w-[300px]"
+      className="group flex w-[min(78vw,280px)] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--ts-ink)]/10 bg-white shadow-[0_20px_50px_rgba(16,36,28,0.18)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(16,36,28,0.22)] md:w-[300px]"
       aria-label={`${deal.title} deal in ${deal.locationName}`}
     >
       <div className="relative aspect-[16/11] overflow-hidden bg-[var(--ts-mist)]">
@@ -169,91 +169,134 @@ type Props = {
   deals?: OperatorDealCard[];
 };
 
+/** Three copies so we can loop scroll without hitting an edge. */
+const LOOP_COPIES = 3;
+
 export function HeroDealCarousel({
   deals = PLACEHOLDER_OPERATOR_DEALS,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(true);
+  const loopingRef = useRef(false);
+  const reduceMotionRef = useRef(false);
 
-  const updateArrows = useCallback(() => {
+  const getSetWidth = useCallback(() => {
     const el = scrollerRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanPrev(el.scrollLeft > 4);
-    setCanNext(el.scrollLeft < maxScroll - 4);
+    if (!el) return 0;
+    // One logical set is 1/LOOP_COPIES of the full scroll width.
+    return el.scrollWidth / LOOP_COPIES;
   }, []);
 
-  const scrollByCard = useCallback((direction: -1 | 1) => {
+  const normalizeLoop = useCallback(() => {
     const el = scrollerRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>("[data-deal-card]");
-    const step = (card?.offsetWidth ?? 280) + 16;
-    el.scrollBy({ left: direction * step, behavior: "smooth" });
-  }, []);
+    if (!el || loopingRef.current) return;
+    const setWidth = getSetWidth();
+    if (setWidth <= 0) return;
+
+    if (el.scrollLeft < setWidth * 0.5) {
+      loopingRef.current = true;
+      el.scrollLeft += setWidth;
+      loopingRef.current = false;
+    } else if (el.scrollLeft >= setWidth * 1.5) {
+      loopingRef.current = true;
+      el.scrollLeft -= setWidth;
+      loopingRef.current = false;
+    }
+  }, [getSetWidth]);
+
+  const scrollByCard = useCallback(
+    (direction: -1 | 1) => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      const card = el.querySelector<HTMLElement>("[data-deal-card]");
+      const step = (card?.offsetWidth ?? 280) + 16;
+      el.scrollBy({
+        left: direction * step,
+        behavior: reduceMotionRef.current ? "auto" : "smooth",
+      });
+    },
+    []
+  );
 
   useEffect(() => {
-    updateArrows();
+    reduceMotionRef.current =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const el = scrollerRef.current;
-    if (!el) return;
-    const onResize = () => updateArrows();
+    if (!el || !deals.length) return;
+
+    // Start in the middle copy so both directions are continuous.
+    const frame = requestAnimationFrame(() => {
+      const setWidth = getSetWidth();
+      if (setWidth > 0) el.scrollLeft = setWidth;
+    });
+
+    const onScroll = () => normalizeLoop();
+    el.addEventListener("scroll", onScroll, { passive: true });
+
+    const onResize = () => {
+      const setWidth = getSetWidth();
+      if (setWidth > 0) {
+        // Keep relative position within the middle set.
+        const offset = el.scrollLeft % setWidth;
+        el.scrollLeft = setWidth + offset;
+      }
+    };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [updateArrows, deals.length]);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [deals.length, getSetWidth, normalizeLoop]);
 
   if (!deals.length) return null;
 
+  const loopDeals = Array.from({ length: LOOP_COPIES }, (_, copy) =>
+    deals.map((deal) => ({ deal, key: `${copy}-${deal.id}` }))
+  ).flat();
+
   return (
-    <section
-      className="relative z-20 -mt-28 px-0 pb-6 md:-mt-36 md:pb-8"
+    <div
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-1/2"
       aria-label="Operator deals"
     >
-      <div className="mx-auto max-w-6xl md:px-10 lg:px-16">
-        <div className="mb-4 flex items-end justify-between gap-4 px-5 md:mb-5 md:px-0">
-          <div>
-            <p className="font-[family-name:var(--font-sora)] text-[10px] font-semibold uppercase tracking-[0.22em] text-white/85 drop-shadow-sm">
-              Last-minute from operators
-            </p>
-            <h2 className="mt-1 font-[family-name:var(--font-instrument)] text-2xl text-white drop-shadow-sm md:text-3xl">
-              Deals worth taking today
-            </h2>
-          </div>
-
-          <div className="hidden items-center gap-2 md:flex">
-            <button
-              type="button"
-              onClick={() => scrollByCard(-1)}
-              disabled={!canPrev}
-              aria-label="Scroll deals left"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/95 text-[var(--ts-ink)] shadow-sm backdrop-blur transition hover:border-[var(--ts-lime)] hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByCard(1)}
-              disabled={!canNext}
-              aria-label="Scroll deals right"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/95 text-[var(--ts-ink)] shadow-sm backdrop-blur transition hover:border-[var(--ts-lime)] hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+      <div className="pointer-events-auto relative mx-auto max-w-6xl">
+        <div className="pointer-events-none absolute inset-y-0 left-2 z-10 hidden items-center md:flex lg:left-0">
+          <button
+            type="button"
+            onClick={() => scrollByCard(-1)}
+            aria-label="Scroll deals left"
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-[0_10px_30px_rgba(16,36,28,0.18)] transition hover:text-[var(--ts-teal)]"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-2 z-10 hidden items-center md:flex lg:right-0">
+          <button
+            type="button"
+            onClick={() => scrollByCard(1)}
+            aria-label="Scroll deals right"
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-[0_10px_30px_rgba(16,36,28,0.18)] transition hover:text-[var(--ts-teal)]"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
 
         <div
           ref={scrollerRef}
-          onScroll={updateArrows}
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-5 md:px-0 [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-auto scroll-smooth px-5 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-5 md:px-14 lg:px-16 [&::-webkit-scrollbar]:hidden"
           role="list"
         >
-          {deals.map((deal) => (
-            <div key={deal.id} data-deal-card role="listitem">
+          {loopDeals.map(({ deal, key }) => (
+            <div key={key} data-deal-card role="listitem">
               <DealCard deal={deal} />
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

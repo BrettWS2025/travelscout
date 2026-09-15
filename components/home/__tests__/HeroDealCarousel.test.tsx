@@ -9,15 +9,18 @@ describe("HeroDealCarousel", () => {
   it("renders placeholder deals with prices and availability", () => {
     render(<HeroDealCarousel />);
 
-    expect(
-      screen.getByRole("heading", { name: /Deals worth taking today/i })
-    ).toBeInTheDocument();
-
     const first = PLACEHOLDER_OPERATOR_DEALS[0];
-    expect(screen.getByText(first.title)).toBeInTheDocument();
-    expect(screen.getByText(first.locationName)).toBeInTheDocument();
+    // Loop copies render the same title multiple times.
+    expect(screen.getAllByText(first.title).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(first.locationName).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Save/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$\d+/).length).toBeGreaterThan(0);
+  });
+
+  it("does not render the previous section heading copy", () => {
+    render(<HeroDealCarousel />);
+    expect(screen.queryByText(/Last-minute from operators/i)).toBeNull();
+    expect(screen.queryByText(/Deals worth taking today/i)).toBeNull();
   });
 
   it("shows desktop scroll controls", () => {
