@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { DiagonalMarquee } from "@/components/home/DiagonalMarquee";
+import { HeroDealCarousel } from "@/components/home/HeroDealCarousel";
 import { Reveal } from "@/components/home/Reveal";
 import { HeroRegionSearch } from "@/components/home/HeroRegionSearch";
 
@@ -19,31 +20,56 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
-      <section className="relative min-h-[100svh] w-full overflow-hidden">
-        <Image
-          src="/Main_Page_Pic.jpg"
-          alt="New Zealand landscape"
-          fill
-          priority
-          className="animate-hero-drift scale-105 object-cover object-center"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
+      <div className="relative">
+        <section className="relative w-full overflow-hidden">
+          <Image
+            src="/Main_Page_Pic.jpg"
+            alt="New Zealand landscape"
+            fill
+            priority
+            className="animate-hero-drift scale-105 object-cover object-center"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-20 pt-28 md:px-10 md:pb-24 lg:px-16">
-          <div className="w-full max-w-xl animate-hero-rise text-center">
-            <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
-              Today, Tomorrow or the next day - always pay less
-            </h1>
-            <HeroRegionSearch />
+          <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
+            <div className="w-full max-w-xl animate-hero-rise text-center">
+              <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+                Today, Tomorrow or the next day - always pay less
+              </h1>
+              <HeroRegionSearch />
+            </div>
+          </div>
+        </section>
+
+        {/* Flat white slab from the hero edge down — same colour as the section below.
+            No gradient / shadow: just solid #fff so the seam disappears. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-full z-10"
+          style={{ backgroundColor: "#ffffff", height: "50vh" }}
+        />
+
+        {/* Cards straddle the hero / white seam */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
+          style={{ transform: "translateY(50%)" }}
+        >
+          <div className="pointer-events-auto relative">
+            <HeroDealCarousel />
           </div>
         </div>
-      </section>
+      </div>
 
-      <DiagonalMarquee />
+      <div style={{ backgroundColor: "#ffffff" }}>
+        <DiagonalMarquee />
+      </div>
 
-      <section className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16">
+      <section
+        className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16"
+        style={{ backgroundColor: "#ffffff" }}
+      >
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ts-teal)]">
