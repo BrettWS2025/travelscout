@@ -51,7 +51,19 @@ export default function Home() {
           style={{ backgroundColor: "var(--bg)", height: "50vh" }}
         />
 
-        {/* Cards straddle the hero / page-surface seam */}
+        {/* Title sits on the hero just above the cards */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 mb-[min(42vw,148px)] md:mb-[160px]">
+          <div className="mx-auto max-w-6xl px-5 md:px-14 lg:px-16">
+            <p className="font-[family-name:var(--font-sora)] text-[10px] font-semibold uppercase tracking-[0.22em] text-white/85">
+              Last-minute from operators
+            </p>
+            <h2 className="mt-1 font-[family-name:var(--font-instrument)] text-2xl text-white md:text-3xl">
+              Deals worth taking today
+            </h2>
+          </div>
+        </div>
+
+        {/* Cards only straddle the seam */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
           style={{ transform: "translateY(50%)" }}
