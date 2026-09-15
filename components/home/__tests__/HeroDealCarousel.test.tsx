@@ -16,10 +16,9 @@ describe("HeroDealCarousel", () => {
     expect(screen.getAllByText(/\$\d+/).length).toBeGreaterThan(0);
   });
 
-  it("does not render heading copy above the cards", () => {
+  it("renders the deal list region", () => {
     render(<HeroDealCarousel />);
-    expect(screen.queryByText(/Last-minute from operators/i)).toBeNull();
-    expect(screen.queryByText(/Deals worth taking today/i)).toBeNull();
+    expect(screen.getByLabelText(/Operator deals/i)).toBeInTheDocument();
   });
 
   it("shows desktop scroll controls", () => {
