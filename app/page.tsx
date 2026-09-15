@@ -20,20 +20,20 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
-      <section className="relative w-full overflow-hidden">
-        <Image
-          src="/Main_Page_Pic.jpg"
-          alt="New Zealand landscape"
-          fill
-          priority
-          className="animate-hero-drift scale-105 object-cover object-center"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
+      <div className="relative">
+        <section className="relative w-full overflow-hidden">
+          <Image
+            src="/Main_Page_Pic.jpg"
+            alt="New Zealand landscape"
+            fill
+            priority
+            className="animate-hero-drift scale-105 object-cover object-center"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col">
-          <div className="flex flex-1 flex-col items-center justify-center px-5 pb-8 pt-28 md:px-10 lg:px-16">
+          <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
             <div className="w-full max-w-xl animate-hero-rise text-center">
               <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
                 Today, Tomorrow or the next day - always pay less
@@ -41,17 +41,19 @@ export default function Home() {
               <HeroRegionSearch />
             </div>
           </div>
+        </section>
 
-          {/* Deal cards live entirely inside the hero — no light band behind them */}
-          <div className="w-full pb-6 pt-2 md:pb-8">
+        {/* Straddle the hero / second-section seam */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-1/2">
+          <div className="pointer-events-auto">
             <HeroDealCarousel />
           </div>
         </div>
-      </section>
+      </div>
 
       <DiagonalMarquee />
 
-      <section className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16">
+      <section className="relative bg-[var(--bg)] px-5 py-20 md:px-10 md:py-28 lg:px-16">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ts-teal)]">
