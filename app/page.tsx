@@ -43,14 +43,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Flat page-surface slab from the hero edge down — same colour as Wānaka /
-            Bay of Islands below. Solid fill only; no gradient or shadow. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-full z-10"
-          style={{ backgroundColor: "var(--bg)", height: "50vh" }}
-        />
-
         {/* Title sits on the hero just above the cards */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 mb-[min(42vw,148px)] md:mb-[160px]">
           <div className="mx-auto max-w-6xl px-5 md:px-14 lg:px-16">
