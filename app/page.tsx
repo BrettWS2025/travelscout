@@ -20,21 +20,20 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
-      {/* Hero + deal cards share one stacking context so cards sit on the seam */}
-      <div className="relative">
-        <section className="relative w-full overflow-hidden">
-          <Image
-            src="/Main_Page_Pic.jpg"
-            alt="New Zealand landscape"
-            fill
-            priority
-            className="animate-hero-drift scale-105 object-cover object-center"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
+      <section className="relative w-full overflow-hidden">
+        <Image
+          src="/Main_Page_Pic.jpg"
+          alt="New Zealand landscape"
+          fill
+          priority
+          className="animate-hero-drift scale-105 object-cover object-center"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-          <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-40 pt-28 md:px-10 md:pb-48 lg:px-16">
+        <div className="relative z-10 flex min-h-[100svh] flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center px-5 pb-8 pt-28 md:px-10 lg:px-16">
             <div className="w-full max-w-xl animate-hero-rise text-center">
               <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
                 Today, Tomorrow or the next day - always pay less
@@ -42,12 +41,13 @@ export default function Home() {
               <HeroRegionSearch />
             </div>
           </div>
-          {/* Hero image runway behind the cards — keeps the seam on the photo, not the page wash */}
-          <div className="relative z-10 h-44 md:h-52" aria-hidden />
-        </section>
 
-        <HeroDealCarousel />
-      </div>
+          {/* Deal cards live entirely inside the hero — no light band behind them */}
+          <div className="w-full pb-6 pt-2 md:pb-8">
+            <HeroDealCarousel />
+          </div>
+        </div>
+      </section>
 
       <DiagonalMarquee />
 

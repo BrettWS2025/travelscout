@@ -207,11 +207,8 @@ export function HeroDealCarousel({
   if (!deals.length) return null;
 
   return (
-    <div
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-[40%]"
-      aria-label="Operator deals"
-    >
-      <div className="pointer-events-auto relative mx-auto max-w-6xl">
+    <div className="relative mx-auto max-w-6xl" aria-label="Operator deals">
+      <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-2 z-10 hidden items-center md:flex lg:left-0">
           <button
             type="button"
