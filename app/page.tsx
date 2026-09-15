@@ -43,17 +43,19 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Cards straddle the hero seam. Lower half sits on an explicit white
-            panel that matches the section below — not the page wash. */}
+        {/* Flat white slab from the hero edge down — same colour as the section below.
+            No gradient / shadow: just solid #fff so the seam disappears. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-full z-10"
+          style={{ backgroundColor: "#ffffff", height: "50vh" }}
+        />
+
+        {/* Cards straddle the hero / white seam */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
           style={{ transform: "translateY(50%)" }}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2"
-            style={{ backgroundColor: "#ffffff" }}
-          />
           <div className="pointer-events-auto relative">
             <HeroDealCarousel />
           </div>

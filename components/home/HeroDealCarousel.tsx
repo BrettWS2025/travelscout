@@ -121,7 +121,7 @@ function DealCard({ deal }: { deal: OperatorDealCard }) {
 
   return (
     <article
-      className="group flex w-[min(78vw,280px)] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--ts-ink)]/10 bg-white shadow-[0_20px_50px_rgba(16,36,28,0.18)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(16,36,28,0.22)] md:w-[300px]"
+      className="group flex w-[min(78vw,280px)] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--ts-ink)]/10 bg-white md:w-[300px]"
       aria-label={`${deal.title} deal in ${deal.locationName}`}
     >
       <div className="relative aspect-[16/11] overflow-hidden bg-[var(--ts-mist)]">
@@ -215,7 +215,7 @@ export function HeroDealCarousel({
             onClick={() => scrollByCard(-1)}
             disabled={!canPrev}
             aria-label="Scroll deals left"
-            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-[0_10px_30px_rgba(16,36,28,0.18)] transition hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-none transition hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -226,7 +226,7 @@ export function HeroDealCarousel({
             onClick={() => scrollByCard(1)}
             disabled={!canNext}
             aria-label="Scroll deals right"
-            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-[0_10px_30px_rgba(16,36,28,0.18)] transition hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ts-ink)]/10 bg-white text-[var(--ts-ink)] shadow-none transition hover:text-[var(--ts-teal)] disabled:cursor-not-allowed disabled:opacity-35"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
