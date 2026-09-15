@@ -43,6 +43,12 @@ export default function Home() {
           </div>
         </section>
 
+        {/* White fill under the hanging cards — same as the section below */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-full z-10 h-48 bg-white md:h-56"
+          aria-hidden
+        />
+
         {/* Straddle the hero / second-section seam */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-1/2">
           <div className="pointer-events-auto">
@@ -53,7 +59,7 @@ export default function Home() {
 
       <DiagonalMarquee />
 
-      <section className="relative bg-[var(--bg)] px-5 py-20 md:px-10 md:py-28 lg:px-16">
+      <section className="relative bg-white px-5 py-20 md:px-10 md:py-28 lg:px-16">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ts-teal)]">
