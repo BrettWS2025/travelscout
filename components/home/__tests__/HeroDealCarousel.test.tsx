@@ -16,10 +16,10 @@ describe("HeroDealCarousel", () => {
     expect(screen.getAllByText(/\$\d+/).length).toBeGreaterThan(0);
   });
 
-  it("does not render heading copy above the cards", () => {
+  it("renders heading copy above the cards", () => {
     render(<HeroDealCarousel />);
-    expect(screen.queryByText(/Last-minute from operators/i)).toBeNull();
-    expect(screen.queryByText(/Deals worth taking today/i)).toBeNull();
+    expect(screen.getByText(/Last-minute from operators/i)).toBeInTheDocument();
+    expect(screen.getByText(/Deals worth taking today/i)).toBeInTheDocument();
   });
 
   it("shows desktop scroll controls", () => {

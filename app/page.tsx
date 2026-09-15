@@ -43,15 +43,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Flat white slab from the hero edge down — same colour as the section below.
-            No gradient / shadow: just solid #fff so the seam disappears. */}
+        {/* Flat page-surface slab from the hero edge down — same colour as Wānaka /
+            Bay of Islands below. Solid fill only; no gradient or shadow. */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-full z-10"
-          style={{ backgroundColor: "#ffffff", height: "50vh" }}
+          style={{ backgroundColor: "var(--bg)", height: "50vh" }}
         />
 
-        {/* Cards straddle the hero / white seam */}
+        {/* Cards straddle the hero / page-surface seam */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
           style={{ transform: "translateY(50%)" }}
@@ -62,13 +62,13 @@ export default function Home() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: "#ffffff" }}>
+      <div style={{ backgroundColor: "var(--bg)" }}>
         <DiagonalMarquee />
       </div>
 
       <section
         className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16"
-        style={{ backgroundColor: "#ffffff" }}
+        style={{ backgroundColor: "var(--bg)" }}
       >
         <div className="mx-auto max-w-6xl">
           <Reveal>
@@ -91,6 +91,7 @@ export default function Home() {
       <section
         id="escape"
         className="relative overflow-hidden px-5 py-8 md:px-10 md:py-12 lg:px-16"
+        style={{ backgroundColor: "var(--bg)" }}
       >
         <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-[var(--ts-mist)] to-transparent" />
         <div className="relative mx-auto max-w-6xl space-y-24 md:space-y-32">

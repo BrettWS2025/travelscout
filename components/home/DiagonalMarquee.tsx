@@ -130,7 +130,7 @@ export function DiagonalMarquee() {
   return (
     <section
       className="relative z-0 overflow-hidden pb-16 pt-60 md:pb-24 md:pt-72"
-      style={{ backgroundColor: "#ffffff" }}
+      style={{ backgroundColor: "var(--bg)" }}
       aria-label="Featured deals showcase"
     >
       <div className="relative mx-auto mb-8 max-w-6xl px-5 md:px-10 lg:px-16">

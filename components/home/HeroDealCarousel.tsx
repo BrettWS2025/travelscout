@@ -208,6 +208,14 @@ export function HeroDealCarousel({
 
   return (
     <div className="relative mx-auto max-w-6xl" aria-label="Operator deals">
+      <div className="mb-4 px-5 md:mb-5 md:px-14 lg:px-16">
+        <p className="font-[family-name:var(--font-sora)] text-[10px] font-semibold uppercase tracking-[0.22em] text-white/85 drop-shadow-sm">
+          Last-minute from operators
+        </p>
+        <h2 className="mt-1 font-[family-name:var(--font-instrument)] text-2xl text-white drop-shadow-sm md:text-3xl">
+          Deals worth taking today
+        </h2>
+      </div>
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-2 z-10 hidden items-center md:flex lg:left-0">
           <button
