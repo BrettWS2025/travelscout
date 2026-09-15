@@ -129,7 +129,8 @@ function MarqueeRow({ reverse = false }: { reverse?: boolean }) {
 export function DiagonalMarquee() {
   return (
     <section
-      className="relative z-0 overflow-hidden bg-white pb-16 pt-2 md:pb-24 md:pt-4"
+      className="relative z-0 overflow-hidden pb-16 pt-52 md:pb-24 md:pt-60"
+      style={{ backgroundColor: "#ffffff" }}
       aria-label="Featured deals showcase"
     >
       <div className="relative mx-auto mb-8 max-w-6xl px-5 md:px-10 lg:px-16">

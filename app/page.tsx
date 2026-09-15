@@ -20,39 +20,54 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
-      <section className="relative w-full overflow-hidden">
-        <Image
-          src="/Main_Page_Pic.jpg"
-          alt="New Zealand landscape"
-          fill
-          priority
-          className="animate-hero-drift scale-105 object-cover object-center"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
+      <div className="relative">
+        <section className="relative w-full overflow-hidden">
+          <Image
+            src="/Main_Page_Pic.jpg"
+            alt="New Zealand landscape"
+            fill
+            priority
+            className="animate-hero-drift scale-105 object-cover object-center"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ts-ink)]/75 via-[var(--ts-ink)]/45 to-[var(--ts-teal)]/35" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(212,230,67,0.18),transparent_50%)]" />
 
-        <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
-          <div className="w-full max-w-xl animate-hero-rise text-center">
-            <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
-              Today, Tomorrow or the next day - always pay less
-            </h1>
-            <HeroRegionSearch />
+          <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-5 pb-36 pt-28 md:px-10 md:pb-44 lg:px-16">
+            <div className="w-full max-w-xl animate-hero-rise text-center">
+              <h1 className="mb-5 font-[family-name:var(--font-instrument)] text-3xl leading-tight tracking-tight text-white md:text-4xl lg:text-[2.75rem]">
+                Today, Tomorrow or the next day - always pay less
+              </h1>
+              <HeroRegionSearch />
+            </div>
+          </div>
+        </section>
+
+        {/* Cards straddle the hero seam. Lower half sits on an explicit white
+            panel that matches the section below — not the page wash. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
+          style={{ transform: "translateY(50%)" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2"
+            style={{ backgroundColor: "#ffffff" }}
+          />
+          <div className="pointer-events-auto relative">
+            <HeroDealCarousel />
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* One continuous white surface from the seam downward.
-          Cards pull up over the hero; their lower half sits on this white. */}
-      <div className="relative z-10 bg-white" style={{ backgroundColor: "#ffffff" }}>
-        <div className="relative z-20 -mt-36 pb-10 md:-mt-40 md:pb-12">
-          <HeroDealCarousel />
-        </div>
-
+      <div style={{ backgroundColor: "#ffffff" }}>
         <DiagonalMarquee />
       </div>
 
-      <section className="relative bg-white px-5 py-20 md:px-10 md:py-28 lg:px-16" style={{ backgroundColor: "#ffffff" }}>
+      <section
+        className="relative px-5 py-20 md:px-10 md:py-28 lg:px-16"
+        style={{ backgroundColor: "#ffffff" }}
+      >
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ts-teal)]">
