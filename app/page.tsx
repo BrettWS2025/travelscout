@@ -20,8 +20,9 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="ts-page">
+      {/* Hero + deal cards share one stacking context so cards sit on the seam */}
       <div className="relative">
-        <section className="relative min-h-[100svh] w-full overflow-hidden">
+        <section className="relative w-full overflow-hidden">
           <Image
             src="/Main_Page_Pic.jpg"
             alt="New Zealand landscape"
@@ -41,6 +42,8 @@ export default function Home() {
               <HeroRegionSearch />
             </div>
           </div>
+          {/* Hero image runway behind the cards — keeps the seam on the photo, not the page wash */}
+          <div className="relative z-10 h-44 md:h-52" aria-hidden />
         </section>
 
         <HeroDealCarousel />

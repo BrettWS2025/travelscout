@@ -10,14 +10,13 @@ describe("HeroDealCarousel", () => {
     render(<HeroDealCarousel />);
 
     const first = PLACEHOLDER_OPERATOR_DEALS[0];
-    // Loop copies render the same title multiple times.
-    expect(screen.getAllByText(first.title).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(first.locationName).length).toBeGreaterThan(0);
+    expect(screen.getByText(first.title)).toBeInTheDocument();
+    expect(screen.getByText(first.locationName)).toBeInTheDocument();
     expect(screen.getAllByText(/Save/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$\d+/).length).toBeGreaterThan(0);
   });
 
-  it("does not render the previous section heading copy", () => {
+  it("does not render heading copy above the cards", () => {
     render(<HeroDealCarousel />);
     expect(screen.queryByText(/Last-minute from operators/i)).toBeNull();
     expect(screen.queryByText(/Deals worth taking today/i)).toBeNull();
