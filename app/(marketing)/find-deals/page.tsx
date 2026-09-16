@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Search, MapPin, Compass } from "lucide-react";
+import { FindDealsRegionSearch } from "@/components/find-deals/FindDealsRegionSearch";
 
 export const metadata: Metadata = {
   title: "Find Deals",
@@ -46,33 +47,7 @@ export default function FindDealsPage({ searchParams }: Props) {
           </p>
 
           <div className="mt-10">
-            <label htmlFor="deal-region" className="sr-only">
-              Search by region
-            </label>
-            <form
-              action="/find-deals"
-              method="get"
-              className="flex flex-col gap-3 rounded-2xl border border-[var(--ts-ink)]/10 bg-white/80 p-3 shadow-[0_24px_60px_rgba(16,36,28,0.08)] backdrop-blur-md sm:flex-row sm:items-center"
-            >
-              <div className="flex flex-1 items-center gap-3 px-3 py-2">
-                <MapPin className="h-5 w-5 shrink-0 text-[var(--ts-teal)]" />
-                <input
-                  id="deal-region"
-                  name="region"
-                  type="text"
-                  defaultValue={region}
-                  placeholder="Queenstown, Bay of Plenty, Rotorua…"
-                  className="w-full bg-transparent font-[family-name:var(--font-sora)] text-base text-[var(--ts-ink)] outline-none placeholder:text-[var(--ts-muted)]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--ts-ink)] px-6 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-white transition hover:bg-[var(--ts-teal)]"
-              >
-                <Search className="h-4 w-4" />
-                Search deals
-              </button>
-            </form>
+            <FindDealsRegionSearch key={region} initialRegion={region} />
           </div>
 
           <p className="mt-4 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
