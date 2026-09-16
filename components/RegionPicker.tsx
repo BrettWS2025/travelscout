@@ -43,6 +43,13 @@ function normalize(value: string) {
     .trim();
 }
 
+function compareRegions(a: string, b: string) {
+  return normalize(a).localeCompare(normalize(b), "en");
+}
+
+/** Alphabetical source list for both pickers. */
+export const NZ_REGIONS_ALPHA = [...NZ_REGIONS].sort(compareRegions);
+
 function useIsMobile(breakpointPx = 768) {
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -131,6 +138,81 @@ function RegionList({
   );
 }
 
+function RegionImagePlaceholder({ selected }: { selected: boolean }) {
+  return (
+    <span
+      className={`relative block aspect-square w-full overflow-hidden rounded-md border ${
+        selected
+          ? "border-white/30 bg-[var(--ts-teal)]/35"
+          : "border-[var(--ts-ink)]/10 bg-[var(--ts-mist)]"
+      }`}
+      aria-hidden
+    >
+      <span
+        className={`absolute inset-0 bg-[linear-gradient(135deg,transparent_40%,rgba(16,36,28,0.06)_40%,rgba(16,36,28,0.06)_60%,transparent_60%)] ${
+          selected ? "opacity-40" : "opacity-100"
+        }`}
+      />
+    </span>
+  );
+}
+
+function RegionImageGrid({
+  regions,
+  selected,
+  onSelect,
+  optionIdPrefix,
+}: {
+  regions: readonly string[];
+  selected: string;
+  onSelect: (region: string) => void;
+  optionIdPrefix: string;
+}) {
+  if (regions.length === 0) {
+    return (
+      <p className="px-4 py-8 text-center font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+        No regions match that search.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      role="listbox"
+      aria-label="New Zealand regions"
+      className="grid grid-cols-3 gap-2 p-3 sm:grid-cols-4 md:grid-cols-5"
+    >
+      {regions.map((r) => {
+        const isSelected = selected === r;
+        return (
+          <button
+            key={r}
+            type="button"
+            id={`${optionIdPrefix}-${normalize(r).replace(/\s+/g, "-")}`}
+            role="option"
+            aria-selected={isSelected}
+            onClick={() => onSelect(r)}
+            className={`group flex flex-col gap-1.5 rounded-lg p-1.5 text-left font-[family-name:var(--font-sora)] transition ${
+              isSelected
+                ? "bg-[var(--ts-ink)] text-white"
+                : "bg-transparent text-[var(--ts-ink)] hover:bg-[var(--ts-mist)]"
+            }`}
+          >
+            <RegionImagePlaceholder selected={isSelected} />
+            <span
+              className={`truncate px-0.5 text-center text-[11px] font-medium leading-tight sm:text-xs ${
+                isSelected ? "text-white" : "text-[var(--ts-ink)]"
+              }`}
+            >
+              {r}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function SearchField({
   id,
   value,
@@ -181,7 +263,7 @@ function DesktopDropdown({
   searchId,
 }: {
   open: boolean;
-  anchorRef: RefObject<HTMLDivElement>;
+  anchorRef: RefObject<HTMLElement>;
   filter: string;
   onFilterChange: (value: string) => void;
   regions: readonly string[];
@@ -222,12 +304,11 @@ function DesktopDropdown({
   return createPortal(
     <div
       id={listId}
-      className="fixed z-[1200] overflow-hidden rounded-xl border border-[var(--ts-ink)]/10 bg-white shadow-[0_16px_40px_rgba(16,36,28,0.18)]"
+      className="fixed z-[1200] overflow-hidden rounded-2xl border border-[var(--ts-ink)]/10 bg-white shadow-[0_16px_40px_rgba(16,36,28,0.18)]"
       style={{
         top: pos.top,
         left: pos.left,
-        width: Math.max(pos.width, 280),
-        maxWidth: "min(100vw - 24px, 420px)",
+        width: pos.width,
       }}
       role="dialog"
       aria-label="Choose a region"
@@ -241,8 +322,8 @@ function DesktopDropdown({
           autoFocus
         />
       </div>
-      <div className="max-h-[min(320px,50vh)] overflow-y-auto overscroll-contain">
-        <RegionList
+      <div className="max-h-[min(420px,55vh)] overflow-y-auto overscroll-contain">
+        <RegionImageGrid
           regions={regions}
           selected={selected}
           onSelect={onSelect}
@@ -352,6 +433,8 @@ type RegionPickerProps = {
   placeholder?: string;
   variant?: RegionPickerVariant;
   className?: string;
+  /** Full search-box shell; desktop dropdown matches this width. */
+  dropdownAnchorRef?: RefObject<HTMLElement>;
 };
 
 export function RegionPicker({
@@ -360,6 +443,7 @@ export function RegionPicker({
   placeholder = "Queenstown, Rotorua, Bay of Plenty…",
   variant = "light",
   className = "",
+  dropdownAnchorRef,
 }: RegionPickerProps) {
   const isMobile = useIsMobile();
   const listId = useId();
@@ -370,8 +454,9 @@ export function RegionPicker({
 
   const filteredRegions = useMemo(() => {
     const q = normalize(filter);
-    if (!q) return NZ_REGIONS;
-    return NZ_REGIONS.filter((r) => normalize(r).includes(q));
+    const source = NZ_REGIONS_ALPHA;
+    if (!q) return source;
+    return source.filter((r) => normalize(r).includes(q));
   }, [filter]);
 
   const close = useCallback(() => {
@@ -392,6 +477,8 @@ export function RegionPicker({
     [onChange, close]
   );
 
+  const desktopAnchor = dropdownAnchorRef ?? triggerRef;
+
   useEffect(() => {
     if (!open) return;
 
@@ -406,6 +493,7 @@ export function RegionPicker({
       if (isMobile) return;
       const target = e.target as Node;
       if (triggerRef.current?.contains(target)) return;
+      if (desktopAnchor.current?.contains(target)) return;
       const panel = document.getElementById(listId);
       if (panel?.contains(target)) return;
       close();
@@ -419,7 +507,7 @@ export function RegionPicker({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("touchstart", onPointerDown);
     };
-  }, [open, close, isMobile, listId]);
+  }, [open, close, isMobile, listId, desktopAnchor]);
 
   const isHero = variant === "hero";
 
@@ -477,7 +565,7 @@ export function RegionPicker({
       ) : (
         <DesktopDropdown
           open={open}
-          anchorRef={triggerRef}
+          anchorRef={desktopAnchor}
           filter={filter}
           onFilterChange={setFilter}
           regions={filteredRegions}

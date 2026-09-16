@@ -45,6 +45,11 @@ describe("HeroRegionSearch", () => {
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByText("Queenstown")).toBeInTheDocument();
 
+    const options = within(dialog).getAllByRole("option");
+    const labels = options.map((el) => el.textContent?.trim() ?? "");
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, "en")));
+    expect(options[0].querySelector(".aspect-square")).toBeTruthy();
+
     await user.type(
       within(dialog).getByPlaceholderText(/Search regions/i),
       "wan"
