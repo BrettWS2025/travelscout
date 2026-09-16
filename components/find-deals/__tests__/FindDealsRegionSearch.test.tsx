@@ -53,11 +53,15 @@ describe("FindDealsRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Bay of Plenty, Rotorua/i,
+        name: /Queenstown, Rotorua, Bay of Plenty/i,
       })
     );
 
     const dialog = screen.getByRole("dialog", { name: /Choose a region/i });
+    const options = within(dialog).getAllByRole("option");
+    const labels = options.map((el) => el.textContent?.trim() ?? "");
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, "en")));
+
     await user.type(
       within(dialog).getByPlaceholderText(/Search regions/i),
       "fiord"
@@ -87,7 +91,7 @@ describe("FindDealsRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Bay of Plenty, Rotorua/i,
+        name: /Queenstown, Rotorua, Bay of Plenty/i,
       })
     );
 
