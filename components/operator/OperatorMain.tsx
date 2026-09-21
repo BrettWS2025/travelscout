@@ -9,8 +9,9 @@ export function OperatorMain({ children }: { children: ReactNode }) {
   const onOperatorHost = useOnOperatorHost();
   const isLanding =
     pathname === "/operator" || (onOperatorHost && pathname === "/");
+  const isAuth = pathname.startsWith("/auth/");
 
-  if (isLanding) {
+  if (isLanding || isAuth) {
     return (
       <main className="relative z-0 overflow-x-hidden pb-0 pt-0">{children}</main>
     );
