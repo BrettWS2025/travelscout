@@ -4,6 +4,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import {
+  AuthPageFrame,
+  authInputClassName,
+  authLabelClassName,
+  authLinkClassName,
+  authPanelClassName,
+  authPrimaryButtonClassName,
+  authSecondaryButtonClassName,
+} from "@/components/auth/AuthPageFrame";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -138,25 +147,36 @@ export default function LoginPage() {
     }
   }
 
-  return (
-    <main className="container max-w-md py-12">
-      <h1 className="text-3xl font-semibold mb-2">
-        {mode === "login" ? "Sign in" : "Create an account"}
-      </h1>
-      <p className="text-sm text-slate-600 mb-6">
-        {onOperatorHost
-          ? mode === "login"
-            ? "Sign in to manage your operator organizations and last-minute deals."
-            : "Create an operator account to publish deals on TravelScout."
-          : mode === "login"
-            ? "Use your email and password to sign in."
-            : "Create an account with your name, email and password."}
-      </p>
+  const description = onOperatorHost
+    ? mode === "login"
+      ? "Sign in to manage your operator organizations and last-minute deals."
+      : "Create an operator account to publish deals on TravelScout."
+    : mode === "login"
+      ? "Use your email and password to sign in."
+      : "Create an account with your name, email and password.";
 
-      <form onSubmit={handleSubmit} className="space-y-4 card p-6">
+  return (
+    <AuthPageFrame
+      eyebrow={mode === "login" ? "Welcome back" : "Join TravelScout"}
+      title={
+        mode === "login" ? (
+          <>
+            Sign in{" "}
+            <span className="italic text-[var(--ts-teal)]">to continue.</span>
+          </>
+        ) : (
+          <>
+            Create your{" "}
+            <span className="italic text-[var(--ts-teal)]">account.</span>
+          </>
+        )
+      }
+      description={description}
+    >
+      <form onSubmit={handleSubmit} className={authPanelClassName}>
         {mode === "signup" && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium" htmlFor="fullName">
+            <label className={authLabelClassName} htmlFor="fullName">
               Full name
             </label>
             <input
@@ -165,14 +185,14 @@ export default function LoginPage() {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+              className={authInputClassName}
               placeholder="e.g. John Smith"
             />
           </div>
         )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="email">
+          <label className={authLabelClassName} htmlFor="email">
             Email
           </label>
           <input
@@ -181,12 +201,12 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+            className={authInputClassName}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium" htmlFor="password">
+          <label className={authLabelClassName} htmlFor="password">
             Password
           </label>
           <input
@@ -196,7 +216,7 @@ export default function LoginPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+            className={authInputClassName}
           />
         </div>
 
@@ -209,57 +229,66 @@ export default function LoginPage() {
                 setForgotMsg(null);
                 setForgotError(null);
               }}
-              className="text-sm text-[var(--accent)] hover:underline"
+              className={authLinkClassName}
             >
               Forgot password?
             </button>
-
-            {/* Optional: keep layout balanced */}
-            <span className="text-xs text-slate-500">
-              {/* Could put a hint here if you want */}
-            </span>
           </div>
         )}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {info && <p className="text-sm text-emerald-300">{info}</p>}
+        {error && (
+          <p className="font-[family-name:var(--font-sora)] text-sm text-red-600">
+            {error}
+          </p>
+        )}
+        {info && (
+          <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-teal)]">
+            {info}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-          style={{ 
-            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-          }}
+          className={authPrimaryButtonClassName}
         >
           {loading
             ? mode === "login"
               ? "Signing in..."
               : "Creating account..."
             : mode === "login"
-            ? "Sign in"
-            : "Create account"}
+              ? "Sign in"
+              : "Create account"}
         </button>
       </form>
 
-      {/* Forgot password panel */}
       {mode === "login" && forgotOpen && (
-        <div className="mt-4 card p-6 space-y-3">
+        <div className={`mt-4 ${authPanelClassName}`}>
           <div>
-            <div className="font-semibold">Reset your password</div>
-            <p className="text-sm text-slate-600">
-              We'll email you a link to set a new password.
+            <div className="font-[family-name:var(--font-instrument)] text-2xl text-[var(--ts-ink)]">
+              Reset your password
+            </div>
+            <p className="mt-1 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+              We&apos;ll email you a link to set a new password.
             </p>
           </div>
 
           <form onSubmit={handleForgotPassword} className="space-y-3">
-            {forgotError && <p className="text-sm text-red-400">{forgotError}</p>}
-            {forgotMsg && <p className="text-sm text-emerald-300">{forgotMsg}</p>}
+            {forgotError && (
+              <p className="font-[family-name:var(--font-sora)] text-sm text-red-600">
+                {forgotError}
+              </p>
+            )}
+            {forgotMsg && (
+              <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-teal)]">
+                {forgotMsg}
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={forgotLoading}
-              className="w-full rounded bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-700 disabled:opacity-60 transition-colors"
+              className={authPrimaryButtonClassName}
             >
               {forgotLoading ? "Sending…" : "Send reset email"}
             </button>
@@ -271,7 +300,7 @@ export default function LoginPage() {
                 setForgotMsg(null);
                 setForgotError(null);
               }}
-              className="w-full rounded px-4 py-2 text-sm border border-slate-300 hover:bg-slate-50 text-slate-700"
+              className={authSecondaryButtonClassName}
             >
               Close
             </button>
@@ -279,7 +308,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      <div className="mt-4 text-sm">
+      <div className="mt-6 text-center">
         {mode === "login" ? (
           <button
             type="button"
@@ -291,7 +320,7 @@ export default function LoginPage() {
               setForgotMsg(null);
               setForgotError(null);
             }}
-            className="text-[var(--accent)] hover:underline"
+            className={authLinkClassName}
           >
             Don&apos;t have an account? Create one
           </button>
@@ -303,12 +332,12 @@ export default function LoginPage() {
               setError(null);
               setInfo(null);
             }}
-            className="text-[var(--accent)] hover:underline"
+            className={authLinkClassName}
           >
             Already have an account? Sign in
           </button>
         )}
       </div>
-    </main>
+    </AuthPageFrame>
   );
 }

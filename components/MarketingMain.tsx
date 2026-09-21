@@ -9,7 +9,8 @@ export function MarketingMain({ children }: { children: ReactNode }) {
     pathname === "/" ||
     pathname === "/operator" ||
     pathname === "/find-deals" ||
-    pathname === "/how-it-works";
+    pathname === "/how-it-works" ||
+    pathname.startsWith("/auth/");
 
   if (isFullBleed) {
     // overflow-x: clip avoids the CSS quirk where overflow-x:hidden forces
