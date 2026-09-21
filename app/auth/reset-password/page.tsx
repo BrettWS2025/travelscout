@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import {
+  AuthPageFrame,
+  authInputClassName,
+  authLabelClassName,
+  authPanelClassName,
+  authPrimaryButtonClassName,
+} from "@/components/auth/AuthPageFrame";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -21,7 +28,7 @@ export default function ResetPasswordPage() {
     let mounted = true;
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
+      await supabase.auth.getSession();
       // session may exist if the link was valid; either way allow form submission
       if (mounted) setReady(true);
     })();
@@ -67,22 +74,39 @@ export default function ResetPasswordPage() {
 
   if (!ready) {
     return (
-      <main className="container max-w-md py-12">
-        <p className="text-sm text-slate-600">Loading…</p>
-      </main>
+      <AuthPageFrame
+        eyebrow="Account"
+        title={
+          <>
+            Almost{" "}
+            <span className="italic text-[var(--ts-teal)]">there.</span>
+          </>
+        }
+        description="Loading your password reset session…"
+      >
+        <div className={authPanelClassName}>
+          <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+            Loading…
+          </p>
+        </div>
+      </AuthPageFrame>
     );
   }
 
   return (
-    <main className="container max-w-md py-12">
-      <h1 className="text-3xl font-semibold mb-2">Set a new password</h1>
-      <p className="text-sm text-slate-600 mb-6">
-        Enter a new password for your account.
-      </p>
-
-      <form onSubmit={handleSetPassword} className="space-y-4 card p-6">
+    <AuthPageFrame
+      eyebrow="Account"
+      title={
+        <>
+          Set a new{" "}
+          <span className="italic text-[var(--ts-teal)]">password.</span>
+        </>
+      }
+      description="Enter a new password for your account."
+    >
+      <form onSubmit={handleSetPassword} className={authPanelClassName}>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-900" htmlFor="password">
+          <label className={authLabelClassName} htmlFor="password">
             New password
           </label>
           <input
@@ -92,12 +116,12 @@ export default function ResetPasswordPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+            className={authInputClassName}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-900" htmlFor="confirm">
+          <label className={authLabelClassName} htmlFor="confirm">
             Confirm new password
           </label>
           <input
@@ -107,24 +131,29 @@ export default function ResetPasswordPage() {
             minLength={6}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+            className={authInputClassName}
           />
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {success && <p className="text-sm text-emerald-300">{success}</p>}
+        {error && (
+          <p className="font-[family-name:var(--font-sora)] text-sm text-red-600">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-teal)]">
+            {success}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-          style={{ 
-            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-          }}
+          className={authPrimaryButtonClassName}
         >
           {loading ? "Updating…" : "Update password"}
         </button>
       </form>
-    </main>
+    </AuthPageFrame>
   );
 }
