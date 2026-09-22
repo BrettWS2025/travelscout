@@ -29,8 +29,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://travelscout.co.nz";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TravelScout | Discover New Zealand",
-    template: "%s | TravelScout",
+    default: "Scout | by travelscout",
+    template: "%s | Scout",
   },
   description:
     "Showcase New Zealand destinations and events, then find deals by place. TravelScout helps you travel smarter across Aotearoa.",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     locale: "en_NZ",
     url: siteUrl,
     siteName: "TravelScout",
-    title: "TravelScout | Discover New Zealand",
+    title: "Scout | by travelscout",
     description:
       "Showcase New Zealand destinations and events, then find deals by place.",
     images: [
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TravelScout | Discover New Zealand",
+    title: "Scout | by travelscout",
     description:
       "Showcase New Zealand destinations and events, then find deals by place.",
     images: ["/TravelScout-Main.png"],
@@ -86,8 +86,8 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png" }],
   },
 };
 

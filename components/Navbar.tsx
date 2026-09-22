@@ -55,15 +55,15 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
             onClick={closeMobile}
           >
             <Image
-              src="/TravelscoutLogo2Cropped.png"
-              alt="TravelScout"
-              width={200}
-              height={60}
+              src="/scout-logo-white.png"
+              alt="Scout"
+              width={120}
+              height={96}
               priority
-              className="pointer-events-none h-[36px] w-auto select-none brightness-0 invert md:h-[48px]"
-              sizes="(max-width: 768px) calc(100vw - 72px), 200px"
+              className="pointer-events-none h-[36px] w-auto select-none md:h-[44px]"
+              sizes="(max-width: 768px) 72px, 110px"
             />
-            <span className="sr-only">TravelScout</span>
+            <span className="sr-only">Scout by travelscout</span>
           </Link>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-5">
