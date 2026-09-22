@@ -51,19 +51,27 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
         <div className="flex items-center justify-between gap-3 rounded-full bg-black px-3 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:gap-4 md:px-4 md:py-2.5">
           <Link
             href={href("/")}
-            className="relative flex min-w-0 shrink items-center"
+            className="relative flex min-w-0 shrink items-center gap-2.5 md:gap-3"
             onClick={closeMobile}
+            aria-label="SCOUT home"
           >
             <Image
               src="/scout-logo-nav.png"
-              alt="Scout"
+              alt=""
               width={200}
               height={162}
               priority
               className="pointer-events-none h-[40px] w-auto select-none md:h-[48px]"
               sizes="(max-width: 768px) 50px, 60px"
             />
-            <span className="sr-only">Scout</span>
+            <span className="flex min-w-0 flex-col justify-center leading-none">
+              <span className="font-[family-name:var(--font-sora)] text-[15px] font-semibold tracking-[0.14em] text-white md:text-[17px]">
+                SCOUT
+              </span>
+              <span className="mt-1 font-[family-name:var(--font-sora)] text-[10px] font-medium tracking-[0.02em] text-white/70 md:text-[11px]">
+                by travelscout
+              </span>
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-5">
