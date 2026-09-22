@@ -30,17 +30,16 @@ Build: `npm run build` (from `web/`).
 
 ### Vercel (required)
 
-In the Vercel project → **Settings → General → Root Directory**, set:
+In the Vercel project → **Settings → General**:
 
-```text
-web
-```
+1. **Root Directory** = `web` (no slash)
+2. **Install Command** = leave default / empty (must be `npm install` or `npm ci`, **not** `npm ci --prefix web`)
+3. **Build Command** = leave default, or `npm run build` / `npm run vercel-build`
 
-Then either leave Build/Install as defaults, or if you keep a custom build
-command of `npm run vercel-build`, that script now exists in `web/package.json`.
+With Root Directory set to `web`, Vercel already runs inside that folder, so
+`--prefix web` breaks the lockfile path.
 
-Without Root Directory = `web`, Next.js looks for `app/` at the repo root and
-fails with “Couldn't find any pages or app directory”.
+Also set **Node.js Version** to `22.x` in Settings → General.
 
 Supabase migrations, scrapers, and Redis compose stay at the repo root and are
 unchanged by this layout.

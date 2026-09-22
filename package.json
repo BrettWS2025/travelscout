@@ -1,7 +1,7 @@
 {
   "name": "travelscout-monorepo",
   "private": true,
-  "description": "TravelScout monorepo — the Next.js app lives in web/",
+  "description": "TravelScout monorepo \u2014 the Next.js app lives in web/",
   "scripts": {
     "dev": "npm run dev --prefix web",
     "build": "npm run build --prefix web",
@@ -11,6 +11,6 @@
     "test": "npm run test --prefix web"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }
