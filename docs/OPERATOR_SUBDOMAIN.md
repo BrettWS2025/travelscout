@@ -13,9 +13,15 @@ Do the steps in this order.
 
 ## Part A — Vercel (add the domain + copy the CNAME target)
 
-### A0. Confirm Vercel Root Directory
+### A0. Confirm Vercel Root Directory (required)
 
-The Next.js app lives in the `web/` folder. In Vercel → Project → Settings → General, set **Root Directory** to `web` (if it is not already).
+The Next.js app lives in the `web/` folder. In Vercel → Project → Settings → General:
+
+1. Set **Root Directory** to `web` (include files outside the root directory if you need repo-root paths — usually leave that off).
+2. If Build Command is overridden to `npm run vercel-build`, that is fine — `web/package.json` defines it as `next build`.
+3. Redeploy after saving.
+
+If Root Directory is left blank, Vercel builds from the repo root and fails looking for `app/`.
 
 ### A1. Open Domains for the TravelScout project
 

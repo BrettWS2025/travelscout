@@ -28,10 +28,19 @@ npm run dev
 
 Build: `npm run build` (from `web/`).
 
-### Vercel
+### Vercel (required)
 
-Set the project **Root Directory** to `web`. Install / build commands can stay
-the defaults (`npm install` / `next build`) relative to that directory.
+In the Vercel project → **Settings → General → Root Directory**, set:
+
+```text
+web
+```
+
+Then either leave Build/Install as defaults, or if you keep a custom build
+command of `npm run vercel-build`, that script now exists in `web/package.json`.
+
+Without Root Directory = `web`, Next.js looks for `app/` at the repo root and
+fails with “Couldn't find any pages or app directory”.
 
 Supabase migrations, scrapers, and Redis compose stay at the repo root and are
 unchanged by this layout.
