@@ -64,11 +64,11 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
               className="pointer-events-none h-[40px] w-auto select-none md:h-[48px]"
               sizes="(max-width: 768px) 50px, 60px"
             />
-            <span className="flex min-w-0 flex-col items-center justify-center text-center leading-none">
+            <span className="relative flex flex-col justify-center leading-none">
               <span className="font-[family-name:var(--font-sora)] text-[15px] font-semibold tracking-[0.14em] text-white md:text-[17px]">
                 SCOUT
               </span>
-              <span className="mt-0.5 font-[family-name:var(--font-sora)] text-[10px] font-medium tracking-[0.02em] text-white/70 md:text-[11px]">
+              <span className="absolute left-0 top-full mt-0.5 whitespace-nowrap font-[family-name:var(--font-sora)] text-[10px] font-medium tracking-[0.02em] text-white/70 md:text-[11px]">
                 by travelscout
               </span>
             </span>
