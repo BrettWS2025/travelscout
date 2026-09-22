@@ -7,11 +7,13 @@ import { Reveal } from "@/components/home/Reveal";
 import { HeroRegionSearch } from "@/components/home/HeroRegionSearch";
 
 export const metadata: Metadata = {
-  title: "TravelScout | Discover New Zealand",
+  title: {
+    absolute: "Scout | by travelscout",
+  },
   description:
     "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   openGraph: {
-    title: "TravelScout | Discover New Zealand",
+    title: "Scout | by travelscout",
     description:
       "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   },
