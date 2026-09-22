@@ -8,7 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     "/find-deals",
     "/how-it-works",
-    "/trip-planner",
     "/guides",
     "/tips",
     "/top-deals",

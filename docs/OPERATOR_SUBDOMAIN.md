@@ -13,6 +13,10 @@ Do the steps in this order.
 
 ## Part A — Vercel (add the domain + copy the CNAME target)
 
+### A0. Confirm Vercel Root Directory
+
+The Next.js app lives in the `web/` folder. In Vercel → Project → Settings → General, set **Root Directory** to `web` (if it is not already).
+
 ### A1. Open Domains for the TravelScout project
 
 1. Go to [https://vercel.com/dashboard](https://vercel.com/dashboard) and sign in.

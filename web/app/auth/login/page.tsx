@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const onOperatorHost = useOnOperatorHost();
   const [redirectTo, setRedirectTo] = useState(
-    onOperatorHost ? "/" : "/account/itineraries"
+    onOperatorHost ? "/" : "/account/profile"
   );
 
   const [mode, setMode] = useState<"login" | "signup">("login");

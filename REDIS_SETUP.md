@@ -1,3 +1,5 @@
+> **Monorepo note:** The Next.js app lives in `web/`. Run Redis npm scripts from `web/` (`cd web && npm run redis:start`, etc.). Docker Compose remains at the repo root (`docker-compose.yml`).
+
 # Redis Setup Guide
 
 ## Quick Answer: Do You Need Both?
@@ -40,7 +42,7 @@
 
 2. **Start Redis:**
    ```bash
-   npm run redis:start
+   cd web && npm run redis:start
    ```
    Or manually:
    ```bash
@@ -54,12 +56,12 @@
 
 4. **Verify it's running:**
    ```bash
-   npm run redis:logs
+   cd web && npm run redis:logs
    ```
 
 5. **Stop Redis when done:**
    ```bash
-   npm run redis:stop
+   cd web && npm run redis:stop
    ```
 
 #### Alternative: Using WSL (Windows Subsystem for Linux):
@@ -119,7 +121,7 @@ REDIS_URL=rediss://default:password@host:port
 
 1. **Start your local Redis** (if using Option 2):
    ```bash
-   npm run redis:start
+   cd web && npm run redis:start
    ```
 
 2. **Make sure `.env.local` has your Redis configuration**
@@ -131,12 +133,12 @@ REDIS_URL=rediss://default:password@host:port
 
 4. **Test the API:**
    ```bash
-   npm run test:eventfinda
+   # (archived) see defunct/scripts/ for Eventfinda probes
    ```
 
 5. **Check Redis logs** (to see cache activity):
    ```bash
-   npm run redis:logs
+   cd web && npm run redis:logs
    ```
 
 ---
@@ -149,13 +151,13 @@ REDIS_URL=rediss://default:password@host:port
 - For local: Make sure port 6379 is not blocked
 
 ### "Connection refused"
-- Redis isn't running - start it with `npm run redis:start`
+- Redis isn't running - start it with `cd web && npm run redis:start`
 - Check if port 6379 is already in use
 
 ### Cache not working?
 - Check your `.env.local` file has the correct variables
 - Restart your Next.js dev server after changing `.env.local`
-- Check Redis logs: `npm run redis:logs`
+- Check Redis logs: `cd web && npm run redis:logs`
 
 ---
 
@@ -163,16 +165,16 @@ REDIS_URL=rediss://default:password@host:port
 
 ```bash
 # Start local Redis
-npm run redis:start
+cd web && npm run redis:start
 
 # Stop local Redis (keeps data)
-npm run redis:stop
+cd web && npm run redis:stop
 
 # Stop and remove Redis container
-npm run redis:down
+cd web && npm run redis:down
 
 # View Redis logs
-npm run redis:logs
+cd web && npm run redis:logs
 
 # Connect to Redis CLI (if you want to inspect cache)
 docker exec -it travelscout-redis redis-cli

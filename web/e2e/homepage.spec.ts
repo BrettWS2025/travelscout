@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Homepage', () => {
   test('should load and display main content', async ({ page }) => {
@@ -13,14 +13,14 @@ test.describe('Homepage', () => {
     await expect(hero).toBeVisible();
   });
 
-  test('should navigate to trip planner', async ({ page }) => {
+  test('should navigate to find deals', async ({ page }) => {
     await page.goto('/');
 
-    const tripPlannerLink = page.locator('a[href="/trip-planner"]').first();
-    await expect(tripPlannerLink).toBeVisible();
+    const findDealsLink = page.locator('a[href="/find-deals"]').first();
+    await expect(findDealsLink).toBeVisible();
     await Promise.all([
-      page.waitForURL(/\/trip-planner(\/|$)/i, { timeout: 10_000 }),
-      tripPlannerLink.click(),
+      page.waitForURL(/\/find-deals(\/|$)/i, { timeout: 10_000 }),
+      findDealsLink.click(),
     ]);
   });
 

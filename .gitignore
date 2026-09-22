@@ -2,22 +2,30 @@
 
 # dependencies
 /node_modules
+/web/node_modules
 /.pnp
 .pnp.js
 
 # testing
 /coverage
+/web/coverage
 /.nyc_output
 /playwright-report
+/web/playwright-report
 /test-results
+/web/test-results
 /playwright/.cache
+/web/playwright/.cache
 
 # next.js
 /.next/
+/web/.next/
 /out/
+/web/out/
 
 # production
 /build
+/web/build
 
 # misc
 .DS_Store
@@ -31,16 +39,21 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+/web/.env*.local
+/web/.env
 
 # vercel
 .vercel
+/web/.vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/web/next-env.d.ts
 
 # vitest
 .vitest
+/web/.vitest
 
 # large data files
 *.pbf

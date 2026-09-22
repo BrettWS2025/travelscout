@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/Navbar";
-import { TripPlannerNavbar } from "@/components/TripPlannerNavbar";
 import { Footer } from "@/components/Footer";
 import { OperatorMain } from "@/components/operator/OperatorMain";
 import { MarketingMain } from "@/components/MarketingMain";
@@ -40,7 +39,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <>
       <Navbar />
-      <TripPlannerNavbar />
       <MarketingMain>{children}</MarketingMain>
       <Footer />
     </>

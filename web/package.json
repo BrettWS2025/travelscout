@@ -13,14 +13,11 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
-    "test:eventfinda": "tsx scripts/test-eventfinda-api.ts",
-    "test:viator": "tsx scripts/test-viator-api.ts",
     "test:redis": "tsx scripts/test-redis.ts",
-    "fetch:wellington-feb13": "tsx scripts/fetch-wellington-feb13.ts",
-    "redis:start": "docker-compose up -d redis",
-    "redis:stop": "docker-compose stop redis",
-    "redis:down": "docker-compose down redis",
-    "redis:logs": "docker-compose logs -f redis"
+    "redis:start": "docker compose -f ../docker-compose.yml up -d redis",
+    "redis:stop": "docker compose -f ../docker-compose.yml stop redis",
+    "redis:down": "docker compose -f ../docker-compose.yml down redis",
+    "redis:logs": "docker compose -f ../docker-compose.yml logs -f redis"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
