@@ -4,7 +4,7 @@ test.describe('Homepage', () => {
   test('should load and display main content', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveTitle(/Scout\s*\|\s*by travelscout/i);
+    await expect(page).toHaveTitle(/SCOUT\s*\|\s*by travelscout/);
 
     const nav = page.getByRole('navigation');
     await expect(nav).toBeVisible();

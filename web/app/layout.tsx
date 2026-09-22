@@ -26,8 +26,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://travelscout.co.nz";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Scout | by travelscout",
-    template: "%s | Scout",
+    default: "SCOUT | by travelscout",
+    template: "%s | SCOUT",
   },
   description:
     "Showcase New Zealand destinations and events, then find deals by place. TravelScout helps you travel smarter across Aotearoa.",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     locale: "en_NZ",
     url: siteUrl,
     siteName: "TravelScout",
-    title: "Scout | by travelscout",
+    title: "SCOUT | by travelscout",
     description:
       "Showcase New Zealand destinations and events, then find deals by place.",
     images: [
@@ -60,13 +60,13 @@ export const metadata: Metadata = {
         url: "/TravelScout-Main.png",
         width: 1200,
         height: 630,
-        alt: "Scout by travelscout",
+        alt: "SCOUT by travelscout",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Scout | by travelscout",
+    title: "SCOUT | by travelscout",
     description:
       "Showcase New Zealand destinations and events, then find deals by place.",
     images: ["/TravelScout-Main.png"],

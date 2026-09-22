@@ -8,12 +8,12 @@ import { HeroRegionSearch } from "@/components/home/HeroRegionSearch";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Scout | by travelscout",
+    absolute: "SCOUT | by travelscout",
   },
   description:
     "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   openGraph: {
-    title: "Scout | by travelscout",
+    title: "SCOUT | by travelscout",
     description:
       "A showcase of New Zealand travel and deals worth chasing. Search by region on Find Deals.",
   },
