@@ -30,7 +30,7 @@ export function HeroRegionSearch() {
     >
       <div
         ref={shellRef}
-        className="flex flex-col gap-2 rounded-2xl border border-white/20 bg-white/12 p-2 text-left shadow-[0_20px_50px_rgba(0,0,0,0.25)] backdrop-blur-md sm:flex-row sm:items-center"
+        className="liquid-glass flex flex-col gap-2 p-2 text-left sm:flex-row sm:items-center"
       >
         <RegionPicker
           value={region}
@@ -41,7 +41,7 @@ export function HeroRegionSearch() {
         />
         <button
           type="submit"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--ts-lime)] px-5 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:brightness-105"
+          className="liquid-glass-cta inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:brightness-105"
         >
           <Search className="h-4 w-4" />
           Find deals

@@ -55,7 +55,9 @@ body {
   .animate-marquee-reverse,
   .animate-hero-drift,
   .animate-hero-rise,
-  .animate-region-sheet-in {
+  .animate-region-sheet-in,
+  .liquid-glass::before,
+  .liquid-glass-cta::before {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
@@ -532,6 +534,180 @@ input[type="date"]::-ms-expand {
   }
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* ----------------------------- */
+/* Liquid Glass (hero search)    */
+/* ----------------------------- */
+
+@keyframes liquid-glass-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes liquid-glass-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.07) 45%,
+      rgba(255, 255, 255, 0.14) 100%
+    )
+      padding-box,
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.18) 38%,
+      rgba(255, 255, 255, 0.08) 62%,
+      rgba(255, 255, 255, 0.4) 100%
+    )
+      border-box;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 48px rgba(0, 0, 0, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(22px) saturate(1.65);
+  -webkit-backdrop-filter: blur(22px) saturate(1.65);
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 80% at 12% 0%,
+      rgba(255, 255, 255, 0.42),
+      transparent 52%
+    ),
+    radial-gradient(
+      90% 70% at 88% 100%,
+      rgba(212, 230, 67, 0.12),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.22) 48%,
+      transparent 72%
+    );
+  background-size: 100% 100%, 100% 100%, 220% 100%;
+  animation:
+    liquid-glass-sheen 9s ease-in-out infinite,
+    liquid-glass-pulse 5.5s ease-in-out infinite;
+}
+
+.liquid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -8px 24px rgba(16, 36, 28, 0.12);
+}
+
+.liquid-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lime CTA with Liquid Glass finish */
+.liquid-glass-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid transparent;
+  background-color: var(--ts-lime);
+  background-image:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ts-lime) 88%, white) 0%,
+      var(--ts-lime) 42%,
+      color-mix(in srgb, var(--ts-lime) 86%, #10241c) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.25) 40%,
+      rgba(255, 255, 255, 0.12) 65%,
+      rgba(255, 255, 255, 0.55) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 -1px 0 rgba(16, 36, 28, 0.12) inset,
+    0 8px 22px rgba(212, 230, 67, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px) saturate(1.35);
+  -webkit-backdrop-filter: blur(10px) saturate(1.35);
+}
+
+.liquid-glass-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 90% at 18% 0%,
+      rgba(255, 255, 255, 0.55),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.35) 48%,
+      transparent 74%
+    );
+  background-size: 100% 100%, 220% 100%;
+  animation: liquid-glass-sheen 8s ease-in-out infinite;
+}
+
+.liquid-glass-cta > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass::before,
+  .liquid-glass-cta::before {
+    animation: none;
+    background-size: 100% 100%, 100% 100%, 100% 100%;
   }
 }
 
