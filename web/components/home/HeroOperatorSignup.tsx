@@ -19,9 +19,6 @@ export function HeroOperatorSignup() {
           Sign up
         </Link>
       </div>
-      <p className="mt-4 font-[family-name:var(--font-sora)] text-sm font-medium tracking-wide text-white/80 md:text-base">
-        first 2 months free
-      </p>
     </div>
   );
 }
