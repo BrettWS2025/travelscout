@@ -56,7 +56,8 @@ body {
   .animate-hero-drift,
   .animate-hero-rise,
   .animate-region-sheet-in,
-  .liquid-glass::before {
+  .liquid-glass::before,
+  .liquid-glass-cta::before {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
@@ -641,8 +642,70 @@ input[type="date"]::-ms-expand {
   z-index: 1;
 }
 
+/* Lime CTA with Liquid Glass finish */
+.liquid-glass-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid transparent;
+  background-color: var(--ts-lime);
+  background-image:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ts-lime) 88%, white) 0%,
+      var(--ts-lime) 42%,
+      color-mix(in srgb, var(--ts-lime) 86%, #10241c) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.25) 40%,
+      rgba(255, 255, 255, 0.12) 65%,
+      rgba(255, 255, 255, 0.55) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 -1px 0 rgba(16, 36, 28, 0.12) inset,
+    0 8px 22px rgba(212, 230, 67, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px) saturate(1.35);
+  -webkit-backdrop-filter: blur(10px) saturate(1.35);
+}
+
+.liquid-glass-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 90% at 18% 0%,
+      rgba(255, 255, 255, 0.55),
+      transparent 55%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.35) 48%,
+      transparent 74%
+    );
+  background-size: 100% 100%, 220% 100%;
+  animation: liquid-glass-sheen 8s ease-in-out infinite;
+}
+
+.liquid-glass-cta > * {
+  position: relative;
+  z-index: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .liquid-glass::before {
+  .liquid-glass::before,
+  .liquid-glass-cta::before {
     animation: none;
     background-size: 100% 100%, 100% 100%, 100% 100%;
   }

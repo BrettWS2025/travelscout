@@ -41,7 +41,7 @@ export function HeroRegionSearch() {
         />
         <button
           type="submit"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[0.9rem] border border-white/35 bg-[var(--ts-lime)]/90 px-5 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-sm transition hover:bg-[var(--ts-lime)] hover:brightness-105"
+          className="liquid-glass-cta inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:brightness-105"
         >
           <Search className="h-4 w-4" />
           Find deals
