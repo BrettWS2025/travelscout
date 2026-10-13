@@ -192,33 +192,50 @@ export async function getOrganization(
   return data ? orgFromDb(data as DbOrganization) : null;
 }
 
+/** Public-schema client (for RPCs) authenticated as the user. */
+function createUserRpcClient(accessToken: string) {
+  const { supabaseUrl, supabaseAnonKey } = requireEnv();
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: supabaseAnonKey,
+      },
+    },
+  });
+}
+
 export async function createOrganization(
   accessToken: string,
-  userId: string,
+  _userId: string,
   input: CreateOrganizationInput
 ): Promise<Organization> {
-  const supabase = createMarketplaceClient(accessToken);
   const slug = input.slug?.trim() || slugify(input.name);
+  const supabase = createUserRpcClient(accessToken);
 
-  const { data, error } = await supabase
-    .from("organizations")
-    .insert({
-      name: input.name.trim(),
-      slug: slug || null,
-      phone: input.phone.trim(),
-      website: input.website.trim(),
-      region: input.region.trim(),
-      default_booking_provider: input.defaultBookingProvider || "manual",
-      fareharbor_shortname: input.fareharborShortname?.trim() || null,
-      fareharbor_asn: input.fareharborAsn?.trim() || null,
-      rezdy_affiliate_code: input.rezdyAffiliateCode?.trim() || null,
-      created_by: userId,
-    })
-    .select("*")
-    .single();
+  // SECURITY DEFINER RPC: reliable bootstrap for operator signup (auth.uid() + owner trigger)
+  const { data, error } = await supabase.rpc("create_marketplace_organization", {
+    p_name: input.name.trim(),
+    p_phone: input.phone.trim(),
+    p_website: input.website.trim(),
+    p_region: input.region.trim(),
+    p_slug: slug || null,
+    p_default_booking_provider: input.defaultBookingProvider || "manual",
+    p_fareharbor_shortname: input.fareharborShortname?.trim() || null,
+    p_fareharbor_asn: input.fareharborAsn?.trim() || null,
+    p_rezdy_affiliate_code: input.rezdyAffiliateCode?.trim() || null,
+  });
 
   if (error) throw new Error(`Failed to create organization: ${error.message}`);
-  return orgFromDb(data as DbOrganization);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("Failed to create organization: no row returned.");
+  return orgFromDb(row as DbOrganization);
 }
 
 export async function listLiveDeals(options?: {
