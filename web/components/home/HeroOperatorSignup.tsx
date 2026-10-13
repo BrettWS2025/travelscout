@@ -1,17 +1,10 @@
 "use client";
 
 import Link from "next/link";
-<<<<<<< HEAD
 import { useOperatorHref } from "@/hooks/useOperatorSurface";
 
 export function HeroOperatorSignup() {
   const signupHref = useOperatorHref("/operator/signup");
-=======
-
-export function HeroOperatorSignup() {
-  const returnTo = "/account/details";
-  const signupHref = `/auth/login?mode=signup&returnTo=${encodeURIComponent(returnTo)}`;
->>>>>>> 8aa1ef4 (Add operator account shell with sidebar navigation)
 
   return (
     <div className="mx-auto w-full max-w-xl text-center">
