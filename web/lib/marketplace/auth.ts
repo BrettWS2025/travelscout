@@ -42,10 +42,13 @@ export function notFound(message = "Not found.") {
 
 export function serverError(context: string, err: unknown) {
   console.error(context, err);
+  const detail = err instanceof Error ? err.message : "Unknown error";
+  // Prefer the underlying detail so clients (and operators) see the real cause.
   return Response.json(
     {
-      error: context,
-      message: err instanceof Error ? err.message : "Unknown error",
+      error: detail && detail !== context ? detail : context,
+      message: detail,
+      context,
     },
     { status: 500 }
   );

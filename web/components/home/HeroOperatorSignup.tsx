@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import { useOperatorHref } from "@/hooks/useOperatorSurface";
 
 export function HeroOperatorSignup() {
-  const onOperatorHost = useOnOperatorHost();
-  const returnTo = onOperatorHost ? "/" : "/operator";
-  const signupHref = `/auth/login?mode=signup&returnTo=${encodeURIComponent(returnTo)}`;
+  const signupHref = useOperatorHref("/operator/signup");
 
   return (
     <div className="mx-auto w-full max-w-xl text-center">

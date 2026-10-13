@@ -8,6 +8,7 @@ export function MarketingMain({ children }: { children: ReactNode }) {
   const isFullBleed =
     pathname === "/" ||
     pathname === "/operator" ||
+    pathname === "/operator/signup" ||
     pathname === "/find-deals" ||
     pathname === "/how-it-works" ||
     pathname.startsWith("/auth/");

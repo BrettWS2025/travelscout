@@ -9,6 +9,7 @@ export type Organization = {
   id: string;
   name: string;
   slug?: string;
+  phone?: string;
   website?: string;
   region?: string;
   defaultBookingProvider: BookingProvider;
@@ -63,8 +64,9 @@ export type Deal = {
 export type CreateOrganizationInput = {
   name: string;
   slug?: string;
-  website?: string;
-  region?: string;
+  phone: string;
+  website: string;
+  region: string;
   defaultBookingProvider?: BookingProvider;
   fareharborShortname?: string;
   fareharborAsn?: string;

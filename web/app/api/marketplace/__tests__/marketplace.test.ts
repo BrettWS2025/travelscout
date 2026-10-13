@@ -73,11 +73,31 @@ describe("marketplace APIs", () => {
       const res = await postOrg(
         new Request("http://localhost/api/marketplace/organizations", {
           method: "POST",
-          body: JSON.stringify({ name: "Jetboat Co", region: "Queenstown" }),
+          body: JSON.stringify({
+            name: "Jetboat Co",
+            phone: "+64 21 123 4567",
+            website: "https://example.com",
+            region: "Queenstown",
+          }),
         })
       );
       expect(res.status).toBe(201);
       expect(mockCreateOrganization).toHaveBeenCalled();
+    });
+
+    it("POST requires phone, website, and region", async () => {
+      mockGetMarketplaceAuth.mockResolvedValue({
+        user: { id: "u1" },
+        accessToken: "tok",
+      });
+      const res = await postOrg(
+        new Request("http://localhost/api/marketplace/organizations", {
+          method: "POST",
+          body: JSON.stringify({ name: "Jetboat Co" }),
+        })
+      );
+      expect(res.status).toBe(400);
+      expect(mockCreateOrganization).not.toHaveBeenCalled();
     });
   });
 
