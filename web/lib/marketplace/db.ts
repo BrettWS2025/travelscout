@@ -16,6 +16,7 @@ type DbOrganization = {
   id: string;
   name: string;
   slug: string | null;
+  phone: string | null;
   website: string | null;
   region: string | null;
   default_booking_provider: BookingProvider;
@@ -99,6 +100,7 @@ function orgFromDb(row: DbOrganization): Organization {
     id: row.id,
     name: row.name,
     slug: row.slug || undefined,
+    phone: row.phone || undefined,
     website: row.website || undefined,
     region: row.region || undefined,
     defaultBookingProvider: row.default_booking_provider,
@@ -198,8 +200,9 @@ export async function createOrganization(
     .insert({
       name: input.name.trim(),
       slug: slug || null,
-      website: input.website?.trim() || null,
-      region: input.region?.trim() || null,
+      phone: input.phone.trim(),
+      website: input.website.trim(),
+      region: input.region.trim(),
       default_booking_provider: input.defaultBookingProvider || "manual",
       fareharbor_shortname: input.fareharborShortname?.trim() || null,
       fareharbor_asn: input.fareharborAsn?.trim() || null,

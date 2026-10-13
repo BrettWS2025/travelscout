@@ -44,7 +44,9 @@ export function isOperatorAppPath(pathname: string): boolean {
     pathname === "/operator" ||
     pathname.startsWith("/operator/") ||
     pathname === "/" ||
-    pathname.startsWith("/organizations")
+    pathname.startsWith("/organizations") ||
+    pathname === "/signup" ||
+    pathname.startsWith("/signup/")
   );
 }
 
@@ -53,6 +55,7 @@ export function shouldRewriteToOperatorApp(pathname: string): boolean {
   if (pathname.startsWith("/operator")) return true;
   if (pathname === "/") return true;
   if (pathname.startsWith("/organizations")) return true;
+  if (pathname === "/signup" || pathname.startsWith("/signup/")) return true;
   return false;
 }
 

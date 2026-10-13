@@ -20,6 +20,7 @@ export default function NewOrganizationPage() {
   const { session } = useAuth();
   const onOperatorHost = useOnOperatorHost();
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [region, setRegion] = useState("");
   const [website, setWebsite] = useState("");
   const [defaultBookingProvider, setDefaultBookingProvider] =
@@ -38,8 +39,9 @@ export default function NewOrganizationPage() {
       const { organization } = await createOrganization(
         {
           name,
-          region: region || undefined,
-          website: website || undefined,
+          phone,
+          region,
+          website,
           defaultBookingProvider,
           fareharborShortname: fareharborShortname || undefined,
           fareharborAsn: fareharborAsn || undefined,
@@ -81,9 +83,22 @@ export default function NewOrganizationPage() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium text-slate-700">Region</span>
+        <span className="text-sm font-medium text-slate-700">Phone *</span>
         <input
           className="input-dark w-full"
+          type="tel"
+          required
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+64 21 000 0000"
+        />
+      </label>
+
+      <label className="block space-y-1">
+        <span className="text-sm font-medium text-slate-700">Region *</span>
+        <input
+          className="input-dark w-full"
+          required
           value={region}
           onChange={(e) => setRegion(e.target.value)}
           placeholder="Queenstown"
@@ -91,10 +106,11 @@ export default function NewOrganizationPage() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium text-slate-700">Website</span>
+        <span className="text-sm font-medium text-slate-700">Website *</span>
         <input
           className="input-dark w-full"
           type="url"
+          required
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
           placeholder="https://example.com"

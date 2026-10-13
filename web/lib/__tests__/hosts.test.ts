@@ -17,6 +17,7 @@ describe("hosts", () => {
     expect(toInternalOperatorPath("/organizations/new")).toBe(
       "/operator/organizations/new"
     );
+    expect(toInternalOperatorPath("/signup")).toBe("/operator/signup");
     expect(toInternalOperatorPath("/operator")).toBe("/operator");
   });
 
@@ -25,6 +26,7 @@ describe("hosts", () => {
     expect(toPublicOperatorPath("/operator/organizations/abc")).toBe(
       "/organizations/abc"
     );
+    expect(toPublicOperatorPath("/operator/signup")).toBe("/signup");
   });
 
   it("detects operator host when configured", () => {

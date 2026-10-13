@@ -41,6 +41,19 @@ export async function POST(req: Request) {
     if (!body?.name || typeof body.name !== "string" || !body.name.trim()) {
       return badRequest("name is required.");
     }
+    if (!body?.phone || typeof body.phone !== "string" || !body.phone.trim()) {
+      return badRequest("phone is required.");
+    }
+    if (
+      !body?.website ||
+      typeof body.website !== "string" ||
+      !body.website.trim()
+    ) {
+      return badRequest("website is required.");
+    }
+    if (!body?.region || typeof body.region !== "string" || !body.region.trim()) {
+      return badRequest("region is required.");
+    }
 
     if (
       body.defaultBookingProvider &&
@@ -54,6 +67,7 @@ export async function POST(req: Request) {
     const organization = await createOrganization(accessToken, user.id, {
       name: body.name,
       slug: body.slug,
+      phone: body.phone,
       website: body.website,
       region: body.region,
       defaultBookingProvider: body.defaultBookingProvider,
