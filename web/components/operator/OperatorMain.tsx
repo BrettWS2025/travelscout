@@ -20,5 +20,7 @@ export function OperatorMain({ children }: { children: ReactNode }) {
     );
   }
 
-  return <main className="relative z-0">{children}</main>;
+  return (
+    <main className="container relative z-0 pb-10 pt-8 md:pt-10">{children}</main>
+  );
 }

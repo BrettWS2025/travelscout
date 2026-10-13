@@ -17,13 +17,19 @@ type NavbarProps = {
 export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const isOverlayNav =
-    pathname === "/" || pathname === "/operator" || travelerLinksToMainSite;
+  // Overlay only on full-bleed landings — account/app pages need a normal header.
+  const isOverlayNav = pathname === "/" || pathname === "/operator";
   const { user } = useAuth();
   const isLoggedIn = !!user;
 
-  const href = (path: string) =>
+  /** Traveler marketing links may point at the main site from the operator portal. */
+  const travelerHref = (path: string) =>
     travelerLinksToMainSite ? mainSiteUrl(path) : path;
+
+  // Auth + account stay on the current surface (operator portal or main site).
+  const accountHref = "/account/details";
+  const loginHref = "/auth/login";
+  const signupHref = "/auth/login?mode=signup";
 
   const signOutUser = async () => {
     try {
@@ -50,7 +56,7 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
       <div className="container">
         <div className="flex items-center justify-between gap-3 rounded-full bg-black px-3 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:gap-4 md:px-4 md:py-2.5">
           <Link
-            href={href("/")}
+            href={travelerLinksToMainSite ? "/" : travelerHref("/")}
             className="relative flex min-w-0 shrink items-center gap-2.5 md:gap-3"
             onClick={closeMobile}
             aria-label="SCOUT home"
@@ -75,19 +81,19 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
           </Link>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-5">
-            <Link href={href("/find-deals")} className={linkClass}>
+            <Link href={travelerHref("/find-deals")} className={linkClass}>
               Find Deals
             </Link>
-            <Link href={href("/how-it-works")} className={linkClass}>
+            <Link href={travelerHref("/how-it-works")} className={linkClass}>
               How it works
             </Link>
             {!isLoggedIn ? (
               <>
-                <Link href={href("/auth/login?mode=signup")} className={linkClass}>
+                <Link href={signupHref} className={linkClass}>
                   Sign up
                 </Link>
                 <Link
-                  href={href("/auth/login")}
+                  href={loginHref}
                   className="rounded-full bg-white/15 px-4 py-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-white transition hover:bg-white/25"
                 >
                   Log in
@@ -95,7 +101,7 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
               </>
             ) : (
               <>
-                <Link href={href("/account/profile")} className={linkClass}>
+                <Link href={accountHref} className={linkClass}>
                   Account
                 </Link>
                 <button
@@ -104,16 +110,18 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                   className={`${linkClass} inline-flex items-center gap-1.5`}
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  Sign out
+                  Log out
                 </button>
               </>
             )}
-            <a
-              href={operatorPortalUrl("/")}
-              className="rounded-full bg-[var(--ts-lime)] px-4 py-2 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)] transition hover:brightness-105"
-            >
-              For operators
-            </a>
+            {!travelerLinksToMainSite && (
+              <a
+                href={operatorPortalUrl("/")}
+                className="rounded-full bg-[var(--ts-lime)] px-4 py-2 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)] transition hover:brightness-105"
+              >
+                For operators
+              </a>
+            )}
           </nav>
 
           <button
@@ -134,14 +142,14 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
             <div className="rounded-2xl border border-white/10 bg-black p-3 shadow-lg">
               <div className="flex flex-col gap-1 font-[family-name:var(--font-sora)] text-sm text-white">
                 <Link
-                  href={href("/find-deals")}
+                  href={travelerHref("/find-deals")}
                   className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                   onClick={closeMobile}
                 >
                   Find Deals
                 </Link>
                 <Link
-                  href={href("/how-it-works")}
+                  href={travelerHref("/how-it-works")}
                   className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                   onClick={closeMobile}
                 >
@@ -150,14 +158,14 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                 {!isLoggedIn ? (
                   <>
                     <Link
-                      href={href("/auth/login?mode=signup")}
+                      href={signupHref}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >
                       Sign up
                     </Link>
                     <Link
-                      href={href("/auth/login")}
+                      href={loginHref}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >
@@ -167,7 +175,7 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                 ) : (
                   <>
                     <Link
-                      href={href("/account/profile")}
+                      href={accountHref}
                       className="rounded-lg px-3 py-3 font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={closeMobile}
                     >
@@ -178,20 +186,22 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                       className="rounded-lg px-3 py-3 text-left font-medium text-white/90 hover:bg-white/10 hover:text-white"
                       onClick={() => {
                         closeMobile();
-                        signOutUser();
+                        void signOutUser();
                       }}
                     >
-                      Sign out
+                      Log out
                     </button>
                   </>
                 )}
-                <a
-                  href={operatorPortalUrl("/")}
-                  className="mt-1 inline-flex items-center justify-center rounded-full bg-[var(--ts-lime)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)]"
-                  onClick={closeMobile}
-                >
-                  For operators
-                </a>
+                {!travelerLinksToMainSite && (
+                  <a
+                    href={operatorPortalUrl("/")}
+                    className="mt-1 inline-flex items-center justify-center rounded-full bg-[var(--ts-lime)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)]"
+                    onClick={closeMobile}
+                  >
+                    For operators
+                  </a>
+                )}
               </div>
             </div>
           </div>

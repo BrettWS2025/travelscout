@@ -1,7 +1,7 @@
 /**
  * Operator portal layout.
- * Landing and all operator routes are public for now — the signed-in
- * dashboard will be rebuilt later, so do not gate anything on auth here.
+ * Landing and organization routes stay public; signed-in operators use
+ * /account for profile, inventory, and settings.
  */
 export default function OperatorLayout({
   children,

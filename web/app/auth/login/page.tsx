@@ -17,9 +17,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const onOperatorHost = useOnOperatorHost();
-  const [redirectTo, setRedirectTo] = useState(
-    onOperatorHost ? "/" : "/account/profile"
-  );
+  const [redirectTo, setRedirectTo] = useState("/account/details");
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
@@ -51,11 +49,11 @@ export default function LoginPage() {
       }
       if (returnTo) {
         setRedirectTo(decodeURIComponent(returnTo));
-      } else if (onOperatorHost) {
-        setRedirectTo("/");
+      } else {
+        setRedirectTo("/account/details");
       }
     }
-  }, [onOperatorHost]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
