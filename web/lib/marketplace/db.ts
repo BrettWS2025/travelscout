@@ -84,7 +84,12 @@ export function createMarketplaceClient(accessToken?: string) {
       detectSessionInUrl: false,
     },
     global: accessToken
-      ? { headers: { Authorization: `Bearer ${accessToken}` } }
+      ? {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: supabaseAnonKey,
+          },
+        }
       : undefined,
   });
 }

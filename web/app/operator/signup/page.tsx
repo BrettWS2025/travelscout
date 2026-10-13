@@ -195,7 +195,10 @@ export default function OperatorSignupPage() {
       setMode("existing");
       setPassword("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      // Strip duplicated "Failed to create organization:" prefix if present
+      setError(message.replace(/^Failed to create organization:\s*/i, ""));
     } finally {
       setLoading(false);
     }
