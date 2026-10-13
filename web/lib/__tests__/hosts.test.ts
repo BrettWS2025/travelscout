@@ -50,5 +50,10 @@ describe("hosts", () => {
     );
     expect(operatorHref("/operator", false)).toBe("/operator");
     expect(operatorHref("/operator", true)).toBe("/");
+    // Preview/same-host portal must keep /operator prefix
+    expect(operatorHref("/operator/signup", false)).toBe("/operator/signup");
+    // Real operator subdomain uses short public path
+    expect(operatorHref("/operator/signup", true)).toBe("/signup");
   });
 });
+
