@@ -3,8 +3,8 @@
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AccountNav } from "@/components/account/AccountNav";
+import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
 import { useAuth } from "@/components/AuthProvider";
-import { useIsOperatorSurface } from "@/components/SiteSurfaceContext";
 
 const OPERATOR_ONLY_PREFIXES = ["/account/inventory", "/account/settings"];
 
@@ -12,7 +12,8 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
-  const isOperatorSurface = useIsOperatorSurface();
+  const { isOperatorProfile, isLoading: operatorLoading } =
+    useIsOperatorProfile();
 
   useEffect(() => {
     if (isLoading) return;
@@ -21,16 +22,25 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Regular travelers should not reach operator-only account sections.
+    if (operatorLoading) return;
+
+    // Regular traveler profiles cannot open operator-only account sections.
     if (
-      !isOperatorSurface &&
+      !isOperatorProfile &&
       OPERATOR_ONLY_PREFIXES.some(
         (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
       )
     ) {
       router.replace("/account/details");
     }
-  }, [user, isLoading, router, isOperatorSurface, pathname]);
+  }, [
+    user,
+    isLoading,
+    router,
+    isOperatorProfile,
+    operatorLoading,
+    pathname,
+  ]);
 
   if (isLoading || !user) {
     return (
@@ -44,10 +54,10 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <div className="ts-page pb-6">
       <div className="mb-8 max-w-3xl">
         <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ts-teal)]">
-          {isOperatorSurface ? "Operator account" : "Your account"}
+          {isOperatorProfile ? "Operator account" : "Your account"}
         </p>
         <h1 className="mt-2 font-[family-name:var(--font-instrument)] text-4xl leading-tight text-[var(--ts-ink)] md:text-5xl">
-          {isOperatorSurface ? (
+          {isOperatorProfile ? (
             <>
               Your <span className="italic text-[var(--ts-teal)]">workspace</span>
             </>
@@ -58,7 +68,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
           )}
         </h1>
         <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)] md:text-base">
-          {isOperatorSurface
+          {isOperatorProfile
             ? "Manage your profile, inventory, and account settings."
             : "Manage your profile and sign-in details."}
         </p>

@@ -170,7 +170,12 @@ export default function OperatorSignupPage() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name } },
+        options: {
+          data: {
+            full_name: name,
+            account_type: "operator",
+          },
+        },
       });
       if (signUpError) throw signUpError;
 
