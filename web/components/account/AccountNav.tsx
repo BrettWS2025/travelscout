@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, LogOut, Package, Settings, User } from "lucide-react";
-import { useIsOperatorSurface } from "@/components/SiteSurfaceContext";
+import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
 
 const travelerNavItems = [
   {
@@ -48,9 +48,9 @@ function isActivePath(pathname: string, href: string) {
 
 export function AccountNav() {
   const pathname = usePathname();
-  const isOperatorSurface = useIsOperatorSurface();
-  // Operator inventory/settings only on the operator portal; travelers get a simple account.
-  const navItems = isOperatorSurface ? operatorNavItems : travelerNavItems;
+  const { isOperatorProfile } = useIsOperatorProfile();
+  // Inventory/settings only for operator profiles; travelers stay on details + log out.
+  const navItems = isOperatorProfile ? operatorNavItems : travelerNavItems;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const activeItem =

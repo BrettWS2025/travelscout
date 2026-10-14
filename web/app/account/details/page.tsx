@@ -134,7 +134,7 @@ export default function AccountDetailsPage() {
           Account details
         </h2>
         <p className="mt-1 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-          Your profile information for this operator account.
+          Your profile information for this account.
         </p>
       </div>
 
