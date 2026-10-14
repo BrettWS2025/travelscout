@@ -19,5 +19,6 @@ export function MarketingMain({ children }: { children: ReactNode }) {
     return <main className="relative z-0 overflow-x-clip pb-0 pt-0">{children}</main>;
   }
 
-  return <main className="container relative z-0 pb-10 pt-[120px]">{children}</main>;
+  // Relative navbar already occupies vertical space; keep a modest top gap.
+  return <main className="container relative z-0 pb-10 pt-8 md:pt-10">{children}</main>;
 }
