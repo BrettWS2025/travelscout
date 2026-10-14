@@ -4,18 +4,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import {
+  ensureUserProfile,
+  type ProfileRow,
+} from "@/lib/profiles";
+import {
   authInputClassName,
   authLabelClassName,
   authPanelClassName,
   authPrimaryButtonClassName,
   authSecondaryButtonClassName,
 } from "@/components/auth/AuthPageFrame";
-
-type ProfileRow = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-};
 
 export default function AccountDetailsPage() {
   const { user, isLoading } = useAuth();
@@ -38,29 +36,24 @@ export default function AccountDetailsPage() {
       setError(null);
       setSaved(false);
 
-      const { data, error: fetchError } = await supabase
-        .from("profiles")
-        .select("id,email,display_name")
-        .eq("id", user.id)
-        .single();
+      try {
+        const p = await ensureUserProfile(user);
+        setProfile(p);
 
-      if (fetchError) {
-        setError(fetchError.message);
+        const metaName =
+          (user.user_metadata?.full_name as string | undefined) ??
+          (user.user_metadata?.name as string | undefined) ??
+          "";
+
+        setFullName(p.display_name ?? metaName ?? "");
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "Could not load your profile."
+        );
         setProfile(null);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const p = data as ProfileRow;
-      setProfile(p);
-
-      const metaName =
-        (user.user_metadata?.full_name as string | undefined) ??
-        (user.user_metadata?.name as string | undefined) ??
-        "";
-
-      setFullName(p.display_name ?? metaName ?? "");
-      setLoading(false);
     })();
   }, [user]);
 
@@ -73,19 +66,40 @@ export default function AccountDetailsPage() {
 
     const name = fullName.trim() || null;
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ display_name: name })
-      .eq("id", user.id);
+    try {
+      // Ensure a row exists before update (covers accounts missing a profiles row).
+      await ensureUserProfile(user);
 
-    if (updateError) {
-      setError(updateError.message);
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email ?? profile?.email ?? null,
+            display_name: name,
+          },
+          { onConflict: "id" }
+        );
+
+      if (updateError) throw updateError;
+
+      setProfile((prev) =>
+        prev
+          ? { ...prev, display_name: name, email: user.email ?? prev.email }
+          : {
+              id: user.id,
+              email: user.email ?? null,
+              display_name: name,
+            }
+      );
+      setSaved(true);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Could not save your profile."
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSaved(true);
-    setLoading(false);
   }
 
   async function handleSendPasswordReset() {
