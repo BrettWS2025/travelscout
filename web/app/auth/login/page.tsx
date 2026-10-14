@@ -40,18 +40,35 @@ export default function LoginPage() {
 
   // Get return URL / auth mode from query params on client side
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const returnTo = params.get("returnTo");
-      const modeParam = params.get("mode");
-      if (modeParam === "signup" || modeParam === "login") {
-        setMode(modeParam);
-      }
-      if (returnTo) {
-        setRedirectTo(decodeURIComponent(returnTo));
-      } else {
-        setRedirectTo("/account/details");
-      }
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("returnTo");
+    const modeParam = params.get("mode");
+    const signedOut = params.get("signedOut");
+
+    if (modeParam === "signup" || modeParam === "login") {
+      setMode(modeParam);
+    }
+    if (returnTo) {
+      setRedirectTo(decodeURIComponent(returnTo));
+    } else {
+      setRedirectTo("/account/details");
+    }
+
+    // Operator-portal logout redirects here so the main-site localStorage
+    // session is cleared too (each subdomain has its own auth storage).
+    if (signedOut === "1") {
+      void (async () => {
+        try {
+          await supabase.auth.signOut({ scope: "local" });
+        } catch (err) {
+          console.error("Error clearing session after signedOut redirect", err);
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.delete("signedOut");
+        window.history.replaceState({}, "", url.toString());
+      })();
     }
   }, []);
 

@@ -47,7 +47,7 @@ describe("useIsOperatorProfile", () => {
     expect(result.current.isOperatorProfile).toBe(false);
   });
 
-  it("honours operator signup metadata even before orgs load", async () => {
+  it("does not treat operator signup metadata alone as an operator profile", async () => {
     authMock.mockReturnValue({
       user: { id: "u3", user_metadata: { account_type: "operator" } },
       session: { access_token: "tok" },
@@ -57,6 +57,6 @@ describe("useIsOperatorProfile", () => {
 
     const { result } = renderHook(() => useIsOperatorProfile());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.isOperatorProfile).toBe(true);
+    expect(result.current.isOperatorProfile).toBe(false);
   });
 });

@@ -5,25 +5,15 @@ import { useAuth } from "@/components/AuthProvider";
 import { listMyOrganizations } from "@/lib/marketplace/client";
 
 type OperatorProfileState = {
-  /** True when this auth user is an operator (org member or operator signup). */
+  /** True only when this user belongs to a marketplace organization. */
   isOperatorProfile: boolean;
   isLoading: boolean;
 };
 
-function metadataLooksLikeOperator(user: {
-  user_metadata?: Record<string, unknown> | null;
-} | null): boolean {
-  const meta = user?.user_metadata ?? {};
-  return (
-    meta.account_type === "operator" ||
-    meta.is_operator === true ||
-    meta.role === "operator"
-  );
-}
-
 /**
- * Operators are marketplace org members (and/or flagged at operator signup).
- * Regular traveler accounts must not see Inventory / Settings.
+ * Inventory / Settings require a real row in marketplace.organizations
+ * (via organization_members). Signup metadata alone is not enough — that was
+ * showing operator nav for accounts that never finished org creation.
  */
 export function useIsOperatorProfile(): OperatorProfileState {
   const { user, session, isLoading: authLoading } = useAuth();
@@ -44,31 +34,21 @@ export function useIsOperatorProfile(): OperatorProfileState {
         return;
       }
 
-      // Fast path from signup metadata while orgs load.
-      if (metadataLooksLikeOperator(user)) {
-        if (!cancelled) {
-          setIsOperatorProfile(true);
-          setIsLoading(false);
-        }
-      } else if (!cancelled) {
-        setIsLoading(true);
-      }
+      if (!cancelled) setIsLoading(true);
 
       try {
         const { organizations } = await listMyOrganizations(
           session?.access_token
         );
         if (!cancelled) {
-          setIsOperatorProfile(
-            organizations.length > 0 || metadataLooksLikeOperator(user)
-          );
+          setIsOperatorProfile(organizations.length > 0);
           setIsLoading(false);
         }
       } catch (err) {
         console.error("Failed to resolve operator profile", err);
         if (!cancelled) {
-          // Fail closed for inventory/settings: only trust explicit metadata.
-          setIsOperatorProfile(metadataLooksLikeOperator(user));
+          // Fail closed: no org list ⇒ not an operator for nav purposes.
+          setIsOperatorProfile(false);
           setIsLoading(false);
         }
       }
