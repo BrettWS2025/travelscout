@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useAccountSignOut } from "@/components/account/useAccountSignOut";
 import { mainSiteUrl, operatorPortalUrl } from "@/lib/hosts";
 
 type NavbarProps = {
@@ -16,29 +16,30 @@ type NavbarProps = {
 
 export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
   // Overlay only on full-bleed landings — account/app pages need a normal header.
-  const isOverlayNav = pathname === "/" || pathname === "/operator";
+  const isOverlayNav =
+    pathname === "/" ||
+    pathname === "/operator" ||
+    pathname === "/signup" ||
+    pathname === "/operator/signup";
   const { user } = useAuth();
   const isLoggedIn = !!user;
+  const signOutUser = useAccountSignOut();
 
   /** Traveler marketing links may point at the main site from the operator portal. */
   const travelerHref = (path: string) =>
     travelerLinksToMainSite ? mainSiteUrl(path) : path;
 
+  // Logo always returns to the main TravelScout site from the operator portal.
+  const homeHref = travelerLinksToMainSite ? mainSiteUrl("/") : "/";
+
   // Auth + account stay on the current surface (operator portal or main site).
   const accountHref = "/account/details";
   const loginHref = "/auth/login";
-  const signupHref = "/auth/login?mode=signup";
-
-  const signOutUser = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error("Error signing out", err);
-      alert("Something went wrong signing out. Please try again.");
-    }
-  };
+  const signupHref = travelerLinksToMainSite
+    ? "/signup"
+    : "/auth/login?mode=signup";
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -55,8 +56,8 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
     >
       <div className="container">
         <div className="flex items-center justify-between gap-3 rounded-full bg-black px-3 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] md:gap-4 md:px-4 md:py-2.5">
-          <Link
-            href={travelerLinksToMainSite ? "/" : travelerHref("/")}
+          <a
+            href={homeHref}
             className="relative flex min-w-0 shrink items-center gap-2.5 md:gap-3"
             onClick={closeMobile}
             aria-label="SCOUT home"
@@ -78,7 +79,7 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                 by travelscout
               </span>
             </span>
-          </Link>
+          </a>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-5">
             <Link href={travelerHref("/find-deals")} className={linkClass}>
@@ -106,7 +107,7 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                 </Link>
                 <button
                   type="button"
-                  onClick={signOutUser}
+                  onClick={() => void signOutUser()}
                   className={`${linkClass} inline-flex items-center gap-1.5`}
                 >
                   <LogOut className="h-3.5 w-3.5" />
@@ -114,14 +115,12 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                 </button>
               </>
             )}
-            {!travelerLinksToMainSite && (
-              <a
-                href={operatorPortalUrl("/")}
-                className="rounded-full bg-[var(--ts-lime)] px-4 py-2 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)] transition hover:brightness-105"
-              >
-                For operators
-              </a>
-            )}
+            <a
+              href={operatorPortalUrl("/")}
+              className="rounded-full bg-[var(--ts-lime)] px-4 py-2 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)] transition hover:brightness-105"
+            >
+              For operators
+            </a>
           </nav>
 
           <button
@@ -193,15 +192,13 @@ export function Navbar({ travelerLinksToMainSite = false }: NavbarProps) {
                     </button>
                   </>
                 )}
-                {!travelerLinksToMainSite && (
-                  <a
-                    href={operatorPortalUrl("/")}
-                    className="mt-1 inline-flex items-center justify-center rounded-full bg-[var(--ts-lime)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)]"
-                    onClick={closeMobile}
-                  >
-                    For operators
-                  </a>
-                )}
+                <a
+                  href={operatorPortalUrl("/")}
+                  className="mt-1 inline-flex items-center justify-center rounded-full bg-[var(--ts-lime)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ts-ink)]"
+                  onClick={closeMobile}
+                >
+                  For operators
+                </a>
               </div>
             </div>
           </div>

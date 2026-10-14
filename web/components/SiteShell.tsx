@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { OperatorMain } from "@/components/operator/OperatorMain";
 import { MarketingMain } from "@/components/MarketingMain";
+import { SiteSurfaceProvider } from "@/components/SiteSurfaceContext";
 import {
   SURFACE_HEADER,
   isOperatorHost,
@@ -25,22 +26,21 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const surface = getSurface();
 
   // Operator portal uses the exact same top pill + mobile menu + footer as home.
-  // Do not use OperatorSiteChrome — it had different links and no footer.
   if (surface === "operator") {
     return (
-      <>
+      <SiteSurfaceProvider surface="operator">
         <Navbar travelerLinksToMainSite />
         <OperatorMain>{children}</OperatorMain>
         <Footer travelerLinksToMainSite />
-      </>
+      </SiteSurfaceProvider>
     );
   }
 
   return (
-    <>
+    <SiteSurfaceProvider surface="main">
       <Navbar />
       <MarketingMain>{children}</MarketingMain>
       <Footer />
-    </>
+    </SiteSurfaceProvider>
   );
 }

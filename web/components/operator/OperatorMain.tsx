@@ -2,21 +2,28 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 
+/**
+ * OperatorMain only mounts inside the operator SiteShell, so `/` is always the
+ * operator landing (on the subdomain) and must stay full-bleed. Do not gate on
+ * useOnOperatorHost() here — that is false during SSR and can leave the hero
+ * trapped inside `.container` (narrow cream gutters).
+ */
 export function OperatorMain({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const onOperatorHost = useOnOperatorHost();
-  const isLanding =
-    pathname === "/operator" || (onOperatorHost && pathname === "/");
+  const pathname = usePathname() || "/";
+  const isLanding = pathname === "/" || pathname === "/operator";
   const isSignup =
+    pathname === "/signup" ||
+    pathname.startsWith("/signup/") ||
     pathname === "/operator/signup" ||
-    (onOperatorHost && (pathname === "/signup" || pathname.startsWith("/signup/")));
+    pathname.startsWith("/operator/signup/");
   const isAuth = pathname.startsWith("/auth/");
 
   if (isLanding || isSignup || isAuth) {
     return (
-      <main className="relative z-0 overflow-x-hidden pb-0 pt-0">{children}</main>
+      <main className="relative z-0 w-full overflow-x-clip pb-0 pt-0">
+        {children}
+      </main>
     );
   }
 
