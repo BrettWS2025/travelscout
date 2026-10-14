@@ -1,18 +1,36 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AccountNav } from "@/components/account/AccountNav";
 import { useAuth } from "@/components/AuthProvider";
+import { useIsOperatorSurface } from "@/components/SiteSurfaceContext";
+
+const OPERATOR_ONLY_PREFIXES = ["/account/inventory", "/account/settings"];
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
+  const isOperatorSurface = useIsOperatorSurface();
 
   useEffect(() => {
     if (isLoading) return;
-    if (!user) router.replace("/auth/login?returnTo=/account/details");
-  }, [user, isLoading, router]);
+    if (!user) {
+      router.replace("/auth/login?returnTo=/account/details");
+      return;
+    }
+
+    // Regular travelers should not reach operator-only account sections.
+    if (
+      !isOperatorSurface &&
+      OPERATOR_ONLY_PREFIXES.some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+      )
+    ) {
+      router.replace("/account/details");
+    }
+  }, [user, isLoading, router, isOperatorSurface, pathname]);
 
   if (isLoading || !user) {
     return (
@@ -26,13 +44,23 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <div className="ts-page pb-6">
       <div className="mb-8 max-w-3xl">
         <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ts-teal)]">
-          Operator account
+          {isOperatorSurface ? "Operator account" : "Your account"}
         </p>
         <h1 className="mt-2 font-[family-name:var(--font-instrument)] text-4xl leading-tight text-[var(--ts-ink)] md:text-5xl">
-          Your <span className="italic text-[var(--ts-teal)]">workspace</span>
+          {isOperatorSurface ? (
+            <>
+              Your <span className="italic text-[var(--ts-teal)]">workspace</span>
+            </>
+          ) : (
+            <>
+              Account <span className="italic text-[var(--ts-teal)]">details</span>
+            </>
+          )}
         </h1>
         <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)] md:text-base">
-          Manage your profile, inventory, and account settings.
+          {isOperatorSurface
+            ? "Manage your profile, inventory, and account settings."
+            : "Manage your profile and sign-in details."}
         </p>
       </div>
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isOperatorHost,
+  mainSiteUrl,
   operatorPortalUrl,
   toInternalOperatorPath,
   toPublicOperatorPath,
@@ -54,6 +55,15 @@ describe("hosts", () => {
     expect(operatorHref("/operator/signup", false)).toBe("/operator/signup");
     // Real operator subdomain uses short public path
     expect(operatorHref("/operator/signup", true)).toBe("/signup");
+  });
+
+  it("mainSiteUrl derives traveler host from operators subdomain", () => {
+    vi.stubEnv("NEXT_PUBLIC_OPERATOR_HOST", "operators.travelscout.co.nz");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    expect(mainSiteUrl("/")).toBe("https://travelscout.co.nz/");
+    expect(mainSiteUrl("/find-deals")).toBe(
+      "https://travelscout.co.nz/find-deals"
+    );
   });
 });
 

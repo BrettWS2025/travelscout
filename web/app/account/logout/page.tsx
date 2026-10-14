@@ -13,7 +13,7 @@ export default function AccountLogoutPage() {
           Log out
         </h2>
         <p className="mt-1 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-          Sign out of your operator account on this device.
+          Sign out of your account on this device.
         </p>
       </div>
 
