@@ -24,7 +24,6 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
 
     if (operatorLoading) return;
 
-    // Regular traveler profiles cannot open operator-only account sections.
     if (
       !isOperatorProfile &&
       OPERATOR_ONLY_PREFIXES.some(
@@ -45,33 +44,17 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   if (isLoading || !user) {
     return (
       <div className="py-10 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-        Loading your account…
+        Loading…
       </div>
     );
   }
 
   return (
     <div className="ts-page pb-6">
-      <div className="mb-8 max-w-3xl">
-        <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ts-teal)]">
-          {isOperatorProfile ? "Operator account" : "Your account"}
-        </p>
-        <h1 className="mt-2 font-[family-name:var(--font-instrument)] text-4xl leading-tight text-[var(--ts-ink)] md:text-5xl">
-          {isOperatorProfile ? (
-            <>
-              Your <span className="italic text-[var(--ts-teal)]">workspace</span>
-            </>
-          ) : (
-            <>
-              Account <span className="italic text-[var(--ts-teal)]">details</span>
-            </>
-          )}
+      <div className="mb-8">
+        <h1 className="font-[family-name:var(--font-instrument)] text-4xl leading-tight text-[var(--ts-ink)] md:text-5xl">
+          Account
         </h1>
-        <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)] md:text-base">
-          {isOperatorProfile
-            ? "Manage your profile, inventory, and account settings."
-            : "Manage your profile and sign-in details."}
-        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">

@@ -7,6 +7,7 @@ import type {
   Deal,
   Organization,
   UpdateDealInput,
+  UpdateOrganizationInput,
 } from "./types";
 
 export class MarketplaceApiError extends Error {
@@ -86,6 +87,17 @@ export function getOrganization(id: string, accessToken?: string | null) {
   return marketplaceFetch<{ organization: Organization }>(
     `/api/marketplace/organizations/${id}`,
     { accessToken }
+  );
+}
+
+export function updateOrganization(
+  id: string,
+  input: UpdateOrganizationInput,
+  accessToken?: string | null
+) {
+  return marketplaceFetch<{ organization: Organization }>(
+    `/api/marketplace/organizations/${id}`,
+    { method: "PATCH", body: input, accessToken }
   );
 }
 

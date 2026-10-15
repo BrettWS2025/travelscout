@@ -73,6 +73,10 @@ export type CreateOrganizationInput = {
   rezdyAffiliateCode?: string;
 };
 
+export type UpdateOrganizationInput = Partial<
+  Pick<CreateOrganizationInput, "name" | "phone" | "website" | "region">
+>;
+
 export type CreateDealInput = {
   organizationId: string;
   title: string;
