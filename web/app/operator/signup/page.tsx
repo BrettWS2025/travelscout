@@ -16,6 +16,8 @@ import {
   authLinkClassName,
   authPrimaryButtonClassName,
 } from "@/components/auth/AuthPageFrame";
+import { RegionPicker } from "@/components/RegionPicker";
+import { canonicalizeRegion } from "@/lib/regions";
 
 const PENDING_ORG_KEY = "ts_pending_operator_org";
 
@@ -123,12 +125,14 @@ export default function OperatorSignupPage() {
     onOperatorHost,
   ]);
 
-  function businessPayload(): PendingOrg {
+  function businessPayload(): PendingOrg | null {
+    const canonicalRegion = canonicalizeRegion(region);
+    if (!canonicalRegion) return null;
     return {
       name: businessName.trim(),
       phone: phone.trim(),
       website: website.trim(),
-      region: region.trim(),
+      region: canonicalRegion,
     };
   }
 
@@ -147,8 +151,8 @@ export default function OperatorSignupPage() {
     setInfo(null);
 
     const org = businessPayload();
-    if (!org.name || !org.phone || !org.website || !org.region) {
-      setError("Please fill in all business details.");
+    if (!org?.name || !org.phone || !org.website || !org.region) {
+      setError("Please fill in all business details, including a valid region.");
       setLoading(false);
       return;
     }
@@ -352,16 +356,18 @@ export default function OperatorSignupPage() {
                     placeholder="https://example.com"
                   />
                 </label>
-                <label className="block space-y-1.5">
+                <div className="block space-y-1.5">
                   <span className={authLabelClassName}>Region</span>
-                  <input
-                    className={authInputClassName}
-                    required
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder="Queenstown"
-                  />
-                </label>
+                  <div className="rounded-xl border border-[var(--ts-ink)]/12 bg-white">
+                    <RegionPicker
+                      value={region}
+                      onChange={setRegion}
+                      variant="light"
+                      required
+                      placeholder="Select your operating region"
+                    />
+                  </div>
+                </div>
               </fieldset>
 
               <button

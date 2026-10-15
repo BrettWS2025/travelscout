@@ -20,6 +20,8 @@ import {
   authPrimaryButtonClassName,
   authSecondaryButtonClassName,
 } from "@/components/auth/AuthPageFrame";
+import { RegionPicker } from "@/components/RegionPicker";
+import { canonicalizeRegion } from "@/lib/regions";
 
 export default function AccountDetailsPage() {
   const { user, session, isLoading } = useAuth();
@@ -125,13 +127,17 @@ export default function AccountDetailsPage() {
         if (!trimmedName) {
           throw new Error("Organisation name is required.");
         }
+        const canonicalRegion = canonicalizeRegion(orgRegion);
+        if (!canonicalRegion) {
+          throw new Error("Please select a valid New Zealand region.");
+        }
 
         const { organization: updated } = await updateOrganization(
           organization.id,
           {
             name: trimmedName,
             phone: orgPhone.trim(),
-            region: orgRegion.trim(),
+            region: canonicalRegion,
           },
           session?.access_token
         );
@@ -255,13 +261,21 @@ export default function AccountDetailsPage() {
                   <label className={authLabelClassName} htmlFor="orgRegion">
                     Region
                   </label>
-                  <input
-                    id="orgRegion"
-                    value={orgRegion}
-                    onChange={(e) => setOrgRegion(e.target.value)}
-                    className={authInputClassName}
-                    disabled={busy || !organization}
-                  />
+                  <div
+                    className={`${authInputClassName} !p-0 overflow-hidden ${
+                      busy || !organization ? "opacity-60" : ""
+                    }`}
+                  >
+                    <RegionPicker
+                      id="orgRegion"
+                      value={orgRegion}
+                      onChange={setOrgRegion}
+                      variant="light"
+                      disabled={busy || !organization}
+                      required
+                      placeholder="Select your operating region"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

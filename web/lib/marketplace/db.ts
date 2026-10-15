@@ -12,6 +12,7 @@ import type {
   UpdateDealInput,
   UpdateOrganizationInput,
 } from "./types";
+import { canonicalizeRegion, regionsMatch } from "@/lib/regions";
 
 type DbOrganization = {
   id: string;
@@ -294,9 +295,10 @@ export async function listLiveDeals(options?: {
 
   let deals = (data as DbDeal[] | null)?.map(dealFromDb) ?? [];
 
-  // Optional region filter via joined org (PostgREST can't always filter nested easily)
+  // Optional region filter via joined org (exact match on canonical NZ region)
   if (options?.region) {
-    const region = options.region.toLowerCase();
+    const region = canonicalizeRegion(options.region);
+    if (!region) return [];
     const orgIds = Array.from(new Set(deals.map((d) => d.organizationId)));
     if (orgIds.length > 0) {
       const { data: orgs } = await supabase
@@ -305,10 +307,12 @@ export async function listLiveDeals(options?: {
         .in("id", orgIds);
       const allowed = new Set(
         (orgs || [])
-          .filter((o) => (o.region || "").toLowerCase().includes(region))
+          .filter((o) => regionsMatch(o.region, region))
           .map((o) => o.id)
       );
       deals = deals.filter((d) => allowed.has(d.organizationId));
+    } else {
+      deals = [];
     }
   }
 

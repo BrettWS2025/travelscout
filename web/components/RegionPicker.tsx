@@ -11,44 +11,17 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, MapPin, Search, X } from "lucide-react";
+import {
+  NZ_REGIONS,
+  NZ_REGIONS_ALPHA,
+  normalizeRegionKey,
+} from "@/lib/regions";
 
-export const NZ_REGIONS = [
-  "Northland",
-  "Auckland",
-  "Coromandel",
-  "Waikato",
-  "Bay of Plenty",
-  "Rotorua",
-  "Taupō",
-  "Hawke's Bay",
-  "Taranaki",
-  "Manawatū",
-  "Wellington",
-  "Nelson / Tasman",
-  "Marlborough",
-  "West Coast",
-  "Canterbury",
-  "Mackenzie",
-  "Queenstown",
-  "Wānaka",
-  "Fiordland",
-  "Southland",
-] as const;
+export { NZ_REGIONS, NZ_REGIONS_ALPHA } from "@/lib/regions";
 
 function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+  return normalizeRegionKey(value);
 }
-
-function compareRegions(a: string, b: string) {
-  return normalize(a).localeCompare(normalize(b), "en");
-}
-
-/** Alphabetical source list for both pickers. */
-export const NZ_REGIONS_ALPHA = [...NZ_REGIONS].sort(compareRegions);
 
 function useIsMobile(breakpointPx = 768) {
   const [isMobile, setIsMobile] = useState(() => {
@@ -433,6 +406,11 @@ type RegionPickerProps = {
   placeholder?: string;
   variant?: RegionPickerVariant;
   className?: string;
+  /** Override the default nz_places_final region list. */
+  regions?: readonly string[];
+  disabled?: boolean;
+  id?: string;
+  required?: boolean;
   /** Full search-box shell; desktop dropdown matches this width. */
   dropdownAnchorRef?: RefObject<HTMLElement>;
 };
@@ -440,9 +418,13 @@ type RegionPickerProps = {
 export function RegionPicker({
   value,
   onChange,
-  placeholder = "Queenstown, Rotorua, Bay of Plenty…",
+  placeholder = "Auckland, Otago, Canterbury…",
   variant = "light",
   className = "",
+  regions,
+  disabled = false,
+  id,
+  required = false,
   dropdownAnchorRef,
 }: RegionPickerProps) {
   const isMobile = useIsMobile();
@@ -451,13 +433,35 @@ export function RegionPicker({
   const triggerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
+  const [remoteRegions, setRemoteRegions] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    if (regions) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/regions");
+        if (!res.ok) return;
+        const data = (await res.json()) as { regions?: string[] };
+        if (!cancelled && Array.isArray(data.regions) && data.regions.length > 0) {
+          setRemoteRegions(data.regions);
+        }
+      } catch {
+        // Keep static fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [regions]);
+
+  const sourceRegions = regions ?? remoteRegions ?? NZ_REGIONS_ALPHA;
 
   const filteredRegions = useMemo(() => {
     const q = normalize(filter);
-    const source = NZ_REGIONS_ALPHA;
-    if (!q) return source;
-    return source.filter((r) => normalize(r).includes(q));
-  }, [filter]);
+    if (!q) return sourceRegions;
+    return sourceRegions.filter((r) => normalize(r).includes(q));
+  }, [filter, sourceRegions]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -465,9 +469,10 @@ export function RegionPicker({
   }, []);
 
   const openPicker = useCallback(() => {
+    if (disabled) return;
     setFilter("");
     setOpen(true);
-  }, []);
+  }, [disabled]);
 
   const selectRegion = useCallback(
     (next: string) => {
@@ -515,14 +520,17 @@ export function RegionPicker({
     <div ref={triggerRef} className={`relative min-w-0 flex-1 ${className}`}>
       <button
         type="button"
+        id={id}
+        disabled={disabled}
         onClick={() => (open ? close() : openPicker())}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
+        aria-required={required || undefined}
         className={
           isHero
-            ? "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/8"
-            : "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[var(--ts-mist)]/70"
+            ? "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/8 disabled:opacity-60"
+            : "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[var(--ts-mist)]/70 disabled:opacity-60"
         }
       >
         <MapPin

@@ -7,6 +7,8 @@ import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 import { operatorHref } from "@/lib/hosts";
 import { createOrganization } from "@/lib/marketplace/client";
 import type { BookingProvider } from "@/lib/marketplace/types";
+import { RegionPicker } from "@/components/RegionPicker";
+import { canonicalizeRegion } from "@/lib/regions";
 
 const PROVIDERS: { value: BookingProvider; label: string }[] = [
   { value: "manual", label: "Manual booking link" },
@@ -35,12 +37,18 @@ export default function NewOrganizationPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const canonicalRegion = canonicalizeRegion(region);
+    if (!canonicalRegion) {
+      setError("Please select a valid New Zealand region.");
+      setLoading(false);
+      return;
+    }
     try {
       const { organization } = await createOrganization(
         {
           name,
           phone,
-          region,
+          region: canonicalRegion,
           website,
           defaultBookingProvider,
           fareharborShortname: fareharborShortname || undefined,
@@ -94,16 +102,18 @@ export default function NewOrganizationPage() {
         />
       </label>
 
-      <label className="block space-y-1">
+      <div className="block space-y-1">
         <span className="text-sm font-medium text-slate-700">Region *</span>
-        <input
-          className="input-dark w-full"
-          required
-          value={region}
-          onChange={(e) => setRegion(e.target.value)}
-          placeholder="Queenstown"
-        />
-      </label>
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <RegionPicker
+            value={region}
+            onChange={setRegion}
+            variant="light"
+            required
+            placeholder="Select your operating region"
+          />
+        </div>
+      </div>
 
       <label className="block space-y-1">
         <span className="text-sm font-medium text-slate-700">Website *</span>

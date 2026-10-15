@@ -82,10 +82,10 @@ export function OperatorLanding() {
                   or chase festival nights when the Southern Alps glow.
                 </p>
                 <Link
-                  href="/find-deals?region=W%C4%81naka"
+                  href="/find-deals?region=Otago"
                   className="mt-6 inline-flex items-center gap-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)] transition hover:text-[var(--ts-teal)]"
                 >
-                  Find deals in Wānaka
+                  Find deals in Otago
                   <span aria-hidden>→</span>
                 </Link>
               </div>

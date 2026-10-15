@@ -9,6 +9,17 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
 
+vi.mock("@/hooks/useGeolocationRegion", () => ({
+  useGeolocationRegion: () => ({
+    region: null,
+    place: null,
+    isLoading: false,
+    error: null,
+    isOutsideNZ: false,
+    permissionDenied: false,
+  }),
+}));
+
 describe("HeroRegionSearch", () => {
   beforeEach(() => {
     push.mockReset();
@@ -37,13 +48,13 @@ describe("HeroRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Rotorua, Bay of Plenty/i,
+        name: /Auckland, Otago, Canterbury/i,
       })
     );
 
     const dialog = screen.getByRole("dialog", { name: /Choose a region/i });
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText("Queenstown")).toBeInTheDocument();
+    expect(within(dialog).getByText("Otago")).toBeInTheDocument();
 
     const options = within(dialog).getAllByRole("option");
     const labels = options.map((el) => el.textContent?.trim() ?? "");
@@ -52,11 +63,11 @@ describe("HeroRegionSearch", () => {
 
     await user.type(
       within(dialog).getByPlaceholderText(/Search regions/i),
-      "wan"
+      "ota"
     );
 
-    expect(within(dialog).getByText("Wānaka")).toBeInTheDocument();
-    expect(within(dialog).queryByText("Queenstown")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("Otago")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Auckland")).not.toBeInTheDocument();
   });
 
   it("selects a region and submits to find-deals", async () => {
@@ -65,16 +76,18 @@ describe("HeroRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Rotorua, Bay of Plenty/i,
+        name: /Auckland, Otago, Canterbury/i,
       })
     );
-    await user.click(screen.getByRole("option", { name: /Rotorua/i }));
+    await user.click(screen.getByRole("option", { name: /Canterbury/i }));
 
-    expect(screen.getByRole("button", { name: /Rotorua/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Canterbury/i })
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Find deals/i }));
     expect(push).toHaveBeenCalledWith(
-      `/find-deals?region=${encodeURIComponent("Rotorua")}`
+      `/find-deals?region=${encodeURIComponent("Canterbury")}`
     );
   });
 
@@ -98,7 +111,7 @@ describe("HeroRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Rotorua, Bay of Plenty/i,
+        name: /Auckland, Otago, Canterbury/i,
       })
     );
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { RegionPicker } from "@/components/RegionPicker";
+import { useGeolocationRegion } from "@/hooks/useGeolocationRegion";
+import { canonicalizeRegion } from "@/lib/regions";
 
 type FindDealsRegionSearchProps = {
   initialRegion?: string;
@@ -13,8 +15,24 @@ export function FindDealsRegionSearch({
   initialRegion = "",
 }: FindDealsRegionSearchProps) {
   const router = useRouter();
-  const [region, setRegion] = useState(initialRegion);
+  const canonicalInitial = canonicalizeRegion(initialRegion) ?? "";
+  const [region, setRegion] = useState(canonicalInitial);
+  const [userPicked, setUserPicked] = useState(!!canonicalInitial);
   const shellRef = useRef<HTMLDivElement>(null);
+  const { region: detectedRegion, isLoading: locating } = useGeolocationRegion(
+    !canonicalInitial
+  );
+
+  useEffect(() => {
+    if (userPicked || region) return;
+    if (!detectedRegion) return;
+    setRegion(detectedRegion);
+  }, [detectedRegion, region, userPicked]);
+
+  const onRegionChange = (next: string) => {
+    setUserPicked(true);
+    setRegion(next);
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +41,12 @@ export function FindDealsRegionSearch({
       router.push("/find-deals");
       return;
     }
-    router.push(`/find-deals?region=${encodeURIComponent(trimmed)}`);
+    const canonical = canonicalizeRegion(trimmed);
+    if (!canonical) {
+      router.push("/find-deals");
+      return;
+    }
+    router.push(`/find-deals?region=${encodeURIComponent(canonical)}`);
   };
 
   return (
@@ -38,9 +61,13 @@ export function FindDealsRegionSearch({
       >
         <RegionPicker
           value={region}
-          onChange={setRegion}
+          onChange={onRegionChange}
           variant="light"
-          placeholder="Queenstown, Rotorua, Bay of Plenty…"
+          placeholder={
+            locating && !region
+              ? "Detecting your region…"
+              : "Auckland, Otago, Canterbury…"
+          }
           dropdownAnchorRef={shellRef}
         />
         <button

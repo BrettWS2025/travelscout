@@ -1,16 +1,32 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { RegionPicker } from "@/components/RegionPicker";
+import { useGeolocationRegion } from "@/hooks/useGeolocationRegion";
+import { canonicalizeRegion } from "@/lib/regions";
 
 export { NZ_REGIONS } from "@/components/RegionPicker";
 
 export function HeroRegionSearch() {
   const router = useRouter();
   const [region, setRegion] = useState("");
+  const [userPicked, setUserPicked] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
+  const { region: detectedRegion, isLoading: locating } =
+    useGeolocationRegion(true);
+
+  useEffect(() => {
+    if (userPicked || region) return;
+    if (!detectedRegion) return;
+    setRegion(detectedRegion);
+  }, [detectedRegion, region, userPicked]);
+
+  const onRegionChange = (next: string) => {
+    setUserPicked(true);
+    setRegion(next);
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +35,12 @@ export function HeroRegionSearch() {
       router.push("/find-deals");
       return;
     }
-    router.push(`/find-deals?region=${encodeURIComponent(trimmed)}`);
+    const canonical = canonicalizeRegion(trimmed);
+    if (!canonical) {
+      router.push("/find-deals");
+      return;
+    }
+    router.push(`/find-deals?region=${encodeURIComponent(canonical)}`);
   };
 
   return (
@@ -34,9 +55,13 @@ export function HeroRegionSearch() {
       >
         <RegionPicker
           value={region}
-          onChange={setRegion}
+          onChange={onRegionChange}
           variant="hero"
-          placeholder="Queenstown, Rotorua, Bay of Plenty…"
+          placeholder={
+            locating
+              ? "Detecting your region…"
+              : "Auckland, Otago, Canterbury…"
+          }
           dropdownAnchorRef={shellRef}
         />
         <button

@@ -7,6 +7,7 @@ import {
 } from "@/lib/marketplace/auth";
 import { createOrganization, listMyOrganizations } from "@/lib/marketplace/db";
 import type { BookingProvider, CreateOrganizationInput } from "@/lib/marketplace/types";
+import { canonicalizeRegion } from "@/lib/regions";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,12 @@ export async function POST(req: Request) {
     if (!body?.region || typeof body.region !== "string" || !body.region.trim()) {
       return badRequest("region is required.");
     }
+    const region = canonicalizeRegion(body.region);
+    if (!region) {
+      return badRequest(
+        "region must be a New Zealand region from nz_places_final."
+      );
+    }
 
     if (
       body.defaultBookingProvider &&
@@ -69,7 +76,7 @@ export async function POST(req: Request) {
       slug: body.slug,
       phone: body.phone,
       website: body.website,
-      region: body.region,
+      region,
       defaultBookingProvider: body.defaultBookingProvider,
       fareharborShortname: body.fareharborShortname,
       fareharborAsn: body.fareharborAsn,

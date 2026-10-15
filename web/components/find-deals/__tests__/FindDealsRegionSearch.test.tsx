@@ -10,6 +10,17 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
 
+vi.mock("@/hooks/useGeolocationRegion", () => ({
+  useGeolocationRegion: () => ({
+    region: null,
+    place: null,
+    isLoading: false,
+    error: null,
+    isOutsideNZ: false,
+    permissionDenied: false,
+  }),
+}));
+
 describe("FindDealsRegionSearch", () => {
   beforeEach(() => {
     push.mockReset();
@@ -39,11 +50,11 @@ describe("FindDealsRegionSearch", () => {
     expect(screen.getByRole("button", { name: /Auckland/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Auckland/i }));
-    await user.click(screen.getByRole("option", { name: /Queenstown/i }));
+    await user.click(screen.getByRole("option", { name: /Otago/i }));
     await user.click(screen.getByRole("button", { name: /Search deals/i }));
 
     expect(push).toHaveBeenCalledWith(
-      `/find-deals?region=${encodeURIComponent("Queenstown")}`
+      `/find-deals?region=${encodeURIComponent("Otago")}`
     );
   });
 
@@ -53,7 +64,7 @@ describe("FindDealsRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Rotorua, Bay of Plenty/i,
+        name: /Auckland, Otago, Canterbury/i,
       })
     );
 
@@ -64,10 +75,10 @@ describe("FindDealsRegionSearch", () => {
 
     await user.type(
       within(dialog).getByPlaceholderText(/Search regions/i),
-      "fiord"
+      "south"
     );
 
-    expect(within(dialog).getByText("Fiordland")).toBeInTheDocument();
+    expect(within(dialog).getByText("Southland")).toBeInTheDocument();
     expect(within(dialog).queryByText("Auckland")).not.toBeInTheDocument();
   });
 
@@ -91,7 +102,7 @@ describe("FindDealsRegionSearch", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Queenstown, Rotorua, Bay of Plenty/i,
+        name: /Auckland, Otago, Canterbury/i,
       })
     );
 
@@ -101,9 +112,9 @@ describe("FindDealsRegionSearch", () => {
       "nelson"
     );
 
-    expect(within(sheet).getByText("Nelson / Tasman")).toBeInTheDocument();
+    expect(within(sheet).getByText("Nelson")).toBeInTheDocument();
     for (const region of NZ_REGIONS) {
-      if (region === "Nelson / Tasman") continue;
+      if (region === "Nelson") continue;
       expect(within(sheet).queryByText(region)).not.toBeInTheDocument();
     }
   });

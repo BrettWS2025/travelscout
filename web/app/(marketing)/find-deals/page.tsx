@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search, MapPin, Compass } from "lucide-react";
 import { FindDealsRegionSearch } from "@/components/find-deals/FindDealsRegionSearch";
+import { canonicalizeRegion } from "@/lib/regions";
 
 export const metadata: Metadata = {
   title: "Find Deals",
   description:
-    "Search travel deals by region across New Zealand. Destination search is coming soon on TravelScout.",
+    "Search travel deals by New Zealand region. Regions come from nz_places_final.",
 };
 
 type Props = {
@@ -14,7 +15,7 @@ type Props = {
 };
 
 export default function FindDealsPage({ searchParams }: Props) {
-  const region = (searchParams?.region ?? "").trim();
+  const region = canonicalizeRegion(searchParams?.region ?? "") ?? "";
 
   return (
     <div className="ts-page min-h-screen">
@@ -62,7 +63,7 @@ export default function FindDealsPage({ searchParams }: Props) {
             {
               icon: MapPin,
               title: "Pick a region",
-              copy: "Start with a town, region, or landmark across Aotearoa.",
+              copy: "Choose one of New Zealand’s official regions — the same list operators publish under.",
             },
             {
               icon: Search,

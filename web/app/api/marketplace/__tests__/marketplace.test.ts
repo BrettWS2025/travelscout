@@ -77,12 +77,36 @@ describe("marketplace APIs", () => {
             name: "Jetboat Co",
             phone: "+64 21 123 4567",
             website: "https://example.com",
-            region: "Queenstown",
+            region: "Otago",
           }),
         })
       );
       expect(res.status).toBe(201);
-      expect(mockCreateOrganization).toHaveBeenCalled();
+      expect(mockCreateOrganization).toHaveBeenCalledWith(
+        "tok",
+        "u1",
+        expect.objectContaining({ region: "Otago" })
+      );
+    });
+
+    it("POST rejects regions outside the nz_places_final list", async () => {
+      mockGetMarketplaceAuth.mockResolvedValue({
+        user: { id: "u1" },
+        accessToken: "tok",
+      });
+      const res = await postOrg(
+        new Request("http://localhost/api/marketplace/organizations", {
+          method: "POST",
+          body: JSON.stringify({
+            name: "Jetboat Co",
+            phone: "+64 21 123 4567",
+            website: "https://example.com",
+            region: "Queenstown",
+          }),
+        })
+      );
+      expect(res.status).toBe(400);
+      expect(mockCreateOrganization).not.toHaveBeenCalled();
     });
 
     it("POST requires phone, website, and region", async () => {

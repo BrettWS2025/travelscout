@@ -8,6 +8,7 @@ import {
 } from "@/lib/marketplace/auth";
 import { getOrganization, updateOrganization } from "@/lib/marketplace/db";
 import type { UpdateOrganizationInput } from "@/lib/marketplace/types";
+import { canonicalizeRegion } from "@/lib/regions";
 
 export const runtime = "nodejs";
 
@@ -62,7 +63,13 @@ export async function PATCH(req: Request, { params }: Params) {
       if (typeof body.region !== "string") {
         return badRequest("region must be a string.");
       }
-      input.region = body.region;
+      const region = canonicalizeRegion(body.region);
+      if (!region) {
+        return badRequest(
+          "region must be a New Zealand region from nz_places_final."
+        );
+      }
+      input.region = region;
     }
 
     if (Object.keys(input).length === 0) {
