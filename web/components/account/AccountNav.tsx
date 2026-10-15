@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, LogOut, Package, Settings, User } from "lucide-react";
+import { useAccountSignOut } from "@/components/account/useAccountSignOut";
 import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
 
 const travelerNavItems = [
@@ -11,11 +12,6 @@ const travelerNavItems = [
     href: "/account/details",
     label: "Account details",
     icon: User,
-  },
-  {
-    href: "/account/logout",
-    label: "Log out",
-    icon: LogOut,
   },
 ] as const;
 
@@ -35,11 +31,6 @@ const operatorNavItems = [
     label: "Settings",
     icon: Settings,
   },
-  {
-    href: "/account/logout",
-    label: "Log out",
-    icon: LogOut,
-  },
 ] as const;
 
 function isActivePath(pathname: string, href: string) {
@@ -49,12 +40,24 @@ function isActivePath(pathname: string, href: string) {
 export function AccountNav() {
   const pathname = usePathname();
   const { isOperatorProfile } = useIsOperatorProfile();
-  // Inventory/settings only for operator profiles; travelers stay on details + log out.
+  const signOut = useAccountSignOut();
   const navItems = isOperatorProfile ? operatorNavItems : travelerNavItems;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const activeItem =
     navItems.find((item) => isActivePath(pathname, item.href)) ?? navItems[0];
+
+  async function handleLogOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setMobileOpen(false);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <nav aria-label="Account">
@@ -92,6 +95,10 @@ export function AccountNav() {
                 onNavigate={() => setMobileOpen(false)}
               />
             ))}
+            <AccountLogOutButton
+              onClick={() => void handleLogOut()}
+              disabled={signingOut}
+            />
           </div>
         )}
       </div>
@@ -111,6 +118,12 @@ export function AccountNav() {
               />
             </li>
           ))}
+          <li>
+            <AccountLogOutButton
+              onClick={() => void handleLogOut()}
+              disabled={signingOut}
+            />
+          </li>
         </ul>
       </div>
     </nav>
@@ -150,5 +163,25 @@ function AccountNavLink({
       />
       {label}
     </Link>
+  );
+}
+
+function AccountLogOutButton({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 font-[family-name:var(--font-sora)] text-sm font-medium text-[var(--ts-muted)] transition hover:bg-white/70 hover:text-[var(--ts-ink)] disabled:opacity-60"
+    >
+      <LogOut className="h-4 w-4 shrink-0 text-[var(--ts-muted)]" />
+      {disabled ? "Logging out…" : "Log out"}
+    </button>
   );
 }

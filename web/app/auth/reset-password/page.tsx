@@ -20,16 +20,13 @@ export default function ResetPasswordPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  // If the user arrived via the Supabase reset link,
-  // Supabase will establish a recovery session automatically.
+  // Recovery links establish a session automatically — keep the user signed in.
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       await supabase.auth.getSession();
-      // session may exist if the link was valid; either way allow form submission
       if (mounted) setReady(true);
     })();
 
@@ -41,7 +38,6 @@ export default function ResetPasswordPage() {
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
@@ -54,20 +50,17 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
+      if (updateError) throw updateError;
 
-      setSuccess("Password updated. You can now sign in.");
-      setPassword("");
-      setConfirm("");
-
-      // Send them somewhere sensible
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 800);
-    } catch (err: any) {
-      setError(err?.message ?? "Could not update password.");
-    } finally {
+      // Session is already valid after updateUser — go straight into the app.
+      router.replace("/account/details");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Could not update password."
+      );
       setLoading(false);
     }
   }
@@ -82,7 +75,7 @@ export default function ResetPasswordPage() {
             <span className="italic text-[var(--ts-teal)]">there.</span>
           </>
         }
-        description="Loading your password reset session…"
+        description="Preparing your session…"
       >
         <div className={authPanelClassName}>
           <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
@@ -102,7 +95,7 @@ export default function ResetPasswordPage() {
           <span className="italic text-[var(--ts-teal)]">password.</span>
         </>
       }
-      description="Enter a new password for your account."
+      description="Choose a new password to continue."
     >
       <form onSubmit={handleSetPassword} className={authPanelClassName}>
         <div className="space-y-2">
@@ -140,18 +133,13 @@ export default function ResetPasswordPage() {
             {error}
           </p>
         )}
-        {success && (
-          <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-teal)]">
-            {success}
-          </p>
-        )}
 
         <button
           type="submit"
           disabled={loading}
           className={authPrimaryButtonClassName}
         >
-          {loading ? "Updating…" : "Update password"}
+          {loading ? "Saving…" : "Save and continue"}
         </button>
       </form>
     </AuthPageFrame>

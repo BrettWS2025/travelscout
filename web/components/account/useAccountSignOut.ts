@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { mainSiteUrl } from "@/lib/hosts";
 import { useIsOperatorSurface } from "@/components/SiteSurfaceContext";
@@ -30,9 +31,8 @@ function clearSupabaseAuthStorage() {
 export function useAccountSignOut() {
   const isOperatorSurface = useIsOperatorSurface();
 
-  return async () => {
+  return useCallback(async () => {
     try {
-      // Local first — always clears this origin's persisted session.
       await supabase.auth.signOut({ scope: "local" });
     } catch (err) {
       console.error("Error signing out locally", err);
@@ -47,12 +47,10 @@ export function useAccountSignOut() {
     clearSupabaseAuthStorage();
 
     if (typeof window !== "undefined") {
-      // Bounce through main site login when leaving the operator portal so the
-      // traveler-site session can be cleared next if they still look logged in.
       const next = isOperatorSurface
         ? `${mainSiteUrl("/auth/login")}?signedOut=1`
         : "/";
       window.location.assign(next);
     }
-  };
+  }, [isOperatorSurface]);
 }

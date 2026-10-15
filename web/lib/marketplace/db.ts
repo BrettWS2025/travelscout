@@ -10,6 +10,7 @@ import type {
   DealStatus,
   Organization,
   UpdateDealInput,
+  UpdateOrganizationInput,
 } from "./types";
 
 type DbOrganization = {
@@ -190,6 +191,37 @@ export async function getOrganization(
 
   if (error) throw new Error(`Failed to get organization: ${error.message}`);
   return data ? orgFromDb(data as DbOrganization) : null;
+}
+
+export async function updateOrganization(
+  accessToken: string,
+  organizationId: string,
+  input: UpdateOrganizationInput
+): Promise<Organization> {
+  const supabase = createMarketplaceClient(accessToken);
+  const patch: Record<string, string | null> = {};
+
+  if (input.name !== undefined) patch.name = input.name.trim();
+  if (input.phone !== undefined) patch.phone = input.phone.trim() || null;
+  if (input.website !== undefined) patch.website = input.website.trim() || null;
+  if (input.region !== undefined) patch.region = input.region.trim() || null;
+
+  if (Object.keys(patch).length === 0) {
+    const existing = await getOrganization(accessToken, organizationId);
+    if (!existing) throw new Error("Organization not found.");
+    return existing;
+  }
+
+  const { data, error } = await supabase
+    .from("organizations")
+    .update(patch)
+    .eq("id", organizationId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to update organization: ${error.message}`);
+  if (!data) throw new Error("Organization not found.");
+  return orgFromDb(data as DbOrganization);
 }
 
 /** Public-schema client (for RPCs) authenticated as the user. */

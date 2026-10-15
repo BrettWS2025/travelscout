@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
 import {
   ensureUserProfile,
   type ProfileRow,
 } from "@/lib/profiles";
+import {
+  listMyOrganizations,
+  updateOrganization,
+} from "@/lib/marketplace/client";
+import type { Organization } from "@/lib/marketplace/types";
 import {
   authInputClassName,
   authLabelClassName,
@@ -16,10 +22,16 @@ import {
 } from "@/components/auth/AuthPageFrame";
 
 export default function AccountDetailsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, session, isLoading } = useAuth();
+  const { isOperatorProfile, isLoading: operatorLoading } =
+    useIsOperatorProfile();
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [fullName, setFullName] = useState("");
+  const [orgName, setOrgName] = useState("");
+  const [orgPhone, setOrgPhone] = useState("");
+  const [orgRegion, setOrgRegion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -29,7 +41,7 @@ export default function AccountDetailsPage() {
   const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || operatorLoading) return;
 
     (async () => {
       setLoading(true);
@@ -44,18 +56,34 @@ export default function AccountDetailsPage() {
           (user.user_metadata?.full_name as string | undefined) ??
           (user.user_metadata?.name as string | undefined) ??
           "";
-
         setFullName(p.display_name ?? metaName ?? "");
+
+        if (isOperatorProfile) {
+          const { organizations } = await listMyOrganizations(
+            session?.access_token
+          );
+          const org = organizations[0] ?? null;
+          setOrganization(org);
+          setOrgName(org?.name ?? "");
+          setOrgPhone(org?.phone ?? "");
+          setOrgRegion(org?.region ?? "");
+        } else {
+          setOrganization(null);
+          setOrgName("");
+          setOrgPhone("");
+          setOrgRegion("");
+        }
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Could not load your profile."
         );
         setProfile(null);
+        setOrganization(null);
       } finally {
         setLoading(false);
       }
     })();
-  }, [user]);
+  }, [user, session?.access_token, isOperatorProfile, operatorLoading]);
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -67,7 +95,6 @@ export default function AccountDetailsPage() {
     const name = fullName.trim() || null;
 
     try {
-      // Ensure a row exists before update (covers accounts missing a profiles row).
       await ensureUserProfile(user);
 
       const { error: updateError } = await supabase
@@ -92,6 +119,28 @@ export default function AccountDetailsPage() {
               display_name: name,
             }
       );
+
+      if (isOperatorProfile && organization) {
+        const trimmedName = orgName.trim();
+        if (!trimmedName) {
+          throw new Error("Organisation name is required.");
+        }
+
+        const { organization: updated } = await updateOrganization(
+          organization.id,
+          {
+            name: trimmedName,
+            phone: orgPhone.trim(),
+            region: orgRegion.trim(),
+          },
+          session?.access_token
+        );
+        setOrganization(updated);
+        setOrgName(updated.name);
+        setOrgPhone(updated.phone ?? "");
+        setOrgRegion(updated.region ?? "");
+      }
+
       setSaved(true);
     } catch (err: unknown) {
       setError(
@@ -141,16 +190,13 @@ export default function AccountDetailsPage() {
     }
   }
 
+  const busy = loading || isLoading || operatorLoading;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-[family-name:var(--font-instrument)] text-3xl text-[var(--ts-ink)]">
-          Account details
-        </h2>
-        <p className="mt-1 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-          Your profile information for this account.
-        </p>
-      </div>
+      <h2 className="font-[family-name:var(--font-instrument)] text-3xl text-[var(--ts-ink)]">
+        Account details
+      </h2>
 
       <div className={authPanelClassName}>
         <div className="space-y-2">
@@ -162,7 +208,7 @@ export default function AccountDetailsPage() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className={authInputClassName}
-            disabled={loading || isLoading}
+            disabled={busy}
           />
         </div>
 
@@ -172,6 +218,60 @@ export default function AccountDetailsPage() {
             {profile?.email ?? user?.email ?? "—"}
           </div>
         </div>
+
+        {isOperatorProfile && (
+          <>
+            <div className="border-t border-[var(--ts-ink)]/8 pt-4">
+              <p className="mb-4 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ts-teal)]">
+                Organisation
+              </p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className={authLabelClassName} htmlFor="orgName">
+                    Organisation name
+                  </label>
+                  <input
+                    id="orgName"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className={authInputClassName}
+                    disabled={busy || !organization}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={authLabelClassName} htmlFor="orgPhone">
+                    Phone
+                  </label>
+                  <input
+                    id="orgPhone"
+                    type="tel"
+                    value={orgPhone}
+                    onChange={(e) => setOrgPhone(e.target.value)}
+                    className={authInputClassName}
+                    disabled={busy || !organization}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={authLabelClassName} htmlFor="orgRegion">
+                    Region
+                  </label>
+                  <input
+                    id="orgRegion"
+                    value={orgRegion}
+                    onChange={(e) => setOrgRegion(e.target.value)}
+                    className={authInputClassName}
+                    disabled={busy || !organization}
+                  />
+                </div>
+              </div>
+            </div>
+            {!organization && !busy && (
+              <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+                No organisation is linked to this account yet.
+              </p>
+            )}
+          </>
+        )}
 
         {error && (
           <p className="font-[family-name:var(--font-sora)] text-sm text-red-600">
@@ -187,16 +287,13 @@ export default function AccountDetailsPage() {
         <button
           type="button"
           onClick={handleSaveProfile}
-          disabled={loading || isLoading}
+          disabled={busy}
           className={authPrimaryButtonClassName}
         >
           {loading ? "Saving…" : "Save changes"}
         </button>
 
         <div className="border-t border-[var(--ts-ink)]/8 pt-4">
-          <p className="mb-3 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-            Need a new password? We&apos;ll email you a reset link.
-          </p>
           <button
             type="button"
             onClick={handleSendPasswordReset}
