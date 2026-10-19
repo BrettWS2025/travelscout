@@ -1,0 +1,29 @@
+---
+description: Core rules for the last-minute deals platform (operator Inventory and Settings). Always read docs/deals-spec.md before changing deals, sessions, pricing, integrations, settings or background jobs.
+alwaysApply: true
+---
+
+# Deals platform: standing rules
+
+The full spec is `docs/deals-spec.md`. It is the source of truth for data, validation and functions. The build plan and progress tracker is `docs/build-chunks.md`. Visual design comes from the supplied screenshots; do not invent new layouts.
+
+## Never break these
+- **Referral only.** No payments, no checkout. Every deal ends at an operator-owned booking destination.
+- **Provider-agnostic.** All provider logic goes through the `ProviderAdapter` interface (connect, listProducts, listSessions, getAvailability, verifyDiscount, buildBookingUrl). No Rezdy-specific code outside the Rezdy adapter.
+- **Server-side enforcement.** The 50% minimum discount, the 72-hour window, status changes and all auto-pause rules live in the backend. The UI may mirror them but never be the only check.
+- **Status is system-owned.** Clients never set `Deal.status` or `pause_reason` directly. All changes go through the single status transition function, which writes a `DealEvent`.
+- **Fail closed.** If live data can't be confirmed (stale sync, expired attestation, broken link), hide the deal.
+- **Time:** store UTC, display in operator timezone (default Pacific/Auckland).
+- **Money:** integer minor units (cents) + ISO 4217 code (default NZD). Never floats for money.
+- **Secrets:** provider credentials only via `credentials_ref` to an encrypted store. Never log them or return them to the client.
+- **Constants** (`MIN_DISCOUNT_PCT`=50, `MAX_LEAD_HOURS`=72, `MANUAL_ATTESTATION_HOURS`=12, `SYNC_STALE_MINUTES`=15, `CLICK_RECHECK`=true, `MANUAL_REVIEW_COUNT`=3) are read from one config module, never hard-coded.
+
+## Roles
+- owner: everything. manager: everything except Billing and Account. staff: read-only Inventory, read-only Business profile, own Notifications.
+- Enforce on the server for every endpoint.
+
+## Working style
+- Use the project's existing stack, ORM, folder structure and test framework. Don't add new frameworks without asking.
+- Every change ships with automated tests for its rules.
+- After finishing a chunk from `docs/build-chunks.md`, tick it in the progress list and add one line of notes (files touched, anything deferred).
+- If a change alters behaviour described in `docs/deals-spec.md`, update the spec in the same change.
