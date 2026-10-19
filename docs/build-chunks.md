@@ -9,7 +9,7 @@
 Cursor ticks these as chunks are finished.
 
 **Phase A: Foundations**
-- [ ] 0. Set up reference files
+- [x] 0. Set up reference files — Notes: filled Project context in `docs/deals-spec.md` (files already present).
 - [ ] 1. Constants and enums
 - [ ] 2. Operator, defaults and team tables
 - [ ] 3. Deal table

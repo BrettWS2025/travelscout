@@ -402,3 +402,25 @@ Eight sub-sections. Owners see all; Managers all except Billing and Account; Sta
 6. Number of manual deals reviewed before trust (assume 3, make it a constant `MANUAL_REVIEW_COUNT`).
 
 Record answers here when decided.
+
+---
+
+## Project context
+
+TravelScout monorepo; the active app is under `web/`.
+
+| Item | Value |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| ORM | None — `@supabase/supabase-js` client with typed helpers |
+| Database | PostgreSQL via Supabase (`supabase/migrations/`; marketplace schema already exists) |
+| Test runner | Vitest (unit); Playwright (e2e) |
+| Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
+| File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
+| Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`) |
+| API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
+| Jobs | None yet for the deals platform |
+| Tests | Colocated `__tests__` under `web/lib/`, `web/components/`, `web/app/api/`; e2e in `web/e2e/` |
+| Operator UI | `web/app/operator/`, `web/components/operator/` |
