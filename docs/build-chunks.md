@@ -10,8 +10,8 @@ Cursor ticks these as chunks are finished.
 
 **Phase A: Foundations**
 - [x] 0. Set up reference files — Notes: filled Project context in `docs/deals-spec.md` (files already present).
-- [ ] 1. Constants and enums
-- [ ] 2. Operator, defaults and team tables
+- [x] 1. Constants and enums — Notes: `web/lib/marketplace/config.ts`, `web/lib/marketplace/enums.ts`, tests in `__tests__/config-and-enums.test.ts`; spec constants table expanded.
+- [x] 2. Operator, defaults and team tables — Notes: migration `20261019000001_create_operators_tables.sql`; service `web/lib/marketplace/operators.ts` (auto defaults + `ensureAcceptedOwner`); tests in `__tests__/operators.test.ts`.
 - [ ] 3. Deal table
 - [ ] 4. Sessions, price options, discount steps
 - [ ] 5. Media table
