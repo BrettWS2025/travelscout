@@ -430,7 +430,7 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`); deals platform constants in `web/lib/marketplace/config.ts`, enums in `web/lib/marketplace/enums.ts`; Operator / booking defaults / team in `web/lib/marketplace/operators.ts` (`marketplace.operators`, `operator_booking_defaults`, `team_members`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`) |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |
 | Tests | Colocated `__tests__` under `web/lib/`, `web/components/`, `web/app/api/`; e2e in `web/e2e/` |
