@@ -17,6 +17,8 @@
 6. **Time and money.** Store all times in UTC; display in the operator's timezone (default `Pacific/Auckland`). Store money as integer minor units (cents) with an ISO 4217 currency code (default `NZD`).
 
 ### Platform constants (admin-configurable)
+Read from `web/lib/marketplace/config.ts` (`getPlatformConfig()` / `PLATFORM_DEFAULTS`). Never hard-code these elsewhere.
+
 | Constant | Default | Meaning |
 |---|---|---|
 | `MIN_DISCOUNT_PCT` | 50 | Minimum discount off the verified original price, per price option |
@@ -24,6 +26,15 @@
 | `MANUAL_ATTESTATION_HOURS` | 12 | Manual deals auto-pause if the operator has not reconfirmed availability within this period |
 | `SYNC_STALE_MINUTES` | 15 | Integrated deals auto-pause if the provider has not synced successfully within this period |
 | `CLICK_RECHECK` | true | Re-check live availability when a traveller clicks Book now, before redirecting |
+| `MANUAL_REVIEW_COUNT` | 3 | First N manual deals per operator require admin review before going live |
+| `LINK_CHECK_TIMEOUT_MS` | 5000 | Timeout for booking-link reachability checks |
+| `CLICK_RECHECK_TIMEOUT_MS` | 2000 | Timeout for provider availability recheck on Book now |
+| `CACHED_AVAILABILITY_MAX_AGE_MINUTES` | 5 | Max age of cached seats before a timed-out click recheck fails closed |
+| `ARCHIVE_AFTER_DAYS` | 30 | Days after expired/ended before a deal is archived |
+| `ATTESTATION_REMINDER_HOURS` | 2 | Hours before attestation expiry to send the reconfirm reminder |
+| `ENFORCE_COMPLIANCE_ON_PUBLISH` | false | When true, missing/expired required compliance docs block publish |
+| `DEFAULT_TIMEZONE` | Pacific/Auckland | Default operator timezone (IANA) |
+| `DEFAULT_CURRENCY` | NZD | Default ISO 4217 currency |
 
 ### Enums
 | Enum | Values |
@@ -419,7 +430,7 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`); deals platform constants in `web/lib/marketplace/config.ts`, enums in `web/lib/marketplace/enums.ts` |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |
 | Tests | Colocated `__tests__` under `web/lib/`, `web/components/`, `web/app/api/`; e2e in `web/e2e/` |
