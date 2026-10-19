@@ -417,8 +417,8 @@ TravelScout monorepo; the active app is under `web/`.
 | Database | PostgreSQL via Supabase (`supabase/migrations/`; marketplace schema already exists) |
 | Test runner | Vitest (unit); Playwright (e2e) |
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
-| File storage | None yet (deal images are URL fields today; no media upload pipeline) |
-| Email / SMS provider | None yet |
+| File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
+| Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
 | Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`) |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |
