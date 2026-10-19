@@ -3,6 +3,9 @@
 -- ============================================================================
 -- list_nz_regions: distinct region_name values from nz_places_final
 -- find_nearest_nz_place: nearest city/town/village/hamlet with region_name
+--
+-- PostGIS lives in the extensions schema on Supabase; qualify types/functions
+-- so this works with a restricted search_path.
 
 CREATE OR REPLACE FUNCTION public.list_nz_regions()
 RETURNS TABLE (region_name text)
@@ -36,7 +39,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
   SELECT
     p.id,
@@ -46,20 +49,22 @@ AS $$
     p.lon,
     p.region_name,
     p.place_type,
-    ST_Distance(
-      p.geometry::geography,
-      ST_SetSRID(ST_MakePoint(p_lon, p_lat), 4326)::geography
+    extensions.ST_Distance(
+      p.geometry::extensions.geography,
+      extensions.ST_SetSRID(extensions.ST_MakePoint(p_lon, p_lat), 4326)::extensions.geography
     ) AS distance_m
   FROM public.nz_places_final p
   WHERE p.place_type IN ('city', 'town', 'village', 'hamlet')
     AND p.region_name IS NOT NULL
     AND btrim(p.region_name) <> ''
-    AND ST_DWithin(
-      p.geometry::geography,
-      ST_SetSRID(ST_MakePoint(p_lon, p_lat), 4326)::geography,
+    AND extensions.ST_DWithin(
+      p.geometry::extensions.geography,
+      extensions.ST_SetSRID(extensions.ST_MakePoint(p_lon, p_lat), 4326)::extensions.geography,
       p_radius_m
     )
-  ORDER BY p.geometry::geography <-> ST_SetSRID(ST_MakePoint(p_lon, p_lat), 4326)::geography
+  ORDER BY
+    p.geometry::extensions.geography
+      <-> extensions.ST_SetSRID(extensions.ST_MakePoint(p_lon, p_lat), 4326)::extensions.geography
   LIMIT 1;
 $$;
 
