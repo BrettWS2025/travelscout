@@ -67,12 +67,12 @@ describe("timezone helpers", () => {
 });
 
 describe("open-window sessions", () => {
-  it("allows 3 days and rejects a 4th; no duplicate days", () => {
+  it("allows 3 days and rejects a 4th; no duplicate days", async () => {
     const { store, deal } = createManualOpenWindow();
     const days = ["2026-10-22", "2026-10-23", "2026-10-24"];
 
     for (const date of days) {
-      const { session } = createDealSession(
+      const { session } = await createDealSession(
         store,
         deal.id,
         { date, manual_seats_available: 3 },
@@ -87,38 +87,38 @@ describe("open-window sessions", () => {
       MAX_OPEN_WINDOW_DAYS
     );
 
-    expect(() =>
+    await expect(
       createDealSession(
         store,
         deal.id,
         { date: "2026-10-22", manual_seats_available: 1 },
         { actor: ACTOR, now: NOW }
       )
-    ).toThrow(/duplicate/i);
+    ).rejects.toThrow(/duplicate/i);
 
-    expect(() =>
+    await expect(
       createDealSession(
         store,
         deal.id,
         { date: "2026-10-25", manual_seats_available: 2 },
         { actor: ACTOR, now: NOW }
       )
-    ).toThrow(/at most 3 days/i);
+    ).rejects.toThrow(/at most 3 days/i);
 
     const events = listSessionEvents(store, deal.id);
     expect(events.filter((e) => e.eventType === "session_added")).toHaveLength(3);
   });
 
-  it("logs seats_changed and session_removed", () => {
+  it("logs seats_changed and session_removed", async () => {
     const { store, deal } = createManualOpenWindow();
-    const { session } = createDealSession(
+    const { session } = await createDealSession(
       store,
       deal.id,
       { date: "2026-10-22", manual_seats_available: 5 },
       { actor: ACTOR, now: NOW }
     );
 
-    updateDealSession(
+    await updateDealSession(
       store,
       deal.id,
       session.id,
@@ -127,7 +127,7 @@ describe("open-window sessions", () => {
     );
     expect(store.sessions.get(session.id)?.seatsDisplayed).toBe(2);
 
-    deleteDealSession(store, deal.id, session.id, {
+    await deleteDealSession(store, deal.id, session.id, {
       actor: ACTOR,
       now: NOW,
     });
@@ -139,7 +139,7 @@ describe("open-window sessions", () => {
 });
 
 describe("manual_session", () => {
-  it("requires future start_at and recomputes seats_displayed with seat_cap", () => {
+  it("requires future start_at and recomputes seats_displayed with seat_cap", async () => {
     const { store, deal } = createManualSessionDeal();
     updateDraftDeal(
       store,
@@ -149,7 +149,7 @@ describe("manual_session", () => {
     );
     const refreshed = store.deals.get(deal.id)!;
 
-    expect(() =>
+    await expect(
       createDealSession(
         store,
         refreshed.id,
@@ -159,9 +159,9 @@ describe("manual_session", () => {
         },
         { actor: ACTOR, now: NOW }
       )
-    ).toThrow(/future/i);
+    ).rejects.toThrow(/future/i);
 
-    const { session } = createDealSession(
+    const { session } = await createDealSession(
       store,
       refreshed.id,
       {
@@ -176,10 +176,10 @@ describe("manual_session", () => {
 });
 
 describe("price options", () => {
-  it("accepts $200 → $90 and rejects $110 with max $100 message", () => {
+  it("accepts $200 → $90 and rejects $110 with max $100 message", async () => {
     const { store, deal } = createManualSessionDeal();
 
-    const { priceOption } = createDealPriceOption(
+    const { priceOption } = await createDealPriceOption(
       store,
       deal.id,
       {
@@ -198,7 +198,7 @@ describe("price options", () => {
     expect(maxDealPrice(20000)).toBe(10000);
 
     try {
-      createDealPriceOption(
+      await createDealPriceOption(
         store,
         deal.id,
         {
@@ -218,7 +218,7 @@ describe("price options", () => {
     }
   });
 
-  it("percentage 60% on $200 stores $80", () => {
+  it("percentage 60% on $200 stores $80", async () => {
     const { store, deal } = createManualSessionDeal();
     updateDraftDeal(
       store,
@@ -227,7 +227,7 @@ describe("price options", () => {
       { actor: ACTOR, now: NOW }
     );
 
-    const { priceOption } = createDealPriceOption(
+    const { priceOption } = await createDealPriceOption(
       store,
       deal.id,
       {
@@ -248,32 +248,36 @@ describe("price options", () => {
     });
   });
 
-  it("reorders sort_order from ordered_ids", () => {
+  it("reorders sort_order from ordered_ids", async () => {
     const { store, deal } = createManualSessionDeal();
-    const a = createDealPriceOption(
-      store,
-      deal.id,
-      {
-        label: "Adult",
-        type: "adult",
-        original_price_minor: 20000,
-        deal_price_minor: 9000,
-      },
-      { actor: ACTOR, now: NOW, id: "opt-a" }
+    const a = (
+      await createDealPriceOption(
+        store,
+        deal.id,
+        {
+          label: "Adult",
+          type: "adult",
+          original_price_minor: 20000,
+          deal_price_minor: 9000,
+        },
+        { actor: ACTOR, now: NOW, id: "opt-a" }
+      )
     ).priceOption;
-    const b = createDealPriceOption(
-      store,
-      deal.id,
-      {
-        label: "Child",
-        type: "child",
-        original_price_minor: 10000,
-        deal_price_minor: 4000,
-      },
-      { actor: ACTOR, now: NOW, id: "opt-b" }
+    const b = (
+      await createDealPriceOption(
+        store,
+        deal.id,
+        {
+          label: "Child",
+          type: "child",
+          original_price_minor: 10000,
+          deal_price_minor: 4000,
+        },
+        { actor: ACTOR, now: NOW, id: "opt-b" }
+      )
     ).priceOption;
 
-    const { priceOptions } = reorderDealPriceOptions(
+    const { priceOptions } = await reorderDealPriceOptions(
       store,
       deal.id,
       [b.id, a.id],
@@ -284,9 +288,9 @@ describe("price options", () => {
     expect(priceOptions[1].sortOrder).toBe(1);
   });
 
-  it("logs price_changed old/new on update", () => {
+  it("logs price_changed old/new on update", async () => {
     const { store, deal } = createManualSessionDeal();
-    const { priceOption } = createDealPriceOption(
+    const { priceOption } = await createDealPriceOption(
       store,
       deal.id,
       {
@@ -298,7 +302,7 @@ describe("price options", () => {
       { actor: ACTOR, now: NOW }
     );
 
-    updateDealPriceOption(
+    await updateDealPriceOption(
       store,
       deal.id,
       priceOption.id,
@@ -315,7 +319,7 @@ describe("price options", () => {
 });
 
 describe("live deal confirm", () => {
-  it("requires confirm: true when the deal is live", () => {
+  it("requires confirm: true when the deal is live", async () => {
     const { store, deal } = createManualSessionDeal();
     // Force live via status store transition path (shared deal map + audit).
     const statusStore = { deals: store.deals, audit: store.audit };
@@ -325,7 +329,7 @@ describe("live deal confirm", () => {
     });
     expect(store.deals.get(deal.id)?.status).toBe("live");
 
-    expect(() =>
+    await expect(
       createDealSession(
         store,
         deal.id,
@@ -335,9 +339,9 @@ describe("live deal confirm", () => {
         },
         { actor: ACTOR, now: NOW }
       )
-    ).toThrow(LiveDealConfirmRequiredError);
+    ).rejects.toBeInstanceOf(LiveDealConfirmRequiredError);
 
-    const { session } = createDealSession(
+    const { session } = await createDealSession(
       store,
       deal.id,
       {

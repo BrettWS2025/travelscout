@@ -78,7 +78,7 @@ describe("Chunk 13 sessions / price-options API", () => {
       now: NOW,
     });
 
-    createDealSession(
+    await createDealSession(
       getDealDraftHttpStore(),
       deal.id,
       { date: "2026-10-22", manual_seats_available: 2 },
@@ -88,7 +88,7 @@ describe("Chunk 13 sessions / price-options API", () => {
       }
     );
 
-    createDealPriceOption(
+    await createDealPriceOption(
       getDealDraftHttpStore(),
       deal.id,
       {
@@ -104,7 +104,7 @@ describe("Chunk 13 sessions / price-options API", () => {
     );
 
     try {
-      createDealPriceOption(
+      await createDealPriceOption(
         getDealDraftHttpStore(),
         deal.id,
         {

@@ -44,7 +44,7 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("ordered_ids must be an array of strings.");
     }
 
-    const result = reorderDealPriceOptions(
+    const result = await reorderDealPriceOptions(
       getDealDraftHttpStore(),
       dealId,
       orderedIds as string[],

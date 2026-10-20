@@ -39,10 +39,15 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("Request body must be JSON.");
     }
 
-    const result = createDealSession(getDealDraftHttpStore(), dealId, body, {
-      actor: { type: "user", id: auth.user.id },
-      confirm: body.confirm === true,
-    });
+    const result = await createDealSession(
+      getDealDraftHttpStore(),
+      dealId,
+      body,
+      {
+        actor: { type: "user", id: auth.user.id },
+        confirm: body.confirm === true,
+      }
+    );
 
     return Response.json({
       session: result.session,

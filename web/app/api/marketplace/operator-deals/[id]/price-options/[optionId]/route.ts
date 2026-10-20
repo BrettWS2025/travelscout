@@ -44,7 +44,7 @@ export async function PATCH(req: Request, { params }: Params) {
       return badRequest("Request body must be JSON.");
     }
 
-    const result = updateDealPriceOption(
+    const result = await updateDealPriceOption(
       getDealDraftHttpStore(),
       dealId,
       optionId,
@@ -91,7 +91,7 @@ export async function DELETE(req: Request, { params }: Params) {
       // no body is fine for DELETE
     }
 
-    const result = deleteDealPriceOption(
+    const result = await deleteDealPriceOption(
       getDealDraftHttpStore(),
       dealId,
       optionId,

@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("Request body must be JSON.");
     }
 
-    const result = createDealPriceOption(
+    const result = await createDealPriceOption(
       getDealDraftHttpStore(),
       dealId,
       body,
