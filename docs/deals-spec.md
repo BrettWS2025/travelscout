@@ -121,7 +121,7 @@ Every table has `id` (uuid), `created_at`, `updated_at` unless noted. "Req" = re
 | location_name | string | Yes | |
 | address | string | Yes | |
 | latitude, longitude | decimal | Yes | From map pin or geocoding |
-| region | string | Yes | From platform region list |
+| region | string | Yes | From `PLATFORM_REGIONS` in `web/lib/marketplace/settings.ts` (Auckland, Northland, Waikato, Bay of Plenty, Rotorua, Taupō, Hawke's Bay, Wellington, Nelson Tasman, Marlborough, Canterbury, West Coast, Otago, Queenstown, Southland) — tourism destinations, distinct from official NZ admin regions |
 | meeting_point_notes | text | No | Max 500 |
 | pickup_available | bool | No | Default false |
 | pickup_notes | text | If pickup | Max 500 |
@@ -261,10 +261,10 @@ Tables: `marketplace.integrations`, `external_products`, `external_sessions`, `s
 |---|---|---|
 | Operator | legal_name, trading_name, slug, logo, cover_image, short_description (≤160), long_description (≤3,000), website, public_email, public_phone, internal_email, internal_phone, address, regions_served string[], timezone, currency, languages string[], gst_number, nzbn, social_links json, account_status, requires_manual_review bool | requires_manual_review is admin-set; forces pending_review on publish |
 | OperatorBookingDefaults | default_sales_cutoff_minutes, default_seat_cap, default_discount_pct, default_discount_mechanism, default_booking_destination_type, default_booking_url, default_booking_phone, default_booking_email, default_booking_instructions, default_cancellation_policy_type, default_cancellation_policy_text, default_attestation_reminder_hours | One row per operator; pre-fills new deals |
-| NotificationPreference | user_id, operator_id, event_type, email, sms, in_app | Events in 6.4 |
+| NotificationPreference | user_id, operator_id, event_type, email, sms, in_app | Events in 6.4; unique (user_id, operator_id, event_type); table `marketplace.notification_preferences` |
 | TeamMember | operator_id, user_id, role, invited_email, invite_status, invited_at, last_active_at | Min 1 owner per operator |
-| ComplianceDocument | operator_id, doc_type, file, issuer, reference_number, issued_on, expires_on, review_status, reviewer_notes | Expiry reminders at 30 and 7 days |
-| BillingAccount | operator_id, plan, billing_model, commission_pct, billing_email, payment_method_ref, status | Invoices pulled from billing provider, not stored |
+| ComplianceDocument | operator_id, doc_type, file, issuer, reference_number, issued_on, expires_on, review_status (default pending), reviewer_notes | Expiry reminders at 30 and 7 days; table `marketplace.compliance_documents` |
+| BillingAccount | operator_id (unique), plan, billing_model, commission_pct, billing_email, payment_method_ref, status (`active`\|`past_due`\|`cancelled`\|`none`) | One row per operator; invoices pulled from billing provider, not stored; `payment_method_ref` never returned to clients |
 
 ---
 
@@ -434,8 +434,11 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts` (plus `web/lib/supabase/`) |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
+| Settings tables | `notification_preferences`, `compliance_documents`, `billing_accounts` |
+| Dev seed | `supabase/seeds/deals_platform_dev.sql` + `seed-dev.ts` (Harbour Kayaks / Bay Cruises) |
+| Platform regions | `PLATFORM_REGIONS` in `settings.ts` |
 | Provider secrets | `storeSecret` / `readSecret` / `deleteSecret` in `secrets.ts`; ciphertext in `marketplace.encrypted_secrets`; API serializers omit `credentials_ref` / `webhook_secret_ref` |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |

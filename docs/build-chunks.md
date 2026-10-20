@@ -17,7 +17,7 @@ Cursor ticks these as chunks are finished.
 - [x] 5. Media table — Notes: `marketplace.deal_media` + `web/lib/marketplace/deal-media.ts` (cover swap/promote, max 12 images, YouTube/Vimeo embed check).
 - [x] 6. Audit, attestation, click, metrics, template tables — Notes: `deal_events` (append-only DB triggers + service reject update/delete), `deal_attestations`, `click_events`, `deal_metric_daily`, `deal_templates` + `web/lib/marketplace/deal-audit.ts`.
 - [x] 7. Integration and auto-deal rule tables — Notes: `integrations` / `external_products` / `external_sessions` / `sync_logs` / `deal_rules` + `encrypted_secrets`; `secrets.ts` AES-GCM helpers; `serializeIntegration` strips refs; deferred FKs on `operator_deals` + `deal_sessions` wired.
-- [ ] 8. Remaining settings tables and seed data
+- [x] 8. Remaining settings tables and seed data — Notes: `notification_preferences` / `compliance_documents` / `billing_accounts` + `settings.ts` (`PLATFORM_REGIONS`, notification defaults); dev seed Harbour Kayaks (owner/manager/staff) + Bay Cruises (rezdy `not_connected`) via `seed-dev.ts` + `supabase/seeds/deals_platform_dev.sql`.
 - [ ] 9. Roles and permissions guard
 
 **Phase B: Manual deals end to end**
