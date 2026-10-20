@@ -151,8 +151,9 @@ export type PublishValidationResult = {
 };
 
 /**
- * Stub until Chunk 16 implements validateForPublish.
- * clearAutoPause / resume paths inject the real validator when available.
+ * No-op validator (always ok). Prefer `validateForPublish` /
+ * `createValidateForPublishFromStore` from deal-publish-validation.ts.
+ * Kept for unit tests that inject their own ValidateForPublishFn.
  */
 export function stubValidateForPublish(
   _deal: Deal

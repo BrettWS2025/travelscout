@@ -285,26 +285,29 @@ Implemented in `web/lib/marketplace/pricing.ts`. Money is always integer minor u
 | `validateSteps(steps, option)` | Steps sorted by `hours_before_start` descending; each price ≤ previous step and ≤ base deal price; each meets min discount; promo codes distinct |
 
 ### 4.1 Publish validation
-| Check | Applies to | Rule |
-|---|---|---|
-| Required fields | All | Every Req field in section 3 present and valid |
-| 50% minimum | All | For every price option and every step: `meetsMinDiscount` / `validateSteps` (§4.0); equivalent to `deal_price_minor ≤ floor(original × (1 − MIN_DISCOUNT_PCT/100))` |
-| Images | All | ≥1 image, exactly 1 cover, all with alt text |
-| Session timing | All | ≥1 session starting in the future; sessions further than MAX_LEAD_HOURS put the deal in scheduled, not live |
-| Booking destination | All | URL passes link check (2xx/3xx within 5 s), or phone/email valid |
-| Integration healthy | Integrated | Integration connected and last_successful_sync_at within SYNC_STALE_MINUTES |
-| Product active | Integrated | ExternalProduct enabled and not archived in provider |
-| Original price locked | Integrated | original_price_minor equals provider's current price; not editable |
-| Discount exists in provider | Integrated, price_option | Discounted provider option exists and price equals deal_price_minor |
-| Promo code confirmed | Integrated, promo_code | Verified via provider API if supported; else operator ticks "This code exists in my booking system" and runs Test link |
-| Session available | Integrated | Provider session exists, not cancelled, seats available |
-| Price evidence | Manual | original_price_evidence_url provided and reachable |
-| Seats entered | Manual | manual_seats_available > 0 for at least one session/day |
-| Attestation | Manual | Operator ticks "These seats are available and I will honour this price"; creates a DealAttestation |
-| Review | Manual, or requires_manual_review | Operator's first 3 manual deals, or all deals if flagged, go to pending_review |
+Implemented in `web/lib/marketplace/deal-publish-validation.ts` as `validateForPublish(deal, context)` → `{ ok, checks: [{ key, label, passed, message, editorStep }], hasSessionWithinLeadHours? }`. Also `validateDealInStore` / `createValidateForPublishFromStore` for draft store + auto-resume. `GET /operator-deals/:id` returns the validation block. Integrated provider checks are stubs (`passed: false`, message “Not yet built — see Chunk 35”) until Chunk 35. Optional `compliance` check runs when `ENFORCE_COMPLIANCE_ON_PUBLISH` is true.
+
+| Check | Applies to | Rule | editorStep |
+|---|---|---|---|
+| `required_fields` | All | Every Req field in section 3 present and valid | content (or pricing / availability / destination when those fields fail) |
+| `min_discount` | All | For every price option and every step: `meetsMinDiscount` / `validateSteps` (§4.0) | pricing |
+| `images` | All | ≥1 image, exactly 1 cover, all with alt text | images |
+| `session_timing` | All | ≥1 session with `start_at − sales_cutoff_minutes` in the future; result also reports whether any is within `MAX_LEAD_HOURS` (live vs scheduled) | availability |
+| `booking_destination` | All | URL `link_status` ok (re-check if unchecked or stale >6 h), or phone/email valid | destination |
+| `integration_healthy` | Integrated | Integration connected and last_successful_sync_at within SYNC_STALE_MINUTES | type |
+| `product_active` | Integrated | ExternalProduct enabled and not archived in provider | type |
+| `original_price_locked` | Integrated | original_price_minor equals provider's current price; not editable | pricing |
+| `discount_in_provider` | Integrated, price_option | Discounted provider option exists and price equals deal_price_minor | pricing |
+| `promo_code_confirmed` | Integrated, promo_code | Verified via provider API if supported; else operator ticks "This code exists in my booking system" and runs Test link | pricing |
+| `session_available` | Integrated | Provider session exists, not cancelled, seats available | availability |
+| `price_evidence` | Manual | original_price_evidence_url provided and reachable | pricing |
+| `seats_entered` | Manual | manual_seats_available > 0 for at least one session/day | availability |
+| `attestation` | Manual | Operator ticks "These seats are available and I will honour this price" (`attested: true`) or a current `attestation_expires_at`; creates a DealAttestation at publish (Chunk 17) | review |
+| `compliance` | Optional | When `ENFORCE_COMPLIANCE_ON_PUBLISH`, required docs (default `public_liability_insurance`) present and not expired | review |
+| Review | Manual, or requires_manual_review | Operator's first 3 manual deals, or all deals if flagged, go to pending_review (Chunk 17 publish flow) | — |
 
 ### 4.2 Status transitions
-Implemented in `web/lib/marketplace/deal-status.ts`: `logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`. Clients never set `status`, `pause_reason` or `pause_detail` — client update helpers strip those fields (`stripSystemOwnedDealFields` / `applyClientDealFieldPatch`). Disallowed edges throw `InvalidDealTransitionError`. Entering `paused` sets `pause_reason=operator`; entering `auto_paused` uses the given reason; both clear on leave. First entry to `live` or `scheduled` sets `published_at` and `first_published_at`; `ended` sets `ended_at`. Every transition writes a `DealEvent` with `from_status` / `to_status` / `reason`. `clearAutoPause` only resumes when the deal is `auto_paused` for the same reason in `AUTO_RESUME_REASONS` and publish validation passes (Chunk 16 fills `validateForPublish`; stub returns ok until then).
+Implemented in `web/lib/marketplace/deal-status.ts`: `logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`. Clients never set `status`, `pause_reason` or `pause_detail` — client update helpers strip those fields (`stripSystemOwnedDealFields` / `applyClientDealFieldPatch`). Disallowed edges throw `InvalidDealTransitionError`. Entering `paused` sets `pause_reason=operator`; entering `auto_paused` uses the given reason; both clear on leave. First entry to `live` or `scheduled` sets `published_at` and `first_published_at`; `ended` sets `ended_at`. Every transition writes a `DealEvent` with `from_status` / `to_status` / `reason`. `clearAutoPause` only resumes when the deal is `auto_paused` for the same reason in `AUTO_RESUME_REASONS` and publish validation passes (`validateForPublish` / `createValidateForPublishFromStore` in `web/lib/marketplace/deal-publish-validation.ts`).
 
 | From | Trigger | To |
 |---|---|---|
@@ -472,7 +475,7 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-media-api.ts` (Chunk 14 upload/embed/cover), `media-storage.ts`, `image-dimensions.ts`, `deal-audit.ts`, `deal-status.ts` (§4.2 transitions), `deal-draft.ts` (Chunk 12 create/update/duplicate), `deal-inventory.ts` (Chunk 13 manual sessions / price options), `booking-destination.ts` / `booking-link.ts` (Chunk 15 link check + tracked URLs), `timezone.ts` (operator-local ↔ UTC), `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-media-api.ts` (Chunk 14 upload/embed/cover), `media-storage.ts`, `image-dimensions.ts`, `deal-audit.ts`, `deal-status.ts` (§4.2 transitions), `deal-draft.ts` (Chunk 12 create/update/duplicate), `deal-inventory.ts` (Chunk 13 manual sessions / price options), `booking-destination.ts` / `booking-link.ts` (Chunk 15 link check + tracked URLs), `deal-publish-validation.ts` (§4.1 publish checks), `timezone.ts` (operator-local ↔ UTC), `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
 | Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | Settings tables | `notification_preferences`, `compliance_documents`, `billing_accounts` |

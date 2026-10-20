@@ -39,7 +39,7 @@ export async function GET(req: Request, { params }: Params) {
     const auth = await requirePermission(req, operatorId, "inventory.read");
     if (!auth.ok) return auth.response;
 
-    const detail = getDealDetail(getDealDraftHttpStore(), dealId);
+    const detail = await getDealDetail(getDealDraftHttpStore(), dealId);
     return Response.json(detail);
   } catch (err) {
     return dealDraftErrorResponse(err, "Failed to get deal.");

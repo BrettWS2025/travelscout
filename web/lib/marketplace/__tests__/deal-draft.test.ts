@@ -314,7 +314,7 @@ describe("updateDraftDeal", () => {
 });
 
 describe("duplicateDeal", () => {
-  it("copies content, media, price options but not sessions", () => {
+  it("copies content, media, price options but not sessions", async () => {
     const { store } = harbourStore();
     const source = createDraftDeal(store, {
       operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
@@ -389,7 +389,7 @@ describe("duplicateDeal", () => {
     expect(copy.bookingUrl).toBe("https://harbour.example/book");
     expect(copy.firstPublishedAt).toBeNull();
 
-    const detail = getDealDetail(store, copy.id);
+    const detail = await getDealDetail(store, copy.id);
     expect(detail.sessions).toHaveLength(0);
     expect(detail.media).toHaveLength(1);
     expect(detail.media[0].url).toBe("https://cdn.example.com/kayak.jpg");
@@ -397,10 +397,11 @@ describe("duplicateDeal", () => {
     expect(detail.priceOptions).toHaveLength(1);
     expect(detail.priceOptions[0].label).toBe("Adult");
     expect(detail.priceOptions[0].id).not.toBe("opt-1");
-    expect(detail.validation).toEqual({ ok: true, checks: [] });
+    expect(detail.validation.ok).toBe(false);
+    expect(detail.validation.checks.length).toBeGreaterThan(0);
 
     // Source still has its session
-    expect(getDealDetail(store, source.id).sessions).toHaveLength(1);
+    expect((await getDealDetail(store, source.id)).sessions).toHaveLength(1);
   });
 
   it("createDraftDeal with duplicate_of uses duplicate path", () => {
@@ -462,7 +463,7 @@ describe("deleteDraftDeal", () => {
 });
 
 describe("getDealDetail", () => {
-  it("returns empty validation block until Chunk 16", () => {
+  it("returns validation checks for an incomplete draft (Chunk 16)", async () => {
     const { store } = harbourStore();
     const deal = createDraftDeal(store, {
       operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
@@ -470,10 +471,16 @@ describe("getDealDetail", () => {
       actor: ACTOR,
       now: NOW,
     });
-    const detail = getDealDetail(store, deal.id);
+    const detail = await getDealDetail(store, deal.id, {
+      now: NOW,
+      refreshStaleLinks: false,
+    });
     expect(detail.deal.id).toBe(deal.id);
-    expect(detail.validation.ok).toBe(true);
-    expect(detail.validation.checks).toEqual([]);
+    expect(detail.validation.ok).toBe(false);
+    expect(detail.validation.checks.length).toBeGreaterThan(0);
+    expect(detail.validation.checks.some((c) => c.key === "required_fields")).toBe(
+      true
+    );
     expect(detail.sessions).toEqual([]);
     expect(detail.media).toEqual([]);
   });
