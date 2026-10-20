@@ -4,7 +4,10 @@
  * (not marketplace.deals — that is the legacy org-scoped lightweight feed).
  *
  * Field-level validation runs on every save. Publish required-ness is Chunk 16.
- * Status / pause_* are system-owned — clients must not set them (Chunk 11).
+ * Status / pause_* are system-owned — only transitionDeal / applyAutoPause /
+ * clearAutoPause may change them (see deal-status.ts). Client PATCH paths must
+ * call stripSystemOwnedDealFields / applyClientDealFieldPatch so status,
+ * pause_reason and pause_detail are ignored.
  */
 
 import type {
