@@ -10,6 +10,7 @@ import {
   notFound,
   serverError,
 } from "./auth";
+import { BookingLinkError } from "./booking-link";
 import {
   createDealDraftStore,
   DealDeleteNotAllowedError,
@@ -48,6 +49,9 @@ export function setDealDraftHttpStore(store: DealDraftStore | null): void {
 export function dealDraftErrorResponse(err: unknown, context: string): Response {
   if (err instanceof DealNotFoundError) {
     return notFound("Deal not found.");
+  }
+  if (err instanceof BookingLinkError) {
+    return Response.json({ error: err.message }, { status: err.status });
   }
   if (err instanceof LiveDealConfirmRequiredError) {
     return Response.json(

@@ -10,6 +10,7 @@
  * pause_reason and pause_detail are ignored.
  */
 
+import { validateBookingDestinationFields } from "./booking-destination";
 import type {
   BookingDestinationType,
   CancellationPolicyType,
@@ -581,6 +582,17 @@ export function validateDealFields(input: DealFieldInput): FieldError[] {
       });
     }
   }
+
+  // Chunk 15: booking_url https; booking_phone E.164; booking_email format
+  errors.push(
+    ...validateBookingDestinationFields({
+      bookingDestinationType: input.bookingDestinationType,
+      bookingUrl: input.bookingUrl,
+      bookingPhone: input.bookingPhone,
+      bookingEmail: input.bookingEmail,
+    }).filter((e) => e.field !== "booking_destination_type")
+  );
+
   if (input.linkStatus !== undefined && input.linkStatus !== null) {
     if (!isLinkStatus(input.linkStatus)) {
       errors.push({ field: "link_status", message: "invalid value" });
