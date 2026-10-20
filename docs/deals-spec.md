@@ -246,13 +246,15 @@ One row per departure (session types) or per day (open window). Every deal has a
 | DealMetricDaily | deal_id, date, impressions, detail_views, booking_clicks, sold_out_on_click, attributed_bookings, attributed_revenue_minor | Reporting |
 
 ### 3.8 Integration tables
-**Integration**: operator_id, provider (enum source_provider, one active per provider per operator), status (integration_status), auth_type, credentials_ref (reference to encrypted secret store; never plain text, never returned to client), external_account_id, external_account_name, sync_mode, poll_interval_seconds (bounded by provider rate limits), webhook_secret_ref, webhook_last_received_at, last_sync_at, last_successful_sync_at (drives SYNC_STALE_MINUTES), last_error_code, last_error_message, default_booking_destination_type, booking_base_url, conversion_tracking_method, booking_source_label, auto_enable_new_products (default false), connected_at, connected_by.
+Tables: `marketplace.integrations`, `external_products`, `external_sessions`, `sync_logs`, `deal_rules`. Domain: `web/lib/marketplace/integration.ts`. Secrets: `web/lib/marketplace/secrets.ts` + `marketplace.encrypted_secrets` (AES-256-GCM; key `SECRETS_ENCRYPTION_KEY`). Unique `(operator_id, provider)` where status ≠ `disconnected`. Deferred FKs from Chunks 3–4 are wired here (`operator_deals.integration_id` / `external_product_id` / `deal_rule_id`, `deal_sessions.external_session_id`).
 
-**ExternalProduct**: integration_id, external_id, name, description, images json, duration_minutes, location json, price_options json, is_enabled_for_deals bool, archived_in_provider bool, raw_payload json, last_synced_at.
+**Integration**: operator_id, provider (enum source_provider minus `manual`, one active per provider per operator), status (integration_status), auth_type, credentials_ref (reference to encrypted secret store; never plain text, never returned to client — serializers strip `credentials_ref` and `webhook_secret_ref`), external_account_id, external_account_name, sync_mode, poll_interval_seconds (bounded by provider rate limits), webhook_secret_ref, webhook_last_received_at, last_sync_at, last_successful_sync_at (drives SYNC_STALE_MINUTES), last_error_code, last_error_message, default_booking_destination_type, booking_base_url, conversion_tracking_method, booking_source_label, auto_enable_new_products (default false), connected_at, connected_by.
 
-**ExternalSession**: external_product_id, external_id, start_at, end_at, seats_available, total_capacity, status, prices json, last_synced_at. Only sessions within the next 72 h (plus buffer) need syncing.
+**ExternalProduct**: integration_id, external_id, name, description, images json, duration_minutes, location json, price_options json, is_enabled_for_deals bool, archived_in_provider bool, raw_payload json, last_synced_at. Unique `(integration_id, external_id)`.
 
-**SyncLog**: integration_id, sync_type, status, started_at, finished_at, items_processed, error_code, error_message, affected_deal_ids.
+**ExternalSession**: external_product_id, external_id, start_at, end_at, seats_available, total_capacity, status, prices json, last_synced_at. Unique `(external_product_id, external_id)`. Only sessions within the next 72 h (plus buffer) need syncing.
+
+**SyncLog**: integration_id, sync_type, status (`running`|`success`|`failed`), started_at, finished_at, items_processed, error_code, error_message, affected_deal_ids.
 
 ### 3.9 Operator and settings tables
 | Table | Fields | Notes |
@@ -432,8 +434,9 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts` (sessions / price options / steps), `operators.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts` (plus `web/lib/supabase/`) |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
+| Provider secrets | `storeSecret` / `readSecret` / `deleteSecret` in `secrets.ts`; ciphertext in `marketplace.encrypted_secrets`; API serializers omit `credentials_ref` / `webhook_secret_ref` |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |
 | Tests | Colocated `__tests__` under `web/lib/`, `web/components/`, `web/app/api/`; e2e in `web/e2e/` |
