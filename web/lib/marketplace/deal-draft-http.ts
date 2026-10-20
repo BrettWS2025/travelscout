@@ -16,6 +16,10 @@ import {
   DealDraftError,
   type DealDraftStore,
 } from "./deal-draft";
+import {
+  LiveDealConfirmRequiredError,
+  MinDiscountError,
+} from "./deal-inventory";
 import { DealNotFoundError } from "./deal-status";
 import { DealValidationError } from "./deal";
 
@@ -36,6 +40,27 @@ export function setDealDraftHttpStore(store: DealDraftStore | null): void {
 export function dealDraftErrorResponse(err: unknown, context: string): Response {
   if (err instanceof DealNotFoundError) {
     return notFound("Deal not found.");
+  }
+  if (err instanceof LiveDealConfirmRequiredError) {
+    return Response.json(
+      {
+        error: err.message,
+        needs_confirm: true,
+        warnings: err.warnings,
+        validation: err.validation,
+      },
+      { status: 409 }
+    );
+  }
+  if (err instanceof MinDiscountError) {
+    return Response.json(
+      {
+        error: err.message,
+        max_deal_price_minor: err.maxDealPriceMinor,
+        errors: err.errors ?? [],
+      },
+      { status: 400 }
+    );
   }
   if (err instanceof DealDeleteNotAllowedError) {
     return Response.json({ error: err.message }, { status: 409 });
