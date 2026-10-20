@@ -499,6 +499,31 @@ export function getBookingDefaults(
   return store.bookingDefaults.get(operatorId) ?? null;
 }
 
+/**
+ * Admin-only toggle: when true, every publish goes to pending_review (Chunk 17).
+ */
+export function setOperatorRequiresManualReview(
+  store: OperatorStore,
+  operatorId: string,
+  on: boolean,
+  options?: { now?: string }
+): Operator {
+  const existing = store.operators.get(operatorId);
+  if (!existing) {
+    throw new OperatorValidationError([
+      { field: "operator_id", message: "not found" },
+    ]);
+  }
+  const now = options?.now ?? new Date().toISOString();
+  const updated: Operator = {
+    ...existing,
+    requiresManualReview: on,
+    updatedAt: now,
+  };
+  store.operators.set(operatorId, updated);
+  return updated;
+}
+
 /** Compile-time / docs anchor: platform defaults used when building booking defaults. */
 export const OPERATOR_PLATFORM_DEFAULTS = {
   MIN_DISCOUNT_PCT,

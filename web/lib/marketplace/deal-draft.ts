@@ -43,6 +43,10 @@ import {
 } from "./deal-status";
 import type { EvidenceUrlCheckRecord, FetchLike } from "./booking-link";
 import {
+  getPublishButtonLabel,
+  type PublishButtonLabel,
+} from "./deal-publish";
+import {
   validateDealInStore,
   type PublishValidationOutcome,
 } from "./deal-publish-validation";
@@ -705,6 +709,8 @@ export type DealDetail = {
   discountSteps: DiscountStep[];
   media: DealMedia[];
   validation: PublishValidationResult | PublishValidationOutcome;
+  /** Editor primary CTA label (Chunk 17). */
+  publish_button: PublishButtonLabel;
 };
 
 export type GetDealDetailOptions = {
@@ -742,6 +748,13 @@ export async function getDealDetail(
 
   // Re-read deal in case link refresh updated it
   const freshDeal = store.deals.get(dealId) ?? deal;
+  const publish_button = getPublishButtonLabel(store, dealId, {
+    now: options?.now,
+    hasSessionWithinLeadHours:
+      "hasSessionWithinLeadHours" in validation
+        ? validation.hasSessionWithinLeadHours
+        : undefined,
+  });
 
   return {
     deal: freshDeal,
@@ -750,6 +763,7 @@ export async function getDealDetail(
     discountSteps,
     media,
     validation,
+    publish_button,
   };
 }
 

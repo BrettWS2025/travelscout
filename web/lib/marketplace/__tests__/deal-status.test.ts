@@ -164,6 +164,31 @@ describe("transitionDeal — pause fields and timestamps", () => {
     );
   });
 
+  it("sets pause_reason=admin when entering paused with reason admin", () => {
+    const store = storeWith("live");
+    const paused = transitionDeal(store, DEAL_ID, "paused", {
+      actor: { type: "admin", id: "a1" },
+      reason: "admin",
+      detail: "Policy",
+      now: NOW,
+    });
+    expect(paused.pauseReason).toBe("admin");
+    expect(paused.pauseDetail).toBe("Policy");
+  });
+
+  it("stores reject notes in pause_detail when pending_review → draft", () => {
+    const store = storeWith("pending_review");
+    const rejected = transitionDeal(store, DEAL_ID, "draft", {
+      actor: { type: "admin", id: "a1" },
+      detail: "Fix the photos",
+      now: NOW,
+    });
+    expect(rejected.status).toBe("draft");
+    expect(rejected.pauseReason).toBeNull();
+    expect(rejected.pauseDetail).toBe("Fix the photos");
+    expect(listDealEvents(store.audit, DEAL_ID)[0].eventType).toBe("rejected");
+  });
+
   it("sets given reason on auto_paused and clears on auto_resume", () => {
     const store = storeWith("live");
     const paused = transitionDeal(store, DEAL_ID, "auto_paused", {
