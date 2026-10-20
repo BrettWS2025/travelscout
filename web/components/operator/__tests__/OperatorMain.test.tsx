@@ -32,4 +32,16 @@ describe("OperatorMain", () => {
     const main = container.querySelector("main");
     expect(main?.className).toContain("container");
   });
+
+  it("keeps quick-update mobile page full-bleed", () => {
+    pathnameMock.mockReturnValue("/quick-update/tok-abc");
+    const { container } = render(
+      <OperatorMain>
+        <div>quick</div>
+      </OperatorMain>
+    );
+    const main = container.querySelector("main");
+    expect(main?.className).toContain("w-full");
+    expect(main?.className).not.toContain("container");
+  });
 });

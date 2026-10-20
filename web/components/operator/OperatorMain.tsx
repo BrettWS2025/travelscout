@@ -18,8 +18,9 @@ export function OperatorMain({ children }: { children: ReactNode }) {
     pathname === "/operator/signup" ||
     pathname.startsWith("/operator/signup/");
   const isAuth = pathname.startsWith("/auth/");
+  const isQuickUpdate = pathname.startsWith("/quick-update/");
 
-  if (isLanding || isSignup || isAuth) {
+  if (isLanding || isSignup || isAuth || isQuickUpdate) {
     return (
       <main className="relative z-0 w-full overflow-x-clip pb-0 pt-0">
         {children}
