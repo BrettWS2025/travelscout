@@ -187,8 +187,8 @@ One row per departure (session types) or per day (open window). Every deal has a
 | original_price_minor | int | Yes | From provider, or entered for manual |
 | original_price_source | enum | System | |
 | original_price_evidence_url | url | If manual | Public page showing standard price |
-| deal_price_minor | int | Yes | Must satisfy 50% rule |
-| discount_pct | decimal | System | 1 − deal/original, 1 dp |
+| deal_price_minor | int | Yes | Must satisfy 50% rule (`meetsMinDiscount`; see §4.0) |
+| discount_pct | decimal | System | `discountPct` / `withDiscountPct` on every save; 1 − deal/original, 1 dp |
 | sort_order | int | Yes | |
 
 ### 3.4 DiscountStep (`marketplace.discount_steps`)
@@ -197,7 +197,7 @@ One row per departure (session types) or per day (open window). Every deal has a
 | deal_id | fk operator_deals | Yes | |
 | price_option_id | fk DealPriceOption | Yes | → `deal_price_options.id` |
 | hours_before_start | int | Yes | 1–MAX_LEAD_HOURS (default 72); applies from this point onward |
-| deal_price_minor | int | Yes | ≤ previous step and meets 50% rule |
+| deal_price_minor | int | Yes | ≤ previous step and ≤ base deal price; meets 50% rule (`validateSteps`) |
 | promo_code | string | If promo_code | Distinct per step |
 | external_deal_price_option_id | string | If price_option | |
 
@@ -271,11 +271,24 @@ Tables: `marketplace.integrations`, `external_products`, `external_sessions`, `s
 ## 4. Validation, status lifecycle and background jobs
 A deal can only go live when every check passes, and it leaves live automatically the moment any check stops passing.
 
+### 4.0 Pricing maths (pure helpers)
+Implemented in `web/lib/marketplace/pricing.ts`. Money is always integer minor units. Never hard-code `MIN_DISCOUNT_PCT` — read via `getPlatformConfig()`.
+
+| Function | Rule |
+|---|---|
+| `maxDealPrice(originalMinor)` | `floor(originalMinor × (1 − MIN_DISCOUNT_PCT/100))` |
+| `meetsMinDiscount(originalMinor, dealMinor)` | `dealMinor ≤ maxDealPrice(originalMinor)` and `dealMinor ≥ 0` and `originalMinor > 0` |
+| `discountPct(originalMinor, dealMinor)` | `round((1 − deal/original) × 100, 1 dp)`; null if original ≤ 0 |
+| `meetsMinDiscountPercentage(pct)` | `pct ≥ MIN_DISCOUNT_PCT` (reject e.g. 49% when min is 50) |
+| `priceFromPercentage(originalMinor, pct)` | Round to nearest cent; if that fails the rule, floor instead so a valid percentage never yields an invalid price |
+| `withDiscountPct(option)` | Attach computed `discountPct` on every DealPriceOption save |
+| `validateSteps(steps, option)` | Steps sorted by `hours_before_start` descending; each price ≤ previous step and ≤ base deal price; each meets min discount; promo codes distinct |
+
 ### 4.1 Publish validation
 | Check | Applies to | Rule |
 |---|---|---|
 | Required fields | All | Every Req field in section 3 present and valid |
-| 50% minimum | All | For every price option and every step: `deal_price_minor ≤ original_price_minor × (1 − MIN_DISCOUNT_PCT/100)` |
+| 50% minimum | All | For every price option and every step: `meetsMinDiscount` / `validateSteps` (§4.0); equivalent to `deal_price_minor ≤ floor(original × (1 − MIN_DISCOUNT_PCT/100))` |
 | Images | All | ≥1 image, exactly 1 cover, all with alt text |
 | Session timing | All | ≥1 session starting in the future; sessions further than MAX_LEAD_HOURS put the deal in scheduled, not live |
 | Booking destination | All | URL passes link check (2xx/3xx within 5 s), or phone/email valid |
@@ -457,7 +470,7 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
 | Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | Settings tables | `notification_preferences`, `compliance_documents`, `billing_accounts` |

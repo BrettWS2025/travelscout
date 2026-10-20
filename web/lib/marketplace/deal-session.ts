@@ -4,6 +4,8 @@
  * Parent: marketplace.operator_deals (inventory Deal — not legacy marketplace.deals).
  *
  * seats_displayed is system-owned: recompute with computeSeatsDisplayed on every save.
+ * discount_pct is system-owned: recompute with withDiscountPct (pricing.ts) on every
+ * DealPriceOption save. Min-discount maths live in pricing.ts (Chunk 10).
  */
 
 import { MAX_LEAD_HOURS, getPlatformConfig } from "./config";
@@ -20,6 +22,9 @@ import {
   isPriceOptionType,
   isSessionStatus,
 } from "./enums";
+import { withDiscountPct } from "./pricing";
+
+export { withDiscountPct };
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -53,7 +58,7 @@ export type DealPriceOption = {
   originalPriceSource: OriginalPriceSource;
   originalPriceEvidenceUrl: string | null;
   dealPriceMinor: number;
-  /** System-computed (Chunk 10); 1 decimal place */
+  /** System-computed via withDiscountPct / discountPct (pricing.ts); 1 dp */
   discountPct: number | null;
   sortOrder: number;
   createdAt: string;
