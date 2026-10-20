@@ -52,6 +52,7 @@ vi.mock("@/lib/marketplace/operator-deals-client", () => ({
     markOperatorDealSoldOutApi(...args),
   bulkOperatorDealsApi: (...args: unknown[]) => bulkOperatorDealsApi(...args),
   duplicateOperatorDeal: (...args: unknown[]) => duplicateOperatorDeal(...args),
+  saveOperatorDealAsTemplateApi: vi.fn(),
   getOperatorDeal: vi.fn(),
   updateOperatorDealSeatsApi: vi.fn(),
 }));

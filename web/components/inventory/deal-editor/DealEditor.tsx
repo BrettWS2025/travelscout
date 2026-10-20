@@ -31,6 +31,7 @@ import type { PublishButtonLabel } from "@/lib/marketplace/deal-publish";
 import {
   OperatorDealsApiError,
   addDealVideoEmbedApi,
+  createDealFromTemplateApi,
   createDealPriceOptionApi,
   createDealSessionApi,
   createOperatorDeal,
@@ -39,6 +40,7 @@ import {
   deleteDealSessionApi,
   duplicateOperatorDeal,
   getOperatorDeal,
+  listOperatorTemplatesApi,
   publishOperatorDeal,
   setDealMediaCoverApi,
   testDealLinkApi,
@@ -47,6 +49,7 @@ import {
   updateDealSessionApi,
   updateOperatorDeal,
   uploadDealMediaApi,
+  type OperatorDealTemplate,
 } from "@/lib/marketplace/operator-deals-client";
 
 type Props = {
@@ -77,6 +80,7 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
   const [pendingConfirm, setPendingConfirm] = useState<
     null | (() => Promise<void>)
   >(null);
+  const [templates, setTemplates] = useState<OperatorDealTemplate[]>([]);
 
   const deal = detail?.deal ?? null;
   const summary = summarizeDealEditor(detail);
@@ -113,6 +117,25 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
       cancelled = true;
     };
   }, [initialDealId, token]);
+
+  useEffect(() => {
+    if (initialDealId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { templates: rows } = await listOperatorTemplatesApi(
+          operatorId,
+          token
+        );
+        if (!cancelled) setTemplates(rows);
+      } catch {
+        // Templates are optional on the type step.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialDealId, operatorId, token]);
 
   async function withLiveConfirm(
     run: (confirm: boolean) => Promise<void>
@@ -224,6 +247,29 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
     }
   }
 
+  async function onCreateFromTemplate(templateId: string) {
+    setCreating(true);
+    setError(null);
+    try {
+      const { deal: created } = await createDealFromTemplateApi(
+        operatorId,
+        templateId,
+        {},
+        token
+      );
+      router.replace(`/account/inventory/deals/${created.id}`);
+      setDealId(created.id);
+      await reload(created.id);
+      setStep("content");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Create from template failed"
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
   async function refreshAfterChildChange() {
     if (dealId) await reload(dealId);
   }
@@ -285,6 +331,8 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
               creating={creating}
               onCreate={onCreate}
               onDuplicate={() => void onDuplicate()}
+              onCreateFromTemplate={(id) => void onCreateFromTemplate(id)}
+              templates={templates}
               hasConnectedIntegration={false}
             />
           )}

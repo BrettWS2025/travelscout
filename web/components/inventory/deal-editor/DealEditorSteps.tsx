@@ -79,17 +79,27 @@ function Counter({
 // Step 1 — Type
 // ---------------------------------------------------------------------------
 
+export type TemplateChoice = {
+  id: string;
+  name: string;
+  deal_type: DealType | null;
+};
+
 export function TypeStep({
   deal,
   creating,
   onCreate,
   onDuplicate,
+  onCreateFromTemplate,
+  templates,
   hasConnectedIntegration,
 }: {
   deal: Deal | null;
   creating: boolean;
   onCreate: (dealType: DealType, duplicateOf?: string) => void;
   onDuplicate: () => void;
+  onCreateFromTemplate?: (templateId: string) => void;
+  templates?: TemplateChoice[];
   hasConnectedIntegration: boolean;
 }) {
   return (
@@ -175,6 +185,41 @@ export function TypeStep({
           ))}
         </div>
       )}
+
+      {!deal && templates && templates.length > 0 && onCreateFromTemplate ? (
+        <div className="space-y-2 rounded-2xl border border-[var(--ts-ink)]/10 bg-[var(--ts-mist)]/40 px-4 py-4">
+          <p className="font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
+            Start from a template
+          </p>
+          <p className="font-[family-name:var(--font-sora)] text-xs text-[var(--ts-muted)]">
+            Copies content, images, pricing and booking destination — not
+            sessions.
+          </p>
+          <ul className="space-y-2">
+            {templates.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
+                  {t.name}
+                  {t.deal_type ? (
+                    <span className="ml-2 text-xs text-[var(--ts-muted)]">
+                      ({t.deal_type.replace(/_/g, " ")})
+                    </span>
+                  ) : null}
+                </span>
+                <button
+                  type="button"
+                  disabled={creating}
+                  onClick={() => onCreateFromTemplate(t.id)}
+                  className="rounded-lg border border-[var(--ts-ink)]/15 bg-white px-3 py-1.5 text-sm font-medium text-[var(--ts-ink)] disabled:opacity-60"
+                >
+                  Use template
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {!deal && !hasConnectedIntegration && (
         <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
           Need a booking system?{" "}

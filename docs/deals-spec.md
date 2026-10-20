@@ -403,6 +403,10 @@ List: name, product, schedule summary, discount, active toggle, deals generated 
 ### 5.5 Templates
 List, rename, delete, "Create deal from template". Store content, images, pricing approach, booking destination and defaults, not sessions.
 
+**Backend (Chunk 25):** `web/lib/marketplace/deal-templates.ts` — `saveDealAsTemplate` (payload: content + media refs + price options; never sessions/attestations), `listOperatorTemplates` / rename / delete, `createDealFromTemplate` via `createDraftDeal` + `applyTemplateChildren`. Routes: `POST /api/marketplace/operator-deals/:id/save-as-template`, `GET|PATCH|DELETE /api/marketplace/operators/:operatorId/templates[/:templateId]`, `POST .../templates/:tid/create-deal`.
+
+**UI (Chunk 25):** `/account/inventory/templates` (`TemplatesList`) + inventory Deals/Templates subnav; deals list “Save as template”; editor type step “Start from a template”.
+
 ### 5.6 Manual operator quick update
 Email/SMS reconfirm link opens a mobile page without full login, scoped by a signed single-use token valid for the attestation window. Shows each live manual deal (and `auto_paused` with `attestation_expired`) with a seat stepper and two buttons: Still available, Sold out.
 

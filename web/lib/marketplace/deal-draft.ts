@@ -19,6 +19,11 @@ import {
   type DealTemplate,
 } from "./deal-audit";
 import {
+  applyTemplateChildren,
+  dealTypeFromTemplatePayload,
+  getOperatorTemplate,
+} from "./deal-templates";
+import {
   addDealMedia,
   createDealMediaStore,
   listDealMedia,
@@ -698,6 +703,20 @@ export function createDraftDeal(
   }
 
   store.deals.set(id, finalDeal);
+
+  // Apply media refs + price options from the template (never sessions).
+  if (input.templateId) {
+    const template = store.audit.templates.get(input.templateId);
+    if (template?.payload) {
+      applyTemplateChildren(
+        store,
+        id,
+        template.payload as Record<string, unknown>,
+        now
+      );
+    }
+  }
+
   logDealEvent(
     store.audit,
     id,
@@ -1091,3 +1110,45 @@ export function listDealCreatedEvents(
 /** Re-export template helper for tests that seed templates into the draft store. */
 export { createDealTemplate };
 export type { DealTemplate };
+
+export type CreateDealFromTemplateOptions = {
+  actor: DealActor;
+  now?: string;
+  id?: string;
+  /** Override deal_type from the template (defaults to payload.deal_type). */
+  dealType?: DealType | null;
+};
+
+/**
+ * POST /operators/:id/templates/:tid/create-deal
+ * New draft from template payload; booking defaults fill gaps via createDraftDeal.
+ * Never copies sessions.
+ */
+export function createDealFromTemplate(
+  store: DealDraftStore,
+  operatorId: string,
+  templateId: string,
+  options: CreateDealFromTemplateOptions
+): Deal {
+  const template = getOperatorTemplate(store, operatorId, templateId);
+  const payload = (template.payload ?? {}) as Record<string, unknown>;
+
+  const dealTypeRaw =
+    options.dealType ?? dealTypeFromTemplatePayload(payload);
+  if (dealTypeRaw == null || !isDealType(dealTypeRaw)) {
+    throw new DealDraftError(
+      "template is missing a valid deal_type; pass deal_type when creating",
+      400,
+      [{ field: "deal_type", message: "required" }]
+    );
+  }
+
+  return createDraftDeal(store, {
+    operatorId,
+    dealType: dealTypeRaw,
+    templateId: template.id,
+    actor: options.actor,
+    now: options.now,
+    id: options.id,
+  });
+}
