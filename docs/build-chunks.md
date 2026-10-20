@@ -29,7 +29,7 @@ Cursor ticks these as chunks are finished.
 - [x] 15. Booking destination validation and link checker — Notes: `booking-destination.ts` + `booking-link.ts` (`checkLink`, `runLinkCheck`, `buildTrackedUrl`, `testDealLink`, `runLinkCheckerJob`); `POST .../operator-deals/:id/test-link`; evidence URL results stored for chunk 16; cron scheduler deferred (call `runLinkCheckerJob` every 6h).
 - [x] 16. Publish validation engine — Notes: `deal-publish-validation.ts` (`validateForPublish`, `validateDealInStore`, `createValidateForPublishFromStore`); wired into `getDealDetail` + inventory live-confirm; integrated checks stubbed until chunk 35; tests in `deal-publish-validation.test.ts`.
 - [x] 17. Publish, schedule, review and attestation — Notes: `deal-publish.ts` (`publishDeal`, `approveDeal`, `rejectDeal`, `adminPauseDeal`, `getPublishButtonLabel`); routes `POST .../operator-deals/:id/publish` + admin approve/reject/pause/manual-review; `publish_button` on GET detail; notify-admins hook stub until chunk 39.
-- [ ] 18. Status ticker job
+- [x] 18. Status ticker job — Notes: `deal-status-ticker.ts` (`runStatusTickerJob`, `tickDealStatus`, `isVisibleToTravellers`); discount-step hook stub until chunk 43; cron every-minute not wired yet.
 - [ ] 19. Operator actions (pause, resume, end, seats, bulk)
 - [ ] 20. Attestation expiry, reminders and quick-update token
 - [ ] 21. Deals list API
