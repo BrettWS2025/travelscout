@@ -1,8 +1,12 @@
 /**
  * POST /api/marketplace/operators/:operatorId/deals
- * Create a draft deal (Chunk 12). Requires inventory.write.
+ *   Create a draft deal (Chunk 12). Requires inventory.write.
  *
- * Body: { deal_type | dealType, template_id?, duplicate_of?, source_provider? }
+ * GET /api/marketplace/operators/:operatorId/deals
+ *   Deals list with tabs, filters, banners (Chunk 21). Requires inventory.read.
+ *
+ * Query (GET): tab, deal_type, source_provider, external_product_id, category,
+ *   date_from, date_to, search, sort, page, page_size
  */
 
 import { badRequest, unauthorized } from "@/lib/marketplace/auth";
@@ -14,12 +18,49 @@ import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
 } from "@/lib/marketplace/deal-draft-http";
+import {
+  listOperatorDeals,
+  parseListOperatorDealsQuery,
+  permissionUserForList,
+} from "@/lib/marketplace/deal-list";
 import { isDealType, isSourceProvider } from "@/lib/marketplace/enums";
 import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
 type Params = { params: { operatorId: string } };
+
+export async function GET(req: Request, { params }: Params) {
+  try {
+    const operatorId = params.operatorId;
+    if (!operatorId) return badRequest("operatorId is required.");
+
+    const auth = await requirePermission(req, operatorId, "inventory.read");
+    if (!auth.ok) return auth.response;
+
+    const url = new URL(req.url);
+    const parsed = parseListOperatorDealsQuery(url.searchParams);
+
+    const result = listOperatorDeals(getDealDraftHttpStore(), operatorId, {
+      ...parsed,
+      permissionUser: permissionUserForList(
+        auth.user.id,
+        operatorId,
+        auth.role
+      ),
+    });
+
+    return Response.json(result);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message === "Authentication required."
+    ) {
+      return unauthorized();
+    }
+    return dealDraftErrorResponse(err, "Failed to list deals.");
+  }
+}
 
 export async function POST(req: Request, { params }: Params) {
   try {

@@ -32,7 +32,7 @@ Cursor ticks these as chunks are finished.
 - [x] 18. Status ticker job — Notes: `deal-status-ticker.ts` (`runStatusTickerJob`, `tickDealStatus`, `isVisibleToTravellers`); discount-step hook stub until chunk 43; cron every-minute not wired yet.
 - [x] 19. Operator actions (pause, resume, end, seats, bulk) — Notes: `deal-actions.ts` (`pauseDeal`/`resumeDeal`/`endDeal`/`archiveDeal`/`updateDealSeats`/`markDealSoldOut`/`bulkDealActions`); routes under `operator-deals/:id/{pause,resume,end,archive,seats,mark-sold-out}` + `operators/:id/deals/bulk`; `paused`/`auto_paused`→`scheduled` edges added; tests in `deal-actions.test.ts`.
 - [x] 20. Attestation expiry, reminders and quick-update token — Notes: `deal-attestation.ts` (`runAttestationJob`, signed quick-update tokens, `attestDeal`); routes `GET|POST /api/marketplace/quick-update/:token`, `POST .../operator-deals/:id/attest`; tables `quick_update_tokens` / `attestation_reminders`; notify stub until chunk 39.
-- [ ] 21. Deals list API
+- [x] 21. Deals list API — Notes: `deal-list.ts` (`listOperatorDeals`, `getOperatorDealsCalendar`, tab_counts, banners, row actions); `GET .../operators/:id/deals` + `.../deals/calendar`; staff gets preview/view_stats only; integrations map on draft store.
 - [ ] 22. Wire deal editor (manual)
 - [ ] 23. Wire deals list
 - [ ] 24. Wire quick-update mobile page
