@@ -1,5 +1,5 @@
 /**
- * Browser client for inventory operator-deals APIs (Chunks 12–17, 22).
+ * Browser client for inventory operator-deals APIs (Chunks 12–17, 19, 21–23).
  * Distinct from the legacy /api/marketplace/deals helpers in client.ts.
  */
 
@@ -11,6 +11,11 @@ import type { DealType, UserRole } from "./enums";
 import type { PublishValidationOutcome } from "./deal-publish-validation";
 import type { PublishButtonLabel } from "./deal-publish";
 import type { FieldError } from "./deal";
+import type {
+  BulkDealAction,
+  DealCalendarResult,
+  ListOperatorDealsResult,
+} from "./deal-list-shared";
 
 export class OperatorDealsApiError extends Error {
   status: number;
@@ -347,6 +352,107 @@ export function publishOperatorDeal(
     target_status: string;
   }>(
     `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/publish`,
+    { method: "POST", body, accessToken }
+  );
+}
+
+export function listOperatorDealsApi(
+  operatorId: string,
+  query: string,
+  accessToken?: string | null
+) {
+  const qs = query ? `?${query}` : "";
+  return operatorDealsFetch<ListOperatorDealsResult>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deals${qs}`,
+    { accessToken }
+  );
+}
+
+export function getOperatorDealsCalendarApi(
+  operatorId: string,
+  from?: string | null,
+  accessToken?: string | null
+) {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  const qs = params.toString();
+  return operatorDealsFetch<DealCalendarResult>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deals/calendar${qs ? `?${qs}` : ""}`,
+    { accessToken }
+  );
+}
+
+export function pauseOperatorDealApi(
+  dealId: string,
+  body: { detail?: string } = {},
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/pause`,
+    { method: "POST", body, accessToken }
+  );
+}
+
+export function resumeOperatorDealApi(
+  dealId: string,
+  body: { attest?: boolean } = {},
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    deal: Deal;
+    validation?: PublishValidationOutcome | null;
+    checks?: PublishValidationOutcome["checks"] | null;
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/resume`,
+    { method: "POST", body, accessToken }
+  );
+}
+
+export function endOperatorDealApi(
+  dealId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/end`,
+    { method: "POST", body: {}, accessToken }
+  );
+}
+
+export function updateOperatorDealSeatsApi(
+  dealId: string,
+  seats: Record<string, number>,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal; sessions: DealSession[] }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/seats`,
+    { method: "POST", body: seats, accessToken }
+  );
+}
+
+export function markOperatorDealSoldOutApi(
+  dealId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal; sessions: DealSession[] }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/mark-sold-out`,
+    { method: "POST", body: {}, accessToken }
+  );
+}
+
+export function bulkOperatorDealsApi(
+  operatorId: string,
+  body: {
+    action: BulkDealAction;
+    deal_ids: string[];
+    confirm?: boolean;
+    attest?: boolean;
+  },
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    results: Array<{ id: string; ok: boolean; error?: string }>;
+  }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deals/bulk`,
     { method: "POST", body, accessToken }
   );
 }
