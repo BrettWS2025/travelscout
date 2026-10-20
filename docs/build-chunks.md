@@ -30,7 +30,7 @@ Cursor ticks these as chunks are finished.
 - [x] 16. Publish validation engine — Notes: `deal-publish-validation.ts` (`validateForPublish`, `validateDealInStore`, `createValidateForPublishFromStore`); wired into `getDealDetail` + inventory live-confirm; integrated checks stubbed until chunk 35; tests in `deal-publish-validation.test.ts`.
 - [x] 17. Publish, schedule, review and attestation — Notes: `deal-publish.ts` (`publishDeal`, `approveDeal`, `rejectDeal`, `adminPauseDeal`, `getPublishButtonLabel`); routes `POST .../operator-deals/:id/publish` + admin approve/reject/pause/manual-review; `publish_button` on GET detail; notify-admins hook stub until chunk 39.
 - [x] 18. Status ticker job — Notes: `deal-status-ticker.ts` (`runStatusTickerJob`, `tickDealStatus`, `isVisibleToTravellers`); discount-step hook stub until chunk 43; cron every-minute not wired yet.
-- [ ] 19. Operator actions (pause, resume, end, seats, bulk)
+- [x] 19. Operator actions (pause, resume, end, seats, bulk) — Notes: `deal-actions.ts` (`pauseDeal`/`resumeDeal`/`endDeal`/`archiveDeal`/`updateDealSeats`/`markDealSoldOut`/`bulkDealActions`); routes under `operator-deals/:id/{pause,resume,end,archive,seats,mark-sold-out}` + `operators/:id/deals/bulk`; `paused`/`auto_paused`→`scheduled` edges added; tests in `deal-actions.test.ts`.
 - [ ] 20. Attestation expiry, reminders and quick-update token
 - [ ] 21. Deals list API
 - [ ] 22. Wire deal editor (manual)
