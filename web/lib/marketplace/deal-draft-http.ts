@@ -19,6 +19,7 @@ import {
 } from "./deal-draft";
 import { DealActionsError } from "./deal-actions";
 import { DealAttestationError } from "./deal-attestation";
+import { DealListError } from "./deal-list";
 import { DealPublishError } from "./deal-publish";
 import {
   LiveDealConfirmRequiredError,
@@ -66,6 +67,9 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
       },
       { status: err.status }
     );
+  }
+  if (err instanceof DealListError) {
+    return Response.json({ error: err.message }, { status: err.status });
   }
   if (err instanceof BookingLinkError) {
     return Response.json({ error: err.message }, { status: err.status });

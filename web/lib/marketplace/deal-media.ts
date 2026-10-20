@@ -475,6 +475,14 @@ export function listDealImages(
   return listImagesByDeal(store, dealId);
 }
 
+/** Cover image for a deal, or undefined if none. */
+export function getDealCoverImage(
+  store: DealMediaStore,
+  dealId: string
+): DealMedia | undefined {
+  return getCover(store, dealId);
+}
+
 export type UpdateDealMediaInput = {
   altText?: string | null;
   caption?: string | null;
