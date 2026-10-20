@@ -25,7 +25,7 @@ Cursor ticks these as chunks are finished.
 - [x] 11. Deal event logger and status transition function — Notes: `web/lib/marketplace/deal-status.ts` (`logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`, client strip of status/pause_*); tests in `deal-status.test.ts`; publish validation stub until chunk 16.
 - [x] 12. Deal draft API (create, update, duplicate) — Notes: `web/lib/marketplace/deal-draft.ts` + routes `POST /api/marketplace/operators/:operatorId/deals`, `GET|PATCH|DELETE /api/marketplace/operator-deals/:id`, `POST .../duplicate`; in-memory store; validation stub empty until chunk 16; Supabase persistence deferred.
 - [x] 13. Sessions and price options API (manual) — Notes: `deal-inventory.ts` + `timezone.ts`; routes under `operator-deals/:id/sessions|price-options` (+ reorder); open-window max 3 days; live edits need `confirm: true`; 50% reject returns `max_deal_price_minor`; publish validation still stubbed until chunk 16.
-- [ ] 14. Media upload API
+- [x] 14. Media upload API — Notes: `deal-media-api.ts` + `media-storage.ts` + `image-dimensions.ts`; routes under `operator-deals/:id/media` (upload/embed/patch/cover/reorder/delete); `importProviderImages` stub → 501 until chunk 32; live edits apply immediately; in-memory storage default.
 - [ ] 15. Booking destination validation and link checker
 - [ ] 16. Publish validation engine
 - [ ] 17. Publish, schedule, review and attestation
