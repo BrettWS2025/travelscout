@@ -101,7 +101,16 @@ export const DEAL_MEDIA_LIMITS = {
   captionMax: 150,
   focalMin: 0,
   focalMax: 1,
+  /** Upload constraints (Chunk 14 / spec §3.5). */
+  maxFileSizeBytes: 10 * 1024 * 1024,
+  minWidthPx: 1200,
+  minHeightPx: 800,
+  allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] as const,
+  defaultUploadAltText: "Deal gallery image",
 } as const;
+
+export type AllowedImageMimeType =
+  (typeof DEAL_MEDIA_LIMITS.allowedMimeTypes)[number];
 
 /**
  * YouTube or Vimeo only (http/https). Matches DB CHECK on deal_media.
@@ -234,7 +243,7 @@ export function assertValidDealMediaFields(
 }
 
 // ---------------------------------------------------------------------------
-// In-memory store (unit tests; DB path comes with Chunk 14 upload API)
+// In-memory store (unit tests + Chunk 14 API until Supabase persistence)
 // ---------------------------------------------------------------------------
 
 export type DealMediaStore = {
@@ -464,4 +473,125 @@ export function listDealImages(
   dealId: string
 ): DealMedia[] {
   return listImagesByDeal(store, dealId);
+}
+
+export type UpdateDealMediaInput = {
+  altText?: string | null;
+  caption?: string | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sortOrder?: number | null;
+};
+
+/**
+ * Partial update of editable media metadata (alt, caption, focal, sort_order).
+ * Does not change url / storage_key / dimensions / media_type.
+ */
+export function updateDealMedia(
+  store: DealMediaStore,
+  mediaId: string,
+  patch: UpdateDealMediaInput,
+  options?: { now?: string }
+): DealMedia {
+  const existing = store.media.get(mediaId);
+  if (!existing) {
+    throw new DealMediaValidationError([
+      { field: "id", message: "media not found" },
+    ]);
+  }
+
+  const nextAlt =
+    patch.altText !== undefined ? patch.altText : existing.altText;
+  const nextCaption =
+    patch.caption !== undefined ? patch.caption : existing.caption;
+  const nextFocalX =
+    patch.focalX !== undefined ? patch.focalX : existing.focalX;
+  const nextFocalY =
+    patch.focalY !== undefined ? patch.focalY : existing.focalY;
+  const nextSort =
+    patch.sortOrder !== undefined ? patch.sortOrder : existing.sortOrder;
+
+  assertValidDealMediaFields({
+    mediaType: existing.mediaType,
+    source: existing.source,
+    url: existing.url,
+    altText: nextAlt,
+    caption: nextCaption,
+    focalX: nextFocalX,
+    focalY: nextFocalY,
+    sortOrder: nextSort,
+  });
+
+  if (nextAlt == null || nextAlt.trim() === "") {
+    throw new DealMediaValidationError([
+      {
+        field: "alt_text",
+        message: `must be ${DEAL_MEDIA_LIMITS.altTextMin}–${DEAL_MEDIA_LIMITS.altTextMax} characters`,
+      },
+    ]);
+  }
+
+  const now = options?.now ?? new Date().toISOString();
+  const updated: DealMedia = {
+    ...existing,
+    altText: nextAlt,
+    caption: nextCaption ?? null,
+    focalX: nextFocalX ?? null,
+    focalY: nextFocalY ?? null,
+    sortOrder: nextSort ?? existing.sortOrder,
+    updatedAt: now,
+  };
+  store.media.set(mediaId, updated);
+  return updated;
+}
+
+/**
+ * Reorder media for a deal. `orderedIds` must list every media id for the deal
+ * exactly once; sort_order is assigned 0..n-1 in that order.
+ */
+export function reorderDealMedia(
+  store: DealMediaStore,
+  dealId: string,
+  orderedIds: string[],
+  options?: { now?: string }
+): DealMedia[] {
+  const existing = listDealMedia(store, dealId);
+  if (existing.length === 0) {
+    if (orderedIds.length === 0) return [];
+    throw new DealMediaValidationError([
+      { field: "ordered_ids", message: "deal has no media to reorder" },
+    ]);
+  }
+
+  const existingIds = new Set(existing.map((m) => m.id));
+  if (orderedIds.length !== existing.length) {
+    throw new DealMediaValidationError([
+      {
+        field: "ordered_ids",
+        message: `must include every media id exactly once (${existing.length} expected)`,
+      },
+    ]);
+  }
+  const seen = new Set<string>();
+  for (const id of orderedIds) {
+    if (!existingIds.has(id)) {
+      throw new DealMediaValidationError([
+        { field: "ordered_ids", message: `unknown media id ${id}` },
+      ]);
+    }
+    if (seen.has(id)) {
+      throw new DealMediaValidationError([
+        { field: "ordered_ids", message: "duplicate media id" },
+      ]);
+    }
+    seen.add(id);
+  }
+
+  const now = options?.now ?? new Date().toISOString();
+  orderedIds.forEach((id, index) => {
+    const row = store.media.get(id)!;
+    store.media.set(id, { ...row, sortOrder: index, updatedAt: now });
+  });
+
+  return listDealMedia(store, dealId);
 }

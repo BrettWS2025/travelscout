@@ -20,6 +20,14 @@ import {
   LiveDealConfirmRequiredError,
   MinDiscountError,
 } from "./deal-inventory";
+import {
+  ImportProviderImagesStubError,
+  MediaUploadBatchError,
+} from "./deal-media-api";
+import {
+  DealMediaLimitError,
+  DealMediaValidationError,
+} from "./deal-media";
 import { DealNotFoundError } from "./deal-status";
 import { DealValidationError } from "./deal";
 
@@ -58,6 +66,34 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
         error: err.message,
         max_deal_price_minor: err.maxDealPriceMinor,
         errors: err.errors ?? [],
+      },
+      { status: 400 }
+    );
+  }
+  if (err instanceof MediaUploadBatchError) {
+    return Response.json(
+      {
+        error: err.message,
+        file_errors: err.fileErrors,
+        errors: err.errors ?? [],
+      },
+      { status: 400 }
+    );
+  }
+  if (err instanceof ImportProviderImagesStubError) {
+    return Response.json(
+      { error: err.message, deferred: "chunk_32" },
+      { status: 501 }
+    );
+  }
+  if (err instanceof DealMediaLimitError || err instanceof DealMediaValidationError) {
+    return Response.json(
+      {
+        error: err.message,
+        errors:
+          err instanceof DealMediaValidationError
+            ? err.errors
+            : [{ field: "images", message: err.message }],
       },
       { status: 400 }
     );
