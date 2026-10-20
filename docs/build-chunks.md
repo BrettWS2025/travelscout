@@ -23,7 +23,7 @@ Cursor ticks these as chunks are finished.
 **Phase B: Manual deals end to end**
 - [x] 10. Pricing maths and the 50% rule — Notes: `web/lib/marketplace/pricing.ts` (`maxDealPrice`, `meetsMinDiscount`, `discountPct`, `priceFromPercentage`, `validateSteps`, `withDiscountPct`); re-exported from `deal-session.ts`; spec §4.0.
 - [x] 11. Deal event logger and status transition function — Notes: `web/lib/marketplace/deal-status.ts` (`logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`, client strip of status/pause_*); tests in `deal-status.test.ts`; publish validation stub until chunk 16.
-- [ ] 12. Deal draft API (create, update, duplicate)
+- [x] 12. Deal draft API (create, update, duplicate) — Notes: `web/lib/marketplace/deal-draft.ts` + routes `POST /api/marketplace/operators/:operatorId/deals`, `GET|PATCH|DELETE /api/marketplace/operator-deals/:id`, `POST .../duplicate`; in-memory store; validation stub empty until chunk 16; Supabase persistence deferred.
 - [ ] 13. Sessions and price options API (manual)
 - [ ] 14. Media upload API
 - [ ] 15. Booking destination validation and link checker
