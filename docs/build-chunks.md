@@ -34,7 +34,7 @@ Cursor ticks these as chunks are finished.
 - [x] 20. Attestation expiry, reminders and quick-update token — Notes: `deal-attestation.ts` (`runAttestationJob`, signed quick-update tokens, `attestDeal`); routes `GET|POST /api/marketplace/quick-update/:token`, `POST .../operator-deals/:id/attest`; tables `quick_update_tokens` / `attestation_reminders`; notify stub until chunk 39.
 - [x] 21. Deals list API — Notes: `deal-list.ts` (`listOperatorDeals`, `getOperatorDealsCalendar`, tab_counts, banners, row actions); `GET .../operators/:id/deals` + `.../deals/calendar`; staff gets preview/view_stats only; integrations map on draft store.
 - [x] 22. Wire deal editor (manual) — Notes: stepped editor under `/account/inventory/deals/{new,[id]}`; `operator-deals-client.ts` + `deal-editor.ts`; `publish_at` on PATCH; `GET /operators/me` + HTTP store seed/email role fallback; Fix jumps to `editorStep`.
-- [ ] 23. Wire deals list
+- [x] 23. Wire deals list — Notes: `DealsList` + `deals-list-ui.ts` + client list/action helpers; inventory page tabs/calendar/filters/bulk/banners/seats; staff read-only via `allowed_actions`.
 - [ ] 24. Wire quick-update mobile page
 - [ ] 25. Templates
 
