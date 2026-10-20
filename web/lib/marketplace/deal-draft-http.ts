@@ -17,6 +17,7 @@ import {
   DealDraftError,
   type DealDraftStore,
 } from "./deal-draft";
+import { DealTemplatesError } from "./deal-templates";
 import { DealActionsError } from "./deal-actions";
 import { DealAttestationError } from "./deal-attestation";
 import { DealListError } from "./deal-list";
@@ -216,7 +217,7 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
   if (err instanceof DealDeleteNotAllowedError) {
     return Response.json({ error: err.message }, { status: 409 });
   }
-  if (err instanceof DealDraftError) {
+  if (err instanceof DealDraftError || err instanceof DealTemplatesError) {
     if (err.status === 403) return forbidden(err.message);
     if (err.status === 404) return notFound(err.message);
     return Response.json(

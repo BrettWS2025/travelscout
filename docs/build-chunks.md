@@ -36,7 +36,7 @@ Cursor ticks these as chunks are finished.
 - [x] 22. Wire deal editor (manual) — Notes: stepped editor under `/account/inventory/deals/{new,[id]}`; `operator-deals-client.ts` + `deal-editor.ts`; `publish_at` on PATCH; `GET /operators/me` + HTTP store seed/email role fallback; Fix jumps to `editorStep`.
 - [x] 23. Wire deals list — Notes: `DealsList` + `deals-list-ui.ts` + client list/action helpers; inventory page tabs/calendar/filters/bulk/banners/seats; staff read-only via `allowed_actions`.
 - [x] 24. Wire quick-update mobile page — Notes: `/quick-update/[token]` + `QuickUpdatePage` / `SeatStepper` / `quick-update-client.ts`; seat steppers + Still available/Sold out per deal; expired/used → login link; full-bleed in MarketingMain/OperatorMain.
-- [ ] 25. Templates
+- [x] 25. Templates — Notes: `deal-templates.ts` + routes save-as-template / templates CRUD / create-deal; `TemplatesList` + inventory subnav; createDraftDeal applies media+prices from payload; tests in `deal-templates.test.ts`.
 
 **Phase C: Integrations and Rezdy**
 - [ ] 26. Provider adapter interface and mock provider

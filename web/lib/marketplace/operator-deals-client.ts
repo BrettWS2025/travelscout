@@ -456,3 +456,73 @@ export function bulkOperatorDealsApi(
     { method: "POST", body, accessToken }
   );
 }
+
+// ---------------------------------------------------------------------------
+// Templates (Chunk 25)
+// ---------------------------------------------------------------------------
+
+export type OperatorDealTemplate = {
+  id: string;
+  operator_id: string;
+  name: string;
+  payload: Record<string, unknown>;
+  deal_type: DealType | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function saveOperatorDealAsTemplateApi(
+  dealId: string,
+  name: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ template: OperatorDealTemplate }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/save-as-template`,
+    { method: "POST", body: { name }, accessToken }
+  );
+}
+
+export function listOperatorTemplatesApi(
+  operatorId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ templates: OperatorDealTemplate[] }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/templates`,
+    { accessToken }
+  );
+}
+
+export function renameOperatorTemplateApi(
+  operatorId: string,
+  templateId: string,
+  name: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ template: OperatorDealTemplate }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/templates/${encodeURIComponent(templateId)}`,
+    { method: "PATCH", body: { name }, accessToken }
+  );
+}
+
+export function deleteOperatorTemplateApi(
+  operatorId: string,
+  templateId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ ok: boolean }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/templates/${encodeURIComponent(templateId)}`,
+    { method: "DELETE", accessToken }
+  );
+}
+
+export function createDealFromTemplateApi(
+  operatorId: string,
+  templateId: string,
+  body: { deal_type?: DealType } = {},
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/templates/${encodeURIComponent(templateId)}/create-deal`,
+    { method: "POST", body, accessToken }
+  );
+}

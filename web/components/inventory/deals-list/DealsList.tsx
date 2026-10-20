@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { UpdateSeatsDialog } from "@/components/inventory/deals-list/UpdateSeatsDialog";
+import { InventorySubnav } from "@/components/inventory/InventorySubnav";
 import type {
   BulkDealAction,
   DealCalendarResult,
@@ -43,6 +44,7 @@ import {
   markOperatorDealSoldOutApi,
   pauseOperatorDealApi,
   resumeOperatorDealApi,
+  saveOperatorDealAsTemplateApi,
   type MyOperator,
 } from "@/lib/marketplace/operator-deals-client";
 
@@ -197,9 +199,26 @@ export function DealsList({ initialTab }: Props) {
         case "view_stats":
           setMessage("Deal stats land in a later chunk.");
           break;
-        case "save_as_template":
-          setMessage("Templates land in the next chunk.");
+        case "save_as_template": {
+          const defaultName = row.title?.trim()
+            ? `${row.title.trim()} template`
+            : "Deal template";
+          const name = window.prompt("Template name", defaultName);
+          if (name == null) break;
+          if (!name.trim()) {
+            setMessage("Template name is required.");
+            break;
+          }
+          const { template } = await saveOperatorDealAsTemplateApi(
+            row.id,
+            name.trim(),
+            token
+          );
+          setMessage(
+            `Saved “${template.name}”. Open Templates to create deals from it.`
+          );
           break;
+        }
         case "duplicate": {
           const { deal } = await duplicateOperatorDeal(row.id, token);
           router.push(`/account/inventory/deals/${deal.id}`);
@@ -323,6 +342,8 @@ export function DealsList({ initialTab }: Props) {
           </Link>
         ) : null}
       </div>
+
+      <InventorySubnav />
 
       {list?.banners && list.banners.length > 0 ? (
         <div className="space-y-2">
