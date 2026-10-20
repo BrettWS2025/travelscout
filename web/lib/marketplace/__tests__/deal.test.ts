@@ -22,18 +22,20 @@ function repeat(ch: string, n: number): string {
 }
 
 describe("Chunk 3 migration", () => {
-  it("defines marketplace.deals with indexes and slug unique", () => {
+  it("defines marketplace.operator_deals (not legacy deals) with indexes and slug unique", () => {
     const sql = readFileSync(MIGRATION_PATH, "utf8");
 
-    expect(sql).toContain("CREATE TABLE marketplace.deals");
-    expect(sql).toContain("idx_marketplace_deals_operator_status");
-    expect(sql).toContain("idx_marketplace_deals_integration_status");
+    expect(sql).toContain("CREATE TABLE marketplace.operator_deals");
+    expect(sql).not.toMatch(/CREATE TABLE marketplace\.deals\s*\(/);
+    expect(sql).toContain("idx_marketplace_operator_deals_operator_status");
+    expect(sql).toContain("idx_marketplace_operator_deals_integration_status");
     expect(sql).toMatch(/slug TEXT NOT NULL UNIQUE/);
     expect(sql).toContain("REFERENCES marketplace.operators(id)");
     expect(sql).toContain("'draft', 'pending_review', 'scheduled', 'live'");
     expect(sql).toContain("promo_code ~ '^[A-Z0-9_-]+$'");
-    expect(sql).toContain("deals_highlights_item_len");
+    expect(sql).toContain("operator_deals_highlights_item_len");
     expect(sql).toContain("Members can view operator deals");
+    expect(sql).toContain("does not collide with the existing");
   });
 });
 

@@ -1,6 +1,7 @@
 /**
  * Inventory Deal (deals platform Chunk 3).
- * Table: marketplace.deals.
+ * Table: marketplace.operator_deals
+ * (not marketplace.deals — that is the legacy org-scoped lightweight feed).
  *
  * Field-level validation runs on every save. Publish required-ness is Chunk 16.
  * Status / pause_* are system-owned — clients must not set them (Chunk 11).

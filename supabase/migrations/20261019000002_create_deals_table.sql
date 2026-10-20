@@ -1,6 +1,10 @@
 -- ============================================================================
--- Deals platform Chunk 3: Deal table
+-- Deals platform Chunk 3: Deal table (inventory)
 -- ============================================================================
+-- Named marketplace.operator_deals so it does not collide with the existing
+-- lightweight marketplace.deals table (org-scoped, from 20260913000001).
+-- Same pattern as marketplace.operators vs marketplace.organizations.
+--
 -- Main inventory deal row. Publish-required content columns are nullable so
 -- drafts can be saved incomplete; field-level validation lives in
 -- web/lib/marketplace/deal.ts. Publish validation is Chunk 16.
@@ -10,7 +14,7 @@
 -- Enum string values match web/lib/marketplace/enums.ts.
 -- ============================================================================
 
-CREATE TABLE marketplace.deals (
+CREATE TABLE marketplace.operator_deals (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   operator_id UUID NOT NULL
     REFERENCES marketplace.operators(id) ON DELETE CASCADE,
@@ -188,57 +192,57 @@ CREATE TABLE marketplace.deals (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  CONSTRAINT deals_tags_max CHECK (cardinality(tags) <= 10),
-  CONSTRAINT deals_highlights_max CHECK (cardinality(highlights) <= 6),
-  CONSTRAINT deals_highlights_item_len CHECK (
+  CONSTRAINT operator_deals_tags_max CHECK (cardinality(tags) <= 10),
+  CONSTRAINT operator_deals_highlights_max CHECK (cardinality(highlights) <= 6),
+  CONSTRAINT operator_deals_highlights_item_len CHECK (
     NOT EXISTS (
       SELECT 1 FROM unnest(highlights) AS h(v) WHERE char_length(v) > 80
     )
   ),
-  CONSTRAINT deals_inclusions_max CHECK (cardinality(inclusions) <= 15),
-  CONSTRAINT deals_exclusions_max CHECK (cardinality(exclusions) <= 15),
-  CONSTRAINT deals_what_to_bring_max CHECK (cardinality(what_to_bring) <= 15)
+  CONSTRAINT operator_deals_inclusions_max CHECK (cardinality(inclusions) <= 15),
+  CONSTRAINT operator_deals_exclusions_max CHECK (cardinality(exclusions) <= 15),
+  CONSTRAINT operator_deals_what_to_bring_max CHECK (cardinality(what_to_bring) <= 15)
 );
 
-CREATE INDEX idx_marketplace_deals_operator_status
-  ON marketplace.deals (operator_id, status);
+CREATE INDEX idx_marketplace_operator_deals_operator_status
+  ON marketplace.operator_deals (operator_id, status);
 
-CREATE INDEX idx_marketplace_deals_integration_status
-  ON marketplace.deals (integration_id, status)
+CREATE INDEX idx_marketplace_operator_deals_integration_status
+  ON marketplace.operator_deals (integration_id, status)
   WHERE integration_id IS NOT NULL;
 
-CREATE TRIGGER update_marketplace_deals_updated_at
-  BEFORE UPDATE ON marketplace.deals
+CREATE TRIGGER update_marketplace_operator_deals_updated_at
+  BEFORE UPDATE ON marketplace.operator_deals
   FOR EACH ROW
   EXECUTE FUNCTION marketplace.update_updated_at_column();
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
-ALTER TABLE marketplace.deals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace.operator_deals ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Members can view operator deals"
-  ON marketplace.deals FOR SELECT
+  ON marketplace.operator_deals FOR SELECT
   USING (marketplace.is_operator_member(operator_id));
 
 CREATE POLICY "Public can view live deals"
-  ON marketplace.deals FOR SELECT
+  ON marketplace.operator_deals FOR SELECT
   USING (status = 'live');
 
 CREATE POLICY "Owners and managers can create deals"
-  ON marketplace.deals FOR INSERT
+  ON marketplace.operator_deals FOR INSERT
   WITH CHECK (marketplace.is_operator_owner_or_manager(operator_id));
 
 CREATE POLICY "Owners and managers can update deals"
-  ON marketplace.deals FOR UPDATE
+  ON marketplace.operator_deals FOR UPDATE
   USING (marketplace.is_operator_owner_or_manager(operator_id));
 
 CREATE POLICY "Owners and managers can delete deals"
-  ON marketplace.deals FOR DELETE
+  ON marketplace.operator_deals FOR DELETE
   USING (marketplace.is_operator_owner_or_manager(operator_id));
 
 -- ---------------------------------------------------------------------------
 -- Grants
 -- ---------------------------------------------------------------------------
-GRANT SELECT ON marketplace.deals TO anon, authenticated, service_role;
-GRANT INSERT, UPDATE, DELETE ON marketplace.deals TO authenticated, service_role;
+GRANT SELECT ON marketplace.operator_deals TO anon, authenticated, service_role;
+GRANT INSERT, UPDATE, DELETE ON marketplace.operator_deals TO authenticated, service_role;
