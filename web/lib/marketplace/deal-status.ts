@@ -36,8 +36,10 @@ const BASE_ALLOWED: ReadonlyArray<readonly [DealStatus, DealStatus]> = [
   ["scheduled", "paused"],
   ["live", "paused"],
   ["paused", "live"],
+  ["paused", "scheduled"], // operator resume when no session within MAX_LEAD_HOURS (Chunk 19)
   ["live", "auto_paused"],
   ["auto_paused", "live"],
+  ["auto_paused", "scheduled"], // operator resume when no session within MAX_LEAD_HOURS (Chunk 19)
   ["live", "sold_out"],
   ["sold_out", "live"],
   ["live", "expired"],
@@ -298,18 +300,23 @@ export function eventTypeForTransition(
 ): DealEventType {
   if (to === "pending_review") return "submitted_for_review";
   if (to === "draft" && from === "pending_review") return "rejected";
-  if (to === "scheduled") return "scheduled";
   if (to === "paused") return "paused";
   if (to === "auto_paused") return "auto_paused";
   if (to === "sold_out") return "sold_out";
   if (to === "expired") return "expired";
   if (to === "ended") return "ended";
   if (to === "archived") return "archived";
-  if (to === "live") {
-    if (from === "paused" || from === "sold_out") return "resumed";
-    if (from === "auto_paused") return "auto_resumed";
-    return "published";
+  // Operator resume (Chunk 19): paused / auto_paused → live or scheduled.
+  if (
+    (to === "live" || to === "scheduled") &&
+    (from === "paused" || from === "sold_out")
+  ) {
+    return "resumed";
   }
+  if (to === "live" && from === "auto_paused") return "auto_resumed";
+  if (to === "scheduled" && from === "auto_paused") return "resumed";
+  if (to === "scheduled") return "scheduled";
+  if (to === "live") return "published";
   // Fallback — should not be reached for allowed edges
   return "updated";
 }

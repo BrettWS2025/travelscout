@@ -36,8 +36,10 @@ const ALLOWED: Array<[DealStatus, DealStatus]> = [
   ["scheduled", "paused"],
   ["live", "paused"],
   ["paused", "live"],
+  ["paused", "scheduled"],
   ["live", "auto_paused"],
   ["auto_paused", "live"],
+  ["auto_paused", "scheduled"],
   ["live", "sold_out"],
   ["sold_out", "live"],
   ["live", "expired"],
@@ -397,6 +399,9 @@ describe("eventTypeForTransition coverage", () => {
     expect(eventTypeForTransition("pending_review", "draft")).toBe("rejected");
     expect(eventTypeForTransition("draft", "live")).toBe("published");
     expect(eventTypeForTransition("sold_out", "live")).toBe("resumed");
+    expect(eventTypeForTransition("paused", "scheduled")).toBe("resumed");
+    expect(eventTypeForTransition("auto_paused", "live")).toBe("auto_resumed");
+    expect(eventTypeForTransition("draft", "scheduled")).toBe("scheduled");
   });
 
   it("knows every deal status for matrix completeness", () => {
