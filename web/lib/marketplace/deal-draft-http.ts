@@ -17,6 +17,7 @@ import {
   DealDraftError,
   type DealDraftStore,
 } from "./deal-draft";
+import { DealPublishError } from "./deal-publish";
 import {
   LiveDealConfirmRequiredError,
   MinDiscountError,
@@ -49,6 +50,16 @@ export function setDealDraftHttpStore(store: DealDraftStore | null): void {
 export function dealDraftErrorResponse(err: unknown, context: string): Response {
   if (err instanceof DealNotFoundError) {
     return notFound("Deal not found.");
+  }
+  if (err instanceof DealPublishError) {
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.checks ? { checks: err.checks } : {}),
+        ...(err.validation ? { validation: err.validation } : {}),
+      },
+      { status: err.status }
+    );
   }
   if (err instanceof BookingLinkError) {
     return Response.json({ error: err.message }, { status: err.status });

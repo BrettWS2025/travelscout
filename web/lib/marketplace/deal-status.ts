@@ -373,7 +373,17 @@ export function transitionDeal(
   let pauseDetail: string | null = existing.pauseDetail;
 
   if (toStatus === "paused") {
-    pauseReason = "operator";
+    // Operator pause (default) or admin pause (Chunk 17; no auto-resume).
+    if (
+      options.reason != null &&
+      options.reason !== "operator" &&
+      options.reason !== "admin"
+    ) {
+      throw new DealStatusError(
+        "paused only accepts pause reason operator or admin"
+      );
+    }
+    pauseReason = options.reason === "admin" ? "admin" : "operator";
     pauseDetail = options.detail ?? null;
   } else if (toStatus === "auto_paused") {
     if (!options.reason || !isPauseReason(options.reason)) {
@@ -381,11 +391,24 @@ export function transitionDeal(
     }
     pauseReason = options.reason;
     pauseDetail = options.detail ?? null;
+  } else if (toStatus === "draft" && fromStatus === "pending_review") {
+    // Admin reject (Chunk 17): hold reviewer notes in pause_detail.
+    pauseReason = null;
+    pauseDetail = options.detail ?? null;
   } else if (
     fromStatus === "paused" ||
     fromStatus === "auto_paused"
   ) {
     // Leaving paused / auto_paused clears pause fields
+    pauseReason = null;
+    pauseDetail = null;
+  } else if (
+    fromStatus === "draft" &&
+    (toStatus === "pending_review" ||
+      toStatus === "scheduled" ||
+      toStatus === "live")
+  ) {
+    // Clear leftover reject notes when publishing again from draft.
     pauseReason = null;
     pauseDetail = null;
   }
