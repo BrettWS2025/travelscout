@@ -21,7 +21,7 @@ Cursor ticks these as chunks are finished.
 - [x] 9. Roles and permissions guard — Notes: `web/lib/marketplace/permissions.ts` (`can`, `requirePermission`, role×action matrix); `forbidden` in `auth.ts`; `profiles.is_platform_admin` migration; tests in `permissions.test.ts`.
 
 **Phase B: Manual deals end to end**
-- [ ] 10. Pricing maths and the 50% rule
+- [x] 10. Pricing maths and the 50% rule — Notes: `web/lib/marketplace/pricing.ts` (`maxDealPrice`, `meetsMinDiscount`, `discountPct`, `priceFromPercentage`, `validateSteps`, `withDiscountPct`); re-exported from `deal-session.ts`; spec §4.0.
 - [ ] 11. Deal event logger and status transition function
 - [ ] 12. Deal draft API (create, update, duplicate)
 - [ ] 13. Sessions and price options API (manual)
