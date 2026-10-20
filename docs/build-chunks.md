@@ -15,7 +15,7 @@ Cursor ticks these as chunks are finished.
 - [x] 3. Deal table — Notes: `marketplace.operator_deals` (avoids legacy `marketplace.deals`) + `web/lib/marketplace/deal.ts` field validator; highlight item length app-only (no subquery CHECK); integration/product/rule FKs deferred to chunk 7.
 - [x] 4. Sessions, price options, discount steps — Notes: `deal_sessions` / `deal_price_options` / `discount_steps` FK → `operator_deals`; `computeSeatsDisplayed` + `withSeatsDisplayed` in `web/lib/marketplace/deal-session.ts`; external_session FK deferred to chunk 7.
 - [x] 5. Media table — Notes: `marketplace.deal_media` + `web/lib/marketplace/deal-media.ts` (cover swap/promote, max 12 images, YouTube/Vimeo embed check).
-- [ ] 6. Audit, attestation, click, metrics, template tables
+- [x] 6. Audit, attestation, click, metrics, template tables — Notes: `deal_events` (append-only DB triggers + service reject update/delete), `deal_attestations`, `click_events`, `deal_metric_daily`, `deal_templates` + `web/lib/marketplace/deal-audit.ts`.
 - [ ] 7. Integration and auto-deal rule tables
 - [ ] 8. Remaining settings tables and seed data
 - [ ] 9. Roles and permissions guard
