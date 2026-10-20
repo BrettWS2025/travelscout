@@ -2,8 +2,8 @@
  * Deal draft API (deals platform Chunk 12).
  *
  * Create / get / update / duplicate / delete drafts for marketplace.operator_deals.
- * Status / pause_* remain system-owned (deal-status.ts). Publish validation is a
- * stub until Chunk 16.
+ * Status / pause_* remain system-owned (deal-status.ts). Publish validation via
+ * deal-publish-validation.ts (Chunk 16).
  *
  * Persistence: in-memory store (same pattern as Chunks 3–11). HTTP routes under
  * /api/marketplace/operators/... and /api/marketplace/operator-deals/... call
@@ -38,10 +38,14 @@ import {
   DealNotFoundError,
   logDealEvent,
   makeDealFixture,
-  stubValidateForPublish,
   type DealActor,
   type PublishValidationResult,
 } from "./deal-status";
+import type { EvidenceUrlCheckRecord, FetchLike } from "./booking-link";
+import {
+  validateDealInStore,
+  type PublishValidationOutcome,
+} from "./deal-publish-validation";
 import type {
   CapacityMode,
   DealType,
@@ -101,6 +105,8 @@ export type DealDraftStore = {
   priceOptions: Map<string, DealPriceOption>;
   discountSteps: Map<string, DiscountStep>;
   operators: OperatorStore;
+  /** Optional — filled by booking-link checks for publish validation. */
+  evidenceUrlChecks?: Map<string, EvidenceUrlCheckRecord>;
 };
 
 export function createDealDraftStore(
@@ -698,13 +704,22 @@ export type DealDetail = {
   priceOptions: DealPriceOption[];
   discountSteps: DiscountStep[];
   media: DealMedia[];
-  validation: PublishValidationResult;
+  validation: PublishValidationResult | PublishValidationOutcome;
 };
 
-export function getDealDetail(
+export type GetDealDetailOptions = {
+  now?: string;
+  attested?: boolean;
+  fetchFn?: FetchLike;
+  /** Default true — probe unchecked/stale booking URLs. */
+  refreshStaleLinks?: boolean;
+};
+
+export async function getDealDetail(
   store: DealDraftStore,
-  dealId: string
-): DealDetail {
+  dealId: string,
+  options?: GetDealDetailOptions
+): Promise<DealDetail> {
   const deal = store.deals.get(dealId);
   if (!deal) throw new DealNotFoundError(dealId);
 
@@ -718,10 +733,24 @@ export function getDealDetail(
     (s) => s.dealId === dealId
   );
   const media = listDealMedia(store.media, dealId);
-  // Chunk 16 fills validateForPublish; empty checks for now.
-  const validation = stubValidateForPublish(deal);
+  const validation = await validateDealInStore(store, dealId, {
+    now: options?.now,
+    attested: options?.attested,
+    fetchFn: options?.fetchFn,
+    refreshStaleLinks: options?.refreshStaleLinks,
+  });
 
-  return { deal, sessions, priceOptions, discountSteps, media, validation };
+  // Re-read deal in case link refresh updated it
+  const freshDeal = store.deals.get(dealId) ?? deal;
+
+  return {
+    deal: freshDeal,
+    sessions,
+    priceOptions,
+    discountSteps,
+    media,
+    validation,
+  };
 }
 
 // ---------------------------------------------------------------------------

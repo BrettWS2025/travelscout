@@ -2,7 +2,7 @@
  * Manual sessions and price-options API (deals platform Chunk 13).
  *
  * Works against the in-memory DealDraftStore from Chunk 12.
- * Live-deal edits re-run publish validation (stub until Chunk 16) and require
+ * Live-deal edits re-run publish validation (Chunk 16) and require
  * `confirm: true` to persist.
  *
  * Routes: /api/marketplace/operator-deals/:id/sessions|price-options
@@ -22,10 +22,10 @@ import {
   type DealPriceOption,
   type DealSession,
 } from "./deal-session";
+import { createValidateForPublishFromStore } from "./deal-publish-validation";
 import {
   DealNotFoundError,
   logDealEvent,
-  stubValidateForPublish,
   type DealActor,
   type PublishValidationResult,
   type ValidateForPublishFn,
@@ -150,10 +150,16 @@ function priceOptionsForDeal(
  * Awaits ValidateForPublishFn (sync or async), matching clearAutoPause.
  */
 export async function assertLiveConfirmOrThrow(
+  store: DealDraftStore,
   deal: Deal,
   options: InventoryMutationOptions
 ): Promise<PublishValidationResult> {
-  const validate = options.validateForPublish ?? stubValidateForPublish;
+  const validate =
+    options.validateForPublish ??
+    createValidateForPublishFromStore(store, {
+      now: options.now,
+      refreshStaleLinks: false,
+    });
   const validation = await validate(deal);
   if (deal.status !== "live") return validation;
 
@@ -254,7 +260,7 @@ export async function createDealSession(
 ): Promise<SessionMutationResult> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const input = normalizeSessionInput(raw);
   const now = options.now ?? new Date().toISOString();
@@ -528,7 +534,7 @@ export async function updateDealSession(
 ): Promise<SessionMutationResult> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const existing = store.sessions.get(sessionId);
   if (!existing || existing.dealId !== dealId) {
@@ -702,7 +708,7 @@ export async function deleteDealSession(
 ): Promise<{ validation: PublishValidationResult }> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const existing = store.sessions.get(sessionId);
   if (!existing || existing.dealId !== dealId) {
@@ -870,7 +876,7 @@ export async function createDealPriceOption(
 ): Promise<PriceOptionMutationResult> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const input = normalizePriceOptionInput(raw);
   const now = options.now ?? new Date().toISOString();
@@ -977,7 +983,7 @@ export async function updateDealPriceOption(
 ): Promise<PriceOptionMutationResult> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const existing = store.priceOptions.get(optionId);
   if (!existing || existing.dealId !== dealId) {
@@ -1112,7 +1118,7 @@ export async function deleteDealPriceOption(
 ): Promise<{ validation: PublishValidationResult }> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   const existing = store.priceOptions.get(optionId);
   if (!existing || existing.dealId !== dealId) {
@@ -1164,7 +1170,7 @@ export async function reorderDealPriceOptions(
 ): Promise<ReorderPriceOptionsResult> {
   const deal = requireDeal(store, dealId);
   requireManualDeal(deal);
-  const validation = await assertLiveConfirmOrThrow(deal, options);
+  const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
   if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
     throw new DealDraftError("ordered_ids is required", 400, [

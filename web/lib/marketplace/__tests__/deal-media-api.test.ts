@@ -289,7 +289,7 @@ describe("Chunk 14 media upload API", () => {
     // After reorder: uploaded[1]=0, video=1, uploaded[0]=2. Delete uploaded[0].
     // Images left: uploaded[1] only → becomes cover.
     expect(newCover?.id).toBe(uploaded[1]!.id);
-    expect(getDealDetail(store, deal.id).media).toHaveLength(2);
+    expect((await getDealDetail(store, deal.id)).media).toHaveLength(2);
   });
 
   it("applies media edits on a live deal without confirm", async () => {

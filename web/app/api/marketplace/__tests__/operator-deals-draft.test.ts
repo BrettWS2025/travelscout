@@ -143,12 +143,12 @@ describe("Chunk 12 deal draft API (permissions + store)", () => {
       now: NOW,
     });
     expect(copy.title).toBe("Copy of Harbour Sunset Deal");
-    expect(getDealDetail(getDealDraftHttpStore(), copy.id).sessions).toHaveLength(
-      0
-    );
-    expect(getDealDetail(getDealDraftHttpStore(), deal.id).sessions).toHaveLength(
-      1
-    );
+    expect(
+      (await getDealDetail(getDealDraftHttpStore(), copy.id)).sessions
+    ).toHaveLength(0);
+    expect(
+      (await getDealDetail(getDealDraftHttpStore(), deal.id)).sessions
+    ).toHaveLength(1);
   });
 
   it("route modules export the Chunk 12 handlers", async () => {

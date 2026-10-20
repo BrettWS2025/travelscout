@@ -83,7 +83,7 @@ describe("open-window sessions", () => {
       expect(session.seatsDisplayed).toBe(3);
     }
 
-    expect(getDealDetail(store, deal.id).sessions).toHaveLength(
+    expect((await getDealDetail(store, deal.id)).sessions).toHaveLength(
       MAX_OPEN_WINDOW_DAYS
     );
 
