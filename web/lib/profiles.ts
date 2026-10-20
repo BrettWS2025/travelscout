@@ -5,6 +5,8 @@ export type ProfileRow = {
   id: string;
   email: string | null;
   display_name: string | null;
+  /** Platform admin (Chunk 9). Not selected by default; see permissions.ts. */
+  is_platform_admin?: boolean;
 };
 
 function displayNameFromUser(user: User): string | null {

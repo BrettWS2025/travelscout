@@ -32,6 +32,10 @@ export function unauthorized(message = "Authentication required.") {
   return Response.json({ error: message }, { status: 401 });
 }
 
+export function forbidden(message = "Forbidden.") {
+  return Response.json({ error: message }, { status: 403 });
+}
+
 export function badRequest(message: string) {
   return Response.json({ error: message }, { status: 400 });
 }
