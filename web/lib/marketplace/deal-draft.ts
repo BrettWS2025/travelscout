@@ -410,6 +410,7 @@ export function dealFieldInputFromClient(
     get("appendTrackingParams", "append_tracking_params")
   );
   assign("linkStatus", get("linkStatus", "link_status"));
+  assign("publishAt", get("publishAt", "publish_at"));
   assign("salesCutoffMinutes", get("salesCutoffMinutes", "sales_cutoff_minutes"));
 
   return out;
