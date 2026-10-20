@@ -12,10 +12,10 @@ import type { PublishValidationOutcome } from "./deal-publish-validation";
 import type { PublishButtonLabel } from "./deal-publish";
 import type { FieldError } from "./deal";
 import type {
+  BulkDealAction,
   DealCalendarResult,
   ListOperatorDealsResult,
-} from "./deal-list";
-import type { BulkDealAction } from "./deal-actions";
+} from "./deal-list-shared";
 
 export class OperatorDealsApiError extends Error {
   status: number;

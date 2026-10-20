@@ -2,7 +2,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DealsList } from "@/components/inventory/deals-list/DealsList";
 import { DEV_SEED_IDS } from "@/lib/marketplace/seed-dev";
-import type { DealListRow, ListOperatorDealsResult } from "@/lib/marketplace/deal-list";
+import type {
+  DealListRow,
+  ListOperatorDealsResult,
+} from "@/lib/marketplace/deal-list-shared";
 
 const push = vi.fn();
 

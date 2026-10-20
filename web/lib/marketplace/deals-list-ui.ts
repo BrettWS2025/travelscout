@@ -6,16 +6,23 @@
 import {
   DEAL_LIST_ROW_ACTIONS,
   DEAL_LIST_TABS,
+  isDealListTab,
   type DealListBanner,
   type DealListRow,
   type DealListRowAction,
   type DealListTab,
-} from "./deal-list";
+} from "./deal-list-shared";
 import type { Category, DealType, PauseReason, SourceProvider } from "./enums";
 import { CATEGORIES, DEAL_TYPES, SOURCE_PROVIDERS } from "./enums";
-import { formatMinorAsDollars } from "./deal-editor";
 
-export { formatMinorAsDollars };
+export { isDealListTab };
+export type { DealListTab };
+
+/** Format minor units as dollars (client-safe; avoid importing deal-editor). */
+export function formatMinorAsDollars(minor: number | null | undefined): string {
+  if (minor == null || !Number.isFinite(minor)) return "—";
+  return `$${(minor / 100).toFixed(2)}`;
+}
 
 export const DEAL_LIST_TAB_LABELS: Record<DealListTab, string> = {
   live: "Live",

@@ -3,7 +3,10 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { DealsList } from "@/components/inventory/deals-list/DealsList";
-import { isDealListTab, type DealListTab } from "@/lib/marketplace/deal-list";
+import {
+  isDealListTab,
+  type DealListTab,
+} from "@/lib/marketplace/deal-list-shared";
 
 function InventoryPageInner() {
   const params = useSearchParams();

@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { UpdateSeatsDialog } from "@/components/inventory/deals-list/UpdateSeatsDialog";
 import type {
+  BulkDealAction,
   DealCalendarResult,
   DealListBanner,
   DealListRow,
   DealListRowAction,
   DealListTab,
   ListOperatorDealsResult,
-} from "@/lib/marketplace/deal-list";
+} from "@/lib/marketplace/deal-list-shared";
 import {
   DEAL_LIST_ROW_ACTION_LABELS,
   DEAL_LIST_TAB_LABELS,
@@ -31,7 +32,6 @@ import {
   type DealsListFilters,
   type DealsListViewMode,
 } from "@/lib/marketplace/deals-list-ui";
-import type { BulkDealAction } from "@/lib/marketplace/deal-actions";
 import {
   OperatorDealsApiError,
   bulkOperatorDealsApi,
