@@ -35,7 +35,7 @@ Cursor ticks these as chunks are finished.
 - [x] 21. Deals list API — Notes: `deal-list.ts` (`listOperatorDeals`, `getOperatorDealsCalendar`, tab_counts, banners, row actions); `GET .../operators/:id/deals` + `.../deals/calendar`; staff gets preview/view_stats only; integrations map on draft store.
 - [x] 22. Wire deal editor (manual) — Notes: stepped editor under `/account/inventory/deals/{new,[id]}`; `operator-deals-client.ts` + `deal-editor.ts`; `publish_at` on PATCH; `GET /operators/me` + HTTP store seed/email role fallback; Fix jumps to `editorStep`.
 - [x] 23. Wire deals list — Notes: `DealsList` + `deals-list-ui.ts` + client list/action helpers; inventory page tabs/calendar/filters/bulk/banners/seats; staff read-only via `allowed_actions`.
-- [ ] 24. Wire quick-update mobile page
+- [x] 24. Wire quick-update mobile page — Notes: `/quick-update/[token]` + `QuickUpdatePage` / `SeatStepper` / `quick-update-client.ts`; seat steppers + Still available/Sold out per deal; expired/used → login link; full-bleed in MarketingMain/OperatorMain.
 - [ ] 25. Templates
 
 **Phase C: Integrations and Rezdy**
