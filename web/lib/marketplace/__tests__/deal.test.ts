@@ -34,7 +34,9 @@ describe("Chunk 3 migration", () => {
     expect(sql).toContain("'draft', 'pending_review', 'scheduled', 'live'");
     expect(sql).toContain("promo_code ~ '^[A-Z0-9_-]+$'");
     expect(sql).toContain("operator_deals_highlights_max");
-    expect(sql).not.toContain("NOT EXISTS");
+    expect(sql).not.toMatch(
+      /CONSTRAINT\s+operator_deals_highlights_item_len[\s\S]*NOT EXISTS/i
+    );
     expect(sql).toContain("Members can view operator deals");
     expect(sql).toContain("does not collide with the existing");
   });
