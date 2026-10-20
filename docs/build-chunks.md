@@ -13,7 +13,7 @@ Cursor ticks these as chunks are finished.
 - [ ] 1. Constants and enums
 - [ ] 2. Operator, defaults and team tables
 - [x] 3. Deal table — Notes: `marketplace.operator_deals` (avoids legacy `marketplace.deals`) + `web/lib/marketplace/deal.ts` field validator; highlight item length app-only (no subquery CHECK); integration/product/rule FKs deferred to chunk 7.
-- [ ] 4. Sessions, price options, discount steps
+- [x] 4. Sessions, price options, discount steps — Notes: `deal_sessions` / `deal_price_options` / `discount_steps` FK → `operator_deals`; `computeSeatsDisplayed` + `withSeatsDisplayed` in `web/lib/marketplace/deal-session.ts`; external_session FK deferred to chunk 7.
 - [ ] 5. Media table
 - [ ] 6. Audit, attestation, click, metrics, template tables
 - [ ] 7. Integration and auto-deal rule tables
@@ -151,6 +151,8 @@ Cursor ticks these as chunks are finished.
 
 **Goal:** the main Deal table. Drafts may be saved incomplete, so DB columns for "Req" fields are nullable; required-ness is enforced by publish validation later (Chunk 16).
 
+**Table name:** `marketplace.operator_deals` (not `marketplace.deals` — that is the legacy org-scoped feed). Spec §3.1 documents this.
+
 **Fields:** operator_id fk, deal_type, source_provider, integration_id fk nullable, external_product_id fk nullable, deal_rule_id fk nullable, status (default draft), pause_reason nullable, pause_detail text, title (10–80), slug (unique, system), summary (20–160), description rich text (100–5,000; allow bold, lists, links only; sanitise on save), category, tags string[] (max 10), highlights string[] (max 6, each ≤80), inclusions/exclusions/what_to_bring string[] (max 15 each), duration_minutes (15–20,160), duration_label, location_name, address, latitude, longitude, region, meeting_point_notes (≤500), pickup_available bool default false, pickup_notes (≤500), min_age (0–99), age_notes, fitness_level, wheelchair_accessible bool, accessibility_notes (≤500), languages string[] (ISO 639-1), weather_dependent bool, weather_notes, cancellation_policy_type, cancellation_policy_text (≤1,000), important_info (≤1,000), overridden_fields string[] default [], currency (3 chars), discount_mechanism, promo_code (3–30, `^[A-Z0-9_-]+$`), discount_input_mode default deal_price, stepped_discount_enabled bool default false, capacity_mode, seat_cap (1–999), min_booking_qty, max_booking_qty, booking_destination_type, booking_url, booking_phone, booking_email, booking_instructions (≤300), append_tracking_params bool default true, link_status default unchecked, link_last_checked_at, link_consecutive_failures int default 0, publish_at, sales_cutoff_minutes (0–1440), last_attested_at, attestation_expires_at, published_at, ended_at, first_published_at, created_by, updated_by.
 
 **Indexes:** (operator_id, status), (integration_id, status), slug unique.
@@ -163,12 +165,14 @@ Cursor ticks these as chunks are finished.
 
 ## Chunk 4. Sessions, price options, discount steps
 
-**DealSession:** deal_id fk (cascade), external_session_id fk nullable, start_at (UTC), end_at nullable, provider_seats_available int nullable, manual_seats_available int (0–999) nullable, seat_cap nullable, seats_displayed int (system), status (live|sold_out|cancelled|expired, default live), last_synced_at.
+Parent Deal table is `marketplace.operator_deals` (see Chunk 3 / spec §3). Child tables: `marketplace.deal_sessions`, `deal_price_options`, `discount_steps`.
+
+**DealSession:** deal_id fk → `operator_deals` (cascade), external_session_id fk nullable, start_at (UTC), end_at nullable, provider_seats_available int nullable, manual_seats_available int (0–999) nullable, seat_cap nullable, seats_displayed int (system), status (live|sold_out|cancelled|expired, default live), last_synced_at.
 - Add a pure function `computeSeatsDisplayed(session, deal)` = min(available, session.seat_cap ?? deal.seat_cap ?? ∞) where available is provider_seats_available for integrated deals and manual_seats_available for manual. Never below 0. Recompute on every save.
 
-**DealPriceOption:** deal_id fk, label, type (price_option_type), external_price_option_id, external_deal_price_option_id, original_price_minor int, original_price_source, original_price_evidence_url, deal_price_minor int, discount_pct decimal (system, computed), sort_order.
+**DealPriceOption:** deal_id fk → `operator_deals`, label, type (price_option_type), external_price_option_id, external_deal_price_option_id, original_price_minor int, original_price_source, original_price_evidence_url, deal_price_minor int, discount_pct decimal (system, computed), sort_order.
 
-**DiscountStep:** deal_id fk, price_option_id fk, hours_before_start (1–72), deal_price_minor, promo_code, external_deal_price_option_id.
+**DiscountStep:** deal_id fk → `operator_deals`, price_option_id fk, hours_before_start (1–72), deal_price_minor, promo_code, external_deal_price_option_id.
 
 **Test it:** tests for computeSeatsDisplayed with and without caps, manual vs integrated.
 

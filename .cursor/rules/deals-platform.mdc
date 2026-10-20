@@ -17,6 +17,7 @@ The full spec is `docs/deals-spec.md`. It is the source of truth for data, valid
 - **Money:** integer minor units (cents) + ISO 4217 code (default NZD). Never floats for money.
 - **Secrets:** provider credentials only via `credentials_ref` to an encrypted store. Never log them or return them to the client.
 - **Constants** (`MIN_DISCOUNT_PCT`=50, `MAX_LEAD_HOURS`=72, `MANUAL_ATTESTATION_HOURS`=12, `SYNC_STALE_MINUTES`=15, `CLICK_RECHECK`=true, `MANUAL_REVIEW_COUNT`=3) are read from one config module, never hard-coded.
+- **Inventory Deal table:** `marketplace.operator_deals` (not legacy `marketplace.deals`). Sessions, price options, discount steps and later children FK to `operator_deals`.
 
 ## Roles
 - owner: everything. manager: everything except Billing and Account. staff: read-only Inventory, read-only Business profile, own Notifications.
