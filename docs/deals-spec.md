@@ -381,6 +381,29 @@ Email/SMS reconfirm link opens a mobile page without full login, scoped by a sig
 
 ---
 
+## 5.9 Roles and permissions (server)
+
+All operator API routes enforce access via `can(user, operatorId, action)` in `web/lib/marketplace/permissions.ts` (or `requirePermission` which returns 401/403). The UI may mirror these rules but must never be the only check.
+
+| Action | owner | manager | staff |
+|---|---|---|---|
+| `inventory.read` | ✓ | ✓ | ✓ |
+| `inventory.write` | ✓ | ✓ | |
+| `settings.integrations` | ✓ | ✓ | |
+| `settings.defaults` | ✓ | ✓ | |
+| `settings.team` | ✓ | ✓ | |
+| `settings.compliance` | ✓ | ✓ | |
+| `settings.profile.write` | ✓ | ✓ | |
+| `settings.profile.read` | ✓ | ✓ | ✓ |
+| `settings.notifications.own` | ✓ | ✓ | ✓ |
+| `settings.billing` | ✓ | | |
+| `settings.account` | ✓ | | |
+| `admin.*` | platform admin only (`profiles.is_platform_admin` / auth `app_metadata.is_platform_admin`) | | |
+
+Membership must be `invite_status = accepted`. Non-members and pending invites fail closed. Platform admin does **not** grant operator inventory/settings actions by itself.
+
+---
+
 ## 6. Settings tab
 Eight sub-sections. Owners see all; Managers all except Billing and Account; Staff see Business profile read-only and their own Notifications.
 
@@ -434,7 +457,8 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts` (plus `web/lib/supabase/`) |
+| Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | Settings tables | `notification_preferences`, `compliance_documents`, `billing_accounts` |
 | Dev seed | `supabase/seeds/deals_platform_dev.sql` + `seed-dev.ts` (Harbour Kayaks / Bay Cruises) |
