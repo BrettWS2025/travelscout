@@ -177,6 +177,8 @@ export type DealFieldInput = {
   bookingInstructions?: string | null;
   appendTrackingParams?: boolean | null;
   linkStatus?: LinkStatus | null;
+  /** Schedule publish for later (null = immediate when approved). */
+  publishAt?: string | null;
   salesCutoffMinutes?: number | null;
 };
 

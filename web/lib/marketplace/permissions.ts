@@ -281,6 +281,28 @@ export type RequirePermissionOptions = {
 };
 
 /**
+ * Optional in-memory team membership lookup (Chunk 22 HTTP store / seeds).
+ * Used when Supabase team_members has no row (process-local draft store).
+ */
+export type MemoryOperatorRoleLookup = (
+  userId: string,
+  operatorId: string,
+  email?: string | null
+) => UserRole | null;
+
+let memoryOperatorRoleLookup: MemoryOperatorRoleLookup | null = null;
+
+export function setMemoryOperatorRoleLookup(
+  fn: MemoryOperatorRoleLookup | null
+): void {
+  memoryOperatorRoleLookup = fn;
+}
+
+export function getMemoryOperatorRoleLookup(): MemoryOperatorRoleLookup | null {
+  return memoryOperatorRoleLookup;
+}
+
+/**
  * Auth + permission middleware for operator API routes.
  * Returns `{ ok: true, ... }` or `{ ok: false, response }` with 401/403.
  */
@@ -304,10 +326,15 @@ export async function requirePermission(
       return isPlatformAdminUser(u, fromProfile);
     });
 
-  const [role, isPlatformAdmin] = await Promise.all([
+  const [lookedUpRole, isPlatformAdmin] = await Promise.all([
     lookupRole(accessToken, user.id, operatorId),
     Promise.resolve(resolveAdmin(user, accessToken)).then(Boolean),
   ]);
+
+  const role =
+    lookedUpRole ??
+    memoryOperatorRoleLookup?.(user.id, operatorId, user.email ?? null) ??
+    null;
 
   const permissionUser: PermissionUser = {
     id: user.id,

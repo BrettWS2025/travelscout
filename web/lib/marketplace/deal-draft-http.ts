@@ -35,19 +35,109 @@ import {
 } from "./deal-media";
 import { DealNotFoundError } from "./deal-status";
 import { DealValidationError } from "./deal";
+import { isUserRole, type UserRole } from "./enums";
+import { setMemoryOperatorRoleLookup } from "./permissions";
+import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
 
 let processStore: DealDraftStore | null = null;
+let memoryLookupInstalled = false;
 
-/** Process-level store for route handlers (replaceable in tests). */
+function ensureMemoryRoleLookup(): void {
+  if (memoryLookupInstalled) return;
+  memoryLookupInstalled = true;
+  setMemoryOperatorRoleLookup((userId, operatorId, email) => {
+    if (!processStore) return null;
+    const seedMatch = email
+      ? DEV_SEED_USERS.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase()
+        )
+      : undefined;
+    const candidateIds = new Set<string>([userId]);
+    if (seedMatch) candidateIds.add(seedMatch.userId);
+
+    for (const m of processStore.operators.teamMembers.values()) {
+      if (
+        m.userId != null &&
+        candidateIds.has(m.userId) &&
+        m.operatorId === operatorId &&
+        m.inviteStatus === "accepted" &&
+        isUserRole(m.role)
+      ) {
+        return m.role as UserRole;
+      }
+    }
+    return null;
+  });
+}
+
+/**
+ * Process-level store for route handlers (replaceable in tests).
+ * First access seeds Harbour Kayaks / Bay Cruises so the editor APIs work
+ * before Supabase persistence lands.
+ */
 export function getDealDraftHttpStore(): DealDraftStore {
+  ensureMemoryRoleLookup();
   if (!processStore) {
-    processStore = createDealDraftStore();
+    const seeded = seedDevMarketplace();
+    processStore = createDealDraftStore(seeded.store);
   }
   return processStore;
 }
 
 export function setDealDraftHttpStore(store: DealDraftStore | null): void {
+  ensureMemoryRoleLookup();
   processStore = store;
+}
+
+/** Operators the given user (or matching seed email) belongs to. */
+export function listOperatorsForUser(
+  userId: string,
+  email?: string | null
+): Array<{
+  id: string;
+  tradingName: string;
+  slug: string;
+  role: UserRole;
+  timezone: string;
+  currency: string;
+}> {
+  const store = getDealDraftHttpStore();
+  const seedMatch = email
+    ? DEV_SEED_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase())
+    : undefined;
+  const candidateIds = new Set<string>([userId]);
+  if (seedMatch) candidateIds.add(seedMatch.userId);
+
+  const out: Array<{
+    id: string;
+    tradingName: string;
+    slug: string;
+    role: UserRole;
+    timezone: string;
+    currency: string;
+  }> = [];
+
+  for (const m of store.operators.teamMembers.values()) {
+    if (
+      m.userId == null ||
+      !candidateIds.has(m.userId) ||
+      m.inviteStatus !== "accepted" ||
+      !isUserRole(m.role)
+    ) {
+      continue;
+    }
+    const op = store.operators.operators.get(m.operatorId);
+    if (!op) continue;
+    out.push({
+      id: op.id,
+      tradingName: op.tradingName,
+      slug: op.slug,
+      role: m.role,
+      timezone: op.timezone,
+      currency: op.currency,
+    });
+  }
+  return out;
 }
 
 export function dealDraftErrorResponse(err: unknown, context: string): Response {
