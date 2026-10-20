@@ -22,7 +22,7 @@ Cursor ticks these as chunks are finished.
 
 **Phase B: Manual deals end to end**
 - [x] 10. Pricing maths and the 50% rule — Notes: `web/lib/marketplace/pricing.ts` (`maxDealPrice`, `meetsMinDiscount`, `discountPct`, `priceFromPercentage`, `validateSteps`, `withDiscountPct`); re-exported from `deal-session.ts`; spec §4.0.
-- [ ] 11. Deal event logger and status transition function
+- [x] 11. Deal event logger and status transition function — Notes: `web/lib/marketplace/deal-status.ts` (`logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`, client strip of status/pause_*); tests in `deal-status.test.ts`; publish validation stub until chunk 16.
 - [ ] 12. Deal draft API (create, update, duplicate)
 - [ ] 13. Sessions and price options API (manual)
 - [ ] 14. Media upload API

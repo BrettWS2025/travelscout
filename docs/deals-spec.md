@@ -304,6 +304,8 @@ Implemented in `web/lib/marketplace/pricing.ts`. Money is always integer minor u
 | Review | Manual, or requires_manual_review | Operator's first 3 manual deals, or all deals if flagged, go to pending_review |
 
 ### 4.2 Status transitions
+Implemented in `web/lib/marketplace/deal-status.ts`: `logDealEvent`, `transitionDeal`, `applyAutoPause`, `clearAutoPause`. Clients never set `status`, `pause_reason` or `pause_detail` — client update helpers strip those fields (`stripSystemOwnedDealFields` / `applyClientDealFieldPatch`). Disallowed edges throw `InvalidDealTransitionError`. Entering `paused` sets `pause_reason=operator`; entering `auto_paused` uses the given reason; both clear on leave. First entry to `live` or `scheduled` sets `published_at` and `first_published_at`; `ended` sets `ended_at`. Every transition writes a `DealEvent` with `from_status` / `to_status` / `reason`. `clearAutoPause` only resumes when the deal is `auto_paused` for the same reason in `AUTO_RESUME_REASONS` and publish validation passes (Chunk 16 fills `validateForPublish`; stub returns ok until then).
+
 | From | Trigger | To |
 |---|---|---|
 | draft | Submitted; validation passes; review required | pending_review |
@@ -315,7 +317,7 @@ Implemented in `web/lib/marketplace/pricing.ts`. Money is always integer minor u
 | auto_paused | Trigger clears (auto-resume reasons only) | live |
 | live | Every remaining session has 0 seats displayed | sold_out |
 | sold_out | Seats reappear before cutoff | live |
-| live / sold_out / auto_paused | Every session past start_at − sales_cutoff_minutes | expired |
+| live / sold_out / auto_paused / paused / scheduled | Every session past start_at − sales_cutoff_minutes | expired |
 | any except archived | Operator ends deal | ended |
 | expired / ended | 30 days pass, or operator archives | archived |
 
@@ -470,7 +472,7 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-audit.ts`, `deal-status.ts` (§4.2 transitions), `integration.ts`, `secrets.ts`, `operators.ts`, `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
 | Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | Settings tables | `notification_preferences`, `compliance_documents`, `billing_accounts` |
