@@ -42,6 +42,10 @@ import {
   type PublishValidationResult,
 } from "./deal-status";
 import type { EvidenceUrlCheckRecord, FetchLike } from "./booking-link";
+import type {
+  AttestationReminderRecord,
+  QuickUpdateTokenRecord,
+} from "./deal-attestation";
 import {
   getPublishButtonLabel,
   type PublishButtonLabel,
@@ -111,6 +115,10 @@ export type DealDraftStore = {
   operators: OperatorStore;
   /** Optional — filled by booking-link checks for publish validation. */
   evidenceUrlChecks?: Map<string, EvidenceUrlCheckRecord>;
+  /** Chunk 20: signed quick-update tokens (hash only). */
+  quickUpdateTokens?: Map<string, QuickUpdateTokenRecord>;
+  /** Chunk 20: attestation reminder dedupe rows. */
+  attestationReminders?: Map<string, AttestationReminderRecord>;
 };
 
 export function createDealDraftStore(
@@ -124,6 +132,8 @@ export function createDealDraftStore(
     priceOptions: new Map(),
     discountSteps: new Map(),
     operators: operators ?? createOperatorStore(),
+    quickUpdateTokens: new Map(),
+    attestationReminders: new Map(),
   };
 }
 

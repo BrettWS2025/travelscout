@@ -18,6 +18,7 @@ import {
   type DealDraftStore,
 } from "./deal-draft";
 import { DealActionsError } from "./deal-actions";
+import { DealAttestationError } from "./deal-attestation";
 import { DealPublishError } from "./deal-publish";
 import {
   LiveDealConfirmRequiredError,
@@ -52,7 +53,11 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
   if (err instanceof DealNotFoundError) {
     return notFound("Deal not found.");
   }
-  if (err instanceof DealPublishError || err instanceof DealActionsError) {
+  if (
+    err instanceof DealPublishError ||
+    err instanceof DealActionsError ||
+    err instanceof DealAttestationError
+  ) {
     return Response.json(
       {
         error: err.message,
