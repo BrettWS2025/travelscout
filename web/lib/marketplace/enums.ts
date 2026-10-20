@@ -25,6 +25,20 @@ export function isSourceProvider(value: unknown): value is SourceProvider {
   return isOneOf(SOURCE_PROVIDERS, value);
 }
 
+/** Booking providers that can be connected via Integration (source_provider minus manual). */
+export const INTEGRATION_PROVIDERS = [
+  "rezdy",
+  "fareharbor",
+  "bokun",
+  "checkfront",
+] as const satisfies readonly SourceProvider[];
+export type IntegrationProvider = (typeof INTEGRATION_PROVIDERS)[number];
+export function isIntegrationProvider(
+  value: unknown
+): value is IntegrationProvider {
+  return isOneOf(INTEGRATION_PROVIDERS, value);
+}
+
 export const DEAL_TYPES = [
   "integrated_session",
   "integrated_multi_session",

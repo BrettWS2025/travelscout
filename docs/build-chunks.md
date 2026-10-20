@@ -16,7 +16,7 @@ Cursor ticks these as chunks are finished.
 - [x] 4. Sessions, price options, discount steps — Notes: `deal_sessions` / `deal_price_options` / `discount_steps` FK → `operator_deals`; `computeSeatsDisplayed` + `withSeatsDisplayed` in `web/lib/marketplace/deal-session.ts`; external_session FK deferred to chunk 7.
 - [x] 5. Media table — Notes: `marketplace.deal_media` + `web/lib/marketplace/deal-media.ts` (cover swap/promote, max 12 images, YouTube/Vimeo embed check).
 - [x] 6. Audit, attestation, click, metrics, template tables — Notes: `deal_events` (append-only DB triggers + service reject update/delete), `deal_attestations`, `click_events`, `deal_metric_daily`, `deal_templates` + `web/lib/marketplace/deal-audit.ts`.
-- [ ] 7. Integration and auto-deal rule tables
+- [x] 7. Integration and auto-deal rule tables — Notes: `integrations` / `external_products` / `external_sessions` / `sync_logs` / `deal_rules` + `encrypted_secrets`; `secrets.ts` AES-GCM helpers; `serializeIntegration` strips refs; deferred FKs on `operator_deals` + `deal_sessions` wired.
 - [ ] 8. Remaining settings tables and seed data
 - [ ] 9. Roles and permissions guard
 
