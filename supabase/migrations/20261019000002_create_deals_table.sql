@@ -192,13 +192,10 @@ CREATE TABLE marketplace.operator_deals (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+  -- Per-item highlight length (≤80) is enforced in web/lib/marketplace/deal.ts;
+  -- PostgreSQL CHECK constraints cannot use subqueries (unnest/NOT EXISTS).
   CONSTRAINT operator_deals_tags_max CHECK (cardinality(tags) <= 10),
   CONSTRAINT operator_deals_highlights_max CHECK (cardinality(highlights) <= 6),
-  CONSTRAINT operator_deals_highlights_item_len CHECK (
-    NOT EXISTS (
-      SELECT 1 FROM unnest(highlights) AS h(v) WHERE char_length(v) > 80
-    )
-  ),
   CONSTRAINT operator_deals_inclusions_max CHECK (cardinality(inclusions) <= 15),
   CONSTRAINT operator_deals_exclusions_max CHECK (cardinality(exclusions) <= 15),
   CONSTRAINT operator_deals_what_to_bring_max CHECK (cardinality(what_to_bring) <= 15)

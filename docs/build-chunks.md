@@ -12,7 +12,7 @@ Cursor ticks these as chunks are finished.
 - [x] 0. Set up reference files — Notes: filled Project context in `docs/deals-spec.md` (files already present).
 - [ ] 1. Constants and enums
 - [ ] 2. Operator, defaults and team tables
-- [x] 3. Deal table — Notes: `marketplace.operator_deals` (avoids legacy `marketplace.deals`) + `web/lib/marketplace/deal.ts` field validator; integration/product/rule FKs deferred to chunk 7.
+- [x] 3. Deal table — Notes: `marketplace.operator_deals` (avoids legacy `marketplace.deals`) + `web/lib/marketplace/deal.ts` field validator; highlight item length app-only (no subquery CHECK); integration/product/rule FKs deferred to chunk 7.
 - [ ] 4. Sessions, price options, discount steps
 - [ ] 5. Media table
 - [ ] 6. Audit, attestation, click, metrics, template tables
