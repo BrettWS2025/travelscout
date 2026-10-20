@@ -92,7 +92,9 @@ Read from `web/lib/marketplace/config.ts` (`getPlatformConfig()` / `PLATFORM_DEF
 ## 3. Data model
 Every table has `id` (uuid), `created_at`, `updated_at` unless noted. "Req" = required to publish; drafts may be saved incomplete.
 
-### 3.1 Deal
+**Inventory Deal table name:** the canonical Deal row lives in `marketplace.operator_deals`. Do **not** use `marketplace.deals` for this model — that table is the legacy org-scoped lightweight feed (`organization_id`, simple status). Child tables (`deal_sessions`, `deal_price_options`, `discount_steps`, later media/events) all FK to `operator_deals.id`. Domain code: `web/lib/marketplace/deal.ts`, `deal-session.ts`.
+
+### 3.1 Deal (`marketplace.operator_deals`)
 | Field | Type | Req | Validation / notes |
 |---|---|---|---|
 | operator_id | fk Operator | Yes | |
@@ -159,25 +161,25 @@ Every table has `id` (uuid), `created_at`, `updated_at` unless noted. "Req" = re
 | published_at, ended_at | datetime | System | |
 | created_by, updated_by | fk User | System | |
 
-### 3.2 DealSession
-One row per departure (session types) or per day (open window). Every deal has at least one.
+### 3.2 DealSession (`marketplace.deal_sessions`)
+One row per departure (session types) or per day (open window). Every deal has at least one. `deal_id` → `marketplace.operator_deals.id` (ON DELETE CASCADE).
 | Field | Type | Req | Notes |
 |---|---|---|---|
-| deal_id | fk Deal | Yes | |
-| external_session_id | fk ExternalSession | If integrated | |
+| deal_id | fk operator_deals | Yes | Inventory Deal parent |
+| external_session_id | fk ExternalSession | If integrated | UUID until Chunk 7 adds FK |
 | start_at | datetime | Yes | Future, and within MAX_LEAD_HOURS once live. Open window: start of the day's availability |
 | end_at | datetime | No | Open window: end of the day's availability |
 | provider_seats_available | int | System | Cached; refreshed on sync and click recheck |
 | manual_seats_available | int | If manual | 0–999 |
 | seat_cap | int | No | Per-session override of deal cap |
-| seats_displayed | int | System | min(available, cap) |
+| seats_displayed | int | System | `computeSeatsDisplayed`: min(available, session.seat_cap ?? deal.seat_cap ?? ∞), never below 0; available = provider seats (integrated) or manual seats (manual); recompute on every save |
 | status | enum session_status | System | |
 | last_synced_at | datetime | System | |
 
-### 3.3 DealPriceOption
+### 3.3 DealPriceOption (`marketplace.deal_price_options`)
 | Field | Type | Req | Notes |
 |---|---|---|---|
-| deal_id | fk Deal | Yes | Min 1 per deal |
+| deal_id | fk operator_deals | Yes | Min 1 per deal |
 | label | string | Yes | e.g. "Adult" |
 | type | enum price_option_type | Yes | |
 | external_price_option_id | string | If integrated | Provider's full-price option |
@@ -189,12 +191,12 @@ One row per departure (session types) or per day (open window). Every deal has a
 | discount_pct | decimal | System | 1 − deal/original, 1 dp |
 | sort_order | int | Yes | |
 
-### 3.4 DiscountStep
+### 3.4 DiscountStep (`marketplace.discount_steps`)
 | Field | Type | Req | Notes |
 |---|---|---|---|
-| deal_id | fk Deal | Yes | |
-| price_option_id | fk DealPriceOption | Yes | |
-| hours_before_start | int | Yes | 1–72; applies from this point onward |
+| deal_id | fk operator_deals | Yes | |
+| price_option_id | fk DealPriceOption | Yes | → `deal_price_options.id` |
+| hours_before_start | int | Yes | 1–MAX_LEAD_HOURS (default 72); applies from this point onward |
 | deal_price_minor | int | Yes | ≤ previous step and meets 50% rule |
 | promo_code | string | If promo_code | Distinct per step |
 | external_deal_price_option_id | string | If price_option | |
@@ -430,7 +432,8 @@ TravelScout monorepo; the active app is under `web/`.
 | Job / queue system | None yet (Redis is used for caching / rate limits only; some GitHub Actions crons for scrapers) |
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
-| Domain types / DB access | `web/lib/marketplace/types.ts`, `web/lib/marketplace/db.ts` (plus `web/lib/supabase/`) |
+| Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts` (sessions / price options / steps), `operators.ts` (plus `web/lib/supabase/`) |
+| Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | API routes | `web/app/api/` (marketplace under `web/app/api/marketplace/`) |
 | Jobs | None yet for the deals platform |
 | Tests | Colocated `__tests__` under `web/lib/`, `web/components/`, `web/app/api/`; e2e in `web/e2e/` |
