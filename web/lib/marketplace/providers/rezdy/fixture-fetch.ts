@@ -8,6 +8,8 @@ import availabilityFixture from "./fixtures/availability.json";
 import type { RezdyFetch } from "./client";
 import type {
   RezdyAvailabilityResponse,
+  RezdyBooking,
+  RezdyBookingsResponse,
   RezdyPriceOption,
   RezdyProduct,
   RezdyProductsResponse,
@@ -21,6 +23,7 @@ import type { GetAvailabilityResult } from "../types";
 export type RezdyFixtureState = {
   products: RezdyProduct[];
   sessions: RezdySession[];
+  bookings: RezdyBooking[];
   forceError: string | null;
   availabilityMinDelayMs: number;
   /** Promo codes the quote endpoint recognises → deal total (major units). */
@@ -85,6 +88,17 @@ function createInitialState(now = new Date()): RezdyFixtureState {
   return {
     products: cloneProducts(),
     sessions: buildRelativeSessions(now),
+    bookings: [
+      {
+        orderNumber: "ORD-FIXTURE-1",
+        status: "CONFIRMED",
+        dateCreated: now.toISOString().replace(/\.\d{3}Z$/, "Z"),
+        totalAmount: 54,
+        totalCurrency: "NZD",
+        coupon: "HALFKAKE",
+        items: [{ productCode: "PHARB1", amount: 54 }],
+      },
+    ],
     forceError: null,
     availabilityMinDelayMs: 0,
     promos: new Map([["HALFKAKE", 54]]),
@@ -206,6 +220,26 @@ export function createRezdyFixtureController(options?: {
       return jsonResponse(body);
     }
 
+    if (method === "GET" && path.endsWith("/bookings")) {
+      const start = url.searchParams.get("minDate");
+      const end = url.searchParams.get("maxDate");
+      const fromMs = start ? Date.parse(start) : 0;
+      const toMs = end ? Date.parse(end) : Number.POSITIVE_INFINITY;
+      const offset = Number(url.searchParams.get("offset") ?? "0");
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      const filtered = state.bookings.filter((b) => {
+        const t = Date.parse(b.datePaid ?? b.dateCreated ?? "");
+        if (Number.isNaN(t)) return false;
+        return t >= fromMs && t <= toMs;
+      });
+      const slice = filtered.slice(offset, offset + limit);
+      const body: RezdyBookingsResponse = {
+        requestStatus: { success: true, version: "v1" },
+        bookings: JSON.parse(JSON.stringify(slice)) as RezdyBooking[],
+      };
+      return jsonResponse(body);
+    }
+
     if (method === "POST" && path.endsWith("/bookings/quote")) {
       let body: Record<string, unknown> = {};
       if (typeof init?.body === "string") {
@@ -275,6 +309,8 @@ export function createRezdyFixtureController(options?: {
     listProducts: (integration) => inner.listProducts(integration),
     listSessions: (integration, productId, from, to) =>
       inner.listSessions(integration, productId, from, to),
+    listBookings: (integration, from, to) =>
+      inner.listBookings(integration, from, to),
     verifyDiscount: (integration, input) =>
       inner.verifyDiscount(integration, input),
     buildBookingUrl: (integration, product, session, promo) =>
@@ -319,6 +355,7 @@ export function createRezdyFixtureController(options?: {
       const fresh = createInitialState(anchor);
       state.products = fresh.products;
       state.sessions = fresh.sessions;
+      state.bookings = fresh.bookings;
       state.forceError = null;
       state.availabilityMinDelayMs = 0;
       state.promos = fresh.promos;

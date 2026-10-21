@@ -203,6 +203,129 @@ export function getOperatorDeal(dealId: string, accessToken?: string | null) {
   );
 }
 
+/** Chunk 45 — deal stats for a local date range. */
+export type OperatorDealStatsResponse = {
+  deal: {
+    id: string;
+    title: string | null;
+    slug: string;
+    status: string;
+    pause_reason: string | null;
+    pause_detail: string | null;
+    currency: string | null;
+    deal_type: string;
+    source_provider: string;
+  };
+  from: string;
+  to: string;
+  timezone: string;
+  totals: {
+    impressions: number;
+    detail_views: number;
+    booking_clicks: number;
+    sold_out_on_click: number;
+    attributed_bookings: number;
+    attributed_revenue_minor: number;
+    ctr: number;
+  };
+  series: Array<{
+    date: string;
+    impressions: number;
+    detail_views: number;
+    booking_clicks: number;
+    sold_out_on_click: number;
+    attributed_bookings: number;
+    attributed_revenue_minor: number;
+    ctr: number;
+  }>;
+  sessions: Array<{
+    id: string;
+    start_at: string;
+    start_at_local: string;
+    end_at: string | null;
+    seats_displayed: number;
+    last_synced_at: string | null;
+    status: string;
+  }>;
+  activity: Array<{
+    id: string;
+    event_type: string;
+    actor_type: string;
+    actor_id: string | null;
+    change: string;
+    detail: Record<string, unknown>;
+    created_at: string;
+    created_at_local: string;
+  }>;
+};
+
+export function getOperatorDealStatsApi(
+  dealId: string,
+  params: { from?: string; to?: string },
+  accessToken?: string | null
+) {
+  const q = new URLSearchParams();
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  const qs = q.toString();
+  return operatorDealsFetch<OperatorDealStatsResponse>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/stats${
+      qs ? `?${qs}` : ""
+    }`,
+    { accessToken }
+  );
+}
+
+/** Public tracking — no auth (Chunk 45). */
+export async function trackImpressionsApi(
+  items: Array<{ deal_id?: string; slug?: string; visitor_id?: string | null }>
+): Promise<{ recorded: number; skipped: number }> {
+  const res = await fetch("/api/marketplace/track/impressions", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    recorded?: number;
+    skipped?: number;
+  };
+  if (!res.ok) {
+    throw new OperatorDealsApiError(
+      data.error ?? "Failed to record impressions",
+      res.status
+    );
+  }
+  return {
+    recorded: data.recorded ?? 0,
+    skipped: data.skipped ?? 0,
+  };
+}
+
+export async function trackDetailViewApi(input: {
+  deal_id?: string;
+  slug?: string;
+  visitor_id?: string | null;
+}): Promise<{ recorded: true; deal_id: string }> {
+  const res = await fetch("/api/marketplace/track/detail-view", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    recorded?: true;
+    deal_id?: string;
+  };
+  if (!res.ok) {
+    throw new OperatorDealsApiError(
+      data.error ?? "Failed to record detail view",
+      res.status
+    );
+  }
+  return { recorded: true, deal_id: data.deal_id ?? "" };
+}
+
 export function updateOperatorDeal(
   dealId: string,
   patch: Record<string, unknown>,

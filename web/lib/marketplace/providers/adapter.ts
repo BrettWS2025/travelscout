@@ -12,6 +12,7 @@ import type {
   ConnectCredentialsInput,
   ConnectResult,
   GetAvailabilityResult,
+  NormalisedBooking,
   NormalisedProduct,
   NormalisedSession,
   ProviderCapabilities,
@@ -80,6 +81,16 @@ export interface ProviderAdapter {
     session?: BookingSessionRef,
     promoCode?: string | null
   ): string;
+
+  /**
+   * Bookings/orders in [from, to] for conversion attribution (Chunk 45).
+   * Money and times already normalised. Return [] when the provider cannot list.
+   */
+  listBookings(
+    integration: Integration,
+    from: Date,
+    to: Date
+  ): Promise<NormalisedBooking[]>;
 
   capabilities(): ProviderCapabilities;
 

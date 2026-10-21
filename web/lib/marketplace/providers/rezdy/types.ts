@@ -102,6 +102,33 @@ export type RezdyQuoteResponse = {
   };
 };
 
+/** Minimal booking/order fields for Chunk 45 attribution (GET /bookings). */
+export type RezdyBooking = {
+  orderNumber?: string | number;
+  status?: string;
+  dateCreated?: string;
+  datePaid?: string;
+  totalAmount?: number;
+  totalCurrency?: string;
+  coupon?: string;
+  source?: string;
+  sourceChannel?: string;
+  resellerSource?: string;
+  sourceReferrer?: string;
+  /** Custom fields / comments may carry click_id for webhook attribution. */
+  resellerComments?: string;
+  items?: Array<{
+    productCode?: string;
+    amount?: number;
+    totalQuantity?: number;
+  }>;
+};
+
+export type RezdyBookingsResponse = {
+  requestStatus?: RezdyRequestStatus;
+  bookings?: RezdyBooking[];
+};
+
 export type RezdyCredentials = {
   api_key: string;
   /** Override API host (staging vs prod). */

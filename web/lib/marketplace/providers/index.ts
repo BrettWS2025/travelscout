@@ -51,6 +51,7 @@ export type {
   ConnectCredentialsInput,
   ConnectResult,
   GetAvailabilityResult,
+  NormalisedBooking,
   NormalisedPriceOption,
   NormalisedProduct,
   NormalisedSession,

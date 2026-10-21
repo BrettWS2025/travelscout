@@ -335,6 +335,20 @@ describe.each(scenarios)(
       expect(["cannot_verify", "not_found"]).toContain(separate.status);
     });
 
+    it("listBookings returns normalised bookings with minor-unit money", async () => {
+      const from = new Date(FIXED_NOW.getTime() - 24 * 60 * 60 * 1000);
+      const to = new Date(FIXED_NOW.getTime() + 24 * 60 * 60 * 1000);
+      const bookings = await adapter.listBookings(integration, from, to);
+      expect(Array.isArray(bookings)).toBe(true);
+      for (const booking of bookings) {
+        expect(booking.external_id).toBeTruthy();
+        expect(booking.booked_at.endsWith("Z")).toBe(true);
+        expect(Number.isInteger(booking.total_amount_minor)).toBe(true);
+        expect(booking.currency).toMatch(/^[A-Z]{3}$/);
+        expect(typeof booking.status).toBe("string");
+      }
+    });
+
     it("buildBookingUrl returns https URL; deep-links only when capable", () => {
       const caps = adapter.capabilities();
       const url = adapter.buildBookingUrl(

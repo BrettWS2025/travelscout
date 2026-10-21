@@ -96,6 +96,10 @@ export function createComingSoonAdapter(
     ): string {
       throw notImplementedError();
     },
+
+    listBookings(_integration: Integration, _from: Date, _to: Date) {
+      return Promise.reject(notImplementedError());
+    },
   };
 }
 

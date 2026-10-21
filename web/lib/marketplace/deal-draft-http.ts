@@ -63,6 +63,7 @@ import { ComplianceError } from "./operator-compliance";
 import { AccountError } from "./account";
 import { BillingError, seedBillingAccounts } from "./billing";
 import { DealRulesError } from "./deal-rules";
+import { DealMetricsError } from "./deal-metrics";
 
 /** Wire Chunk 39 notify into modules that must stay client-safe. */
 let notificationHooksInstalled = false;
@@ -321,6 +322,16 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
         ...(err.code ? { code: err.code } : {}),
       },
       { status: err.status, headers }
+    );
+  }
+  if (err instanceof DealMetricsError) {
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+      },
+      { status: err.status }
     );
   }
   if (
