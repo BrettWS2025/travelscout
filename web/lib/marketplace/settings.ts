@@ -273,6 +273,33 @@ export function validateComplianceDocumentFields(
   ) {
     errors.push({ field: "review_status", message: "invalid review_status" });
   }
+  for (const [field, value] of [
+    ["issued_on", input.issuedOn],
+    ["expires_on", input.expiresOn],
+  ] as const) {
+    if (value !== undefined && value !== null && value !== "") {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        errors.push({ field, message: "must be YYYY-MM-DD" });
+      }
+    }
+  }
+  if (input.issuer !== undefined && input.issuer !== null) {
+    if (typeof input.issuer !== "string") {
+      errors.push({ field: "issuer", message: "must be a string" });
+    } else if (input.issuer.length > 200) {
+      errors.push({ field: "issuer", message: "max 200 characters" });
+    }
+  }
+  if (input.referenceNumber !== undefined && input.referenceNumber !== null) {
+    if (typeof input.referenceNumber !== "string") {
+      errors.push({ field: "reference_number", message: "must be a string" });
+    } else if (input.referenceNumber.length > 100) {
+      errors.push({
+        field: "reference_number",
+        message: "max 100 characters",
+      });
+    }
+  }
   return errors;
 }
 

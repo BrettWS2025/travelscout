@@ -73,7 +73,7 @@ export const SYNC_LOG_STATUS_LABELS: Record<SyncLogStatus, string> = {
   failed: "Failed",
 };
 
-/** Settings subnav items. Integrations + profile/defaults + notifications + team live. */
+/** Settings subnav items. Integrations + profile/defaults + notifications + team + compliance live. */
 export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/integrations",
@@ -103,7 +103,7 @@ export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/compliance",
     label: "Compliance",
-    live: false,
+    live: true,
   },
   {
     href: "/account/settings/billing",

@@ -218,8 +218,11 @@ function docNotExpired(
   doc: ComplianceDocument,
   nowMs: number
 ): boolean {
+  if (doc.reviewStatus === "expired" || doc.reviewStatus === "rejected") {
+    return false;
+  }
   if (!doc.expiresOn) return true;
-  const exp = Date.parse(doc.expiresOn);
+  const exp = Date.parse(`${doc.expiresOn}T00:00:00.000Z`);
   if (!Number.isFinite(exp)) return false;
   // expires_on is a date; treat end of that UTC day as still valid
   return exp + 24 * 60 * 60 * 1000 - 1 >= nowMs;
@@ -1319,7 +1322,13 @@ export async function validateDealInStore(
     now,
     attested: options?.attested,
     evidenceUrlChecks: store.evidenceUrlChecks,
-    complianceDocuments: options?.complianceDocuments,
+    complianceDocuments:
+      options?.complianceDocuments ??
+      (store.complianceDocuments
+        ? [...store.complianceDocuments.values()].filter(
+            (d) => d.operatorId === deal.operatorId
+          )
+        : undefined),
     fetchFn: options?.fetchFn,
     integration,
     externalProduct,

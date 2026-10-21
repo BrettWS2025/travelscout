@@ -59,6 +59,7 @@ import {
   setLastActiveTouchHandler,
   touchTeamMemberLastActive,
 } from "./team";
+import { ComplianceError } from "./operator-compliance";
 
 /** Wire Chunk 39 notify into modules that must stay client-safe. */
 let notificationHooksInstalled = false;
@@ -350,6 +351,18 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     );
   }
   if (err instanceof TeamError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+        errors: err.errors ?? [],
+      },
+      { status: err.status }
+    );
+  }
+  if (err instanceof ComplianceError) {
     if (err.status === 403) return forbidden(err.message);
     if (err.status === 404) return notFound(err.message);
     return Response.json(
