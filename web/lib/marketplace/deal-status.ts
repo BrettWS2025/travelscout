@@ -34,6 +34,7 @@ const BASE_ALLOWED: ReadonlyArray<readonly [DealStatus, DealStatus]> = [
   ["pending_review", "draft"],
   ["scheduled", "live"],
   ["scheduled", "paused"],
+  ["scheduled", "auto_paused"], // integration disconnect / sync failure (Chunks 27–29)
   ["live", "paused"],
   ["paused", "live"],
   ["paused", "scheduled"], // operator resume when no session within MAX_LEAD_HOURS (Chunk 19)
@@ -478,7 +479,7 @@ export function transitionDeal(
 // ---------------------------------------------------------------------------
 
 /**
- * Move a live deal to auto_paused with the given reason.
+ * Move a live or scheduled deal to auto_paused with the given reason.
  * Idempotent when already auto_paused for the same reason (updates detail only).
  */
 export function applyAutoPause(
