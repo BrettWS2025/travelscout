@@ -40,8 +40,11 @@ import {
   deleteDealSessionApi,
   duplicateOperatorDeal,
   getOperatorDeal,
+  importProviderImagesApi,
+  listDealProductsApi,
   listOperatorTemplatesApi,
   publishOperatorDeal,
+  revertDealFieldApi,
   setDealMediaCoverApi,
   testDealLinkApi,
   updateDealMediaApi,
@@ -49,6 +52,7 @@ import {
   updateDealSessionApi,
   updateOperatorDeal,
   uploadDealMediaApi,
+  type DealProductPickerItem,
   type OperatorDealTemplate,
 } from "@/lib/marketplace/operator-deals-client";
 
@@ -81,6 +85,10 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
     null | (() => Promise<void>)
   >(null);
   const [templates, setTemplates] = useState<OperatorDealTemplate[]>([]);
+  const [products, setProducts] = useState<DealProductPickerItem[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [hasConnectedIntegration, setHasConnectedIntegration] =
+    useState(false);
 
   const deal = detail?.deal ?? null;
   const summary = summarizeDealEditor(detail);
@@ -130,6 +138,31 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
         if (!cancelled) setTemplates(rows);
       } catch {
         // Templates are optional on the type step.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialDealId, operatorId, token]);
+
+  useEffect(() => {
+    if (initialDealId) return;
+    let cancelled = false;
+    setProductsLoading(true);
+    (async () => {
+      try {
+        const res = await listDealProductsApi(operatorId, token);
+        if (!cancelled) {
+          setProducts(res.products);
+          setHasConnectedIntegration(res.has_connected_integration);
+        }
+      } catch {
+        if (!cancelled) {
+          setProducts([]);
+          setHasConnectedIntegration(false);
+        }
+      } finally {
+        if (!cancelled) setProductsLoading(false);
       }
     })();
     return () => {
@@ -234,6 +267,48 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
     }
   }
 
+  async function onCreateIntegrated(
+    dealType: "integrated_session" | "integrated_multi_session",
+    productId: string
+  ) {
+    setCreating(true);
+    setError(null);
+    try {
+      const product = products.find((p) => p.id === productId);
+      const { deal: created } = await createOperatorDeal(
+        operatorId,
+        {
+          deal_type: dealType,
+          external_product_id: productId,
+          source_provider: product?.provider ?? null,
+        },
+        token
+      );
+      router.replace(`/account/inventory/deals/${created.id}`);
+      setDealId(created.id);
+      await reload(created.id);
+      setStep("content");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Create failed");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function onRevertField(field: string) {
+    if (!dealId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await revertDealFieldApi(dealId, field, token);
+      await reload(dealId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Revert failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onDuplicate() {
     if (!dealId) return;
     setCreating(true);
@@ -329,11 +404,16 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
             <TypeStep
               deal={deal}
               creating={creating}
-              onCreate={onCreate}
+              onCreate={(t) => void onCreate(t)}
+              onCreateIntegrated={(t, productId) =>
+                void onCreateIntegrated(t, productId)
+              }
               onDuplicate={() => void onDuplicate()}
               onCreateFromTemplate={(id) => void onCreateFromTemplate(id)}
               templates={templates}
-              hasConnectedIntegration={false}
+              hasConnectedIntegration={hasConnectedIntegration}
+              products={products}
+              productsLoading={productsLoading}
             />
           )}
 
@@ -342,6 +422,9 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
               deal={deal}
               errors={fieldErrors}
               onChange={onContentChange}
+              providerValues={detail?.provider_values ?? null}
+              overriddenFields={detail?.overridden_fields ?? []}
+              onRevertField={(field) => void onRevertField(field)}
             />
           )}
 
@@ -349,6 +432,22 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
             <ImagesStep
               media={detail.media}
               busy={busyMedia}
+              canImportProvider={Boolean(deal?.externalProductId)}
+              onImportProvider={async () => {
+                if (!dealId) return;
+                setBusyMedia(true);
+                setError(null);
+                try {
+                  await importProviderImagesApi(dealId, token);
+                  await refreshAfterChildChange();
+                } catch (err) {
+                  setError(
+                    err instanceof Error ? err.message : "Import failed"
+                  );
+                } finally {
+                  setBusyMedia(false);
+                }
+              }}
               onUpload={async (files) => {
                 if (!files?.length || !dealId) return;
                 setBusyMedia(true);

@@ -12,6 +12,7 @@ import {
   validateDealInStore,
   validateForPublish,
 } from "@/lib/marketplace/deal-publish-validation";
+import { makeDealFixture, seedDeal } from "@/lib/marketplace/deal-status";
 import { seedDevMarketplace, DEV_SEED_IDS } from "@/lib/marketplace/seed-dev";
 import type { DealSession, DealPriceOption } from "@/lib/marketplace/deal-session";
 
@@ -270,20 +271,17 @@ describe("validateForPublish — complete manual draft", () => {
 describe("validateForPublish — integrated stubs", () => {
   it("includes not-yet-built integrated checks", async () => {
     const { store } = harbourStore();
-    const deal = createDraftDeal(store, {
-      operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
-      dealType: "integrated_session",
-      actor: ACTOR,
-      now: NOW,
+    const deal = makeDealFixture({
       id: "int-1",
-    });
-    // Force integrated type (createDraftDeal may require integration — if not, patch)
-    store.deals.set(deal.id, {
-      ...store.deals.get(deal.id)!,
+      operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
       dealType: "integrated_session",
       sourceProvider: "rezdy",
       capacityMode: "live_provider",
+      status: "draft",
+      createdAt: NOW,
+      updatedAt: NOW,
     });
+    seedDeal({ deals: store.deals, audit: store.audit }, deal);
 
     const result = await validateForPublish(store.deals.get(deal.id)!, {
       sessions: [],

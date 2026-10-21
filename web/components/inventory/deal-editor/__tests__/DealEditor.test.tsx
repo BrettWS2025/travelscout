@@ -57,6 +57,14 @@ vi.mock("@/lib/marketplace/operator-deals-client", () => ({
   setDealMediaCoverApi: vi.fn(),
   deleteDealMediaApi: vi.fn(),
   testDealLinkApi: vi.fn(),
+  listDealProductsApi: vi.fn().mockResolvedValue({
+    products: [],
+    has_connected_integration: false,
+  }),
+  listOperatorTemplatesApi: vi.fn().mockResolvedValue({ templates: [] }),
+  createDealFromTemplateApi: vi.fn(),
+  revertDealFieldApi: vi.fn(),
+  importProviderImagesApi: vi.fn(),
 }));
 
 function incompleteDetail() {
@@ -94,6 +102,8 @@ function incompleteDetail() {
       ],
     },
     publish_button: "Submit for review" as const,
+    provider_values: null,
+    overridden_fields: [],
   };
 }
 

@@ -22,7 +22,12 @@ import {
   approveDeal,
   publishDeal,
 } from "@/lib/marketplace/deal-publish";
-import { applyAutoPause, transitionDeal } from "@/lib/marketplace/deal-status";
+import {
+  applyAutoPause,
+  makeDealFixture,
+  seedDeal,
+  transitionDeal,
+} from "@/lib/marketplace/deal-status";
 import { getPlatformConfig } from "@/lib/marketplace/config";
 import { seedOperatorWithOwner } from "@/lib/marketplace/operators";
 import { seedDevMarketplace, DEV_SEED_IDS } from "@/lib/marketplace/seed-dev";
@@ -403,19 +408,18 @@ describe("Chunk 19 operator actions", () => {
 
     // Seed an integrated live deal for the same operator.
     const integratedId = "bulk-integrated";
-    createDraftDeal(store, {
-      operatorId,
-      dealType: "integrated_session",
-      actor: ACTOR,
-      now: NOW,
-      id: integratedId,
-      sourceProvider: "rezdy",
-    });
-    transitionDeal(
+    seedDeal(
       { deals: store.deals, audit: store.audit },
-      integratedId,
-      "live",
-      { actor: ACTOR, now: NOW }
+      makeDealFixture({
+        id: integratedId,
+        operatorId,
+        dealType: "integrated_session",
+        sourceProvider: "rezdy",
+        capacityMode: "live_provider",
+        status: "live",
+        createdAt: NOW,
+        updatedAt: NOW,
+      })
     );
 
     const result = await bulkDealActions(store, operatorId, {

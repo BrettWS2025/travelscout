@@ -129,7 +129,7 @@ describe("createDraftDeal", () => {
     expect(seeded.harbourKayaks.staff.role).toBe("staff");
   });
 
-  it("skips default discount_mechanism when invalid for integrated type", () => {
+  it("rejects integrated create without external_product_id", () => {
     const opStore = createOperatorStore();
     const { operator, defaults } = createOperator(opStore, {
       legalName: "Bay Co",
@@ -137,19 +137,17 @@ describe("createDraftDeal", () => {
       slug: "bay-co",
       currency: "NZD",
     });
-    // Defaults use manual_price — invalid for integrated.
     expect(defaults.defaultDiscountMechanism).toBe("manual_price");
     const store = createDealDraftStore(opStore);
-    const deal = createDraftDeal(store, {
-      operatorId: operator.id,
-      dealType: "integrated_session",
-      sourceProvider: "rezdy",
-      actor: { type: "user", id: "u1" },
-      now: NOW,
-    });
-    expect(deal.discountMechanism).toBeNull();
-    expect(deal.capacityMode).toBe("live_provider");
-    expect(deal.sourceProvider).toBe("rezdy");
+    expect(() =>
+      createDraftDeal(store, {
+        operatorId: operator.id,
+        dealType: "integrated_session",
+        sourceProvider: "rezdy",
+        actor: { type: "user", id: "u1" },
+        now: NOW,
+      })
+    ).toThrow(/external_product_id/i);
   });
 
   it("prefillFromBookingDefaults uses operator currency", () => {
