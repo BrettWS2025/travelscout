@@ -1,0 +1,103 @@
+{
+  "requestStatus": { "success": true, "version": "v1" },
+  "products": [
+    {
+      "productType": "ACTIVITY",
+      "name": "Harbour Kayak Tour",
+      "shortDescription": "Paddle the inner harbour with a guide.",
+      "description": "Paddle the inner harbour with a guide. Suitable for beginners. Recorded Rezdy fixture for Chunk 31 contract tests.",
+      "productCode": "PHARB1",
+      "supplierId": 90001,
+      "supplierAlias": "fixture-bay-cruises",
+      "supplierName": "Fixture Bay Cruises",
+      "timezone": "Pacific/Auckland",
+      "advertisedPrice": 120.0,
+      "currency": "NZD",
+      "durationMinutes": 120,
+      "latitude": -36.841,
+      "longitude": 174.763,
+      "locationAddress": {
+        "addressLine": "1 Quay St",
+        "city": "Auckland",
+        "countryCode": "NZ",
+        "latitude": -36.841,
+        "longitude": 174.763
+      },
+      "priceOptions": [
+        {
+          "price": 120.0,
+          "label": "Adult",
+          "id": 5001,
+          "seatsUsed": 1,
+          "priceGroupType": "EACH",
+          "productCode": "PHARB1"
+        },
+        {
+          "price": 80.0,
+          "label": "Child",
+          "id": 5002,
+          "seatsUsed": 1,
+          "priceGroupType": "EACH",
+          "productCode": "PHARB1"
+        },
+        {
+          "price": 54.0,
+          "label": "Adult deal",
+          "id": 5003,
+          "seatsUsed": 1,
+          "priceGroupType": "EACH",
+          "productCode": "PHARB1"
+        }
+      ],
+      "images": [
+        {
+          "id": 1,
+          "itemUrl": "https://cdn.fixture.example/kayak-1.jpg",
+          "largeSizeUrl": "https://cdn.fixture.example/kayak-1-lg.jpg"
+        }
+      ],
+      "bookingMode": "INVENTORY"
+    },
+    {
+      "productType": "ACTIVITY",
+      "name": "Bay Sunset Cruise",
+      "shortDescription": "Two-hour sunset cruise.",
+      "description": "Two-hour sunset cruise with complimentary drink. Recorded Rezdy fixture.",
+      "productCode": "PCRUZ2",
+      "supplierId": 90001,
+      "supplierAlias": "fixture-bay-cruises",
+      "supplierName": "Fixture Bay Cruises",
+      "timezone": "Pacific/Auckland",
+      "advertisedPrice": 99.0,
+      "currency": "NZD",
+      "durationMinutes": 120,
+      "latitude": -36.843,
+      "longitude": 174.767,
+      "priceOptions": [
+        {
+          "price": 99.0,
+          "label": "Adult",
+          "id": 6001,
+          "seatsUsed": 1,
+          "priceGroupType": "EACH",
+          "productCode": "PCRUZ2"
+        },
+        {
+          "price": 45.0,
+          "label": "Adult deal",
+          "id": 6002,
+          "seatsUsed": 1,
+          "priceGroupType": "EACH",
+          "productCode": "PCRUZ2"
+        }
+      ],
+      "images": [
+        {
+          "id": 2,
+          "itemUrl": "https://cdn.fixture.example/cruise-1.jpg"
+        }
+      ],
+      "bookingMode": "INVENTORY"
+    }
+  ]
+}

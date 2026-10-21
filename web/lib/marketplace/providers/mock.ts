@@ -5,8 +5,8 @@
  * can mutate seats, cancel sessions, change prices, and force timeouts/errors
  * via the returned controller. Money is always minor units; times always UTC.
  *
- * Until Chunk 31 lands a real Rezdy adapter, the registry may hand this out
- * for provider `rezdy` when mock mode is enabled.
+ * Controllable stand-in for provider `rezdy` in tests and when
+ * REZDY_USE_MOCK=1. Production default is RezdyAdapter (Chunk 31).
  */
 
 import type { Integration } from "../integration";

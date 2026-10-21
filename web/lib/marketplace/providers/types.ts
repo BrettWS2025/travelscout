@@ -55,6 +55,12 @@ export type ProviderCapabilities = {
   deep_link_promo: boolean;
   min_poll_seconds: number;
   max_poll_seconds: number;
+  /**
+   * When set, connect uses this sync_mode instead of inferring from
+   * webhooks_availability (e.g. Rezdy: hybrid for product/order webhooks
+   * while seats still require polling — webhooks_availability stays false).
+   */
+  preferred_sync_mode?: "webhook" | "polling" | "hybrid";
 };
 
 export type ConnectCredentialsInput = Record<string, unknown>;
@@ -63,6 +69,10 @@ export type ConnectResult = {
   external_account_id: string;
   external_account_name: string;
   credentials_ref: string;
+  /** Opaque webhook path token (Rezdy has no HMAC — spec §7.4). */
+  webhook_secret_ref?: string | null;
+  /** Suggested booking host, e.g. https://{alias}.rezdy.com */
+  booking_base_url?: string | null;
 };
 
 export type TestConnectionResult =
