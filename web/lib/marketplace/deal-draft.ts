@@ -59,7 +59,12 @@ import {
   validateDealInStore,
   type PublishValidationOutcome,
 } from "./deal-publish-validation";
-import type { Integration, SyncLog } from "./integration";
+import type {
+  ExternalProduct,
+  ExternalSession,
+  Integration,
+  SyncLog,
+} from "./integration";
 import type {
   CapacityMode,
   DealType,
@@ -127,8 +132,14 @@ export type DealDraftStore = {
   attestationReminders?: Map<string, AttestationReminderRecord>;
   /** Chunk 21: integrations for list banners / has_integration. */
   integrations?: Map<string, Integration>;
-  /** Chunk 27+: sync log rows (full engine in Chunk 28). */
+  /** Chunk 27+: sync log rows. */
   syncLogs?: Map<string, SyncLog>;
+  /** Chunk 28: provider catalogue cached from sync. */
+  externalProducts?: Map<string, ExternalProduct>;
+  /** Chunk 28: provider sessions cached from sync. */
+  externalSessions?: Map<string, ExternalSession>;
+  /** Chunk 28: last successful poll started_at ISO per integration (scheduler). */
+  integrationPollState?: Map<string, { lastPollStartedAt: string }>;
 };
 
 export function createDealDraftStore(
@@ -146,6 +157,9 @@ export function createDealDraftStore(
     attestationReminders: new Map(),
     integrations: new Map(),
     syncLogs: new Map(),
+    externalProducts: new Map(),
+    externalSessions: new Map(),
+    integrationPollState: new Map(),
   };
 }
 
