@@ -95,18 +95,9 @@ import {
   type IntegratedProductPickerItem,
 } from "./deal-integrated";
 import type { NormalisedPriceOption } from "./providers/types";
+import type { DiscountVerification } from "./deal-integrated-pricing-shared";
 
-/** Chunk 33 verification payload (also stored on Deal.discountVerification). */
-export type DiscountVerification = {
-  status: "verified" | "not_found" | "cannot_verify" | "failed";
-  checked_at: string;
-  options: Array<{
-    price_option_id: string;
-    status: "verified" | "not_found" | "cannot_verify" | "failed";
-    message?: string;
-    actual_price_minor?: number;
-  }>;
-};
+export type { DiscountVerification };
 
 function clearDiscountVerificationOnDeal(deal: Deal, now?: string): Deal {
   return {

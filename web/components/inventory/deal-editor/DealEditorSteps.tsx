@@ -36,8 +36,8 @@ import {
   formatDiscountVerificationStatusText,
   formatSeparateProductRef,
   parseSeparateProductRef,
-} from "@/lib/marketplace/deal-integrated-pricing";
-import type { DiscountVerification } from "@/lib/marketplace/deal-draft";
+  type DiscountVerification,
+} from "@/lib/marketplace/deal-integrated-pricing-shared";
 import type { DealProductPickerItem } from "@/lib/marketplace/operator-deals-client";
 import type { NormalisedPriceOption } from "@/lib/marketplace/providers/types";
 import { PLATFORM_REGIONS } from "@/lib/marketplace/settings";
