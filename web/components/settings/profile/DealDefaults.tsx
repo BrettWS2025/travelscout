@@ -96,7 +96,7 @@ export function DealDefaults() {
 
   const [operator, setOperator] = useState<MyOperator | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
-  const [note, setNote] = useState(BOOKING_DEFAULTS_NOTE);
+  const [note, setNote] = useState<string>(BOOKING_DEFAULTS_NOTE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
