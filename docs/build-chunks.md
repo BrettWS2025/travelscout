@@ -51,7 +51,7 @@ Cursor ticks these as chunks are finished.
 - [x] 35. Integrated publish checks and provider-driven auto-pauses — Notes: real integrated checks in `deal-publish-validation.ts`; `deal-integrated-sync-hooks.ts` (`runPostSyncProviderHooks`, `deal_auto_paused` notify stub); session_cancelled / price_below_threshold (no auto-resume); tests in `deal-integrated-publish.test.ts`.
 
 **Phase D: Book now**
-- [ ] 36. Book now click flow and tracking
+- [x] 36. Book now click flow and tracking — Notes: `deal-book-now.ts` + `POST /api/marketplace/deals/:slug/book`; ClickEvent + click_recheck SyncLog; integrated recheck / cache fallback / just_sold_out / cannot_confirm; manual show_instructions; visitor/IP rate limit; tests in `deal-book-now.test.ts`.
 
 **Phase E: Settings**
 - [ ] 37. Integrations settings screens

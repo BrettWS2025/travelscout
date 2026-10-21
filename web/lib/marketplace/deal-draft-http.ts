@@ -33,6 +33,7 @@ import {
   MediaUploadBatchError,
 } from "./deal-media-api";
 import { IntegratedDealError } from "./deal-integrated";
+import { DealBookNowError } from "./deal-book-now";
 import {
   DealMediaLimitError,
   DealMediaValidationError,
@@ -252,6 +253,19 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
         ...(err.code ? { code: err.code } : {}),
       },
       { status: err.status }
+    );
+  }
+  if (err instanceof DealBookNowError) {
+    const headers: HeadersInit = {};
+    if (err.status === 429 && err.retryAfterSec != null) {
+      headers["Retry-After"] = String(err.retryAfterSec);
+    }
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+      },
+      { status: err.status, headers }
     );
   }
   if (
