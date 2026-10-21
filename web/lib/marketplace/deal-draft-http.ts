@@ -54,6 +54,11 @@ import {
   seedNotificationPreferences,
 } from "./notifications";
 import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
+import {
+  TeamError,
+  setLastActiveTouchHandler,
+  touchTeamMemberLastActive,
+} from "./team";
 
 /** Wire Chunk 39 notify into modules that must stay client-safe. */
 let notificationHooksInstalled = false;
@@ -70,6 +75,7 @@ function ensureNotificationHooks(): void {
 
 let processStore: DealDraftStore | null = null;
 let memoryLookupInstalled = false;
+let lastActiveHookInstalled = false;
 
 function ensureMemoryRoleLookup(): void {
   if (memoryLookupInstalled) return;
@@ -99,6 +105,16 @@ function ensureMemoryRoleLookup(): void {
   });
 }
 
+/** Chunk 40: throttled last_active_at updates via requirePermission. */
+function ensureLastActiveHook(): void {
+  if (lastActiveHookInstalled) return;
+  lastActiveHookInstalled = true;
+  setLastActiveTouchHandler((operatorId, userId) => {
+    if (!processStore) return;
+    touchTeamMemberLastActive(processStore, operatorId, userId);
+  });
+}
+
 /**
  * Process-level store for route handlers (replaceable in tests).
  * First access seeds Harbour Kayaks / Bay Cruises so the editor APIs work
@@ -107,6 +123,7 @@ function ensureMemoryRoleLookup(): void {
 export function getDealDraftHttpStore(): DealDraftStore {
   ensureMemoryRoleLookup();
   ensureNotificationHooks();
+  ensureLastActiveHook();
   if (!processStore) {
     const seeded = seedDevMarketplace();
     processStore = createDealDraftStore(seeded.store);
@@ -117,6 +134,7 @@ export function getDealDraftHttpStore(): DealDraftStore {
     processStore.externalProducts = new Map();
     processStore.externalSessions = new Map();
     processStore.integrationPollState = new Map();
+    processStore.teamInviteTokens = new Map();
     seedNotificationPreferences(
       processStore,
       seeded.notificationPreferences
@@ -128,6 +146,7 @@ export function getDealDraftHttpStore(): DealDraftStore {
 export function setDealDraftHttpStore(store: DealDraftStore | null): void {
   ensureMemoryRoleLookup();
   ensureNotificationHooks();
+  ensureLastActiveHook();
   processStore = store;
 }
 
@@ -327,6 +346,18 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     if (err.status === 404) return notFound(err.message);
     return Response.json(
       { error: err.message, errors: err.errors ?? [] },
+      { status: err.status }
+    );
+  }
+  if (err instanceof TeamError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+        errors: err.errors ?? [],
+      },
       { status: err.status }
     );
   }

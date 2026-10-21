@@ -210,6 +210,11 @@ export type DealDraftStore = {
     string,
     import("./notifications").DailySummarySent
   >;
+  /** Chunk 40: hashed team invite tokens. */
+  teamInviteTokens?: Map<
+    string,
+    import("./team").TeamInviteTokenRecord
+  >;
 };
 
 export function createDealDraftStore(
@@ -236,6 +241,7 @@ export function createDealDraftStore(
     notificationIncidents: new Map(),
     notificationDeliveries: new Map(),
     dailySummarySent: new Map(),
+    teamInviteTokens: new Map(),
   };
 }
 
