@@ -10,7 +10,10 @@ import {
   notFound,
   serverError,
 } from "./auth";
-import { BookingLinkError } from "./booking-link";
+import {
+  BookingLinkError,
+  setNotifyBookingLinkBroken,
+} from "./booking-link";
 import {
   createDealDraftStore,
   DealDeleteNotAllowedError,
@@ -39,15 +42,31 @@ import {
   DealMediaValidationError,
 } from "./deal-media";
 import { DealNotFoundError } from "./deal-status";
+import { setNotifyDealLifecycle } from "./deal-status-ticker";
 import { DealValidationError } from "./deal";
 import { isUserRole, type UserRole } from "./enums";
 import { OperatorValidationError } from "./operators";
 import { setMemoryOperatorRoleLookup } from "./permissions";
 import {
   NotificationError,
+  notifyBookingLinkBroken,
+  notifyDealLifecycle,
   seedNotificationPreferences,
 } from "./notifications";
 import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
+
+/** Wire Chunk 39 notify into modules that must stay client-safe. */
+let notificationHooksInstalled = false;
+function ensureNotificationHooks(): void {
+  if (notificationHooksInstalled) return;
+  notificationHooksInstalled = true;
+  setNotifyBookingLinkBroken(async (store, payload) => {
+    await notifyBookingLinkBroken(store, payload);
+  });
+  setNotifyDealLifecycle(async (store, payload) => {
+    await notifyDealLifecycle(store, payload);
+  });
+}
 
 let processStore: DealDraftStore | null = null;
 let memoryLookupInstalled = false;
@@ -87,6 +106,7 @@ function ensureMemoryRoleLookup(): void {
  */
 export function getDealDraftHttpStore(): DealDraftStore {
   ensureMemoryRoleLookup();
+  ensureNotificationHooks();
   if (!processStore) {
     const seeded = seedDevMarketplace();
     processStore = createDealDraftStore(seeded.store);
@@ -107,6 +127,7 @@ export function getDealDraftHttpStore(): DealDraftStore {
 
 export function setDealDraftHttpStore(store: DealDraftStore | null): void {
   ensureMemoryRoleLookup();
+  ensureNotificationHooks();
   processStore = store;
 }
 

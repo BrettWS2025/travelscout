@@ -11,10 +11,18 @@
  * marketplace events yet). Inject via setNotificationChannelProviders.
  */
 
-import type { DealDraftStore } from "./deal-draft";
-import { DealDraftError } from "./deal-draft";
-import { listTeamMembers, type TeamMember } from "./operators";
-import { can, type PermissionUser } from "./permissions";
+/**
+ * IMPORTANT: keep this module free of server-only imports (auth, permissions,
+ * next/headers, supabase/server) and free of value/type imports from
+ * deal-draft. booking-link / deal-publish-validation are pulled into client
+ * components via the deal editor; pulling deal-draft → permissions → auth
+ * breaks the Next.js client build (`next/headers` in a client graph).
+ */
+import {
+  listTeamMembers,
+  type OperatorStore,
+  type TeamMember,
+} from "./operators";
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   MANDATORY_NOTIFICATION_EVENTS,
@@ -32,10 +40,19 @@ import { getZonedParts, localDateKey, zonedLocalToUtcIso } from "./timezone";
 // Errors
 // ---------------------------------------------------------------------------
 
-export class NotificationError extends DealDraftError {
-  constructor(message: string, status = 400, errors?: Array<{ field: string; message: string }>) {
-    super(message, status, errors);
+export class NotificationError extends Error {
+  readonly status: number;
+  readonly errors?: Array<{ field: string; message: string }>;
+
+  constructor(
+    message: string,
+    status = 400,
+    errors?: Array<{ field: string; message: string }>
+  ) {
+    super(message);
     this.name = "NotificationError";
+    this.status = status;
+    this.errors = errors;
   }
 }
 
@@ -165,6 +182,20 @@ export function channelsEnabled(pref: NotificationChannels): boolean {
 // Store helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural store shape used by notify/prefs (compatible with DealDraftStore
+ * without importing it — keeps this module out of the server-only import graph).
+ */
+export type NotificationDealStore = {
+  operators: OperatorStore;
+  deals: Map<string, { operatorId: string }>;
+  notificationPreferences?: Map<string, NotificationPreference>;
+  inAppNotifications?: Map<string, InAppNotification>;
+  notificationIncidents?: Map<string, NotificationIncident>;
+  notificationDeliveries?: Map<string, NotificationDelivery>;
+  dailySummarySent?: Map<string, DailySummarySent>;
+};
+
 export type NotificationStoreMaps = {
   preferences: Map<string, NotificationPreference>;
   inApp: Map<string, InAppNotification>;
@@ -173,7 +204,7 @@ export type NotificationStoreMaps = {
   dailySummarySent: Map<string, DailySummarySent>;
 };
 
-function ensureMaps(store: DealDraftStore): NotificationStoreMaps {
+function ensureMaps(store: NotificationDealStore): NotificationStoreMaps {
   if (!store.notificationPreferences) {
     store.notificationPreferences = new Map();
   }
@@ -200,7 +231,7 @@ function ensureMaps(store: DealDraftStore): NotificationStoreMaps {
 
 /** Seed preference rows into the draft store (dev HTTP / tests). */
 export function seedNotificationPreferences(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   prefs: NotificationPreference[]
 ): void {
   const maps = ensureMaps(store);
@@ -236,7 +267,7 @@ function findPref(
  * Idempotent — only inserts missing event types.
  */
 export function ensureDefaultPreferencesForMember(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   userId: string,
   operatorId: string,
   options?: { now?: string }
@@ -269,7 +300,7 @@ export function ensureDefaultPreferencesForMember(
 }
 
 function acceptedMembersWithUser(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string
 ): TeamMember[] {
   return listTeamMembers(store.operators, operatorId).filter(
@@ -317,27 +348,13 @@ export function serializeInAppNotification(
 }
 
 // ---------------------------------------------------------------------------
-// Permissions
-// ---------------------------------------------------------------------------
-
-export function requireNotificationsOwn(
-  user: PermissionUser,
-  operatorId: string
-): void {
-  if (!can(user, operatorId, "settings.notifications.own")) {
-    throw new NotificationError(
-      "You do not have permission to manage notification preferences.",
-      403
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Preference GET / PATCH
 // ---------------------------------------------------------------------------
+// Permission checks live in the API routes via requirePermission
+// (settings.notifications.own) — do not import permissions here.
 
 export function getMyNotificationPreferences(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   options?: { now?: string }
@@ -367,7 +384,7 @@ export type PatchNotificationPreferenceInput = {
  * Rejects turning off the last channel on a mandatory event.
  */
 export function patchMyNotificationPreference(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   body: PatchNotificationPreferenceInput,
@@ -460,7 +477,7 @@ export function patchMyNotificationPreference(
  * Bulk patch: body.preferences = [{ event_type, email?, sms?, in_app? }, ...]
  */
 export function patchMyNotificationPreferencesBulk(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   items: PatchNotificationPreferenceInput[],
@@ -593,7 +610,7 @@ function defaultBody(
  * Dedupes when incidentKey was already recorded for this operator+event.
  */
 export async function notify(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   eventType: NotificationEventType,
   payload: NotifyPayload = {},
@@ -749,14 +766,14 @@ export async function notify(
 
 /** Test helper: clear incident so notify can fire again. */
 export function clearNotificationIncident(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   incidentKey: string
 ): void {
   ensureMaps(store).incidents.delete(incidentKey);
 }
 
 export function listNotificationDeliveries(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   filter?: {
     operatorId?: string;
     eventType?: NotificationEventType;
@@ -781,7 +798,7 @@ export function listNotificationDeliveries(
 // ---------------------------------------------------------------------------
 
 export function listMyInAppNotifications(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   options?: { unreadOnly?: boolean; limit?: number }
@@ -799,7 +816,7 @@ export function listMyInAppNotifications(
 }
 
 export function markInAppNotificationRead(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   notificationId: string,
@@ -818,7 +835,7 @@ export function markInAppNotificationRead(
 }
 
 export function markAllInAppNotificationsRead(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   operatorId: string,
   userId: string,
   options?: { now?: string }
@@ -840,7 +857,7 @@ export function markAllInAppNotificationsRead(
 // ---------------------------------------------------------------------------
 
 export async function notifyIntegrationSyncFailing(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     integrationId: string;
@@ -871,7 +888,7 @@ export async function notifyIntegrationSyncFailing(
 }
 
 export async function notifyDealAutoPaused(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     dealId: string;
@@ -899,7 +916,7 @@ export async function notifyDealAutoPaused(
 }
 
 export async function notifyAttestationDue(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     dealIds: string[];
@@ -931,7 +948,7 @@ export async function notifyAttestationDue(
 }
 
 export async function notifyBookingLinkBroken(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     dealId: string;
@@ -957,7 +974,7 @@ export async function notifyBookingLinkBroken(
 }
 
 export async function notifyDealReviewUpdate(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     dealId: string;
@@ -1001,7 +1018,7 @@ export async function notifyDealReviewUpdate(
 }
 
 export async function notifyDealLifecycle(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   payload: {
     operatorId: string;
     dealId: string;
@@ -1064,7 +1081,7 @@ function yesterdayLocalDateKey(nowIso: string, timeZone: string): string {
  * Metrics body is a lightweight placeholder until Chunk 45 rollups.
  */
 export async function runDailyPerformanceSummaryJob(
-  store: DealDraftStore,
+  store: NotificationDealStore,
   options?: { now?: string; localHour?: number }
 ): Promise<DailyPerformanceSummaryJobResult> {
   const maps = ensureMaps(store);

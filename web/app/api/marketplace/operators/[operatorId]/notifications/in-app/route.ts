@@ -15,7 +15,6 @@ import {
   listMyInAppNotifications,
   markAllInAppNotificationsRead,
   markInAppNotificationRead,
-  requireNotificationsOwn,
   serializeInAppNotification,
 } from "@/lib/marketplace/notifications";
 
@@ -37,8 +36,6 @@ export async function GET(req: Request, { params }: Params) {
       "settings.notifications.own"
     );
     if (!auth.ok) return auth.response;
-
-    requireNotificationsOwn(auth.permissionUser, operatorId);
 
     const url = new URL(req.url);
     const unreadOnly =
@@ -78,8 +75,6 @@ export async function POST(req: Request, { params }: Params) {
       "settings.notifications.own"
     );
     if (!auth.ok) return auth.response;
-
-    requireNotificationsOwn(auth.permissionUser, operatorId);
 
     let body: Record<string, unknown>;
     try {

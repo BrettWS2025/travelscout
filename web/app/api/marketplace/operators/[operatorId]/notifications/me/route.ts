@@ -16,7 +16,6 @@ import {
   getMyNotificationPreferences,
   patchMyNotificationPreference,
   patchMyNotificationPreferencesBulk,
-  requireNotificationsOwn,
   serializeNotificationPreference,
 } from "@/lib/marketplace/notifications";
 
@@ -38,8 +37,6 @@ export async function GET(req: Request, { params }: Params) {
       "settings.notifications.own"
     );
     if (!auth.ok) return auth.response;
-
-    requireNotificationsOwn(auth.permissionUser, operatorId);
 
     const prefs = getMyNotificationPreferences(
       getDealDraftHttpStore(),
@@ -72,8 +69,6 @@ export async function PATCH(req: Request, { params }: Params) {
       "settings.notifications.own"
     );
     if (!auth.ok) return auth.response;
-
-    requireNotificationsOwn(auth.permissionUser, operatorId);
 
     let body: Record<string, unknown>;
     try {
