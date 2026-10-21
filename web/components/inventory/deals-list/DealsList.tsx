@@ -197,7 +197,7 @@ export function DealsList({ initialTab }: Props) {
           router.push(`/account/inventory/deals/${row.id}?preview=1`);
           break;
         case "view_stats":
-          setMessage("Deal stats land in a later chunk.");
+          router.push(`/account/inventory/deals/${row.id}/stats`);
           break;
         case "save_as_template": {
           const defaultName = row.title?.trim()

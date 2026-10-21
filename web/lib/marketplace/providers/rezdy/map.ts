@@ -4,12 +4,14 @@
 
 import type { PriceOptionType, SessionStatus } from "../../enums";
 import type {
+  NormalisedBooking,
   NormalisedPriceOption,
   NormalisedProduct,
   NormalisedSession,
   NormalisedSessionPrice,
 } from "../types";
 import type {
+  RezdyBooking,
   RezdyPriceOption,
   RezdyProduct,
   RezdySession,
@@ -221,4 +223,39 @@ export function mapSession(session: RezdySession): NormalisedSession | null {
 /** Format a UTC Date as Rezdy `startTime`/`endTime` query value (ISO Z). */
 export function toRezdyUtcParam(d: Date): string {
   return d.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+/**
+ * Extract click_id from resellerComments when operators embed it
+ * (webhook attribution path — Rezdy has no native click_id field, §7.7).
+ */
+function clickIdFromComments(comments: string | null | undefined): string | null {
+  if (!comments) return null;
+  const m = /(?:^|[?\s&#])click_id=([A-Za-z0-9_-]+)/i.exec(comments);
+  return m?.[1] ?? null;
+}
+
+/** Map a Rezdy booking/order to NormalisedBooking for Chunk 45 attribution. */
+export function mapBooking(booking: RezdyBooking): NormalisedBooking | null {
+  const externalId =
+    booking.orderNumber != null ? String(booking.orderNumber) : null;
+  if (!externalId) return null;
+  const bookedAt =
+    toUtcIso(booking.datePaid) ?? toUtcIso(booking.dateCreated);
+  if (!bookedAt) return null;
+  const productCode = booking.items?.[0]?.productCode ?? null;
+  const currency = (booking.totalCurrency ?? "NZD").toUpperCase();
+  return {
+    external_id: externalId,
+    product_external_id: productCode,
+    booked_at: bookedAt,
+    total_amount_minor: majorToMinor(booking.totalAmount),
+    currency: /^[A-Z]{3}$/.test(currency) ? currency : "NZD",
+    promo_code: booking.coupon?.trim()
+      ? booking.coupon.trim().toUpperCase()
+      : null,
+    source_channel: booking.sourceChannel?.trim() || null,
+    click_id: clickIdFromComments(booking.resellerComments),
+    status: booking.status?.trim() || "UNKNOWN",
+  };
 }

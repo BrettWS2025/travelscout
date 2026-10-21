@@ -19,6 +19,7 @@ import type {
   ConnectCredentialsInput,
   ConnectResult,
   GetAvailabilityResult,
+  NormalisedBooking,
   NormalisedProduct,
   NormalisedSession,
   ProviderCapabilities,
@@ -47,6 +48,8 @@ export type MockAdapterState = {
   /** productExternalId → sessions */
   sessionsByProduct: Map<string, NormalisedSession[]>;
   promos: MockPromo[];
+  /** Controllable bookings for Chunk 45 attribution tests. */
+  bookings: NormalisedBooking[];
   /** Simulate connect / test / list failures */
   forceError: string | null;
   /** Simulate getAvailability timeout when timeoutMs is below this threshold */
@@ -79,6 +82,8 @@ export type MockAdapterController = {
   /** getAvailability waits this many ms before responding (for timeout tests). */
   setAvailabilityDelayMs(ms: number): void;
   addPromo(promo: MockPromo): void;
+  addBooking(booking: NormalisedBooking): void;
+  clearBookings(): void;
 };
 
 function startOfUtcDay(d: Date): Date {
@@ -236,6 +241,7 @@ function createInitialState(now: Date): MockAdapterState {
         deal_price_minor: 5400,
       },
     ],
+    bookings: [],
     forceError: null,
     availabilityMinDelayMs: 0,
     connected: false,
@@ -295,6 +301,7 @@ export function createMockAdapter(options?: {
     state.products = fresh.products;
     state.sessionsByProduct = fresh.sessionsByProduct;
     state.promos = fresh.promos;
+    state.bookings = [];
     state.forceError = null;
     state.availabilityMinDelayMs = 0;
     state.connected = false;
@@ -514,6 +521,24 @@ export function createMockAdapter(options?: {
       return url.toString();
     },
 
+    async listBookings(
+      integration: Integration,
+      from: Date,
+      to: Date
+    ): Promise<NormalisedBooking[]> {
+      maybeThrow();
+      requireCredentials(integration);
+      await readSecret(integration.credentialsRef!);
+      const fromMs = from.getTime();
+      const toMs = to.getTime();
+      return state.bookings
+        .filter((b) => {
+          const t = Date.parse(b.booked_at);
+          return t >= fromMs && t <= toMs;
+        })
+        .map((b) => ({ ...b }));
+    },
+
     async handleWebhook() {
       return [];
     },
@@ -594,6 +619,12 @@ export function createMockAdapter(options?: {
     },
     addPromo(promo) {
       state.promos.push({ ...promo });
+    },
+    addBooking(booking) {
+      state.bookings.push({ ...booking });
+    },
+    clearBookings() {
+      state.bookings = [];
     },
   };
 

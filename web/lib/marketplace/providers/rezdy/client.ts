@@ -11,6 +11,7 @@ import {
 import {
   REZDY_PRODUCTION_BASE,
   type RezdyAvailabilityResponse,
+  type RezdyBookingsResponse,
   type RezdyCredentials,
   type RezdyProductsResponse,
   type RezdyQuoteResponse,
@@ -49,6 +50,13 @@ export type RezdyClient = {
     body: Record<string, unknown>,
     options?: { timeoutMs?: number }
   ): Promise<RezdyQuoteResponse>;
+  getBookings(params: {
+    from: Date;
+    to: Date;
+    offset?: number;
+    limit?: number;
+    timeoutMs?: number;
+  }): Promise<RezdyBookingsResponse>;
 };
 
 function providerError(
@@ -227,6 +235,21 @@ export function createRezdyClient(options: RezdyClientOptions): RezdyClient {
       return request<RezdyQuoteResponse>("POST", `/bookings/quote`, {
         body,
         timeoutMs: options?.timeoutMs,
+      });
+    },
+
+    async getBookings(params) {
+      const offset = params.offset ?? 0;
+      const limit = Math.min(params.limit ?? 100, 100);
+      const q = new URLSearchParams({
+        offset: String(offset),
+        limit: String(limit),
+        // Supplier API date filters (UTC) — see spec §7.7.
+        minDate: params.from.toISOString(),
+        maxDate: params.to.toISOString(),
+      });
+      return request<RezdyBookingsResponse>("GET", `/bookings?${q}`, {
+        timeoutMs: params.timeoutMs,
       });
     },
   };

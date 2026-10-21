@@ -15,6 +15,7 @@ import type {
   ConnectCredentialsInput,
   ConnectResult,
   GetAvailabilityResult,
+  NormalisedBooking,
   NormalisedProduct,
   NormalisedSession,
   ProviderCapabilities,
@@ -31,6 +32,7 @@ import {
   type RezdyFetch,
 } from "./client";
 import {
+  mapBooking,
   mapProduct,
   mapSession,
   majorToMinor,
@@ -535,6 +537,30 @@ export function createRezdyAdapter(
       }
 
       return { status: "cannot_verify" };
+    },
+
+    async listBookings(
+      integration: Integration,
+      from: Date,
+      to: Date
+    ): Promise<NormalisedBooking[]> {
+      const credentials = await loadCredentials(integration);
+      const client = clientFor(credentials, options);
+      const out: NormalisedBooking[] = [];
+      let offset = 0;
+      const limit = 100;
+      for (;;) {
+        const page = await client.getBookings({ from, to, offset, limit });
+        const rows = page.bookings ?? [];
+        for (const row of rows) {
+          const mapped = mapBooking(row);
+          if (mapped) out.push(mapped);
+        }
+        if (rows.length < limit) break;
+        offset += limit;
+        if (offset > 5_000) break; // safety
+      }
+      return out;
     },
 
     buildBookingUrl(

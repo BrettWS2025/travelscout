@@ -26,6 +26,7 @@ export {
 } from "./throttle";
 export {
   majorToMinor,
+  mapBooking,
   mapPriceOptionType,
   mapProduct,
   mapSession,

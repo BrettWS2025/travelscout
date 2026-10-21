@@ -188,7 +188,21 @@ export function channelsEnabled(pref: NotificationChannels): boolean {
  */
 export type NotificationDealStore = {
   operators: OperatorStore;
-  deals: Map<string, { operatorId: string }>;
+  deals: Map<string, { operatorId: string; id?: string }>;
+  /** Chunk 45: optional metrics for daily summary body. */
+  audit?: {
+    metrics: Map<
+      string,
+      {
+        dealId: string;
+        date: string;
+        impressions: number;
+        detailViews: number;
+        bookingClicks: number;
+        attributedBookings: number;
+      }
+    >;
+  };
   notificationPreferences?: Map<string, NotificationPreference>;
   inAppNotifications?: Map<string, InAppNotification>;
   notificationIncidents?: Map<string, NotificationIncident>;
@@ -1078,7 +1092,7 @@ function yesterdayLocalDateKey(nowIso: string, timeZone: string): string {
 
 /**
  * Once per operator local morning: email daily_performance_summary.
- * Metrics body is a lightweight placeholder until Chunk 45 rollups.
+ * Uses DealMetricDaily rollups (Chunk 45) when present for yesterday.
  */
 export async function runDailyPerformanceSummaryJob(
   store: NotificationDealStore,
@@ -1106,9 +1120,25 @@ export async function runDailyPerformanceSummaryJob(
     }
 
     const summaryDate = yesterdayLocalDateKey(now, tz);
-    const dealCount = [...store.deals.values()].filter(
-      (d) => d.operatorId === operator.id
-    ).length;
+    const operatorDeals = [...store.deals.entries()].filter(
+      ([, d]) => d.operatorId === operator.id
+    );
+    const operatorDealIds = new Set(
+      operatorDeals.map(([id, d]) => d.id ?? id)
+    );
+    const dealCount = operatorDealIds.size;
+
+    let impressions = 0;
+    let detailViews = 0;
+    let bookingClicks = 0;
+    let attributedBookings = 0;
+    for (const m of store.audit?.metrics?.values() ?? []) {
+      if (!operatorDealIds.has(m.dealId) || m.date !== summaryDate) continue;
+      impressions += m.impressions;
+      detailViews += m.detailViews;
+      bookingClicks += m.bookingClicks;
+      attributedBookings += m.attributedBookings;
+    }
 
     const result = await notify(
       store,
@@ -1117,12 +1147,16 @@ export async function runDailyPerformanceSummaryJob(
       {
         summary_date: summaryDate,
         deal_count: dealCount,
+        impressions,
+        detail_views: detailViews,
+        booking_clicks: bookingClicks,
+        attributed_bookings: attributedBookings,
       },
       {
         now,
         incidentKey: `daily_performance_summary:${operator.id}:${todayLocal}`,
         title: `Daily performance — ${summaryDate}`,
-        body: `Yesterday (${summaryDate}): ${dealCount} deal(s) on file. Detailed stats arrive in a later release.`,
+        body: `Yesterday (${summaryDate}): ${dealCount} deal(s); ${impressions} impressions, ${detailViews} detail views, ${bookingClicks} Book now clicks, ${attributedBookings} attributed booking(s).`,
       }
     );
 

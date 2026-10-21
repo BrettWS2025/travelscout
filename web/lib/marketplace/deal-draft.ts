@@ -237,6 +237,8 @@ export type DealDraftStore = {
   >;
   /** Chunk 44: auto-deal rules. */
   dealRules?: Map<string, import("./integration").DealRule>;
+  /** Chunk 45: raw impression / detail_view events before hourly rollup. */
+  trackingEvents?: Map<string, import("./deal-metrics").TrackingEvent>;
 };
 
 export function createDealDraftStore(
@@ -269,6 +271,7 @@ export function createDealDraftStore(
     billingAccounts: new Map(),
     discountDisplayCache: new Map(),
     dealRules: new Map(),
+    trackingEvents: new Map(),
   };
 }
 

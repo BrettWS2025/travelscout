@@ -122,4 +122,23 @@ export type BookingSessionRef =
   | null
   | undefined;
 
+/**
+ * Normalised booking/order for conversion attribution (Chunk 45).
+ * Money in minor units; times UTC ISO.
+ */
+export type NormalisedBooking = {
+  external_id: string;
+  product_external_id: string | null;
+  booked_at: string;
+  total_amount_minor: number;
+  currency: string;
+  /** Redeemed promo / coupon when the provider exposes it. */
+  promo_code: string | null;
+  /** Agent / affiliate source label (e.g. Rezdy sourceChannel). */
+  source_channel: string | null;
+  /** Present when a booking webhook carried our click_id. */
+  click_id: string | null;
+  status: string;
+};
+
 export type AdapterProvider = IntegrationProvider;
