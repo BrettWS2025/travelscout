@@ -54,7 +54,7 @@ Cursor ticks these as chunks are finished.
 - [x] 36. Book now click flow and tracking — Notes: `deal-book-now.ts` + `POST /api/marketplace/deals/:slug/book`; ClickEvent + click_recheck SyncLog; integrated recheck / cache fallback / just_sold_out / cannot_confirm; manual show_instructions; visitor/IP rate limit; tests in `deal-book-now.test.ts`.
 
 **Phase E: Settings**
-- [ ] 37. Integrations settings screens
+- [x] 37. Integrations settings screens — Notes: `/account/settings/integrations` grid + `[provider]` detail (Connection/Health/Products/Sync/Booking/Conversion/Sync log); `integrations-client.ts` + `integrations-settings-ui.ts`; GET detail + POST test-booking-link; Coming soon FH/Bókun/Checkfront; manual explainer when none connected.
 - [ ] 38. Business profile and deal defaults
 - [ ] 39. Notifications
 - [ ] 40. Team

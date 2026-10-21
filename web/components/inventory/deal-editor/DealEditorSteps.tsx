@@ -218,7 +218,7 @@ export function TypeStep({
             <p className="text-sm text-[var(--ts-muted)]">
               No enabled products. Enable products in{" "}
               <a
-                href="/account/settings"
+                href="/account/settings/integrations"
                 className="font-semibold text-[var(--ts-teal)] underline"
               >
                 Integration settings
@@ -368,7 +368,7 @@ export function TypeStep({
         <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
           Need a booking system?{" "}
           <a
-            href="/account/settings"
+            href="/account/settings/integrations"
             className="font-semibold text-[var(--ts-teal)] underline"
           >
             Connect an integration in Settings

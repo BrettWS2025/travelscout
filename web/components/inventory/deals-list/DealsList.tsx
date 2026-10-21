@@ -714,7 +714,7 @@ function EmptyBlock({
         ) : null}
         {showConnect ? (
           <Link
-            href="/account/settings"
+            href="/account/settings/integrations"
             className="inline-block font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-teal)]"
           >
             Connect an integration →
