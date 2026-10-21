@@ -57,7 +57,7 @@ Cursor ticks these as chunks are finished.
 - [x] 37. Integrations settings screens — Notes: `/account/settings/integrations` grid + `[provider]` detail (Connection/Health/Products/Sync/Booking/Conversion/Sync log); `integrations-client.ts` + `integrations-settings-ui.ts`; GET detail + POST test-booking-link; Coming soon FH/Bókun/Checkfront; manual explainer when none connected.
 - [x] 38. Business profile and deal defaults — Notes: `operator-profile.ts` + GET/PATCH `.../profile`, `.../booking-defaults`, GET `.../preview`, POST logo/cover; UI `/account/settings/business-profile` + `deal-defaults`; staff read-only profile; defaults note “new deals only”.
 - [x] 39. Notifications — Notes: `notifications.ts` + GET/PATCH `.../notifications/me`, in-app list/mark-read; `notify()` fans out email/SMS/in-app (stubs); mandatory channel guard; daily summary job; stubs in publish/attestation/stale-sync/sync-hooks/booking-link/status-ticker wired; UI `/account/settings/notifications`.
-- [ ] 40. Team
+- [x] 40. Team — Notes: `team.ts` + invite tokens (`team_invite_tokens`); routes `GET|POST .../team`, `PATCH|DELETE /team/:mid`, resend/revoke, `GET|POST /team/invite/:token`; last owner + owner-only owner changes; throttled `last_active_at`; UI `/account/settings/team` + `/team/invite/[token]`.
 - [ ] 41. Compliance documents
 - [ ] 42. Billing and account
 

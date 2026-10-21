@@ -346,6 +346,14 @@ export async function requirePermission(
     return { ok: false, response: forbidden(denialMessage(action)) };
   }
 
+  // Chunk 40: throttled last_active_at for accepted team members.
+  // Dynamic import avoids a hard cycle with team.ts ↔ permissions.
+  void import("./team")
+    .then(({ touchLastActiveIfConfigured }) => {
+      touchLastActiveIfConfigured(operatorId, user.id);
+    })
+    .catch(() => undefined);
+
   return {
     ok: true,
     user,
