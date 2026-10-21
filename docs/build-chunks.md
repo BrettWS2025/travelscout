@@ -63,7 +63,7 @@ Cursor ticks these as chunks are finished.
 
 **Phase F: Advanced**
 - [x] 43. Stepped discounts — Notes: `deal-stepped-discounts.ts` + client-safe `deal-stepped-discounts-shared.ts` (`currentPrice`, CRUD, `applyCurrentDiscountSteps`); routes `…/discount-steps`; wired list/Book now/ticker/publish `discount_in_provider`; editor Step 4 timeline; tests in `deal-stepped-discounts.test.ts`.
-- [ ] 44. Auto-deal rules
+- [x] 44. Auto-deal rules — Notes: `deal-rules.ts` CRUD/preview/`runDealRulesJob` (15m); routes `…/deal-rules` + `GET /deal-rules/:id/preview`; UI `/account/inventory/auto-deal-rules`; list `from_rule` already wired; tests in `deal-rules.test.ts`.
 - [ ] 45. Metrics rollup and deal stats
 
 ---

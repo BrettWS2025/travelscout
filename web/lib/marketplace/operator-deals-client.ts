@@ -693,3 +693,134 @@ export function createDealFromTemplateApi(
     { method: "POST", body, accessToken }
   );
 }
+
+// ---------------------------------------------------------------------------
+// Auto-deal rules (Chunk 44)
+// ---------------------------------------------------------------------------
+
+export type OperatorDealRuleListRow = {
+  id: string;
+  name: string;
+  product: { id: string; name: string; external_id: string } | null;
+  integration_id: string;
+  provider: string | null;
+  schedule_summary: string;
+  discount_summary: string;
+  is_active: boolean;
+  auto_publish: boolean;
+  deals_generated_last_7_days: number;
+  next_run_at: string | null;
+  last_run_at: string | null;
+  rule_type: string;
+  list_hours_before_start: number;
+  min_unsold_seats: number;
+  start_date: string;
+  end_date: string | null;
+};
+
+export type OperatorDealRule = {
+  id: string;
+  operator_id: string;
+  integration_id: string;
+  external_product_id: string;
+  name: string;
+  is_active: boolean;
+  rule_type: string;
+  days_of_week: number[];
+  specific_dates: string[];
+  session_times: string[];
+  list_hours_before_start: number;
+  min_unsold_seats: number;
+  seat_cap: number | null;
+  price_config: Record<string, unknown>;
+  discount_mechanism: string;
+  promo_code: string | null;
+  template_deal_id: string;
+  auto_publish: boolean;
+  start_date: string;
+  end_date: string | null;
+  last_run_at: string | null;
+  next_run_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DealRulePreviewResponse = {
+  message: string;
+  would_create: number;
+  provider: string;
+  sessions: Array<{
+    external_session_id: string;
+    external_id: string;
+    start_at: string;
+    local_start: string;
+    seats_available: number;
+    hours_until_start: number;
+  }>;
+};
+
+export function listOperatorDealRulesApi(
+  operatorId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ rules: OperatorDealRuleListRow[] }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules`,
+    { accessToken }
+  );
+}
+
+export function getOperatorDealRuleApi(
+  operatorId: string,
+  ruleId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ rule: OperatorDealRule }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules/${encodeURIComponent(ruleId)}`,
+    { accessToken }
+  );
+}
+
+export function createOperatorDealRuleApi(
+  operatorId: string,
+  body: Record<string, unknown>,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ rule: OperatorDealRule }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules`,
+    { method: "POST", body, accessToken }
+  );
+}
+
+export function updateOperatorDealRuleApi(
+  operatorId: string,
+  ruleId: string,
+  body: Record<string, unknown>,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ rule: OperatorDealRule }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules/${encodeURIComponent(ruleId)}`,
+    { method: "PATCH", body, accessToken }
+  );
+}
+
+export function deleteOperatorDealRuleApi(
+  operatorId: string,
+  ruleId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ ok: boolean }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules/${encodeURIComponent(ruleId)}`,
+    { method: "DELETE", accessToken }
+  );
+}
+
+export function previewOperatorDealRuleApi(
+  operatorId: string,
+  ruleId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<DealRulePreviewResponse>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-rules/${encodeURIComponent(ruleId)}/preview`,
+    { accessToken }
+  );
+}

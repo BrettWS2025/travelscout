@@ -5,6 +5,11 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/account/inventory", label: "Deals", exact: true },
+  {
+    href: "/account/inventory/auto-deal-rules",
+    label: "Auto-deal rules",
+    exact: false,
+  },
   { href: "/account/inventory/templates", label: "Templates", exact: false },
 ] as const;
 

@@ -62,6 +62,7 @@ import {
 import { ComplianceError } from "./operator-compliance";
 import { AccountError } from "./account";
 import { BillingError, seedBillingAccounts } from "./billing";
+import { DealRulesError } from "./deal-rules";
 
 /** Wire Chunk 39 notify into modules that must stay client-safe. */
 let notificationHooksInstalled = false;
@@ -325,7 +326,8 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
   if (
     err instanceof DealDraftError ||
     err instanceof DealTemplatesError ||
-    err instanceof IntegratedDealError
+    err instanceof IntegratedDealError ||
+    err instanceof DealRulesError
   ) {
     if (err.status === 403) return forbidden(err.message);
     if (err.status === 404) return notFound(err.message);
