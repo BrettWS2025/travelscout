@@ -140,6 +140,18 @@ export type DealDraftStore = {
   externalSessions?: Map<string, ExternalSession>;
   /** Chunk 28: last successful poll started_at ISO per integration (scheduler). */
   integrationPollState?: Map<string, { lastPollStartedAt: string }>;
+  /**
+   * Chunk 29: sync_failure notify dedupe (once per stale incident).
+   * Shape matches SyncFailureIncidentRecord in integration-stale-sync.ts.
+   */
+  syncFailureIncidents?: Map<
+    string,
+    {
+      integrationId: string;
+      sinceSyncAt: string | null;
+      notifiedAt: string;
+    }
+  >;
 };
 
 export function createDealDraftStore(
@@ -160,6 +172,7 @@ export function createDealDraftStore(
     externalProducts: new Map(),
     externalSessions: new Map(),
     integrationPollState: new Map(),
+    syncFailureIncidents: new Map(),
   };
 }
 

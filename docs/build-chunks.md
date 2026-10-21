@@ -42,7 +42,7 @@ Cursor ticks these as chunks are finished.
 - [x] 26. Provider adapter interface and mock provider — Notes: `web/lib/marketplace/providers/` (`ProviderAdapter`, `getAdapter`, coming-soon FH/Bókun/Checkfront, mock backs rezdy until Chunk 31); contract tests in `providers/__tests__/provider-adapter.contract.test.ts`.
 - [x] 27. Connect, test and disconnect integrations — Notes: `integration-connect.ts` + routes under `operators/:id/integrations`; stub full sync until Chunk 28; disconnect auto-pauses live/scheduled (`scheduled→auto_paused`); reconnect clears `integration_disconnected` after sync.
 - [x] 28. Sync engine and sync log — Notes: `integration-sync.ts` (`runSync`, poll job, webhook HMAC, product/resync/sync-log APIs); replaces connect stub; Chunk 35 post-sync hooks stubbed; seats update DealSessions; lock + retry.
-- [ ] 29. Stale-sync monitor and integration auto-pause
+- [x] 29. Stale-sync monitor and integration auto-pause — Notes: `integration-stale-sync.ts` (`runStaleSyncMonitorJob`, sync_failure degrade/pause + once-per-incident notify stub); `runSync` clears `sync_failure` on success; tests in `integration-stale-sync.test.ts`.
 - [ ] 30. Rezdy research (answer open decisions)
 - [ ] 31. Rezdy adapter
 - [ ] 32. Integrated deal creation and content overrides
