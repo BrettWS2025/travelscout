@@ -361,7 +361,7 @@ Every transition writes a DealEvent. Session-level status lives on DealSession, 
 | Job | Frequency | Does |
 |---|---|---|
 | Provider sync | Per poll_interval_seconds + webhooks (`runIntegrationPollJob` / webhook route in `integration-sync.ts`) | Refresh ExternalProduct / ExternalSession for next 72 h + 24 h buffer; update linked DealSession seats |
-| Stale-sync monitor | Every minute | Apply and clear sync_failure |
+| Stale-sync monitor | Every minute | `runStaleSyncMonitorJob` in `web/lib/marketplace/integration-stale-sync.ts`: connected/degraded with `last_successful_sync_at` older than `SYNC_STALE_MINUTES` → status `degraded`, `applyAutoPause(sync_failure)` on live deals, notify `integration_sync_failing` once per incident (stub until Chunk 39); `error`/`disconnected` → `applyAutoPause(integration_disconnected)` on live/scheduled; fresh sync → `connected` + `clearAutoPause(sync_failure)` (also from `runSync` on success) |
 | Status ticker | Every minute | `runStatusTickerJob` in `web/lib/marketplace/deal-status-ticker.ts`: scheduled→live (publish_at reached + session within `MAX_LEAD_HOURS` + validateForPublish); expire sessions past cutoff; expire deals when all sessions expired/cancelled; live↔sold_out from seats; discount-step hook (Chunk 43); archive expired/ended after `ARCHIVE_AFTER_DAYS`. Traveller visibility: `isVisibleToTravellers` (live + sellable session within lead window) |
 | Auto-deal rule runner | Every 15 minutes | Evaluate active DealRules, create deals |
 | Link checker | On publish, then every 6 h | Update link_status; apply/clear link_broken |

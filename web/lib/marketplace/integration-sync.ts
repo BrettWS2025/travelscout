@@ -22,6 +22,7 @@ import {
   clearAutoPause,
   type DealActor,
 } from "./deal-status";
+import { clearSyncFailurePausesForIntegration } from "./integration-stale-sync";
 import {
   isIntegrationProvider,
   isSyncType,
@@ -747,6 +748,20 @@ export async function runSync(
             // Operator resumes manually if validation fails
           }
         }
+      }
+
+      // Chunk 29: successful sync clears sync_failure auto-pauses + notify incident
+      const syncFailureCleared = await clearSyncFailurePausesForIntegration(
+        store,
+        integrationId,
+        {
+          actor: options?.actor ?? { type: "system" },
+          now: finishIso,
+          validateForPublish: () => ({ ok: true, checks: [] }),
+        }
+      );
+      for (const id of syncFailureCleared.resumedDealIds) {
+        if (!resumed.includes(id)) resumed.push(id);
       }
     }
 
