@@ -278,10 +278,13 @@ export function createMockAdapter(options?: {
   now?: Date | (() => Date);
   state?: MockAdapterState;
 }): MockAdapterController {
-  const nowFn =
-    typeof options?.now === "function"
-      ? options.now
-      : () => options?.now ?? new Date();
+  // Capture so TS narrows Date vs () => Date inside the else branch
+  // (options?.now is not narrowed through a deferred arrow closure).
+  const nowOption = options?.now;
+  const nowFn: () => Date =
+    typeof nowOption === "function"
+      ? nowOption
+      : () => nowOption ?? new Date();
 
   const state = options?.state ?? createInitialState(nowFn());
 
