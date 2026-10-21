@@ -235,6 +235,8 @@ export type DealDraftStore = {
     string,
     import("./deal-stepped-discounts").DiscountDisplayCacheEntry
   >;
+  /** Chunk 44: auto-deal rules. */
+  dealRules?: Map<string, import("./integration").DealRule>;
 };
 
 export function createDealDraftStore(
@@ -266,6 +268,7 @@ export function createDealDraftStore(
     complianceReminders: new Map(),
     billingAccounts: new Map(),
     discountDisplayCache: new Map(),
+    dealRules: new Map(),
   };
 }
 
