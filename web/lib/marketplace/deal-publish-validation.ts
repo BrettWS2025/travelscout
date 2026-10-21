@@ -28,6 +28,10 @@ import {
   plainTextFromHtml,
   type Deal,
 } from "./deal";
+import { parseProviderPriceOptions } from "./deal-integrated";
+import {
+  parseSeparateProductRef,
+} from "./deal-integrated-pricing-shared";
 import { listDealMedia, type DealMedia } from "./deal-media";
 import type {
   DealPriceOption,
@@ -39,6 +43,7 @@ import type {
   PublishValidationResult,
   ValidateForPublishFn,
 } from "./deal-status";
+import type { ExternalProduct, ExternalSession, Integration } from "./integration";
 import {
   isIntegratedDealType,
   isManualDealType,
@@ -118,6 +123,12 @@ export type ValidateForPublishContext = {
    */
   checkEvidenceUrl?: (url: string) => Promise<LinkCheckResult>;
   fetchFn?: FetchLike;
+  /** Chunk 35: integration row for integrated publish checks. */
+  integration?: Integration | null;
+  /** Chunk 35: linked ExternalProduct for integrated publish checks. */
+  externalProduct?: ExternalProduct | null;
+  /** Chunk 35: ExternalSession rows keyed by id (for session_available). */
+  externalSessionsById?: Map<string, ExternalSession>;
 };
 
 // ---------------------------------------------------------------------------
@@ -766,52 +777,403 @@ function checkAttestation(
   );
 }
 
-function integratedStubChecks(): PublishValidationCheckKeyed[] {
-  const stubs: Array<{
-    key: string;
-    label: string;
-    editorStep: EditorStep;
-  }> = [
-    {
-      key: "integration_healthy",
-      label: "Integration healthy",
-      editorStep: "type",
-    },
-    {
-      key: "product_active",
-      label: "Product active",
-      editorStep: "type",
-    },
-    {
-      key: "original_price_locked",
-      label: "Original price locked",
-      editorStep: "pricing",
-    },
-    {
-      key: "discount_in_provider",
-      label: "Discount in provider",
-      editorStep: "pricing",
-    },
-    {
-      key: "promo_code_confirmed",
-      label: "Promo code confirmed",
-      editorStep: "pricing",
-    },
-    {
-      key: "session_available",
-      label: "Session available",
-      editorStep: "availability",
-    },
-  ];
-  return stubs.map((s) =>
-    check(
-      s.key,
-      s.label,
+// ---------------------------------------------------------------------------
+// Integrated checks (Chunk 35)
+// ---------------------------------------------------------------------------
+
+function checkIntegrationHealthy(
+  deal: Deal,
+  ctx: ValidateForPublishContext,
+  nowIso: string
+): PublishValidationCheckKeyed {
+  const integration = ctx.integration;
+  if (!integration) {
+    return check(
+      "integration_healthy",
+      "Integration healthy",
       false,
-      s.editorStep,
-      "Not yet built — see Chunk 35"
+      "type",
+      deal.integrationId
+        ? "Integration not found"
+        : "Deal has no linked integration"
+    );
+  }
+
+  const staleMinutes = getPlatformConfig().SYNC_STALE_MINUTES;
+  const nowMs = Date.parse(nowIso);
+  const lastOkMs =
+    integration.lastSuccessfulSyncAt != null
+      ? Date.parse(integration.lastSuccessfulSyncAt)
+      : NaN;
+  const syncFresh =
+    Number.isFinite(lastOkMs) &&
+    nowMs - lastOkMs <= staleMinutes * 60_000;
+
+  const connected = integration.status === "connected";
+  const passed = connected && syncFresh;
+
+  let message: string;
+  if (passed) {
+    message = "Integration connected and sync is fresh";
+  } else if (!connected) {
+    message = `Integration status is ${integration.status} (must be connected)`;
+  } else if (!Number.isFinite(lastOkMs)) {
+    message = "Integration has never synced successfully";
+  } else {
+    message = `Last successful sync is older than ${staleMinutes} minutes`;
+  }
+
+  return check(
+    "integration_healthy",
+    "Integration healthy",
+    passed,
+    "type",
+    message
+  );
+}
+
+function checkProductActive(
+  deal: Deal,
+  ctx: ValidateForPublishContext
+): PublishValidationCheckKeyed {
+  const product = ctx.externalProduct;
+  if (!product) {
+    return check(
+      "product_active",
+      "Product active",
+      false,
+      "type",
+      deal.externalProductId
+        ? "External product not found"
+        : "Deal has no linked product"
+    );
+  }
+
+  const enabled = product.isEnabledForDeals;
+  const archived = product.archivedInProvider;
+  const passed = enabled && !archived;
+
+  let message: string;
+  if (passed) {
+    message = "Product is enabled and not archived";
+  } else if (archived) {
+    message = "Product is archived in the provider";
+  } else {
+    message = "Product is not enabled for deals";
+  }
+
+  return check("product_active", "Product active", passed, "type", message);
+}
+
+function checkOriginalPriceLocked(
+  ctx: ValidateForPublishContext,
+  priceOptions: DealPriceOption[]
+): PublishValidationCheckKeyed {
+  const product = ctx.externalProduct;
+  if (!product) {
+    return check(
+      "original_price_locked",
+      "Original price locked",
+      false,
+      "pricing",
+      "Cannot verify originals without a linked product"
+    );
+  }
+
+  const byExternalId = new Map(
+    parseProviderPriceOptions(product).map(
+      (p) => [p.external_id, p] as const
     )
   );
+  const problems: string[] = [];
+
+  for (const opt of priceOptions) {
+    const label = opt.label || opt.id;
+    if (!opt.externalPriceOptionId) {
+      problems.push(`${label}: missing provider price option id`);
+      continue;
+    }
+    const provider = byExternalId.get(opt.externalPriceOptionId);
+    if (!provider) {
+      problems.push(
+        `${label}: provider option ${opt.externalPriceOptionId} not found`
+      );
+      continue;
+    }
+    if (provider.price_minor !== opt.originalPriceMinor) {
+      problems.push(
+        `${label}: original ${opt.originalPriceMinor} ≠ provider ${provider.price_minor}`
+      );
+    }
+  }
+
+  if (priceOptions.length === 0) {
+    problems.push("No price options");
+  }
+
+  const passed = problems.length === 0;
+  return check(
+    "original_price_locked",
+    "Original price locked",
+    passed,
+    "pricing",
+    passed
+      ? "Each original price matches the provider catalogue"
+      : problems.slice(0, 5).join("; ")
+  );
+}
+
+function checkDiscountInProvider(
+  deal: Deal,
+  ctx: ValidateForPublishContext,
+  priceOptions: DealPriceOption[]
+): PublishValidationCheckKeyed {
+  if (deal.discountMechanism !== "price_option") {
+    return check(
+      "discount_in_provider",
+      "Discount in provider",
+      true,
+      "pricing",
+      "Not using price_option mechanism"
+    );
+  }
+
+  const product = ctx.externalProduct;
+  if (!product) {
+    return check(
+      "discount_in_provider",
+      "Discount in provider",
+      false,
+      "pricing",
+      "Cannot verify discount without a linked product"
+    );
+  }
+
+  const byExternalId = new Map(
+    parseProviderPriceOptions(product).map(
+      (p) => [p.external_id, p] as const
+    )
+  );
+  const problems: string[] = [];
+
+  for (const opt of priceOptions) {
+    const label = opt.label || opt.id;
+    const dealOptId = opt.externalDealPriceOptionId;
+    if (!dealOptId || parseSeparateProductRef(dealOptId)) {
+      problems.push(`${label}: select a provider discounted price option`);
+      continue;
+    }
+    const discounted = byExternalId.get(dealOptId);
+    if (!discounted) {
+      problems.push(
+        `${label}: discounted option ${dealOptId} not found in provider`
+      );
+      continue;
+    }
+    if (discounted.price_minor !== opt.dealPriceMinor) {
+      problems.push(
+        `${label}: provider discount ${discounted.price_minor} ≠ deal price ${opt.dealPriceMinor}`
+      );
+    }
+  }
+
+  if (priceOptions.length === 0) {
+    problems.push("No price options");
+  }
+
+  const passed = problems.length === 0;
+  return check(
+    "discount_in_provider",
+    "Discount in provider",
+    passed,
+    "pricing",
+    passed
+      ? "Discounted provider options match deal prices"
+      : problems.slice(0, 5).join("; ")
+  );
+}
+
+function checkPromoCodeConfirmed(
+  deal: Deal
+): PublishValidationCheckKeyed {
+  const mechanism = deal.discountMechanism;
+
+  if (mechanism === "price_option") {
+    return check(
+      "promo_code_confirmed",
+      "Promo code confirmed",
+      true,
+      "pricing",
+      "Not using promo_code mechanism"
+    );
+  }
+
+  if (mechanism !== "promo_code" && mechanism !== "separate_product") {
+    return check(
+      "promo_code_confirmed",
+      "Promo code confirmed",
+      false,
+      "pricing",
+      "Set an integrated discount mechanism"
+    );
+  }
+
+  const verification = deal.discountVerification;
+  const verified = verification?.status === "verified";
+  const cannotVerify = verification?.status === "cannot_verify";
+  const linkOk = deal.linkStatus === "ok";
+  const operatorConfirmed = deal.promoCodeConfirmedByOperator === true;
+
+  // Verified via provider API
+  if (verified) {
+    return check(
+      "promo_code_confirmed",
+      "Promo code confirmed",
+      true,
+      "pricing",
+      "Discount verified in provider"
+    );
+  }
+
+  // cannot_verify (or separate_product): operator confirm + Test link
+  // Also allow confirm+link when status is not yet verified (Chunk 35).
+  if (operatorConfirmed && linkOk) {
+    return check(
+      "promo_code_confirmed",
+      "Promo code confirmed",
+      true,
+      "pricing",
+      cannotVerify || mechanism === "separate_product"
+        ? "Operator confirmed discount; booking link tested"
+        : "Operator confirmed promo code; booking link tested"
+    );
+  }
+
+  const problems: string[] = [];
+  if (!verified) {
+    if (verification == null) {
+      problems.push("Run verify discount");
+    } else if (verification.status === "not_found") {
+      problems.push("Discount not found in provider");
+    } else if (verification.status === "failed") {
+      problems.push("Discount verification failed");
+    } else if (cannotVerify || mechanism === "separate_product") {
+      problems.push("Provider cannot verify — confirm manually");
+    } else {
+      problems.push(`Verification status is ${verification.status}`);
+    }
+  }
+  if (!operatorConfirmed && (cannotVerify || mechanism === "separate_product" || !verified)) {
+    if (!problems.some((p) => /confirm/i.test(p))) {
+      problems.push("Tick promo code / discount confirmation");
+    }
+  }
+  if (!linkOk) {
+    problems.push("Run Test link successfully (link_status must be ok)");
+  }
+
+  return check(
+    "promo_code_confirmed",
+    "Promo code confirmed",
+    false,
+    "pricing",
+    problems.slice(0, 4).join("; ")
+  );
+}
+
+function sessionHasProviderSeats(session: DealSession): boolean {
+  const seats =
+    session.providerSeatsAvailable != null &&
+    Number.isFinite(session.providerSeatsAvailable)
+      ? session.providerSeatsAvailable
+      : session.seatsDisplayed;
+  return seats > 0;
+}
+
+function checkSessionAvailable(
+  deal: Deal,
+  ctx: ValidateForPublishContext,
+  sessions: DealSession[]
+): PublishValidationCheckKeyed {
+  if (sessions.length === 0) {
+    return check(
+      "session_available",
+      "Session available",
+      false,
+      "availability",
+      "Select at least one provider session"
+    );
+  }
+
+  const extMap = ctx.externalSessionsById ?? new Map<string, ExternalSession>();
+  const available: DealSession[] = [];
+  const problems: string[] = [];
+
+  for (const session of sessions) {
+    if (!session.externalSessionId) {
+      problems.push(`Session ${session.id}: missing external_session_id`);
+      continue;
+    }
+    const ext = extMap.get(session.externalSessionId);
+    if (!ext) {
+      problems.push(`Session ${session.id}: provider session not found`);
+      continue;
+    }
+    if (ext.status === "cancelled" || session.status === "cancelled") {
+      problems.push(`Session ${session.id}: cancelled in provider`);
+      continue;
+    }
+    if (!sessionHasProviderSeats(session) && (ext.seatsAvailable ?? 0) <= 0) {
+      problems.push(`Session ${session.id}: no seats available`);
+      continue;
+    }
+    available.push(session);
+  }
+
+  const needAll = deal.dealType === "integrated_session";
+  const passed = needAll
+    ? available.length === sessions.length && available.length >= 1
+    : available.length >= 1;
+
+  let message: string;
+  if (passed) {
+    message =
+      available.length === 1
+        ? "Selected provider session is available"
+        : `${available.length} selected provider sessions are available`;
+  } else if (needAll) {
+    message =
+      problems[0] ??
+      "The selected provider session must exist, not be cancelled, and have seats";
+  } else {
+    message =
+      problems.length > 0
+        ? `No sellable sessions; ${problems.slice(0, 3).join("; ")}`
+        : "At least one selected provider session must have seats";
+  }
+
+  return check(
+    "session_available",
+    "Session available",
+    passed,
+    "availability",
+    message
+  );
+}
+
+function integratedPublishChecks(
+  deal: Deal,
+  ctx: ValidateForPublishContext,
+  nowIso: string
+): PublishValidationCheckKeyed[] {
+  return [
+    checkIntegrationHealthy(deal, ctx, nowIso),
+    checkProductActive(deal, ctx),
+    checkOriginalPriceLocked(ctx, ctx.priceOptions),
+    checkDiscountInProvider(deal, ctx, ctx.priceOptions),
+    checkPromoCodeConfirmed(deal),
+    checkSessionAvailable(deal, ctx, ctx.sessions),
+  ];
 }
 
 function checkCompliance(
@@ -874,7 +1236,7 @@ export async function validateForPublish(
   }
 
   if (isIntegratedDealType(deal.dealType)) {
-    checks.push(...integratedStubChecks());
+    checks.push(...integratedPublishChecks(deal, ctx, now));
   }
 
   const compliance = checkCompliance(ctx.complianceDocuments, now);
@@ -937,6 +1299,18 @@ export async function validateDealInStore(
 
   const refreshStale = options?.refreshStaleLinks !== false;
 
+  const integration =
+    deal.integrationId && store.integrations
+      ? (store.integrations.get(deal.integrationId) ?? null)
+      : null;
+  const externalProduct =
+    deal.externalProductId && store.externalProducts
+      ? (store.externalProducts.get(deal.externalProductId) ?? null)
+      : null;
+  const externalSessionsById = store.externalSessions
+    ? new Map(store.externalSessions)
+    : new Map();
+
   const ctx: ValidateForPublishContext = {
     sessions,
     priceOptions,
@@ -947,6 +1321,9 @@ export async function validateDealInStore(
     evidenceUrlChecks: store.evidenceUrlChecks,
     complianceDocuments: options?.complianceDocuments,
     fetchFn: options?.fetchFn,
+    integration,
+    externalProduct,
+    externalSessionsById,
     refreshBookingLink: refreshStale
       ? async (d) => {
           if (!d.bookingUrl) return null;

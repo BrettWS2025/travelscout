@@ -4,7 +4,7 @@
  * runSync: listProducts → upsert ExternalProduct; for enabled products,
  * listSessions (now → now+MAX_LEAD_HOURS+24h) → upsert ExternalSession;
  * mark missing sessions cancelled; refresh linked DealSession seats;
- * hand off to Chunk 35 hooks (stubs until that chunk).
+ * hand off to Chunk 35 hooks (session_cancelled / price_below_threshold).
  *
  * One sync per integration at a time (lock). Adapter calls retry with backoff.
  * Content fields: refresh non-overridden fields via refreshDealsFromExternalProduct
@@ -16,6 +16,10 @@ import { getPlatformConfig, MAX_LEAD_HOURS } from "./config";
 import type { DealDraftStore } from "./deal-draft";
 import type { Deal } from "./deal";
 import { refreshDealsFromExternalProduct } from "./deal-integrated";
+import {
+  runPostSyncProviderHooks,
+  type PostSyncHookContext,
+} from "./deal-integrated-sync-hooks";
 import {
   withSeatsDisplayed,
   type DealSession,
@@ -215,28 +219,9 @@ export async function withRetry<T>(
   throw lastErr;
 }
 
-// ---------------------------------------------------------------------------
-// Chunk 35 hooks (stubs)
-// ---------------------------------------------------------------------------
-
-export type PostSyncHookContext = {
-  store: DealDraftStore;
-  integration: Integration;
-  affectedDealIds: string[];
-  updatedExternalSessionIds: string[];
-  cancelledExternalSessionIds: string[];
-  now: string;
-};
-
-/**
- * Called after a successful product/session upsert. Chunk 35 fills in
- * session_cancelled / price_below_threshold auto-pauses. No-op until then.
- */
-export async function runPostSyncProviderHooks(
-  _ctx: PostSyncHookContext
-): Promise<void> {
-  // Chunk 35: cancellation + price checks
-}
+// Re-export Chunk 35 hooks for callers/tests
+export type { PostSyncHookContext };
+export { runPostSyncProviderHooks };
 
 // ---------------------------------------------------------------------------
 // Sync window
