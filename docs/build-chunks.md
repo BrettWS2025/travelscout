@@ -62,7 +62,7 @@ Cursor ticks these as chunks are finished.
 - [x] 42. Billing and account — Notes: `billing.ts` GET/PATCH (stub invoices when no provider) + usage from ClickEvent/DealMetricDaily; `account.ts` CSV export + close (end live/scheduled, disconnect secrets, suspend); routes billing/export/close; UI `/account/settings/billing` + `/account`; SSO/2FA TODO in spec §6.8.
 
 **Phase F: Advanced**
-- [ ] 43. Stepped discounts
+- [x] 43. Stepped discounts — Notes: `deal-stepped-discounts.ts` + client-safe `deal-stepped-discounts-shared.ts` (`currentPrice`, CRUD, `applyCurrentDiscountSteps`); routes `…/discount-steps`; wired list/Book now/ticker/publish `discount_in_provider`; editor Step 4 timeline; tests in `deal-stepped-discounts.test.ts`.
 - [ ] 44. Auto-deal rules
 - [ ] 45. Metrics rollup and deal stats
 

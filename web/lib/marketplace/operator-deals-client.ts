@@ -316,6 +316,47 @@ export function deleteDealPriceOptionApi(
   );
 }
 
+export function createDiscountStepApi(
+  dealId: string,
+  body: Record<string, unknown>,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    discount_step: import("./deal-session").DiscountStep;
+    validation: PublishValidationOutcome | null;
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/discount-steps`,
+    { method: "POST", body, accessToken }
+  );
+}
+
+export function updateDiscountStepApi(
+  dealId: string,
+  stepId: string,
+  body: Record<string, unknown>,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    discount_step: import("./deal-session").DiscountStep;
+    validation: PublishValidationOutcome | null;
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/discount-steps/${encodeURIComponent(stepId)}`,
+    { method: "PATCH", body, accessToken }
+  );
+}
+
+export function deleteDiscountStepApi(
+  dealId: string,
+  stepId: string,
+  body: Record<string, unknown> = {},
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ ok: boolean }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/discount-steps/${encodeURIComponent(stepId)}`,
+    { method: "DELETE", body, accessToken }
+  );
+}
+
 export function verifyDealDiscountApi(
   dealId: string,
   body: { promo_code_confirmed_by_operator?: boolean } = {},

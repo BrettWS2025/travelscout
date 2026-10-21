@@ -929,7 +929,8 @@ function checkOriginalPriceLocked(
 function checkDiscountInProvider(
   deal: Deal,
   ctx: ValidateForPublishContext,
-  priceOptions: DealPriceOption[]
+  priceOptions: DealPriceOption[],
+  discountSteps: DiscountStep[] = []
 ): PublishValidationCheckKeyed {
   if (deal.discountMechanism !== "price_option") {
     return check(
@@ -977,6 +978,30 @@ function checkDiscountInProvider(
       problems.push(
         `${label}: provider discount ${discounted.price_minor} ≠ deal price ${opt.dealPriceMinor}`
       );
+    }
+
+    // Chunk 43: each stepped price_option must also match a provider option.
+    const optionSteps = discountSteps.filter((s) => s.priceOptionId === opt.id);
+    for (const step of optionSteps) {
+      const stepOptId = step.externalDealPriceOptionId;
+      if (!stepOptId || parseSeparateProductRef(stepOptId)) {
+        problems.push(
+          `${label} @${step.hoursBeforeStart}h: select a provider discounted option for the step`
+        );
+        continue;
+      }
+      const stepDiscounted = byExternalId.get(stepOptId);
+      if (!stepDiscounted) {
+        problems.push(
+          `${label} @${step.hoursBeforeStart}h: discounted option ${stepOptId} not found in provider`
+        );
+        continue;
+      }
+      if (stepDiscounted.price_minor !== step.dealPriceMinor) {
+        problems.push(
+          `${label} @${step.hoursBeforeStart}h: provider ${stepDiscounted.price_minor} ≠ step price ${step.dealPriceMinor}`
+        );
+      }
     }
   }
 
@@ -1173,7 +1198,7 @@ function integratedPublishChecks(
     checkIntegrationHealthy(deal, ctx, nowIso),
     checkProductActive(deal, ctx),
     checkOriginalPriceLocked(ctx, ctx.priceOptions),
-    checkDiscountInProvider(deal, ctx, ctx.priceOptions),
+    checkDiscountInProvider(deal, ctx, ctx.priceOptions, ctx.discountSteps),
     checkPromoCodeConfirmed(deal),
     checkSessionAvailable(deal, ctx, ctx.sessions),
   ];

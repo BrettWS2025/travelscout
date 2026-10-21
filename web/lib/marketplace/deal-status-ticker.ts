@@ -164,7 +164,7 @@ export function filterVisibleToTravellers(
 }
 
 // ---------------------------------------------------------------------------
-// Discount-step hook (Chunk 43 fills this in)
+// Discount-step hook (Chunk 43)
 // ---------------------------------------------------------------------------
 
 export type ApplyCurrentDiscountStepsFn = (
@@ -174,15 +174,17 @@ export type ApplyCurrentDiscountStepsFn = (
 ) => void | Promise<void>;
 
 /**
- * Placeholder until stepped discounts (Chunk 43). No-op by default.
- * When steps activate, Chunk 43 will log price_changed and refresh display price.
+ * When a stepped discount activates, log price_changed and refresh display price.
+ * Implemented in deal-stepped-discounts.ts (Chunk 43).
  */
+import { applyCurrentDiscountSteps as applyCurrentDiscountStepsImpl } from "./deal-stepped-discounts";
+
 export async function applyCurrentDiscountSteps(
-  _store: DealDraftStore,
-  _dealId: string,
-  _now: string
+  store: DealDraftStore,
+  dealId: string,
+  now: string
 ): Promise<void> {
-  // Chunk 43
+  return applyCurrentDiscountStepsImpl(store, dealId, now);
 }
 
 // ---------------------------------------------------------------------------
