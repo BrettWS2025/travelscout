@@ -36,6 +36,31 @@ export {
 } from "./booking-destination";
 
 // ---------------------------------------------------------------------------
+// Notification hook (wired from server-only deal-draft-http — do not import
+// notifications.ts here; this module is in the deal-editor client graph)
+// ---------------------------------------------------------------------------
+
+export type BookingLinkBrokenNotifyPayload = {
+  operatorId: string;
+  dealId: string;
+  detail: string;
+  at: string;
+};
+
+export type NotifyBookingLinkBrokenFn = (
+  store: DealDraftStore,
+  payload: BookingLinkBrokenNotifyPayload
+) => void | Promise<void>;
+
+let notifyBookingLinkBrokenHook: NotifyBookingLinkBrokenFn | null = null;
+
+export function setNotifyBookingLinkBroken(
+  fn: NotifyBookingLinkBrokenFn | null
+): void {
+  notifyBookingLinkBrokenHook = fn;
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -388,6 +413,14 @@ export async function runLinkCheck(
           { actor, now }
         );
         autoPaused = true;
+        if (notifyBookingLinkBrokenHook) {
+          await notifyBookingLinkBrokenHook(store, {
+            operatorId: deal.operatorId,
+            dealId: deal.id,
+            detail,
+            at: now,
+          });
+        }
       }
     }
   }

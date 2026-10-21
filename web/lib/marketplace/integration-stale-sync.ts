@@ -127,7 +127,7 @@ export function syncFailurePauseDetail(
 }
 
 // ---------------------------------------------------------------------------
-// Notification stub (Chunk 39 replaces with notify())
+// Notification (Chunk 39: notify integration_sync_failing)
 // ---------------------------------------------------------------------------
 
 export type IntegrationSyncFailingNotifyPayload = {
@@ -143,20 +143,25 @@ export type SendIntegrationSyncFailingFn = (
   payload: IntegrationSyncFailingNotifyPayload
 ) => void | Promise<void>;
 
-let sendSyncFailingHook: SendIntegrationSyncFailingFn = () => {
-  // no-op until notifications are wired (Chunk 39)
-};
+let sendSyncFailingHook: SendIntegrationSyncFailingFn | null = null;
 
+/** Test override; null → notify() via notifyIntegrationSyncFailing. */
 export function setSendIntegrationSyncFailing(
   fn: SendIntegrationSyncFailingFn | null
 ): void {
-  sendSyncFailingHook = fn ?? (() => undefined);
+  sendSyncFailingHook = fn;
 }
 
 export async function sendIntegrationSyncFailing(
+  store: DealDraftStore,
   payload: IntegrationSyncFailingNotifyPayload
 ): Promise<void> {
-  await sendSyncFailingHook(payload);
+  if (sendSyncFailingHook) {
+    await sendSyncFailingHook(payload);
+    return;
+  }
+  const { notifyIntegrationSyncFailing } = await import("./notifications");
+  await notifyIntegrationSyncFailing(store, payload);
 }
 
 /** Clear incident so the next stale period can notify again. */
@@ -369,7 +374,7 @@ export async function runStaleSyncMonitorJob(
           )
           .map((d) => d.id);
 
-        await sendIntegrationSyncFailing({
+        await sendIntegrationSyncFailing(store, {
           operatorId: current.operatorId,
           integrationId: current.id,
           provider: current.provider,

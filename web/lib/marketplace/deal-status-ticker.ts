@@ -27,6 +27,32 @@ import type { DealStatus, SessionStatus } from "./enums";
 
 const SYSTEM_ACTOR: DealActor = { type: "system" };
 
+// ---------------------------------------------------------------------------
+// Notification hook (wired from server-only deal-draft-http — avoid importing
+// notifications.ts so this module stays out of accidental client graphs)
+// ---------------------------------------------------------------------------
+
+export type DealLifecycleNotifyPayload = {
+  operatorId: string;
+  dealId: string;
+  dealTitle: string | null;
+  status: "live" | "sold_out" | "expired";
+  at: string;
+};
+
+export type NotifyDealLifecycleFn = (
+  store: DealDraftStore,
+  payload: DealLifecycleNotifyPayload
+) => void | Promise<void>;
+
+let notifyDealLifecycleHook: NotifyDealLifecycleFn | null = null;
+
+export function setNotifyDealLifecycle(
+  fn: NotifyDealLifecycleFn | null
+): void {
+  notifyDealLifecycleHook = fn;
+}
+
 const EXPIRE_FROM: ReadonlySet<DealStatus> = new Set([
   "live",
   "sold_out",
@@ -345,6 +371,15 @@ export async function tickDealStatus(
   if (promoted) {
     deal = promoted;
     transitions.push("live");
+    if (notifyDealLifecycleHook) {
+      await notifyDealLifecycleHook(store, {
+        operatorId: deal.operatorId,
+        dealId: deal.id,
+        dealTitle: deal.title,
+        status: "live",
+        at: now,
+      });
+    }
   }
 
   // 2. Per session: past cutoff → expired
@@ -357,6 +392,15 @@ export async function tickDealStatus(
   if (expired) {
     deal = expired;
     transitions.push("expired");
+    if (notifyDealLifecycleHook) {
+      await notifyDealLifecycleHook(store, {
+        operatorId: deal.operatorId,
+        dealId: deal.id,
+        dealTitle: deal.title,
+        status: "expired",
+        at: now,
+      });
+    }
   }
 
   // 4. live ↔ sold_out from seats on remaining sessions
@@ -365,6 +409,18 @@ export async function tickDealStatus(
   if (flipped) {
     deal = flipped;
     transitions.push(flipped.status);
+    if (
+      notifyDealLifecycleHook &&
+      (flipped.status === "sold_out" || flipped.status === "live")
+    ) {
+      await notifyDealLifecycleHook(store, {
+        operatorId: deal.operatorId,
+        dealId: deal.id,
+        dealTitle: deal.title,
+        status: flipped.status,
+        at: now,
+      });
+    }
   }
 
   // 5. Discount step hook (Chunk 43)

@@ -346,7 +346,7 @@ describe("Chunk 17 publish / review / attestation", () => {
       skipLinkCheck: true,
     });
 
-    const rejected = rejectDeal(store, dealId, {
+    const rejected = await rejectDeal(store, dealId, {
       actor: ADMIN,
       notes: "Missing insurance certificate",
       now: NOW,

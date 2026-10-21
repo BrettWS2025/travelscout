@@ -70,7 +70,7 @@ export class DealPublishError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Notify admins (simple hook; Chunk 39 replaces with notify())
+// Notify operator members (Chunk 39: deal_review_update)
 // ---------------------------------------------------------------------------
 
 export type DealReviewNotifyPayload = {
@@ -79,26 +79,41 @@ export type DealReviewNotifyPayload = {
   dealTitle: string | null;
   submittedBy: string | null;
   at: string;
+  action?: "submitted" | "approved" | "rejected";
+  notes?: string | null;
 };
 
 export type NotifyAdminsOfDealReviewFn = (
   payload: DealReviewNotifyPayload
 ) => void | Promise<void>;
 
-let notifyAdminsHook: NotifyAdminsOfDealReviewFn = () => {
-  // no-op until notifications are wired
-};
+let notifyAdminsHook: NotifyAdminsOfDealReviewFn | null = null;
 
+/** Test override; null → notify() via notifyDealReviewUpdate. */
 export function setNotifyAdminsOfDealReview(
   fn: NotifyAdminsOfDealReviewFn | null
 ): void {
-  notifyAdminsHook = fn ?? (() => undefined);
+  notifyAdminsHook = fn;
 }
 
 export async function notifyAdminsOfDealReview(
+  store: DealDraftStore,
   payload: DealReviewNotifyPayload
 ): Promise<void> {
-  await notifyAdminsHook(payload);
+  if (notifyAdminsHook) {
+    await notifyAdminsHook(payload);
+    return;
+  }
+  const { notifyDealReviewUpdate } = await import("./notifications");
+  await notifyDealReviewUpdate(store, {
+    operatorId: payload.operatorId,
+    dealId: payload.dealId,
+    dealTitle: payload.dealTitle,
+    action: payload.action ?? "submitted",
+    submittedBy: payload.submittedBy,
+    notes: payload.notes ?? null,
+    at: payload.at,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -370,11 +385,12 @@ export async function publishDeal(
   }
 
   if (target === "pending_review") {
-    await notifyAdminsOfDealReview({
+    await notifyAdminsOfDealReview(store, {
       operatorId: deal.operatorId,
       dealId: deal.id,
       dealTitle: deal.title,
       submittedBy: options.actor.id ?? null,
+      action: "submitted",
       at: now,
     });
   }
@@ -505,6 +521,15 @@ export async function approveDeal(
     deal = store.deals.get(dealId) ?? deal;
   }
 
+  await notifyAdminsOfDealReview(store, {
+    operatorId: deal.operatorId,
+    dealId: deal.id,
+    dealTitle: deal.title,
+    submittedBy: null,
+    action: "approved",
+    at: now,
+  });
+
   return {
     deal,
     validation,
@@ -520,11 +545,11 @@ export type RejectDealOptions = {
   now?: string;
 };
 
-export function rejectDeal(
+export async function rejectDeal(
   store: DealDraftStore,
   dealId: string,
   options: RejectDealOptions
-): Deal {
+): Promise<Deal> {
   const existing = store.deals.get(dealId);
   if (!existing) throw new DealNotFoundError(dealId);
 
@@ -545,11 +570,13 @@ export function rejectDeal(
       ? options.actor
       : { type: "admin", id: options.actor.id };
 
+  const now = options.now ?? new Date().toISOString();
+  let deal: Deal;
   try {
-    return transitionDeal(asStatusStore(store), dealId, "draft", {
+    deal = transitionDeal(asStatusStore(store), dealId, "draft", {
       actor,
       detail: notes,
-      now: options.now,
+      now,
       eventDetail: { notes },
     });
   } catch (err) {
@@ -558,6 +585,18 @@ export function rejectDeal(
     }
     throw err;
   }
+
+  await notifyAdminsOfDealReview(store, {
+    operatorId: deal.operatorId,
+    dealId: deal.id,
+    dealTitle: deal.title,
+    submittedBy: null,
+    action: "rejected",
+    notes,
+    at: now,
+  });
+
+  return deal;
 }
 
 export type AdminPauseDealOptions = {

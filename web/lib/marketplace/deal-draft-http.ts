@@ -10,7 +10,10 @@ import {
   notFound,
   serverError,
 } from "./auth";
-import { BookingLinkError } from "./booking-link";
+import {
+  BookingLinkError,
+  setNotifyBookingLinkBroken,
+} from "./booking-link";
 import {
   createDealDraftStore,
   DealDeleteNotAllowedError,
@@ -39,11 +42,31 @@ import {
   DealMediaValidationError,
 } from "./deal-media";
 import { DealNotFoundError } from "./deal-status";
+import { setNotifyDealLifecycle } from "./deal-status-ticker";
 import { DealValidationError } from "./deal";
 import { isUserRole, type UserRole } from "./enums";
 import { OperatorValidationError } from "./operators";
 import { setMemoryOperatorRoleLookup } from "./permissions";
+import {
+  NotificationError,
+  notifyBookingLinkBroken,
+  notifyDealLifecycle,
+  seedNotificationPreferences,
+} from "./notifications";
 import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
+
+/** Wire Chunk 39 notify into modules that must stay client-safe. */
+let notificationHooksInstalled = false;
+function ensureNotificationHooks(): void {
+  if (notificationHooksInstalled) return;
+  notificationHooksInstalled = true;
+  setNotifyBookingLinkBroken(async (store, payload) => {
+    await notifyBookingLinkBroken(store, payload);
+  });
+  setNotifyDealLifecycle(async (store, payload) => {
+    await notifyDealLifecycle(store, payload);
+  });
+}
 
 let processStore: DealDraftStore | null = null;
 let memoryLookupInstalled = false;
@@ -83,6 +106,7 @@ function ensureMemoryRoleLookup(): void {
  */
 export function getDealDraftHttpStore(): DealDraftStore {
   ensureMemoryRoleLookup();
+  ensureNotificationHooks();
   if (!processStore) {
     const seeded = seedDevMarketplace();
     processStore = createDealDraftStore(seeded.store);
@@ -93,12 +117,17 @@ export function getDealDraftHttpStore(): DealDraftStore {
     processStore.externalProducts = new Map();
     processStore.externalSessions = new Map();
     processStore.integrationPollState = new Map();
+    seedNotificationPreferences(
+      processStore,
+      seeded.notificationPreferences
+    );
   }
   return processStore;
 }
 
 export function setDealDraftHttpStore(store: DealDraftStore | null): void {
   ensureMemoryRoleLookup();
+  ensureNotificationHooks();
   processStore = store;
 }
 
@@ -291,6 +320,14 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     return Response.json(
       { error: err.message, errors: err.errors },
       { status: 400 }
+    );
+  }
+  if (err instanceof NotificationError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      { error: err.message, errors: err.errors ?? [] },
+      { status: err.status }
     );
   }
   if (err instanceof Error && /required|invalid/i.test(err.message)) {

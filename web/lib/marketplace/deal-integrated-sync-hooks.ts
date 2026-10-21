@@ -27,7 +27,7 @@ import { isIntegratedDealType } from "./enums";
 import { meetsMinDiscount, withDiscountPct } from "./pricing";
 
 // ---------------------------------------------------------------------------
-// Notification stub (Chunk 39 replaces with notify())
+// Notification (Chunk 39: notify deal_auto_paused)
 // ---------------------------------------------------------------------------
 
 export type DealAutoPausedNotifyPayload = {
@@ -42,20 +42,25 @@ export type SendDealAutoPausedFn = (
   payload: DealAutoPausedNotifyPayload
 ) => void | Promise<void>;
 
-let sendDealAutoPausedHook: SendDealAutoPausedFn = () => {
-  // no-op until notifications are wired (Chunk 39)
-};
+let sendDealAutoPausedHook: SendDealAutoPausedFn | null = null;
 
+/** Test override; null → notify() via notifyDealAutoPaused. */
 export function setSendDealAutoPaused(
   fn: SendDealAutoPausedFn | null
 ): void {
-  sendDealAutoPausedHook = fn ?? (() => undefined);
+  sendDealAutoPausedHook = fn;
 }
 
 export async function sendDealAutoPaused(
+  store: DealDraftStore,
   payload: DealAutoPausedNotifyPayload
 ): Promise<void> {
-  await sendDealAutoPausedHook(payload);
+  if (sendDealAutoPausedHook) {
+    await sendDealAutoPausedHook(payload);
+    return;
+  }
+  const { notifyDealAutoPaused } = await import("./notifications");
+  await notifyDealAutoPaused(store, payload);
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +230,7 @@ async function pauseAndNotify(
   actor: DealActor
 ): Promise<void> {
   applyAutoPause(store, deal.id, reason, detail, { actor, now });
-  await sendDealAutoPaused({
+  await sendDealAutoPaused(store, {
     operatorId: deal.operatorId,
     dealId: deal.id,
     reason,
