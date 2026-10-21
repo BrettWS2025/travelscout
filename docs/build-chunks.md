@@ -55,7 +55,7 @@ Cursor ticks these as chunks are finished.
 
 **Phase E: Settings**
 - [x] 37. Integrations settings screens — Notes: `/account/settings/integrations` grid + `[provider]` detail (Connection/Health/Products/Sync/Booking/Conversion/Sync log); `integrations-client.ts` + `integrations-settings-ui.ts`; GET detail + POST test-booking-link; Coming soon FH/Bókun/Checkfront; manual explainer when none connected.
-- [ ] 38. Business profile and deal defaults
+- [x] 38. Business profile and deal defaults — Notes: `operator-profile.ts` + GET/PATCH `.../profile`, `.../booking-defaults`, GET `.../preview`, POST logo/cover; UI `/account/settings/business-profile` + `deal-defaults`; staff read-only profile; defaults note “new deals only”.
 - [ ] 39. Notifications
 - [ ] 40. Team
 - [ ] 41. Compliance documents

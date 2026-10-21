@@ -41,6 +41,7 @@ import {
 import { DealNotFoundError } from "./deal-status";
 import { DealValidationError } from "./deal";
 import { isUserRole, type UserRole } from "./enums";
+import { OperatorValidationError } from "./operators";
 import { setMemoryOperatorRoleLookup } from "./permissions";
 import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
 
@@ -281,6 +282,12 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     );
   }
   if (err instanceof DealValidationError) {
+    return Response.json(
+      { error: err.message, errors: err.errors },
+      { status: 400 }
+    );
+  }
+  if (err instanceof OperatorValidationError) {
     return Response.json(
       { error: err.message, errors: err.errors },
       { status: 400 }

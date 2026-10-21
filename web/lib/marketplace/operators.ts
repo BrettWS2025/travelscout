@@ -6,12 +6,19 @@
  */
 
 import {
+  isE164Phone,
+  isHttpsUrl,
+  isValidBookingEmail,
+  validateBookingDestinationFields,
+} from "./booking-destination";
+import {
   ATTESTATION_REMINDER_HOURS,
   DEFAULT_CURRENCY,
   DEFAULT_TIMEZONE,
   MIN_DISCOUNT_PCT,
   getPlatformConfig,
 } from "./config";
+import { ISO_639_1_REGEX } from "./deal";
 import type {
   AccountStatus,
   BookingDestinationType,
@@ -21,6 +28,8 @@ import type {
   UserRole,
 } from "./enums";
 import {
+  INTEGRATED_MECHANISMS,
+  MANUAL_MECHANISMS,
   isAccountStatus,
   isBookingDestinationType,
   isCancellationPolicyType,
@@ -28,6 +37,7 @@ import {
   isInviteStatus,
   isUserRole,
 } from "./enums";
+import { isPlatformRegion } from "./settings";
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -144,6 +154,43 @@ export class LastOwnerError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Validation helpers (Chunk 38)
+// ---------------------------------------------------------------------------
+
+/** True when the string is a valid IANA timezone (Intl accepts it). */
+export function isValidIanaTimezone(value: string): boolean {
+  const tz = value.trim();
+  if (!tz) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** ISO 4217: three uppercase letters (same rule as Deal.currency). */
+export function isIso4217Currency(value: string): boolean {
+  return /^[A-Z]{3}$/.test(value.trim());
+}
+
+/**
+ * Discount mechanism must be usable for at least one deal type
+ * (integrated or manual set).
+ */
+export function isMechanismValidForAnyDealType(
+  mechanism: DiscountMechanism
+): boolean {
+  return (
+    (INTEGRATED_MECHANISMS as readonly string[]).includes(mechanism) ||
+    (MANUAL_MECHANISMS as readonly string[]).includes(mechanism)
+  );
+}
+
+export const BOOKING_DEFAULTS_NOTE =
+  "Changes apply to new deals only" as const;
+
+// ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
 
@@ -182,6 +229,106 @@ export function validateOperatorFields(input: CreateOperatorInput): FieldError[]
     !isAccountStatus(input.accountStatus)
   ) {
     errors.push({ field: "account_status", message: "invalid value" });
+  }
+
+  if (input.website != null && input.website !== "") {
+    if (!isHttpsUrl(input.website)) {
+      errors.push({ field: "website", message: "must be an https URL" });
+    }
+  }
+  if (input.logo != null && input.logo !== "") {
+    if (!isHttpsUrl(input.logo)) {
+      errors.push({ field: "logo", message: "must be an https URL" });
+    }
+  }
+  if (input.coverImage != null && input.coverImage !== "") {
+    if (!isHttpsUrl(input.coverImage)) {
+      errors.push({ field: "cover_image", message: "must be an https URL" });
+    }
+  }
+
+  for (const [field, value] of [
+    ["public_email", input.publicEmail],
+    ["internal_email", input.internalEmail],
+  ] as const) {
+    if (value != null && value !== "") {
+      if (!isValidBookingEmail(value)) {
+        errors.push({ field, message: "must be a valid email" });
+      }
+    }
+  }
+
+  for (const [field, value] of [
+    ["public_phone", input.publicPhone],
+    ["internal_phone", input.internalPhone],
+  ] as const) {
+    if (value != null && value !== "") {
+      if (!isE164Phone(value)) {
+        errors.push({
+          field,
+          message: "must be E.164 (e.g. +6421234567)",
+        });
+      }
+    }
+  }
+
+  if (input.timezone != null) {
+    if (!isValidIanaTimezone(input.timezone)) {
+      errors.push({
+        field: "timezone",
+        message: "must be a valid IANA timezone",
+      });
+    }
+  }
+
+  if (input.currency != null) {
+    if (!isIso4217Currency(input.currency)) {
+      errors.push({
+        field: "currency",
+        message: "must be a 3-letter ISO 4217 code",
+      });
+    }
+  }
+
+  if (input.languages != null) {
+    input.languages.forEach((lang, i) => {
+      if (typeof lang !== "string" || !ISO_639_1_REGEX.test(lang)) {
+        errors.push({
+          field: `languages[${i}]`,
+          message: "must be an ISO 639-1 code (two lowercase letters)",
+        });
+      }
+    });
+  }
+
+  if (input.regionsServed != null) {
+    input.regionsServed.forEach((region, i) => {
+      if (!isPlatformRegion(region)) {
+        errors.push({
+          field: `regions_served[${i}]`,
+          message: "must be a platform region",
+        });
+      }
+    });
+  }
+
+  if (input.socialLinks != null) {
+    if (
+      typeof input.socialLinks !== "object" ||
+      Array.isArray(input.socialLinks)
+    ) {
+      errors.push({ field: "social_links", message: "must be an object" });
+    } else {
+      for (const [key, value] of Object.entries(input.socialLinks)) {
+        if (value == null || value === "") continue;
+        if (typeof value !== "string" || !isHttpsUrl(value)) {
+          errors.push({
+            field: `social_links.${key}`,
+            message: "must be an https URL",
+          });
+        }
+      }
+    }
   }
 
   return errors;
@@ -224,14 +371,20 @@ export function validateBookingDefaultsPatch(
       });
     }
   }
-  if (
-    patch.defaultDiscountMechanism != null &&
-    !isDiscountMechanism(patch.defaultDiscountMechanism)
-  ) {
-    errors.push({
-      field: "default_discount_mechanism",
-      message: "invalid value",
-    });
+  if (patch.defaultDiscountMechanism != null) {
+    if (!isDiscountMechanism(patch.defaultDiscountMechanism)) {
+      errors.push({
+        field: "default_discount_mechanism",
+        message: "invalid value",
+      });
+    } else if (
+      !isMechanismValidForAnyDealType(patch.defaultDiscountMechanism)
+    ) {
+      errors.push({
+        field: "default_discount_mechanism",
+        message: "must be valid for at least one deal type",
+      });
+    }
   }
   if (
     patch.defaultBookingDestinationType != null &&
@@ -269,6 +422,37 @@ export function validateBookingDefaultsPatch(
       message: "must be ≤ 1,000 characters",
     });
   }
+
+  if (patch.defaultAttestationReminderHours != null) {
+    const n = patch.defaultAttestationReminderHours;
+    if (!Number.isInteger(n) || n < 1 || n > 24) {
+      errors.push({
+        field: "default_attestation_reminder_hours",
+        message: "must be an integer 1–24",
+      });
+    }
+  }
+
+  errors.push(
+    ...validateBookingDestinationFields({
+      bookingDestinationType: patch.defaultBookingDestinationType,
+      bookingUrl: patch.defaultBookingUrl,
+      bookingPhone: patch.defaultBookingPhone,
+      bookingEmail: patch.defaultBookingEmail,
+    }).map((e) => ({
+      field:
+        e.field === "booking_destination_type"
+          ? "default_booking_destination_type"
+          : e.field === "booking_url"
+            ? "default_booking_url"
+            : e.field === "booking_phone"
+              ? "default_booking_phone"
+              : e.field === "booking_email"
+                ? "default_booking_email"
+                : e.field,
+      message: e.message,
+    }))
+  );
 
   return errors;
 }
