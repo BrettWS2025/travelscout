@@ -118,6 +118,8 @@ describe("deal-editor helpers (chunk 22)", () => {
         ],
       },
       publish_button: "Publish" as const,
+      provider_values: null,
+      overridden_fields: [],
     } satisfies DealDetail;
 
     const summary = summarizeDealEditor(detail);

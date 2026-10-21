@@ -32,6 +32,7 @@ import {
   ImportProviderImagesStubError,
   MediaUploadBatchError,
 } from "./deal-media-api";
+import { IntegratedDealError } from "./deal-integrated";
 import {
   DealMediaLimitError,
   DealMediaValidationError,
@@ -240,7 +241,11 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
       { status: err.status }
     );
   }
-  if (err instanceof DealDraftError || err instanceof DealTemplatesError) {
+  if (
+    err instanceof DealDraftError ||
+    err instanceof DealTemplatesError ||
+    err instanceof IntegratedDealError
+  ) {
     if (err.status === 403) return forbidden(err.message);
     if (err.status === 404) return notFound(err.message);
     return Response.json(

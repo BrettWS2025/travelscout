@@ -10,7 +10,6 @@ import {
   listDealImages,
 } from "@/lib/marketplace/deal-media";
 import {
-  ImportProviderImagesStubError,
   MediaUploadBatchError,
   addDealVideoEmbed,
   importProviderImages,
@@ -322,11 +321,14 @@ describe("Chunk 14 media upload API", () => {
     expect(patched.caption).toBe("Applies immediately");
   });
 
-  it("importProviderImages is a Chunk 32 stub", async () => {
+  it("importProviderImages requires a linked external product", async () => {
     const { store, deal } = harbourDeal();
     await expect(
       importProviderImages(store, deal.id, { actor: ACTOR, now: NOW })
-    ).rejects.toBeInstanceOf(ImportProviderImagesStubError);
+    ).rejects.toMatchObject({
+      name: "DealDraftError",
+      message: expect.stringMatching(/external product/i),
+    });
   });
 
   it("rejects oversize files with a per-file error", async () => {

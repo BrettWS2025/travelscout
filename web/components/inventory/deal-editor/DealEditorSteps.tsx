@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { Deal } from "@/lib/marketplace/deal";
 import type { DealMedia } from "@/lib/marketplace/deal-media";
 import type { DealPriceOption, DealSession } from "@/lib/marketplace/deal-session";
 import type { FieldError } from "@/lib/marketplace/deal";
+import type { ProviderContentValues } from "@/lib/marketplace/deal-integrated";
 import {
   CONTENT_COUNTERS,
   charCounter,
@@ -13,6 +15,7 @@ import {
   formatMinorAsDollars,
   minorToDollarsInput,
 } from "@/lib/marketplace/deal-editor";
+import { isIntegratedDealType } from "@/lib/marketplace/enums";
 import {
   BOOKING_DESTINATION_TYPES,
   CANCELLATION_POLICY_TYPES,
@@ -85,23 +88,64 @@ export type TemplateChoice = {
   deal_type: DealType | null;
 };
 
+export type ProductPickerItem = {
+  id: string;
+  provider: string;
+  name: string;
+  thumbnail_url: string | null;
+  price_min_minor: number | null;
+  price_max_minor: number | null;
+  currency: string | null;
+  sessions_next_72h: number;
+};
+
+function formatPickerPrice(p: ProductPickerItem): string {
+  if (p.price_min_minor == null) return "—";
+  const cur = p.currency ?? "NZD";
+  const min = (p.price_min_minor / 100).toFixed(2);
+  if (p.price_max_minor != null && p.price_max_minor !== p.price_min_minor) {
+    const max = (p.price_max_minor / 100).toFixed(2);
+    return `${cur} ${min}–${max}`;
+  }
+  return `${cur} ${min}`;
+}
+
 export function TypeStep({
   deal,
   creating,
   onCreate,
+  onCreateIntegrated,
   onDuplicate,
   onCreateFromTemplate,
   templates,
   hasConnectedIntegration,
+  products,
+  productsLoading,
 }: {
   deal: Deal | null;
   creating: boolean;
-  onCreate: (dealType: DealType, duplicateOf?: string) => void;
+  onCreate: (dealType: DealType) => void;
+  onCreateIntegrated?: (
+    dealType: "integrated_session" | "integrated_multi_session",
+    productId: string
+  ) => void;
   onDuplicate: () => void;
   onCreateFromTemplate?: (templateId: string) => void;
   templates?: TemplateChoice[];
   hasConnectedIntegration: boolean;
+  products?: ProductPickerItem[];
+  productsLoading?: boolean;
 }) {
+  const [pendingIntegrated, setPendingIntegrated] = useState<
+    "integrated_session" | "integrated_multi_session" | null
+  >(null);
+  const [productSearch, setProductSearch] = useState("");
+
+  const filteredProducts = (products ?? []).filter((p) => {
+    if (!productSearch.trim()) return true;
+    return p.name.toLowerCase().includes(productSearch.trim().toLowerCase());
+  });
+
   return (
     <div className="space-y-4">
       <h3 className="font-[family-name:var(--font-instrument)] text-2xl text-[var(--ts-ink)]">
@@ -109,7 +153,7 @@ export function TypeStep({
       </h3>
       <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
         Manual deals are available now. Integrated types need a connected
-        booking system.
+        booking system and an enabled product.
       </p>
 
       {deal ? (
@@ -122,6 +166,7 @@ export function TypeStep({
           </p>
           <p className="mt-1 text-xs text-[var(--ts-muted)]">
             Source: {deal.sourceProvider}
+            {deal.externalProductId ? " · linked product" : ""}
           </p>
           <button
             type="button"
@@ -130,6 +175,87 @@ export function TypeStep({
           >
             Duplicate as new draft
           </button>
+        </div>
+      ) : pendingIntegrated ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
+              Choose a product
+              <span className="ml-2 font-normal text-[var(--ts-muted)]">
+                ({pendingIntegrated.replace(/_/g, " ")})
+              </span>
+            </p>
+            <button
+              type="button"
+              className="text-sm font-medium text-[var(--ts-teal)] underline"
+              onClick={() => {
+                setPendingIntegrated(null);
+                setProductSearch("");
+              }}
+            >
+              Back
+            </button>
+          </div>
+          <input
+            type="search"
+            placeholder="Search products…"
+            value={productSearch}
+            onChange={(e) => setProductSearch(e.target.value)}
+            className={fieldClass}
+          />
+          {productsLoading ? (
+            <p className="text-sm text-[var(--ts-muted)]">Loading products…</p>
+          ) : filteredProducts.length === 0 ? (
+            <p className="text-sm text-[var(--ts-muted)]">
+              No enabled products. Enable products in{" "}
+              <a
+                href="/account/settings"
+                className="font-semibold text-[var(--ts-teal)] underline"
+              >
+                Integration settings
+              </a>
+              .
+            </p>
+          ) : (
+            <ul className="max-h-80 space-y-2 overflow-y-auto">
+              {filteredProducts.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    disabled={creating}
+                    onClick={() =>
+                      onCreateIntegrated?.(pendingIntegrated, p.id)
+                    }
+                    className="flex w-full items-center gap-3 rounded-xl border border-[var(--ts-ink)]/10 bg-white px-3 py-2.5 text-left hover:border-[var(--ts-teal)] disabled:opacity-60"
+                  >
+                    {p.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.thumbnail_url}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--ts-mist)] text-xs text-[var(--ts-muted)]">
+                        —
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-[var(--ts-muted)]">
+                        {p.provider} · {formatPickerPrice(p)}
+                        {p.sessions_next_72h > 0
+                          ? ` · ${p.sessions_next_72h} sessions`
+                          : ""}
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -165,7 +291,16 @@ export function TypeStep({
               key={opt.type}
               type="button"
               disabled={!opt.enabled || creating}
-              onClick={() => onCreate(opt.type)}
+              onClick={() => {
+                if (
+                  opt.type === "integrated_session" ||
+                  opt.type === "integrated_multi_session"
+                ) {
+                  setPendingIntegrated(opt.type);
+                  return;
+                }
+                onCreate(opt.type);
+              }}
               className={`rounded-2xl border px-4 py-4 text-left transition ${
                 opt.enabled
                   ? "border-[var(--ts-ink)]/15 bg-white hover:border-[var(--ts-teal)]"
@@ -186,7 +321,7 @@ export function TypeStep({
         </div>
       )}
 
-      {!deal && templates && templates.length > 0 && onCreateFromTemplate ? (
+      {!deal && !pendingIntegrated && templates && templates.length > 0 && onCreateFromTemplate ? (
         <div className="space-y-2 rounded-2xl border border-[var(--ts-ink)]/10 bg-[var(--ts-mist)]/40 px-4 py-4">
           <p className="font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
             Start from a template
@@ -239,35 +374,115 @@ export function TypeStep({
 // Step 2 — Content
 // ---------------------------------------------------------------------------
 
+function ProviderFieldBadge({
+  field,
+  providerLabel,
+  overridden,
+  providerValue,
+  onRevert,
+}: {
+  field: string;
+  providerLabel: string;
+  overridden: boolean;
+  providerValue: string | number | null | undefined;
+  onRevert?: (field: string) => void;
+}) {
+  if (!overridden) {
+    return (
+      <span className="font-[family-name:var(--font-sora)] text-[10px] font-semibold uppercase tracking-wide text-[var(--ts-teal)]">
+        From {providerLabel}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-[family-name:var(--font-sora)] text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+        Overridden
+      </span>
+      {onRevert ? (
+        <button
+          type="button"
+          className="font-[family-name:var(--font-sora)] text-[10px] font-semibold text-[var(--ts-teal)] underline"
+          title={
+            providerValue != null && providerValue !== ""
+              ? `Restore: ${String(providerValue).slice(0, 80)}`
+              : "Restore provider value"
+          }
+          onClick={() => onRevert(field)}
+        >
+          Revert
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
 export function ContentStep({
   deal,
   errors,
   onChange,
+  providerValues,
+  overriddenFields,
+  onRevertField,
 }: {
   deal: Deal;
   errors: FieldError[];
   onChange: (patch: Record<string, unknown>) => void;
+  providerValues?: ProviderContentValues | null;
+  overriddenFields?: string[];
+  onRevertField?: (field: string) => void;
 }) {
   const title = deal.title ?? "";
   const summary = deal.summary ?? "";
   const description = deal.description ?? "";
+  const showProvider =
+    isIntegratedDealType(deal.dealType) && providerValues != null;
+  const overridden = new Set(overriddenFields ?? deal.overriddenFields ?? []);
+  const providerLabel =
+    deal.sourceProvider && deal.sourceProvider !== "manual"
+      ? deal.sourceProvider.charAt(0).toUpperCase() +
+        deal.sourceProvider.slice(1)
+      : "provider";
+
+  const badge = (
+    field: keyof ProviderContentValues,
+    value: string | number | null | undefined
+  ) =>
+    showProvider ? (
+      <ProviderFieldBadge
+        field={field}
+        providerLabel={providerLabel}
+        overridden={overridden.has(field)}
+        providerValue={value}
+        onRevert={onRevertField}
+      />
+    ) : null;
 
   return (
     <div className="space-y-4">
       <h3 className="font-[family-name:var(--font-instrument)] text-2xl text-[var(--ts-ink)]">
         Content
       </h3>
+      {showProvider ? (
+        <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+          Fields from {providerLabel} stay in sync until you edit them. Use
+          Revert to restore the provider value.
+        </p>
+      ) : null}
 
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <label className={labelClass} htmlFor="deal-title">
             Title
           </label>
-          <Counter
-            value={title}
-            min={CONTENT_COUNTERS.title.min}
-            max={CONTENT_COUNTERS.title.max}
-          />
+          <div className="flex items-center gap-2">
+            {badge("title", providerValues?.title)}
+            <Counter
+              value={title}
+              min={CONTENT_COUNTERS.title.min}
+              max={CONTENT_COUNTERS.title.max}
+            />
+          </div>
         </div>
         <input
           id="deal-title"
@@ -280,15 +495,18 @@ export function ContentStep({
       </div>
 
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <label className={labelClass} htmlFor="deal-summary">
             Summary
           </label>
-          <Counter
-            value={summary}
-            min={CONTENT_COUNTERS.summary.min}
-            max={CONTENT_COUNTERS.summary.max}
-          />
+          <div className="flex items-center gap-2">
+            {badge("summary", providerValues?.summary)}
+            <Counter
+              value={summary}
+              min={CONTENT_COUNTERS.summary.min}
+              max={CONTENT_COUNTERS.summary.max}
+            />
+          </div>
         </div>
         <textarea
           id="deal-summary"
@@ -302,15 +520,18 @@ export function ContentStep({
       </div>
 
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <label className={labelClass} htmlFor="deal-description">
             Description
           </label>
-          <Counter
-            value={description}
-            min={CONTENT_COUNTERS.description.min}
-            max={CONTENT_COUNTERS.description.max}
-          />
+          <div className="flex items-center gap-2">
+            {badge("description", providerValues?.description)}
+            <Counter
+              value={description}
+              min={CONTENT_COUNTERS.description.min}
+              max={CONTENT_COUNTERS.description.max}
+            />
+          </div>
         </div>
         <textarea
           id="deal-description"
@@ -574,6 +795,8 @@ export function ImagesStep({
   onSetCover,
   onDelete,
   onPatchAlt,
+  onImportProvider,
+  canImportProvider,
 }: {
   media: DealMedia[];
   busy: boolean;
@@ -582,6 +805,8 @@ export function ImagesStep({
   onSetCover: (mediaId: string) => void;
   onDelete: (mediaId: string) => void;
   onPatchAlt: (mediaId: string, alt: string) => void;
+  onImportProvider?: () => void;
+  canImportProvider?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -592,14 +817,26 @@ export function ImagesStep({
         JPG/PNG/WebP, min 1200×800, max 12 images. Exactly one cover.
       </p>
 
-      <input
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        disabled={busy}
-        onChange={(e) => onUpload(e.target.files)}
-        className="block w-full font-[family-name:var(--font-sora)] text-sm"
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          disabled={busy}
+          onChange={(e) => onUpload(e.target.files)}
+          className="block font-[family-name:var(--font-sora)] text-sm"
+        />
+        {canImportProvider && onImportProvider ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onImportProvider}
+            className="rounded-xl border border-[var(--ts-ink)]/15 bg-white px-3 py-2 text-sm font-medium disabled:opacity-60"
+          >
+            Import from provider
+          </button>
+        ) : null}
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <input

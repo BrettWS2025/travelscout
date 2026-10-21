@@ -7,13 +7,15 @@
  * hand off to Chunk 35 hooks (stubs until that chunk).
  *
  * One sync per integration at a time (lock). Adapter calls retry with backoff.
- * Content fields on Deal are never overwritten here (Chunk 32 / overridden_fields).
+ * Content fields: refresh non-overridden fields via refreshDealsFromExternalProduct
+ * (Chunk 32). Overridden fields are never overwritten.
  */
 
 import { createHmac, timingSafeEqual } from "crypto";
 import { getPlatformConfig, MAX_LEAD_HOURS } from "./config";
 import type { DealDraftStore } from "./deal-draft";
 import type { Deal } from "./deal";
+import { refreshDealsFromExternalProduct } from "./deal-integrated";
 import {
   withSeatsDisplayed,
   type DealSession,
@@ -435,7 +437,7 @@ function markMissingSessionsCancelled(
 
 /**
  * Push provider seats onto linked DealSessions and recompute seats_displayed.
- * Does not touch Deal content / overridden_fields (Chunk 32).
+ * Deal content refresh is handled separately via refreshDealsFromExternalProduct.
  */
 function updateLinkedDealSessions(
   store: DealDraftStore,
@@ -594,6 +596,12 @@ export async function runSync(
       const { product } = upsertProduct(store, current, normalised, now);
       upsertedProducts.push(product);
       itemsProcessed += 1;
+      // Chunk 32: refresh non-overridden content on draft/scheduled/live deals.
+      for (const dealId of refreshDealsFromExternalProduct(store, product, {
+        now,
+      })) {
+        affectedDealIds.add(dealId);
+      }
     }
 
     // Products previously known but missing from provider → archived

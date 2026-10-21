@@ -8,6 +8,7 @@
  */
 
 import { DealDraftError, type DealDraftStore } from "./deal-draft";
+import { importProviderImagesFromProduct } from "./deal-integrated";
 import {
   DEAL_MEDIA_LIMITS,
   DealMediaLimitError,
@@ -65,6 +66,7 @@ export class MediaUploadBatchError extends DealDraftError {
   }
 }
 
+/** @deprecated Chunk 32 implemented importProviderImages — kept for error mapping. */
 export class ImportProviderImagesStubError extends DealDraftError {
   constructor() {
     super(
@@ -542,13 +544,44 @@ export function listDealMediaForDeal(
 }
 
 /**
- * Stub for Chunk 32 — import images from the linked ExternalProduct.
- * Exists so the editor can call it; always returns 501 until implemented.
+ * Import images from the linked ExternalProduct (Chunk 32).
+ * Source = provider; skips URLs already on the deal; first image becomes cover
+ * when the deal has no images yet.
  */
 export async function importProviderImages(
-  _store: DealDraftStore,
-  _dealId: string,
-  _options: MediaMutationOptions
+  store: DealDraftStore,
+  dealId: string,
+  options: MediaMutationOptions
 ): Promise<{ imported: number; media: DealMedia[] }> {
-  throw new ImportProviderImagesStubError();
+  const deal = requireDeal(store, dealId);
+  if (!deal.externalProductId) {
+    throw new DealDraftError(
+      "Deal has no linked external product to import images from",
+      400,
+      [{ field: "external_product_id", message: "required" }]
+    );
+  }
+  const product = store.externalProducts?.get(deal.externalProductId);
+  if (!product) {
+    throw new DealDraftError("Linked external product not found", 404, [
+      { field: "external_product_id", message: "not found" },
+    ]);
+  }
+
+  const result = importProviderImagesFromProduct(store, dealId, product, {
+    now: options.now,
+  });
+
+  if (result.imported > 0) {
+    logDealEvent(
+      store.audit,
+      dealId,
+      "updated",
+      options.actor,
+      { fields: ["media"], imported_provider_images: result.imported },
+      { now: options.now }
+    );
+  }
+
+  return result;
 }

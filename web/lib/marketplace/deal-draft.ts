@@ -81,6 +81,19 @@ import {
   isSourceProvider,
 } from "./enums";
 import {
+  applyIntegratedProductChildren,
+  IntegratedDealError,
+  integratedPrefillDealFields,
+  listIntegratedProductsForPicker,
+  mergeOverriddenFieldsFromPatch,
+  providerValuesForDeal,
+  requireEnabledProductForDeal,
+  revertDealContentField,
+  stripOverriddenFieldsFromPatch,
+  type ProviderContentValues,
+  type IntegratedProductPickerItem,
+} from "./deal-integrated";
+import {
   createOperatorStore,
   getBookingDefaults,
   type Operator,
@@ -88,6 +101,7 @@ import {
   type OperatorStore,
 } from "./operators";
 import { can, type PermissionUser } from "./permissions";
+import { getPlatformConfig, MAX_LEAD_HOURS } from "./config";
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -544,6 +558,12 @@ export type CreateDraftDealInput = {
   dealType: DealType;
   /** Optional provider for integrated types (ignored for manual). */
   sourceProvider?: SourceProvider | null;
+  /**
+   * Required for integrated_session / integrated_multi_session (Chunk 32).
+   * Must reference an enabled, non-archived ExternalProduct on a connected
+   * integration for this operator.
+   */
+  externalProductId?: string | null;
   templateId?: string | null;
   duplicateOf?: string | null;
   actor: DealActor;
@@ -587,6 +607,32 @@ export function createDraftDeal(
     }
   }
 
+  // Chunk 32: integrated drafts require a connected integration + enabled product.
+  let integratedProduct: ReturnType<typeof requireEnabledProductForDeal> | null =
+    null;
+  if (isIntegratedDealType(input.dealType)) {
+    const productId = input.externalProductId?.trim() || null;
+    if (!productId) {
+      throw new DealDraftError(
+        "external_product_id is required for integrated deals",
+        400,
+        [{ field: "external_product_id", message: "required" }]
+      );
+    }
+    try {
+      integratedProduct = requireEnabledProductForDeal(
+        store,
+        input.operatorId,
+        productId
+      );
+    } catch (err) {
+      if (err instanceof IntegratedDealError) {
+        throw new DealDraftError(err.message, err.status, err.errors);
+      }
+      throw err;
+    }
+  }
+
   const now = input.now ?? new Date().toISOString();
   const id = input.id ?? crypto.randomUUID();
   const defaults = getBookingDefaults(store.operators, input.operatorId);
@@ -594,7 +640,10 @@ export function createDraftDeal(
     input.dealType,
     operator,
     defaults,
-    { sourceProvider: input.sourceProvider }
+    {
+      sourceProvider:
+        integratedProduct?.integration.provider ?? input.sourceProvider,
+    }
   );
 
   let templatePatch: DealFieldInput = {};
@@ -621,19 +670,31 @@ export function createDraftDeal(
     templatePatch.discountMechanism = prefill.discountMechanism;
   }
 
+  const integratedPrefill = integratedProduct
+    ? integratedPrefillDealFields(
+        integratedProduct.product,
+        integratedProduct.integration
+      )
+    : null;
+
   // Manual types always force provider + capacity regardless of template.
   const sourceProvider = isManualDealType(input.dealType)
     ? "manual"
-    : prefill.sourceProvider;
+    : (integratedPrefill?.sourceProvider as SourceProvider | undefined) ??
+      prefill.sourceProvider;
   const capacityMode = isManualDealType(input.dealType)
     ? "manual_count"
-    : (templatePatch.capacityMode as CapacityMode | undefined) ??
+    : (integratedPrefill?.capacityMode as CapacityMode | undefined) ??
+      (templatePatch.capacityMode as CapacityMode | undefined) ??
       prefill.capacityMode;
 
+  const titleForSlug =
+    (integratedPrefill?.title as string | null | undefined) ||
+    (templatePatch.title ? String(templatePatch.title) : null);
   const slug = ensureUniqueDealSlug(
     store,
-    templatePatch.title
-      ? slugifyDealTitle(String(templatePatch.title))
+    titleForSlug
+      ? slugifyDealTitle(titleForSlug)
       : `draft-${id.slice(0, 8)}`
   );
 
@@ -664,13 +725,27 @@ export function createDraftDeal(
     updatedAt: now,
   });
 
-  const withTemplate = applyClientDealFieldPatch(deal, templatePatch, { now });
-  // Re-assert forced manual / capacity rules after template merge.
+  const withIntegrated = integratedPrefill
+    ? applyClientDealFieldPatch(deal, integratedPrefill, { now })
+    : deal;
+  const withTemplate = applyClientDealFieldPatch(
+    withIntegrated,
+    templatePatch,
+    { now }
+  );
+  // Re-assert forced manual / capacity / integration rules after template merge.
   const finalDeal: Deal = {
     ...withTemplate,
     dealType: input.dealType,
     sourceProvider,
     capacityMode,
+    integrationId:
+      (integratedPrefill?.integrationId as string | null | undefined) ??
+      withTemplate.integrationId,
+    externalProductId:
+      (integratedPrefill?.externalProductId as string | null | undefined) ??
+      withTemplate.externalProductId,
+    overriddenFields: integratedPrefill ? [] : withTemplate.overriddenFields,
     status: "draft",
     pauseReason: null,
     pauseDetail: null,
@@ -686,42 +761,58 @@ export function createDraftDeal(
     endedAt: null,
   };
 
-  assertValidDealFields({
-    dealType: finalDeal.dealType,
-    sourceProvider: finalDeal.sourceProvider,
-    title: finalDeal.title,
-    summary: finalDeal.summary,
-    description: finalDeal.description,
-    category: finalDeal.category,
-    tags: finalDeal.tags,
-    highlights: finalDeal.highlights,
-    inclusions: finalDeal.inclusions,
-    exclusions: finalDeal.exclusions,
-    whatToBring: finalDeal.whatToBring,
-    durationMinutes: finalDeal.durationMinutes,
-    meetingPointNotes: finalDeal.meetingPointNotes,
-    pickupNotes: finalDeal.pickupNotes,
-    minAge: finalDeal.minAge,
-    fitnessLevel: finalDeal.fitnessLevel,
-    accessibilityNotes: finalDeal.accessibilityNotes,
-    languages: finalDeal.languages,
-    cancellationPolicyType: finalDeal.cancellationPolicyType,
-    cancellationPolicyText: finalDeal.cancellationPolicyText,
-    importantInfo: finalDeal.importantInfo,
-    currency: finalDeal.currency,
-    discountMechanism: finalDeal.discountMechanism,
-    promoCode: finalDeal.promoCode,
-    discountInputMode: finalDeal.discountInputMode,
-    capacityMode: finalDeal.capacityMode,
-    seatCap: finalDeal.seatCap,
-    minBookingQty: finalDeal.minBookingQty,
-    maxBookingQty: finalDeal.maxBookingQty,
-    bookingDestinationType: finalDeal.bookingDestinationType,
-    bookingInstructions: finalDeal.bookingInstructions,
-    salesCutoffMinutes: finalDeal.salesCutoffMinutes,
-    latitude: finalDeal.latitude,
-    longitude: finalDeal.longitude,
-  });
+  try {
+    assertValidDealFields({
+      dealType: finalDeal.dealType,
+      sourceProvider: finalDeal.sourceProvider,
+      title: finalDeal.title,
+      summary: finalDeal.summary,
+      description: finalDeal.description,
+      category: finalDeal.category,
+      tags: finalDeal.tags,
+      highlights: finalDeal.highlights,
+      inclusions: finalDeal.inclusions,
+      exclusions: finalDeal.exclusions,
+      whatToBring: finalDeal.whatToBring,
+      durationMinutes: finalDeal.durationMinutes,
+      meetingPointNotes: finalDeal.meetingPointNotes,
+      pickupNotes: finalDeal.pickupNotes,
+      minAge: finalDeal.minAge,
+      fitnessLevel: finalDeal.fitnessLevel,
+      accessibilityNotes: finalDeal.accessibilityNotes,
+      languages: finalDeal.languages,
+      cancellationPolicyType: finalDeal.cancellationPolicyType,
+      cancellationPolicyText: finalDeal.cancellationPolicyText,
+      importantInfo: finalDeal.importantInfo,
+      currency: finalDeal.currency,
+      discountMechanism: finalDeal.discountMechanism,
+      promoCode: finalDeal.promoCode,
+      discountInputMode: finalDeal.discountInputMode,
+      capacityMode: finalDeal.capacityMode,
+      seatCap: finalDeal.seatCap,
+      minBookingQty: finalDeal.minBookingQty,
+      maxBookingQty: finalDeal.maxBookingQty,
+      bookingDestinationType: finalDeal.bookingDestinationType,
+      bookingInstructions: finalDeal.bookingInstructions,
+      salesCutoffMinutes: finalDeal.salesCutoffMinutes,
+      latitude: finalDeal.latitude,
+      longitude: finalDeal.longitude,
+    });
+  } catch (err) {
+    if (err instanceof DealValidationError) {
+      // Provider product copy is often under publish min lengths; keep the
+      // prefill on the draft and let publish validation enforce mins later.
+      const softFields = new Set(["title", "summary", "description"]);
+      const hard = integratedProduct
+        ? err.errors.filter((e) => !softFields.has(e.field))
+        : err.errors;
+      if (hard.length > 0) {
+        throw new DealDraftError(err.message, 400, hard);
+      }
+    } else {
+      throw err;
+    }
+  }
 
   if (
     finalDeal.discountMechanism != null &&
@@ -733,6 +824,16 @@ export function createDraftDeal(
   }
 
   store.deals.set(id, finalDeal);
+
+  // Chunk 32: provider images + price options from ExternalProduct.
+  if (integratedProduct) {
+    applyIntegratedProductChildren(
+      store,
+      id,
+      integratedProduct.product,
+      { now }
+    );
+  }
 
   // Apply media refs + price options from the template (never sessions).
   if (input.templateId) {
@@ -755,11 +856,17 @@ export function createDraftDeal(
     {
       deal_type: finalDeal.dealType,
       ...(input.templateId ? { template_id: input.templateId } : {}),
+      ...(integratedProduct
+        ? {
+            external_product_id: integratedProduct.product.id,
+            integration_id: integratedProduct.integration.id,
+          }
+        : {}),
     },
     { now }
   );
 
-  return finalDeal;
+  return store.deals.get(id)!;
 }
 
 // ---------------------------------------------------------------------------
@@ -775,6 +882,13 @@ export type DealDetail = {
   validation: PublishValidationResult | PublishValidationOutcome;
   /** Editor primary CTA label (Chunk 17). */
   publish_button: PublishButtonLabel;
+  /**
+   * Chunk 32: current provider content for integrated deals (null for manual).
+   * UI shows "From Rezdy" + Override/Revert against these values.
+   */
+  provider_values: ProviderContentValues | null;
+  /** Chunk 32: snake_case content fields the operator has overridden. */
+  overridden_fields: string[];
 };
 
 export type GetDealDetailOptions = {
@@ -828,6 +942,8 @@ export async function getDealDetail(
     media,
     validation,
     publish_button,
+    provider_values: providerValuesForDeal(store, freshDeal),
+    overridden_fields: [...(freshDeal.overriddenFields ?? [])],
   };
 }
 
@@ -854,7 +970,7 @@ export function updateDraftDeal(
   const existing = store.deals.get(dealId);
   if (!existing) throw new DealNotFoundError(dealId);
 
-  const patch = dealFieldInputFromClient(rawPatch as Record<string, unknown>);
+  let patch = dealFieldInputFromClient(rawPatch as Record<string, unknown>);
 
   if (patch.dealType !== undefined && patch.dealType !== null) {
     if (!isDealType(patch.dealType)) {
@@ -900,6 +1016,9 @@ export function updateDraftDeal(
     patch.capacityMode = "manual_count";
   }
 
+  // Clients never set overridden_fields directly (Chunk 32 — server-owned).
+  patch = stripOverriddenFieldsFromPatch(patch);
+
   const titleChanging =
     patch.title !== undefined &&
     patch.title !== existing.title &&
@@ -916,9 +1035,15 @@ export function updateDraftDeal(
   }
 
   const now = options.now ?? new Date().toISOString();
-  let updated = applyClientDealFieldPatch(existing, validated, { now });
+  const overriddenFields = mergeOverriddenFieldsFromPatch(existing, validated);
+  let updated = applyClientDealFieldPatch(
+    existing,
+    { ...validated, overriddenFields },
+    { now }
+  );
   updated = {
     ...updated,
+    overriddenFields,
     updatedBy: options.actor.id ?? updated.updatedBy,
   };
 
@@ -948,6 +1073,78 @@ export function updateDraftDeal(
   }
 
   return updated;
+}
+
+// ---------------------------------------------------------------------------
+// Revert content field (Chunk 32)
+// ---------------------------------------------------------------------------
+
+export type RevertDealFieldOptions = {
+  actor: DealActor;
+  now?: string;
+};
+
+/**
+ * Restore a content field from the linked ExternalProduct and remove it from
+ * overridden_fields. Regenerates slug when reverting title on a draft.
+ */
+export function revertDealField(
+  store: DealDraftStore,
+  dealId: string,
+  field: string,
+  options: RevertDealFieldOptions
+): Deal {
+  try {
+    const result = revertDealContentField(store, dealId, field, options);
+    let updated = result.deal;
+    if (result.titleChanged && updated.title) {
+      updated = {
+        ...updated,
+        slug: ensureUniqueDealSlug(
+          store,
+          slugifyDealTitle(updated.title),
+          dealId
+        ),
+      };
+      store.deals.set(dealId, updated);
+    }
+    return updated;
+  } catch (err) {
+    if (err instanceof IntegratedDealError) {
+      throw new DealDraftError(err.message, err.status, err.errors);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Enabled products from connected integrations for the deal editor picker.
+ */
+export function listDealProductsForPicker(
+  store: DealDraftStore,
+  operatorId: string,
+  options?: { now?: string | Date }
+): IntegratedProductPickerItem[] {
+  const lead = getPlatformConfig().MAX_LEAD_HOURS ?? MAX_LEAD_HOURS;
+  const sessions = store.externalSessions;
+
+  return listIntegratedProductsForPicker(store, operatorId, {
+    now: options?.now,
+    leadHours: lead,
+    sessionsInNextLeadHours: (productId, nowDate, leadHours) => {
+      if (!sessions) return 0;
+      const until = nowDate.getTime() + leadHours * 60 * 60 * 1000;
+      const nowMs = nowDate.getTime();
+      let count = 0;
+      for (const s of sessions.values()) {
+        if (s.externalProductId !== productId) continue;
+        if (s.status === "cancelled" || s.status === "expired") continue;
+        const t = Date.parse(s.startAt);
+        if (Number.isFinite(t) && t >= nowMs && t <= until) count += 1;
+      }
+      return count;
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------

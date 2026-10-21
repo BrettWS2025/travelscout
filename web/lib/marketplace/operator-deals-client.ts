@@ -137,12 +137,62 @@ export function createOperatorDeal(
     deal_type: DealType;
     template_id?: string | null;
     duplicate_of?: string | null;
+    /** Required for integrated deal types (Chunk 32). */
+    external_product_id?: string | null;
+    source_provider?: string | null;
   },
   accessToken?: string | null
 ) {
   return operatorDealsFetch<{ deal: Deal }>(
     `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deals`,
     { method: "POST", body: input, accessToken }
+  );
+}
+
+export type DealProductPickerItem = {
+  id: string;
+  integration_id: string;
+  provider: string;
+  external_id: string;
+  name: string;
+  thumbnail_url: string | null;
+  price_min_minor: number | null;
+  price_max_minor: number | null;
+  currency: string | null;
+  sessions_next_72h: number;
+};
+
+export function listDealProductsApi(
+  operatorId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    products: DealProductPickerItem[];
+    has_connected_integration: boolean;
+  }>(
+    `/api/marketplace/operators/${encodeURIComponent(operatorId)}/deal-products`,
+    { accessToken }
+  );
+}
+
+export function revertDealFieldApi(
+  dealId: string,
+  field: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ deal: Deal }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/revert-field`,
+    { method: "POST", body: { field }, accessToken }
+  );
+}
+
+export function importProviderImagesApi(
+  dealId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{ imported: number; media: unknown[] }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/media/import-provider`,
+    { method: "POST", body: {}, accessToken }
   );
 }
 

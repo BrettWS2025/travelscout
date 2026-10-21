@@ -101,12 +101,17 @@ export async function POST(req: Request, { params }: Params) {
       (body.duplicate_of as string | undefined) ??
       (body.duplicateOf as string | undefined) ??
       null;
+    const externalProductId =
+      (body.external_product_id as string | undefined) ??
+      (body.externalProductId as string | undefined) ??
+      null;
 
     const store = getDealDraftHttpStore();
     const input: CreateDraftDealInput = {
       operatorId,
       dealType: dealTypeRaw,
       sourceProvider,
+      externalProductId,
       templateId,
       duplicateOf,
       actor: { type: "user", id: auth.user.id },
