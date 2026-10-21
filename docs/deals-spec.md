@@ -472,17 +472,113 @@ Eight sub-sections. Owners see all; Managers all except Billing and Account; Sta
 
 ---
 
-## 7. Open decisions
-1. Which discount mechanisms Rezdy supports via API (promo code read/validate; booking page deep link that pre-selects a session and applies a code).
-2. Rezdy auth method for a marketplace partner and its rate limits (sets minimum poll interval).
-3. Whether Rezdy webhooks cover availability changes or only bookings (hybrid vs polling).
-4. Billing model. Commission makes conversion tracking mandatory.
-5. Whether expired compliance documents block publishing (build as a config flag, default off).
-6. Number of manual deals reviewed before trust (assume 3, make it a constant `MANUAL_REVIEW_COUNT`).
+## 7. Rezdy research (Chunk 30) — decided for Chunk 31
 
-Record answers here when decided.
+Sources (current public docs as of research): [Supplier API](https://developers.rezdy.com/rezdyapi/index-supplier.html), [Agent API](https://developers.rezdy.com/rezdyapi/index-agent.html), [Webhooks](https://developers.rezdy.com/rezdywebhooks/index.html), Rezdy support articles on promo codes, affiliate links, and webhook setup.
+
+**Chosen surface:** Supplier API (`https://api.rezdy.com/v1`, staging `https://api.rezdy-staging.com/v1`). We are a referral marketplace (no payments / no checkout on our side), so we do **not** book through the Agent/marketplace API. Each operator connects their own supplier API key; we read products and availability and deep-link travellers to the operator’s Rezdy booking page.
+
+### 7.1 Auth and how an operator grants access
+- **Method:** API key per supplier account (`auth_type = api_key`). Pass as query `apiKey=` or HTTP header `apiKey` on every HTTPS call. No CORS — server-side only.
+- **Grant flow:** Operator logs into Rezdy → Integrations → Rezdy API → Request API Key → pastes the key into our connect form. We store it only via `storeSecret` → `credentials_ref`; never log or return it.
+- **Account identity on connect:** `GET /products` (or first successful call) returns `supplierId` / `supplierAlias` / `supplierName` on product rows; `GET /companies/alias/{companyAlias}` can refine display name. Store `external_account_id` = supplierId (string), `external_account_name` = supplierName (or alias).
+- **Not used for v1:** Agent API OAuth/marketplace connection (would imply reselling/booking). RezdyConnect is for inbound channel-manager supply, not our use case.
+
+### 7.2 Rate limits → poll interval
+- **Limit:** 100 calls per minute per API key. Excess → HTTP 406 `"Too Many Requests"`. Rezdy may alter the limit; cache products/availability as they recommend.
+- **Safe adapter bounds:** `min_poll_seconds = 60`, `max_poll_seconds = 900` (15 min = `SYNC_STALE_MINUTES`). Default connect poll = **300 s (5 min)** so a full sync (paginated `GET /products` + batched `GET /availability`) stays well under 100/min and under the stale-sync fail-closed window.
+- Throttle + exponential backoff on 406 in the Rezdy adapter (Chunk 31). Click rechecks share the same throttle.
+
+### 7.3 Products, sessions/availability, prices
+| Need | Endpoint | Notes |
+|---|---|---|
+| Products | `GET /v1/products` (offset/limit ≤100), `GET /v1/products/{productCode}` | Product codes start with `P` (e.g. `PWQF1Y`). Fields: name, descriptions, images, `durationMinutes`, location, `priceOptions`, `timezone`, currency, bookingMode. |
+| Sessions / seats | `GET /v1/availability?productCode=&startTimeLocal=&endTimeLocal=` | Returns sessions with `id`, `startTime` (UTC), `startTimeLocal`, `seats` / `seatsAvailable`, per-session `priceOptions`. Multiple `productCode` params allowed in one call — use for sync batching. |
+| Single-session recheck | Same availability call with start=end = session local start | Honour `timeoutMs` on Book now. |
+| Prices | Product + session `priceOptions[]` | Money arrives as decimal major units → convert to integer minor units in the adapter. Times → UTC ISO. |
+
+**Price option → our `price_option_type`:** Rezdy does **not** expose a typed enum on the public PriceOption model (fields: `id`, `label`, `price`, `seatsUsed`, `minQuantity`/`maxQuantity`, `priceGroupType` e.g. `EACH`). Map by case-insensitive `label` heuristics: Adult→`adult`, Child→`child`, Infant→`infant`, Senior→`senior`, Student→`student`, Family→`family`, Group / Everyone / shared-seat labels→`group`, else `per_unit`. Store `external_price_option_id` = stringified Rezdy `id` (and keep `label` for booking-form display). `priceGroupType` other than per-person/`EACH` still maps to `group` or `per_unit` as above.
+
+### 7.4 Webhooks → sync_mode
+Documented webhook types (operator configures URL in Rezdy UI): **New/Updated/Cancelled Order**, **New/Updated/Deleted Product**, **New Contact**. There is **no availability or session webhook**.
+
+**Decision:** `sync_mode = hybrid`.
+- **Polling** (required): availability and seats via `GET /availability` on `poll_interval_seconds`.
+- **Webhooks** (optional accelerator): product create/update/delete → incremental product sync; order webhooks → conversion attribution (Chunk 45), not seat updates.
+- No HMAC/signature in Rezdy webhook docs. Chunk 31: issue a per-integration opaque path/token in the webhook URL and treat that as `webhook_secret_ref` verification (shared-secret-in-URL). Reject unknown tokens. Document that Rezdy does not sign bodies.
+
+### 7.5 Promo codes via API
+- **Supplier API:** Promo/coupon redemption is supported on **`POST /v1/bookings/quote`** and booking create via a `coupon` field (changelog). `GET /v1/vouchers` / `GET /v1/vouchers/{voucherCode}` lists **gift-card vouchers**, not a full promo-code catalogue with % off metadata.
+- **Agent API:** Coupons explicitly **not** available — another reason we use Supplier API.
+- **`verifyDiscount` behaviour (Chunk 31/33):**
+  - `price_option` / `separate_product`: compare listed price options / second product prices → `verified` | `not_found`.
+  - `promo_code`: attempt `POST /bookings/quote` with the code and expected quantities; if quote succeeds and discounted total matches `expected_price_minor` → `verified`; if code missing → `not_found`; if quote cannot prove the deal price without placing a hold → **`cannot_verify`** and require operator confirm + Test link (already in Chunk 33).
+- Do **not** create bookings to verify codes.
+
+### 7.6 Booking page URL format (session / promo deep links)
+Documented product booking URL:
+
+```text
+https://{supplierAlias}.rezdy.com/view/{productCode}
+```
+
+Equivalent to the numeric booking-form product path. Prefer alias + productCode from API fields.
+
+- **Session pre-select:** **Not documented** in the public API or support deep-link docs. Set `deep_link_session = false`. Workaround: link to the product page; put the session local date/time in `booking_instructions` so the traveller picks the right departure.
+- **Promo pre-apply:** **Not documented** as a query param on the product URL (promo is entered at checkout; separate “Redeem Voucher” booking-button target exists but is not a product+code deep link). Set `deep_link_promo = false`. Workaround: instructions “Enter promo code CODE at checkout”; optional separate redeem URL only if the operator supplies one.
+- Affiliate tracking (optional): `?agentCode={code}` on catalogue/product URLs when the operator has added us (or a labelled agent) — see §7.7.
+
+`buildBookingUrl` v1 = product view URL above (+ optional `agentCode` when `conversion_tracking_method = booking_source` and a label is configured). Platform UTM/`click_id` still appended by `buildTrackedUrl` when `append_tracking_params` is true.
+
+### 7.7 Conversion tracking / source labels
+Bookings expose `source`, `resellerSource`, `sourceChannel`, `sourceReferrer`, `resellerComments`. `GET /bookings` can filter by `sourceChannel` (agent code).
+
+| Our `conversion_tracking_method` | Rezdy approach |
+|---|---|
+| `promo_code` | Match orders that redeemed the deal’s promo (order coupon / voucher fields via list bookings or order webhooks). Best fit for referral. |
+| `booking_source` | Operator creates/shares an agent (or affiliate) code; we append `?agentCode=` on Book now URLs; match `sourceChannel`. |
+| `webhook` | Subscribe to New/Updated Order; attribute when promo or agent code matches (no generic click_id field from Rezdy online checkout). |
+| `none` | Default until the operator configures one of the above. |
+
+We cannot rely on Rezdy storing our `click_id` on online booking-form checkouts. Keep `click_id` in our `ClickEvent` / UTMs for analytics; attributed bookings need promo or agent-code matching.
+
+### 7.8 RezdyAdapter `capabilities()` (for Chunk 31)
+
+```ts
+{
+  available: true,
+  webhooks_availability: false, // order + product only; seats via poll
+  promo_code_verify: true,      // via POST /bookings/quote; may return cannot_verify
+  deep_link_session: false,
+  deep_link_promo: false,
+  min_poll_seconds: 60,
+  max_poll_seconds: 900,
+}
+```
+
+Connect defaults: `auth_type = api_key`, `sync_mode = hybrid`, `poll_interval_seconds = 300` (clamped to min/max).
+
+### 7.9 Spec assumptions Rezdy cannot meet — workarounds
+
+| Spec assumption | Rezdy reality | Workaround |
+|---|---|---|
+| Live availability webhooks | No session/availability webhooks | Poll `GET /availability`; hybrid mode still useful for products/orders |
+| Webhook HMAC signature | None documented | Opaque token in webhook URL (`webhook_secret_ref`) |
+| Deep-link session on booking URL | Not documented | Product URL + session time in `booking_instructions` |
+| Deep-link promo on booking URL | Not documented | Instructions to enter code; `cannot_verify` path + Test link |
+| Typed price_option enum from provider | Free-text `label` (+ `priceGroupType`) | Heuristic label map; default `per_unit` |
+| Read full promo catalogue / % off via API | Vouchers endpoint is gift cards; promos via quote | Quote to verify; operator confirm when unverifiable |
+| Tag online booking with our click_id | Not available on booking form | UTM/`click_id` on our redirect only; attribute via promo_code or agentCode |
+| Agent API promo validation | Coupons unavailable on Agent API | Use Supplier API key per operator |
+| Per-price-option seat pools | API exposes session total seats only | `seats_displayed` from session total; note limitation in UI if needed |
+
+### 7.10 Other open decisions (non-Rezdy) — already decided
+4. **Billing model** — still product-level; commission makes conversion tracking mandatory when that model is chosen (use §7.7). Not blocking Chunk 31.
+5. **Compliance on publish** — `ENFORCE_COMPLIANCE_ON_PUBLISH` (default false) in config.
+6. **Manual review count** — `MANUAL_REVIEW_COUNT` (default 3) in config.
 
 ---
+
 
 ## Project context
 

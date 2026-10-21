@@ -43,7 +43,7 @@ Cursor ticks these as chunks are finished.
 - [x] 27. Connect, test and disconnect integrations — Notes: `integration-connect.ts` + routes under `operators/:id/integrations`; stub full sync until Chunk 28; disconnect auto-pauses live/scheduled (`scheduled→auto_paused`); reconnect clears `integration_disconnected` after sync.
 - [x] 28. Sync engine and sync log — Notes: `integration-sync.ts` (`runSync`, poll job, webhook HMAC, product/resync/sync-log APIs); replaces connect stub; Chunk 35 post-sync hooks stubbed; seats update DealSessions; lock + retry.
 - [x] 29. Stale-sync monitor and integration auto-pause — Notes: `integration-stale-sync.ts` (`runStaleSyncMonitorJob`, sync_failure degrade/pause + once-per-incident notify stub); `runSync` clears `sync_failure` on success; tests in `integration-stale-sync.test.ts`.
-- [ ] 30. Rezdy research (answer open decisions)
+- [x] 30. Rezdy research (answer open decisions) — Notes: filled `docs/deals-spec.md` §7 (Supplier API key auth, 100/min → poll 60–900s default 300, hybrid sync, no avail webhooks, quote-based promo verify, no session/promo deep links, promo/agentCode attribution); capabilities() table for Chunk 31; no code.
 - [ ] 31. Rezdy adapter
 - [ ] 32. Integrated deal creation and content overrides
 - [ ] 33. Integrated pricing and discount verification
