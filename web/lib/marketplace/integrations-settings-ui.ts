@@ -73,7 +73,7 @@ export const SYNC_LOG_STATUS_LABELS: Record<SyncLogStatus, string> = {
   failed: "Failed",
 };
 
-/** Settings subnav items. Only Integrations is live in Chunk 37. */
+/** Settings subnav items. Integrations + profile/defaults live (Chunks 37–38). */
 export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/integrations",
@@ -83,12 +83,12 @@ export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/business-profile",
     label: "Business profile",
-    live: false,
+    live: true,
   },
   {
     href: "/account/settings/deal-defaults",
     label: "Deal defaults",
-    live: false,
+    live: true,
   },
   {
     href: "/account/settings/notifications",
