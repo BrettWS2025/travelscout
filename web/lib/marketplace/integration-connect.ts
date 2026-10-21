@@ -5,16 +5,14 @@
  * credentials_ref (secrets helper). Status changes and deal auto-pauses go
  * through applyAutoPause / clearAutoPause.
  *
- * Full product/session sync is Chunk 28 — this chunk kicks off a stub sync
- * that marks success and clears integration_disconnected pauses so reconnect
- * can restore live deals.
+ * Full product/session sync is Chunk 28 (`runSync` in integration-sync.ts).
+ * Connect kicks off a full sync via kickOffFullSync after credentials are stored.
  */
 
 import type { DealDraftStore } from "./deal-draft";
 import type { Deal } from "./deal";
 import {
   applyAutoPause,
-  clearAutoPause,
   type DealActor,
 } from "./deal-status";
 import {
@@ -23,7 +21,6 @@ import {
   type Integration,
   type PublicIntegration,
   type SyncLog,
-  type SyncLogStatus,
 } from "./integration";
 import {
   isBookingDestinationType,
@@ -123,11 +120,6 @@ function ensureIntegrationsMap(
 ): Map<string, Integration> {
   if (!store.integrations) store.integrations = new Map();
   return store.integrations;
-}
-
-function ensureSyncLogsMap(store: DealDraftStore): Map<string, SyncLog> {
-  if (!store.syncLogs) store.syncLogs = new Map();
-  return store.syncLogs;
 }
 
 function listOperatorIntegrations(
@@ -317,7 +309,7 @@ export function serializeSyncLog(log: SyncLog): Record<string, unknown> {
 }
 
 // ---------------------------------------------------------------------------
-// Sync kickoff stub (Chunk 28 replaces the body)
+// Sync kickoff (delegates to Chunk 28 runSync — dynamic import avoids cycles)
 // ---------------------------------------------------------------------------
 
 export type KickOffFullSyncResult = {
@@ -326,102 +318,25 @@ export type KickOffFullSyncResult = {
   resumed_deal_ids: string[];
 };
 
-function newSyncLog(
-  integrationId: string,
-  now: string,
-  status: SyncLogStatus = "running"
-): SyncLog {
-  return {
-    id: crypto.randomUUID(),
-    integrationId,
-    syncType: "full",
-    status,
-    startedAt: now,
-    finishedAt: null,
-    itemsProcessed: 0,
-    errorCode: null,
-    errorMessage: null,
-    affectedDealIds: [],
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
 /**
- * Start a full sync. Until Chunk 28, the stub completes successfully and
- * clears integration_disconnected auto-pauses (reconnect path).
+ * Start a full sync after connect/reconnect. Upserts products/sessions via
+ * `runSync` and clears `integration_disconnected` auto-pauses on success.
  */
 export async function kickOffFullSync(
   store: DealDraftStore,
   integrationId: string,
   options?: { now?: string; actor?: DealActor }
 ): Promise<KickOffFullSyncResult> {
-  const map = ensureIntegrationsMap(store);
-  const integration = map.get(integrationId);
-  if (!integration) {
-    throw new IntegrationConnectError("Integration not found", 404);
-  }
-
-  const now = options?.now ?? new Date().toISOString();
-  const logs = ensureSyncLogsMap(store);
-  const log = newSyncLog(integrationId, now, "running");
-  logs.set(log.id, log);
-
-  let updated: Integration = {
-    ...integration,
-    lastSyncAt: now,
-    updatedAt: now,
-  };
-  map.set(integrationId, updated);
-
-  // Stub success — Chunk 28 fills listProducts / listSessions / upserts.
-  const finishedAt = now;
-  const successLog: SyncLog = {
-    ...log,
-    status: "success",
-    finishedAt,
-    itemsProcessed: 0,
-    updatedAt: finishedAt,
-  };
-  logs.set(successLog.id, successLog);
-
-  updated = {
-    ...updated,
-    status: updated.status === "error" ? "connected" : updated.status,
-    lastSuccessfulSyncAt: finishedAt,
-    lastErrorCode: null,
-    lastErrorMessage: null,
-    updatedAt: finishedAt,
-  };
-  if (updated.status === "connecting" || updated.status === "degraded") {
-    updated = { ...updated, status: "connected" };
-  }
-  map.set(integrationId, updated);
-
-  const resumed: string[] = [];
-  for (const deal of dealsForIntegration(store, integrationId)) {
-    if (
-      deal.status === "auto_paused" &&
-      deal.pauseReason === "integration_disconnected"
-    ) {
-      try {
-        await clearAutoPause(store, deal.id, "integration_disconnected", {
-          actor: options?.actor ?? { type: "system" },
-          now: finishedAt,
-          // Stub until Chunk 35 integrated publish checks are real.
-          validateForPublish: () => ({ ok: true, checks: [] }),
-        });
-        resumed.push(deal.id);
-      } catch {
-        // Leave paused if validation/transition fails — operator resumes manually.
-      }
-    }
-  }
-
+  const { runSync } = await import("./integration-sync");
+  const result = await runSync(store, integrationId, "full", {
+    now: options?.now,
+    actor: options?.actor,
+    clearDisconnectedPauses: true,
+  });
   return {
-    sync_log: successLog,
-    integration: updated,
-    resumed_deal_ids: resumed,
+    sync_log: result.sync_log,
+    integration: result.integration,
+    resumed_deal_ids: result.resumed_deal_ids,
   };
 }
 
