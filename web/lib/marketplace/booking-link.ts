@@ -388,6 +388,13 @@ export async function runLinkCheck(
           { actor, now }
         );
         autoPaused = true;
+        const { notifyBookingLinkBroken } = await import("./notifications");
+        await notifyBookingLinkBroken(store, {
+          operatorId: deal.operatorId,
+          dealId: deal.id,
+          detail,
+          at: now,
+        });
       }
     }
   }

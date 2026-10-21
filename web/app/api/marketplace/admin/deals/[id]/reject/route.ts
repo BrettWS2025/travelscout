@@ -44,7 +44,7 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("notes is required.");
     }
 
-    const deal = rejectDeal(getDealDraftHttpStore(), dealId, {
+    const deal = await rejectDeal(getDealDraftHttpStore(), dealId, {
       actor: { type: "admin", id: auth.user.id },
       notes: notesRaw,
     });

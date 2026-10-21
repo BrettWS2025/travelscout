@@ -345,6 +345,14 @@ export async function tickDealStatus(
   if (promoted) {
     deal = promoted;
     transitions.push("live");
+    const { notifyDealLifecycle } = await import("./notifications");
+    await notifyDealLifecycle(store, {
+      operatorId: deal.operatorId,
+      dealId: deal.id,
+      dealTitle: deal.title,
+      status: "live",
+      at: now,
+    });
   }
 
   // 2. Per session: past cutoff → expired
@@ -357,6 +365,14 @@ export async function tickDealStatus(
   if (expired) {
     deal = expired;
     transitions.push("expired");
+    const { notifyDealLifecycle } = await import("./notifications");
+    await notifyDealLifecycle(store, {
+      operatorId: deal.operatorId,
+      dealId: deal.id,
+      dealTitle: deal.title,
+      status: "expired",
+      at: now,
+    });
   }
 
   // 4. live ↔ sold_out from seats on remaining sessions
@@ -365,6 +381,16 @@ export async function tickDealStatus(
   if (flipped) {
     deal = flipped;
     transitions.push(flipped.status);
+    if (flipped.status === "sold_out" || flipped.status === "live") {
+      const { notifyDealLifecycle } = await import("./notifications");
+      await notifyDealLifecycle(store, {
+        operatorId: deal.operatorId,
+        dealId: deal.id,
+        dealTitle: deal.title,
+        status: flipped.status,
+        at: now,
+      });
+    }
   }
 
   // 5. Discount step hook (Chunk 43)

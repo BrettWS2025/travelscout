@@ -43,6 +43,10 @@ import { DealValidationError } from "./deal";
 import { isUserRole, type UserRole } from "./enums";
 import { OperatorValidationError } from "./operators";
 import { setMemoryOperatorRoleLookup } from "./permissions";
+import {
+  NotificationError,
+  seedNotificationPreferences,
+} from "./notifications";
 import { DEV_SEED_USERS, seedDevMarketplace } from "./seed-dev";
 
 let processStore: DealDraftStore | null = null;
@@ -93,6 +97,10 @@ export function getDealDraftHttpStore(): DealDraftStore {
     processStore.externalProducts = new Map();
     processStore.externalSessions = new Map();
     processStore.integrationPollState = new Map();
+    seedNotificationPreferences(
+      processStore,
+      seeded.notificationPreferences
+    );
   }
   return processStore;
 }
@@ -291,6 +299,14 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     return Response.json(
       { error: err.message, errors: err.errors },
       { status: 400 }
+    );
+  }
+  if (err instanceof NotificationError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      { error: err.message, errors: err.errors ?? [] },
+      { status: err.status }
     );
   }
   if (err instanceof Error && /required|invalid/i.test(err.message)) {

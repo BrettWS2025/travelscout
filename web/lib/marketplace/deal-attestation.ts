@@ -417,7 +417,7 @@ function markTokenUsed(
 }
 
 // ---------------------------------------------------------------------------
-// Notification stub (Chunk 39 replaces with notify())
+// Notification (Chunk 39: notify attestation_due)
 // ---------------------------------------------------------------------------
 
 export type AttestationReminderNotifyPayload = {
@@ -434,20 +434,32 @@ export type SendAttestationReminderFn = (
   payload: AttestationReminderNotifyPayload
 ) => void | Promise<void>;
 
-let sendReminderHook: SendAttestationReminderFn = () => {
-  // no-op until notifications are wired (Chunk 39)
-};
+let sendReminderHook: SendAttestationReminderFn | null = null;
 
+/** Test override; null → notify() via notifyAttestationDue. */
 export function setSendAttestationReminder(
   fn: SendAttestationReminderFn | null
 ): void {
-  sendReminderHook = fn ?? (() => undefined);
+  sendReminderHook = fn;
 }
 
 export async function sendAttestationReminder(
+  store: DealDraftStore,
   payload: AttestationReminderNotifyPayload
 ): Promise<void> {
-  await sendReminderHook(payload);
+  if (sendReminderHook) {
+    await sendReminderHook(payload);
+    return;
+  }
+  const { notifyAttestationDue } = await import("./notifications");
+  await notifyAttestationDue(store, {
+    operatorId: payload.operatorId,
+    dealIds: payload.dealIds,
+    quickUpdatePath: payload.quickUpdatePath,
+    quickUpdateToken: payload.quickUpdateToken,
+    expiresAt: payload.expiresAt,
+    at: payload.at,
+  });
 }
 
 export function buildQuickUpdatePath(rawToken: string): string {
@@ -1044,7 +1056,7 @@ export async function runAttestationJob(
     });
 
     const channels: ("email" | "sms")[] = ["email", "sms"];
-    await sendAttestationReminder({
+    await sendAttestationReminder(store, {
       operatorId,
       dealIds,
       quickUpdatePath: buildQuickUpdatePath(issued.rawToken),

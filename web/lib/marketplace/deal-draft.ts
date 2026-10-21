@@ -185,6 +185,31 @@ export type DealDraftStore = {
       notifiedAt: string;
     }
   >;
+  /** Chunk 39: per-user notification preferences. */
+  notificationPreferences?: Map<
+    string,
+    import("./settings").NotificationPreference
+  >;
+  /** Chunk 39: in-app inbox rows. */
+  inAppNotifications?: Map<
+    string,
+    import("./notifications").InAppNotification
+  >;
+  /** Chunk 39: notify() incident dedupe. */
+  notificationIncidents?: Map<
+    string,
+    import("./notifications").NotificationIncident
+  >;
+  /** Chunk 39: channel delivery log (tests / stubs). */
+  notificationDeliveries?: Map<
+    string,
+    import("./notifications").NotificationDelivery
+  >;
+  /** Chunk 39: daily summary sent markers (operator → local date). */
+  dailySummarySent?: Map<
+    string,
+    import("./notifications").DailySummarySent
+  >;
 };
 
 export function createDealDraftStore(
@@ -206,6 +231,11 @@ export function createDealDraftStore(
     externalSessions: new Map(),
     integrationPollState: new Map(),
     syncFailureIncidents: new Map(),
+    notificationPreferences: new Map(),
+    inAppNotifications: new Map(),
+    notificationIncidents: new Map(),
+    notificationDeliveries: new Map(),
+    dailySummarySent: new Map(),
   };
 }
 

@@ -73,7 +73,7 @@ export const SYNC_LOG_STATUS_LABELS: Record<SyncLogStatus, string> = {
   failed: "Failed",
 };
 
-/** Settings subnav items. Integrations + profile/defaults live (Chunks 37–38). */
+/** Settings subnav items. Integrations + profile/defaults + notifications live. */
 export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/integrations",
@@ -93,7 +93,7 @@ export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/notifications",
     label: "Notifications",
-    live: false,
+    live: true,
   },
   {
     href: "/account/settings/team",
