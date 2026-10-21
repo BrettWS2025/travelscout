@@ -108,12 +108,12 @@ export const SETTINGS_NAV_ITEMS = [
   {
     href: "/account/settings/billing",
     label: "Billing",
-    live: false,
+    live: true,
   },
   {
     href: "/account/settings/account",
     label: "Account",
-    live: false,
+    live: true,
   },
 ] as const;
 

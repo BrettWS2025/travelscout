@@ -225,6 +225,8 @@ export type DealDraftStore = {
     string,
     import("./operator-compliance").ComplianceReminderRecord
   >;
+  /** Chunk 42: billing accounts (one per operator). */
+  billingAccounts?: Map<string, import("./settings").BillingAccount>;
 };
 
 export function createDealDraftStore(
@@ -254,6 +256,7 @@ export function createDealDraftStore(
     teamInviteTokens: new Map(),
     complianceDocuments: new Map(),
     complianceReminders: new Map(),
+    billingAccounts: new Map(),
   };
 }
 
