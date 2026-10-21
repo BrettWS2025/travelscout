@@ -257,6 +257,39 @@ export function listIntegrationCards(
   return cards;
 }
 
+export type IntegrationDetailResult = {
+  card: IntegrationProviderCard;
+  /** Full public integration when actively connected (any non-disconnected row). */
+  integration: Record<string, unknown> | null;
+};
+
+/**
+ * Provider detail payload for Settings (Chunk 37). Always returns a card;
+ * `integration` is null when not connected / only disconnected history.
+ */
+export function getIntegrationDetail(
+  store: DealDraftStore,
+  operatorId: string,
+  provider: string
+): IntegrationDetailResult {
+  if (!isIntegrationProvider(provider)) {
+    throw new IntegrationConnectError(
+      `Unknown provider: ${provider}`,
+      400,
+      "unknown_provider"
+    );
+  }
+  const cards = listIntegrationCards(store, operatorId);
+  const card =
+    cards.find((c) => c.provider === provider) ??
+    emptyCard(provider, isProviderAvailable(provider));
+  const active = findActiveIntegration(store, operatorId, provider);
+  return {
+    card,
+    integration: active ? serializeIntegrationPublic(active) : null,
+  };
+}
+
 /** Snake_case public integration for API detail responses. */
 export function serializeIntegrationPublic(
   integration: Integration
@@ -927,6 +960,73 @@ export function updateIntegrationSettings(
   return {
     integration: updated,
     public: serializeIntegrationPublic(updated),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Test booking base URL (Chunk 37 settings UI)
+// ---------------------------------------------------------------------------
+
+export type TestBookingLinkResult = {
+  ok: boolean;
+  url: string;
+  status: number | null;
+  error: string | null;
+};
+
+/**
+ * Reachability check for the integration's booking_base_url (Settings →
+ * Booking links → Test link). Uses checkLink; does not mutate deal link_*.
+ */
+export async function testIntegrationBookingLink(
+  store: DealDraftStore,
+  operatorId: string,
+  provider: string,
+  options?: { url?: string | null; fetchFn?: typeof fetch }
+): Promise<TestBookingLinkResult> {
+  if (!isIntegrationProvider(provider)) {
+    throw new IntegrationConnectError(
+      `Unknown provider: ${provider}`,
+      400,
+      "unknown_provider"
+    );
+  }
+  const integration = findActiveIntegration(store, operatorId, provider);
+  if (!integration) {
+    throw new IntegrationConnectError(
+      "Integration is not connected.",
+      404,
+      "not_connected"
+    );
+  }
+
+  const url =
+    (typeof options?.url === "string" && options.url.trim()
+      ? options.url.trim()
+      : null) ?? integration.bookingBaseUrl;
+
+  if (!url) {
+    throw new IntegrationConnectError(
+      "No booking base URL to test. Save a https booking base URL first.",
+      400,
+      "missing_booking_url"
+    );
+  }
+  if (!/^https:\/\//i.test(url)) {
+    throw new IntegrationConnectError(
+      "booking_base_url must be https",
+      400,
+      "invalid_field"
+    );
+  }
+
+  const { checkLink } = await import("./booking-link");
+  const result = await checkLink(url, { fetchFn: options?.fetchFn });
+  return {
+    ok: result.ok,
+    url,
+    status: result.status,
+    error: result.error,
   };
 }
 

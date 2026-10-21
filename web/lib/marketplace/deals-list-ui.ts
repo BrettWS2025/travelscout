@@ -166,7 +166,7 @@ export function bannerFixHref(
   operatorId: string
 ): string {
   if (banner.type === "integration_unhealthy") {
-    return `/account/settings?section=integrations&operator=${encodeURIComponent(operatorId)}`;
+    return `/account/settings/integrations`;
   }
   if (banner.fix.startsWith("http") || banner.fix.startsWith("/")) {
     return banner.fix;

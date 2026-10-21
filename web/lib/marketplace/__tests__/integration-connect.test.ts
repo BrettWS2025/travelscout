@@ -13,9 +13,11 @@ import {
   countDealsPausedOnDisconnect,
   disconnectIntegration,
   getDisconnectPreview,
+  getIntegrationDetail,
   listIntegrationCards,
   resetIntegrationSecretsBootstrap,
   serializeIntegrationPublic,
+  testIntegrationBookingLink,
   testIntegrationConnection,
   updateIntegrationSettings,
 } from "@/lib/marketplace/integration-connect";
@@ -363,5 +365,60 @@ describe("Chunk 27 integration connect / disconnect", () => {
     ) as Integration;
     expect(row.status).toBe("error");
     expect(row.lastErrorMessage).toBe("Supplier API key rejected");
+  });
+
+  it("getIntegrationDetail returns card + public integration without secrets", async () => {
+    const { store, bayOperatorId, bayOwnerId } = freshStore();
+    await connectIntegration(
+      store,
+      bayOperatorId,
+      "rezdy",
+      { api_key: "detail-key" },
+      { actor: { type: "user", id: bayOwnerId }, now: NOW }
+    );
+
+    const detail = getIntegrationDetail(store, bayOperatorId, "rezdy");
+    expect(detail.card.status).toBe("connected");
+    expect(detail.integration).toBeTruthy();
+    expect(detail.integration).not.toHaveProperty("credentials_ref");
+    expect(detail.integration).not.toHaveProperty("credentialsRef");
+    expect(() => assertNoSecretRefs(detail.integration!)).not.toThrow();
+  });
+
+  it("testIntegrationBookingLink checks https booking_base_url", async () => {
+    const { store, bayOperatorId, bayOwnerId } = freshStore();
+    await connectIntegration(
+      store,
+      bayOperatorId,
+      "rezdy",
+      { api_key: "link-key" },
+      { actor: { type: "user", id: bayOwnerId }, now: NOW }
+    );
+    updateIntegrationSettings(store, bayOperatorId, "rezdy", {
+      booking_base_url: "https://book.example.test",
+    });
+
+    const ok = await testIntegrationBookingLink(
+      store,
+      bayOperatorId,
+      "rezdy",
+      {
+        fetchFn: async () =>
+          new Response(null, { status: 200 }) as Response,
+      }
+    );
+    expect(ok.ok).toBe(true);
+    expect(ok.url).toBe("https://book.example.test");
+
+    const bad = await testIntegrationBookingLink(
+      store,
+      bayOperatorId,
+      "rezdy",
+      {
+        fetchFn: async () =>
+          new Response(null, { status: 404 }) as Response,
+      }
+    );
+    expect(bad.ok).toBe(false);
   });
 });
