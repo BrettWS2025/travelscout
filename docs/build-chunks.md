@@ -39,7 +39,7 @@ Cursor ticks these as chunks are finished.
 - [x] 25. Templates — Notes: `deal-templates.ts` + routes save-as-template / templates CRUD / create-deal; `TemplatesList` + inventory subnav; createDraftDeal applies media+prices from payload; tests in `deal-templates.test.ts`.
 
 **Phase C: Integrations and Rezdy**
-- [ ] 26. Provider adapter interface and mock provider
+- [x] 26. Provider adapter interface and mock provider — Notes: `web/lib/marketplace/providers/` (`ProviderAdapter`, `getAdapter`, coming-soon FH/Bókun/Checkfront, mock backs rezdy until Chunk 31); contract tests in `providers/__tests__/provider-adapter.contract.test.ts`.
 - [ ] 27. Connect, test and disconnect integrations
 - [ ] 28. Sync engine and sync log
 - [ ] 29. Stale-sync monitor and integration auto-pause
