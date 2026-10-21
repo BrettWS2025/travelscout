@@ -7,7 +7,7 @@ import type { Deal } from "./deal";
 import { DEAL_FIELD_LIMITS } from "./deal";
 import type { DealDetail } from "./deal-draft";
 import type { DealPriceOption, DealSession } from "./deal-session";
-import { lowestCurrentPriceOption } from "./deal-stepped-discounts";
+import { lowestCurrentPriceOption } from "./deal-stepped-discounts-shared";
 import {
   EDITOR_STEPS,
   type EditorStep,

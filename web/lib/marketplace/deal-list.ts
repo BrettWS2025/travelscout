@@ -11,7 +11,7 @@ import type { Deal } from "./deal";
 import type { DealDraftStore } from "./deal-draft";
 import { getDealCoverImage } from "./deal-media";
 import type { DealPriceOption, DealSession } from "./deal-session";
-import { lowestCurrentPriceOption } from "./deal-stepped-discounts";
+import { lowestCurrentPriceOption } from "./deal-stepped-discounts-shared";
 import type { Integration } from "./integration";
 import {
   isCategory,

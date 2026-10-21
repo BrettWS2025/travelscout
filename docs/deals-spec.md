@@ -297,7 +297,7 @@ Implemented in `web/lib/marketplace/pricing.ts`. Money is always integer minor u
 | `priceFromPercentage(originalMinor, pct)` | Round to nearest cent; if that fails the rule, floor instead so a valid percentage never yields an invalid price |
 | `withDiscountPct(option)` | Attach computed `discountPct` on every DealPriceOption save |
 | `validateSteps(steps, option)` | Steps sorted by `hours_before_start` descending; each price ≤ previous step and ≤ base deal price; each meets min discount; promo codes distinct |
-| `currentPrice(option, session, now, steps)` | Chunk 43 (`deal-stepped-discounts.ts`): deepest step whose `hours_before_start ≥ hours until start`, else base `deal_price_minor`; returns price, promo code, and active step |
+| `currentPrice(option, session, now, steps)` | Chunk 43 (`deal-stepped-discounts-shared.ts`, re-exported from `deal-stepped-discounts.ts`): deepest step whose `hours_before_start ≥ hours until start`, else base `deal_price_minor`; returns price, promo code, and active step |
 
 **Stepped discounts (Chunk 43):** When `stepped_discount_enabled`, CRUD steps per price option via `POST|PATCH|DELETE /api/marketplace/operator-deals/:id/discount-steps` (`deal-stepped-discounts.ts`). Promo / quote mechanisms require distinct `promo_code` per step; `price_option` requires `external_deal_price_option_id`. Integrated steps are verified with `adapter.verifyDiscount` on save. Status ticker `applyCurrentDiscountSteps` logs `price_changed` when a step activates and refreshes the display-price cache. List, calendar, editor summary and Book now use `currentPrice` / `bookingPromoForSession` (step promo passed to `buildBookingUrl`). Publish `min_discount` and `discount_in_provider` include every step.
 
