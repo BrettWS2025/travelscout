@@ -215,6 +215,16 @@ export type DealDraftStore = {
     string,
     import("./team").TeamInviteTokenRecord
   >;
+  /** Chunk 41: operator compliance documents. */
+  complianceDocuments?: Map<
+    string,
+    import("./settings").ComplianceDocument
+  >;
+  /** Chunk 41: compliance_expiring reminder dedupe (30d / 7d). */
+  complianceReminders?: Map<
+    string,
+    import("./operator-compliance").ComplianceReminderRecord
+  >;
 };
 
 export function createDealDraftStore(
@@ -242,6 +252,8 @@ export function createDealDraftStore(
     notificationDeliveries: new Map(),
     dailySummarySent: new Map(),
     teamInviteTokens: new Map(),
+    complianceDocuments: new Map(),
+    complianceReminders: new Map(),
   };
 }
 

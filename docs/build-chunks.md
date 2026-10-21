@@ -58,7 +58,7 @@ Cursor ticks these as chunks are finished.
 - [x] 38. Business profile and deal defaults — Notes: `operator-profile.ts` + GET/PATCH `.../profile`, `.../booking-defaults`, GET `.../preview`, POST logo/cover; UI `/account/settings/business-profile` + `deal-defaults`; staff read-only profile; defaults note “new deals only”.
 - [x] 39. Notifications — Notes: `notifications.ts` + GET/PATCH `.../notifications/me`, in-app list/mark-read; `notify()` fans out email/SMS/in-app (stubs); mandatory channel guard; daily summary job; stubs in publish/attestation/stale-sync/sync-hooks/booking-link/status-ticker wired; UI `/account/settings/notifications`.
 - [x] 40. Team — Notes: `team.ts` + invite tokens (`team_invite_tokens`); routes `GET|POST .../team`, `PATCH|DELETE /team/:mid`, resend/revoke, `GET|POST /team/invite/:token`; last owner + owner-only owner changes; throttled `last_active_at`; UI `/account/settings/team` + `/team/invite/[token]`.
-- [ ] 41. Compliance documents
+- [x] 41. Compliance documents — Notes: `operator-compliance.ts` CRUD + upload (pdf/jpg/png ≤10 MB) + `runComplianceExpiryJob` (30/7d `compliance_expiring` via `notify`, mark expired); admin approve/reject; store maps on draft store; ENFORCE wired via `validateDealInStore`; UI `/account/settings/compliance`.
 - [ ] 42. Billing and account
 
 **Phase F: Advanced**
