@@ -37,7 +37,12 @@ import {
   type DealFieldInput,
   type FieldError,
 } from "./deal";
-import type { DealPriceOption, DealSession, DiscountStep } from "./deal-session";
+import {
+  withSeatsDisplayed,
+  type DealPriceOption,
+  type DealSession,
+  type DiscountStep,
+} from "./deal-session";
 import {
   applyClientDealFieldPatch,
   DealNotFoundError,
@@ -1128,6 +1133,22 @@ export function updateDraftDeal(
 
   const fields = changedFieldNames(existing, updated);
   store.deals.set(dealId, updated);
+
+  // Chunk 34: capacity / seat_cap changes must recompute seats_displayed.
+  if (
+    isIntegratedDealType(updated.dealType) &&
+    (updated.capacityMode !== existing.capacityMode ||
+      updated.seatCap !== existing.seatCap)
+  ) {
+    for (const session of store.sessions.values()) {
+      if (session.dealId !== dealId) continue;
+      store.sessions.set(session.id, {
+        ...session,
+        ...withSeatsDisplayed(session, updated),
+        updatedAt: now,
+      });
+    }
+  }
 
   if (fields.length > 0) {
     logDealEvent(

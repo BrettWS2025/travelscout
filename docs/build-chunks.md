@@ -47,7 +47,7 @@ Cursor ticks these as chunks are finished.
 - [x] 31. Rezdy adapter — Notes: `providers/rezdy/` (adapter/client/throttle/map/fixtures); registry default RezdyAdapter (`REZDY_USE_MOCK=1` keeps mock); contract tests on fixtures; `npm run rezdy:sandbox`; connect sets webhook token + booking_base_url; preferred_sync_mode hybrid.
 - [x] 32. Integrated deal creation and content overrides — Notes: `deal-integrated.ts` (prefill, overridden_fields, revert, sync refresh); create requires `external_product_id`; `GET deal-products` picker; `POST revert-field`; `importProviderImages` live; editor Step 1 product picker + Step 2 From-provider/Revert; tests in `deal-integrated.test.ts`.
 - [x] 33. Integrated pricing and discount verification — Notes: `deal-integrated-pricing.ts` + `POST .../verify-discount`; `promo_code_confirmed_by_operator` + `discount_verification` on `operator_deals`; separate_product refs as `product:<uuid>`; editor Step 4 integrated UI; tests in `deal-integrated-pricing.test.ts`.
-- [ ] 34. Integrated availability and capacity
+- [x] 34. Integrated availability and capacity — Notes: `deal-integrated-availability.ts` + `GET|PUT .../available-sessions`; capacity note; editor Step 5 integrated picker; seats recompute on select/PATCH/sync; tests in `deal-integrated-availability.test.ts`.
 - [ ] 35. Integrated publish checks and provider-driven auto-pauses
 
 **Phase D: Book now**

@@ -41,10 +41,12 @@ import {
   duplicateOperatorDeal,
   getOperatorDeal,
   importProviderImagesApi,
+  listAvailableSessionsApi,
   listDealProductsApi,
   listOperatorTemplatesApi,
   publishOperatorDeal,
   revertDealFieldApi,
+  selectIntegratedSessionsApi,
   setDealMediaCoverApi,
   testDealLinkApi,
   updateDealMediaApi,
@@ -53,9 +55,12 @@ import {
   updateOperatorDeal,
   uploadDealMediaApi,
   verifyDealDiscountApi,
+  type AvailableExternalSessionRow,
   type DealProductPickerItem,
   type OperatorDealTemplate,
 } from "@/lib/marketplace/operator-deals-client";
+import { CAPACITY_CAP_NOTE } from "@/lib/marketplace/deal-integrated-availability-shared";
+import { isIntegratedDealType } from "@/lib/marketplace/enums";
 
 type Props = {
   operatorId: string;
@@ -90,6 +95,12 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
   const [productsLoading, setProductsLoading] = useState(false);
   const [hasConnectedIntegration, setHasConnectedIntegration] =
     useState(false);
+  const [availableSessions, setAvailableSessions] = useState<
+    AvailableExternalSessionRow[] | null
+  >(null);
+  const [capacityNote, setCapacityNote] = useState<string | null>(
+    CAPACITY_CAP_NOTE
+  );
 
   const deal = detail?.deal ?? null;
   const summary = summarizeDealEditor(detail);
@@ -106,6 +117,28 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
     setDealId(id);
     return next;
   }, [token]);
+
+  const reloadAvailableSessions = useCallback(
+    async (id: string) => {
+      try {
+        const res = await listAvailableSessionsApi(id, token);
+        setAvailableSessions(res.sessions);
+        setCapacityNote(res.note ?? CAPACITY_CAP_NOTE);
+      } catch {
+        setAvailableSessions([]);
+      }
+    },
+    [token]
+  );
+
+  useEffect(() => {
+    if (step !== "availability" || !dealId || !deal) return;
+    if (!isIntegratedDealType(deal.dealType)) {
+      setAvailableSessions(null);
+      return;
+    }
+    void reloadAvailableSessions(dealId);
+  }, [step, dealId, deal, reloadAvailableSessions]);
 
   useEffect(() => {
     if (!initialDealId) return;
@@ -595,7 +628,32 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
             <AvailabilityStep
               deal={deal}
               sessions={detail.sessions}
+              availableSessions={availableSessions}
+              capacityNote={capacityNote}
               onPatchDeal={(patch) => void patchDeal(patch)}
+              onSelectIntegratedSessions={async (body) => {
+                if (!dealId) return;
+                setError(null);
+                try {
+                  await withLiveConfirm(async (confirm) => {
+                    await selectIntegratedSessionsApi(
+                      dealId,
+                      { ...body, confirm },
+                      token
+                    );
+                    await refreshAfterChildChange();
+                    await reloadAvailableSessions(dealId);
+                  });
+                } catch (err) {
+                  setError(
+                    err instanceof OperatorDealsApiError
+                      ? err.message
+                      : err instanceof Error
+                        ? err.message
+                        : "Session selection failed"
+                  );
+                }
+              }}
               onAddSession={async (body) => {
                 if (!dealId) return;
                 try {
