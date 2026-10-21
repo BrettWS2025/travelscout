@@ -1,5 +1,5 @@
 /**
- * Chunk 26 — adapter registry and coming-soon providers.
+ * Chunk 26/31 — adapter registry and coming-soon providers.
  */
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -13,23 +13,40 @@ import {
   resetAdapterRegistry,
   createComingSoonAdapter,
   createMockAdapter,
+  REZDY_CAPABILITIES,
 } from "@/lib/marketplace/providers";
 
 afterEach(() => {
   resetAdapterRegistry();
+  delete process.env.REZDY_USE_MOCK;
 });
 
 describe("getAdapter registry", () => {
-  it("returns an available adapter for rezdy (mock until Chunk 31)", () => {
+  it("returns an available RezdyAdapter for rezdy by default", () => {
     const adapter = getAdapter("rezdy");
     expect(adapter.provider).toBe("rezdy");
     expect(adapter.capabilities().available).toBe(true);
+    expect(adapter.capabilities()).toMatchObject({
+      min_poll_seconds: REZDY_CAPABILITIES.min_poll_seconds,
+      max_poll_seconds: REZDY_CAPABILITIES.max_poll_seconds,
+      preferred_sync_mode: "hybrid",
+      deep_link_session: false,
+      deep_link_promo: false,
+    });
   });
 
-  it("returns the same default mock instance for rezdy", () => {
+  it("returns the same default Rezdy adapter instance", () => {
     const a = getAdapter("rezdy");
     const b = getAdapter("rezdy");
     expect(a).toBe(b);
+  });
+
+  it("uses the mock adapter when REZDY_USE_MOCK=1", () => {
+    process.env.REZDY_USE_MOCK = "1";
+    resetAdapterRegistry();
+    const adapter = getAdapter("rezdy");
+    expect(adapter.capabilities().deep_link_session).toBe(true);
+    expect(adapter.capabilities().deep_link_promo).toBe(true);
   });
 
   it("registers fareharbor, bokun, checkfront as coming soon", () => {

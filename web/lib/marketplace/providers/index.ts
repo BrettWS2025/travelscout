@@ -25,6 +25,17 @@ export {
   type MockPromo,
 } from "./mock";
 export {
+  createRezdyAdapter,
+  createRezdyFixtureController,
+  getRezdyAdapter,
+  REZDY_CAPABILITIES,
+  REZDY_PRODUCTION_BASE,
+  REZDY_STAGING_BASE,
+  resetRezdyAdapterSingleton,
+  type RezdyAdapterOptions,
+  type RezdyFixtureController,
+} from "./rezdy";
+export {
   getAdapter,
   getDefaultMockController,
   isProviderAvailable,

@@ -1142,6 +1142,22 @@ function bodyAsString(body: unknown): string {
   return JSON.stringify(body ?? {});
 }
 
+function webhookTokenFromBody(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const obj = body as Record<string, unknown>;
+  if (typeof obj.webhook_token === "string") return obj.webhook_token;
+  if (typeof obj.token === "string") return obj.token;
+  return null;
+}
+
+/** Constant-time string compare for opaque webhook tokens (Rezdy §7.4). */
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 /**
  * Verify webhook HMAC-SHA256 signature.
  * Accepts header `x-webhook-signature` or `x-signature` as hex digest of body.
@@ -1214,7 +1230,17 @@ export async function handleIntegrationWebhook(
     const sig =
       headerValue(request.headers, "x-webhook-signature") ??
       headerValue(request.headers, "x-signature");
-    if (!verifyWebhookSignature(secret, request.body, sig)) {
+    const token =
+      headerValue(request.headers, "x-webhook-token") ??
+      headerValue(request.headers, "x-rezdy-webhook-token") ??
+      webhookTokenFromBody(request.body);
+    const hmacOk = verifyWebhookSignature(secret, request.body, sig);
+    // Rezdy has no HMAC (§7.4) — opaque token in URL/header matches webhook_secret_ref.
+    const tokenOk =
+      typeof token === "string" &&
+      token.length > 0 &&
+      timingSafeStringEqual(token, secret);
+    if (!hmacOk && !tokenOk) {
       throw new IntegrationSyncError(
         "Invalid webhook signature.",
         401,

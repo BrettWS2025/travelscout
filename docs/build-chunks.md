@@ -44,7 +44,7 @@ Cursor ticks these as chunks are finished.
 - [x] 28. Sync engine and sync log — Notes: `integration-sync.ts` (`runSync`, poll job, webhook HMAC, product/resync/sync-log APIs); replaces connect stub; Chunk 35 post-sync hooks stubbed; seats update DealSessions; lock + retry.
 - [x] 29. Stale-sync monitor and integration auto-pause — Notes: `integration-stale-sync.ts` (`runStaleSyncMonitorJob`, sync_failure degrade/pause + once-per-incident notify stub); `runSync` clears `sync_failure` on success; tests in `integration-stale-sync.test.ts`.
 - [x] 30. Rezdy research (answer open decisions) — Notes: filled `docs/deals-spec.md` §7 (Supplier API key auth, 100/min → poll 60–900s default 300, hybrid sync, no avail webhooks, quote-based promo verify, no session/promo deep links, promo/agentCode attribution); capabilities() table for Chunk 31; no code.
-- [ ] 31. Rezdy adapter
+- [x] 31. Rezdy adapter — Notes: `providers/rezdy/` (adapter/client/throttle/map/fixtures); registry default RezdyAdapter (`REZDY_USE_MOCK=1` keeps mock); contract tests on fixtures; `npm run rezdy:sandbox`; connect sets webhook token + booking_base_url; preferred_sync_mode hybrid.
 - [ ] 32. Integrated deal creation and content overrides
 - [ ] 33. Integrated pricing and discount verification
 - [ ] 34. Integrated availability and capacity

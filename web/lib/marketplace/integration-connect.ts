@@ -345,6 +345,7 @@ export async function kickOffFullSync(
 // ---------------------------------------------------------------------------
 
 function defaultSyncMode(caps: ProviderCapabilities): SyncMode {
+  if (caps.preferred_sync_mode) return caps.preferred_sync_mode;
   return caps.webhooks_availability ? "hybrid" : "polling";
 }
 
@@ -478,8 +479,14 @@ export async function connectIntegration(
       status: "connected",
       authType: options.authType ?? "api_key",
       credentialsRef: connected.credentials_ref,
+      webhookSecretRef:
+        connected.webhook_secret_ref ?? row.webhookSecretRef ?? null,
       externalAccountId: connected.external_account_id,
       externalAccountName: connected.external_account_name,
+      bookingBaseUrl:
+        row.bookingBaseUrl ??
+        connected.booking_base_url ??
+        null,
       syncMode: row.syncMode ?? defaultSyncMode(caps),
       pollIntervalSeconds:
         row.pollIntervalSeconds != null

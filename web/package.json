@@ -15,6 +15,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
     "test:redis": "tsx scripts/test-redis.ts",
+    "rezdy:sandbox": "tsx scripts/rezdy-sandbox.ts",
     "redis:start": "docker compose -f ../docker-compose.yml up -d redis",
     "redis:stop": "docker compose -f ../docker-compose.yml stop redis",
     "redis:down": "docker compose -f ../docker-compose.yml down redis",

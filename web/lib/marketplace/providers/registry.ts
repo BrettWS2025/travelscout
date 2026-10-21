@@ -1,10 +1,10 @@
 /**
- * Provider adapter registry (Chunk 26).
+ * Provider adapter registry (Chunk 26 + 31).
  *
  * getAdapter(provider) → implementation. Unknown providers throw.
  * FareHarbor / Bókun / Checkfront are "coming soon" (available:false).
- * Rezdy uses the mock adapter until Chunk 31 registers the real one,
- * unless a custom factory is installed via registerAdapterFactory.
+ * Rezdy uses RezdyAdapter by default; set REZDY_USE_MOCK=1 (or register a
+ * factory) to keep the controllable mock for local/dev without an API key.
  */
 
 import {
@@ -23,13 +23,19 @@ import {
   createMockAdapter,
   type MockAdapterController,
 } from "./mock";
+import { getRezdyAdapter, resetRezdyAdapterSingleton } from "./rezdy";
 
 export type AdapterFactory = () => ProviderAdapter;
 
 const factories = new Map<IntegrationProvider, AdapterFactory>();
 
-/** Shared mock used as the default rezdy adapter until Chunk 31. */
+/** Shared mock when REZDY_USE_MOCK is enabled or tests ask for it. */
 let defaultMock: MockAdapterController | null = null;
+
+function useMockRezdy(): boolean {
+  const flag = process.env.REZDY_USE_MOCK?.trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
+}
 
 function getOrCreateDefaultMock(): MockAdapterController {
   if (!defaultMock) {
@@ -39,9 +45,10 @@ function getOrCreateDefaultMock(): MockAdapterController {
 }
 
 function defaultRezdyFactory(): ProviderAdapter {
-  // Chunk 31 will replace this with RezdyAdapter. Until then the mock backs
-  // rezdy so connect/sync/book-now flows and contract tests have a real target.
-  return getOrCreateDefaultMock().adapter;
+  if (useMockRezdy()) {
+    return getOrCreateDefaultMock().adapter;
+  }
+  return getRezdyAdapter();
 }
 
 /** Access the default mock controller (dev/tests). Creates it if needed. */
@@ -62,7 +69,7 @@ function ensureDefaultsRegistered(): void {
 }
 
 /**
- * Replace or install the factory for a provider (tests / Chunk 31 Rezdy).
+ * Replace or install the factory for a provider (tests / custom wiring).
  * Pass null to clear and restore the default on next getAdapter.
  */
 export function registerAdapterFactory(
@@ -80,12 +87,13 @@ export function registerAdapterFactory(
 }
 
 /**
- * Clear all custom factories and the default mock singleton (test teardown).
- * Defaults re-apply lazily on the next getAdapter call.
+ * Clear all custom factories and the default mock / Rezdy singletons
+ * (test teardown). Defaults re-apply lazily on the next getAdapter call.
  */
 export function resetAdapterRegistry(): void {
   factories.clear();
   defaultMock = null;
+  resetRezdyAdapterSingleton();
 }
 
 /**

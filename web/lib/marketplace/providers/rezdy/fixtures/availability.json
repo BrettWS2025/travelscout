@@ -1,0 +1,74 @@
+{
+  "requestStatus": { "success": true, "version": "v1" },
+  "sessions": [
+    {
+      "id": 71001,
+      "productCode": "PHARB1",
+      "startTime": "2026-10-20T21:00:00Z",
+      "endTime": "2026-10-20T23:00:00Z",
+      "startTimeLocal": "2026-10-21 10:00:00",
+      "endTimeLocal": "2026-10-21 12:00:00",
+      "seats": 12,
+      "seatsAvailable": 8,
+      "priceOptions": [
+        { "price": 120.0, "label": "Adult", "id": 5001, "seatsUsed": 1, "productCode": "PHARB1" },
+        { "price": 80.0, "label": "Child", "id": 5002, "seatsUsed": 1, "productCode": "PHARB1" },
+        { "price": 54.0, "label": "Adult deal", "id": 5003, "seatsUsed": 1, "productCode": "PHARB1" }
+      ]
+    },
+    {
+      "id": 71002,
+      "productCode": "PHARB1",
+      "startTime": "2026-10-21T01:00:00Z",
+      "endTime": "2026-10-21T03:00:00Z",
+      "startTimeLocal": "2026-10-21 14:00:00",
+      "endTimeLocal": "2026-10-21 16:00:00",
+      "seats": 12,
+      "seatsAvailable": 8,
+      "priceOptions": [
+        { "price": 120.0, "label": "Adult", "id": 5001, "seatsUsed": 1, "productCode": "PHARB1" },
+        { "price": 54.0, "label": "Adult deal", "id": 5003, "seatsUsed": 1, "productCode": "PHARB1" }
+      ]
+    },
+    {
+      "id": 71003,
+      "productCode": "PHARB1",
+      "startTime": "2026-10-22T21:00:00Z",
+      "endTime": "2026-10-22T23:00:00Z",
+      "startTimeLocal": "2026-10-23 10:00:00",
+      "endTimeLocal": "2026-10-23 12:00:00",
+      "seats": 12,
+      "seatsAvailable": 6,
+      "priceOptions": [
+        { "price": 120.0, "label": "Adult", "id": 5001, "seatsUsed": 1, "productCode": "PHARB1" }
+      ]
+    },
+    {
+      "id": 72001,
+      "productCode": "PCRUZ2",
+      "startTime": "2026-10-20T06:00:00Z",
+      "endTime": "2026-10-20T08:00:00Z",
+      "startTimeLocal": "2026-10-20 19:00:00",
+      "endTimeLocal": "2026-10-20 21:00:00",
+      "seats": 40,
+      "seatsAvailable": 20,
+      "priceOptions": [
+        { "price": 99.0, "label": "Adult", "id": 6001, "seatsUsed": 1, "productCode": "PCRUZ2" },
+        { "price": 45.0, "label": "Adult deal", "id": 6002, "seatsUsed": 1, "productCode": "PCRUZ2" }
+      ]
+    },
+    {
+      "id": 72002,
+      "productCode": "PCRUZ2",
+      "startTime": "2026-10-21T06:00:00Z",
+      "endTime": "2026-10-21T08:00:00Z",
+      "startTimeLocal": "2026-10-21 19:00:00",
+      "endTimeLocal": "2026-10-21 21:00:00",
+      "seats": 40,
+      "seatsAvailable": 20,
+      "priceOptions": [
+        { "price": 99.0, "label": "Adult", "id": 6001, "seatsUsed": 1, "productCode": "PCRUZ2" }
+      ]
+    }
+  ]
+}
