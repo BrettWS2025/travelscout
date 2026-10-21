@@ -60,6 +60,8 @@ import {
   touchTeamMemberLastActive,
 } from "./team";
 import { ComplianceError } from "./operator-compliance";
+import { AccountError } from "./account";
+import { BillingError, seedBillingAccounts } from "./billing";
 
 /** Wire Chunk 39 notify into modules that must stay client-safe. */
 let notificationHooksInstalled = false;
@@ -136,6 +138,8 @@ export function getDealDraftHttpStore(): DealDraftStore {
     processStore.externalSessions = new Map();
     processStore.integrationPollState = new Map();
     processStore.teamInviteTokens = new Map();
+    processStore.billingAccounts = new Map();
+    seedBillingAccounts(processStore, seeded.billingAccounts);
     seedNotificationPreferences(
       processStore,
       seeded.notificationPreferences
@@ -363,6 +367,18 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
     );
   }
   if (err instanceof ComplianceError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+        errors: err.errors ?? [],
+      },
+      { status: err.status }
+    );
+  }
+  if (err instanceof BillingError || err instanceof AccountError) {
     if (err.status === 403) return forbidden(err.message);
     if (err.status === 404) return notFound(err.message);
     return Response.json(
