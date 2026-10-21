@@ -268,8 +268,8 @@ describe("validateForPublish — complete manual draft", () => {
   });
 });
 
-describe("validateForPublish — integrated stubs", () => {
-  it("includes not-yet-built integrated checks", async () => {
+describe("validateForPublish — integrated checks (Chunk 35)", () => {
+  it("includes failing integrated checks when context is missing", async () => {
     const { store } = harbourStore();
     const deal = makeDealFixture({
       id: "int-1",
@@ -277,6 +277,7 @@ describe("validateForPublish — integrated stubs", () => {
       dealType: "integrated_session",
       sourceProvider: "rezdy",
       capacityMode: "live_provider",
+      discountMechanism: "price_option",
       status: "draft",
       createdAt: NOW,
       updatedAt: NOW,
@@ -291,7 +292,7 @@ describe("validateForPublish — integrated stubs", () => {
       now: NOW,
     });
 
-    const stubKeys = [
+    const keys = [
       "integration_healthy",
       "product_active",
       "original_price_locked",
@@ -299,12 +300,36 @@ describe("validateForPublish — integrated stubs", () => {
       "promo_code_confirmed",
       "session_available",
     ];
-    for (const key of stubKeys) {
+    for (const key of keys) {
       const c = result.checks.find((x) => x.key === key);
       expect(c, key).toBeDefined();
-      expect(c!.passed).toBe(false);
-      expect(c!.message).toMatch(/Not yet built/i);
+      expect(c!.message).not.toMatch(/Not yet built/i);
     }
+    // Without store context these fail (promo_code_confirmed is N/A for price_option)
+    expect(
+      result.checks.find((c) => c.key === "integration_healthy")!.passed
+    ).toBe(false);
+    expect(
+      result.checks.find((c) => c.key === "product_active")!.passed
+    ).toBe(false);
+    expect(
+      result.checks.find((c) => c.key === "original_price_locked")!.passed
+    ).toBe(false);
+    expect(
+      result.checks.find((c) => c.key === "discount_in_provider")!.passed
+    ).toBe(false);
+    expect(
+      result.checks.find((c) => c.key === "promo_code_confirmed")!.passed
+    ).toBe(true);
+    expect(
+      result.checks.find((c) => c.key === "session_available")!.passed
+    ).toBe(false);
+    expect(
+      result.checks.find((c) => c.key === "integration_healthy")!.message
+    ).toMatch(/no linked integration|not found/i);
+    expect(
+      result.checks.find((c) => c.key === "session_available")!.message
+    ).toMatch(/select at least one/i);
   });
 });
 
