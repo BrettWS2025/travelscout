@@ -140,6 +140,8 @@ Every table has `id` (uuid), `created_at`, `updated_at` unless noted. "Req" = re
 | currency | string(3) | Yes | Defaults from operator |
 | discount_mechanism | enum | Yes | Integrated: promo_code, price_option, separate_product. Manual: manual_price, quote_code |
 | promo_code | string | If promo_code or quote_code | 3–30 chars, `A–Z 0–9 - _` |
+| promo_code_confirmed_by_operator | bool | If cannot_verify | Chunk 33: operator attests the code/discount exists when `adapter.verifyDiscount` returns `cannot_verify`; also requires a successful Test link before publish (Chunk 35) |
+| discount_verification | jsonb | System | Chunk 33: last `POST .../verify-discount` result `{ status, checked_at, options[] }` |
 | discount_input_mode | enum | Yes | UI convenience; prices always stored |
 | stepped_discount_enabled | bool | No | Default false; uses DiscountStep |
 | capacity_mode | enum | Yes | Manual types are always manual_count |
@@ -183,8 +185,8 @@ One row per departure (session types) or per day (open window). Every deal has a
 | label | string | Yes | e.g. "Adult" |
 | type | enum price_option_type | Yes | |
 | external_price_option_id | string | If integrated | Provider's full-price option |
-| external_deal_price_option_id | string | If price_option | Provider's discounted option |
-| original_price_minor | int | Yes | From provider, or entered for manual |
+| external_deal_price_option_id | string | If price_option or separate_product | For `price_option`: provider's discounted option id. For `separate_product`: `product:<external_product_uuid>` (see Chunk 33 / `formatSeparateProductRef`) |
+| original_price_minor | int | Yes | From provider, or entered for manual. **Integrated: read-only** — always equals the provider's current price for `external_price_option_id` |
 | original_price_source | enum | System | |
 | original_price_evidence_url | url | If manual | Public page showing standard price |
 | deal_price_minor | int | Yes | Must satisfy 50% rule (`meetsMinDiscount`; see §4.0) |
@@ -263,6 +265,8 @@ Tables: `marketplace.integrations`, `external_products`, `external_sessions`, `s
 **Sync engine (Chunk 28):** `web/lib/marketplace/integration-sync.ts` — `runSync(integrationId, type)` creates a `SyncLog` (`running` → `success`|`failed`); `listProducts` → upsert `ExternalProduct` (`archived_in_provider`; new products enabled only if `auto_enable_new_products`); for enabled products, `listSessions` for now → now+`MAX_LEAD_HOURS`+24h → upsert `ExternalSession`; mark missing in-window sessions `cancelled`; update linked `DealSession.provider_seats_available` / `last_synced_at` / `seats_displayed`; refresh non-overridden Deal content via Chunk 32. Post-sync provider hooks stubbed for Chunk 35. One sync per integration (lock); adapter calls retry with backoff. Scheduler: `runIntegrationPollJob` polls connected integrations on `poll_interval_seconds`. Webhook: `POST /api/marketplace/webhooks/providers/:provider` verifies HMAC **or** opaque token (`x-webhook-token` / body token matching `webhook_secret_ref` — Rezdy §7.4), sets `webhook_last_received_at`, incremental sync for affected products. Operator routes: `POST .../resync`, `POST .../products/refresh`, `GET .../products`, `PATCH .../products/:pid {is_enabled_for_deals}`, `GET .../sync-log`.
 
 **Integrated deal creation / content overrides (Chunk 32):** `web/lib/marketplace/deal-integrated.ts` — creating `integrated_session` / `integrated_multi_session` requires a connected (or degraded) integration and an enabled, non-archived `ExternalProduct` (`external_product_id` on `POST .../deals`). Prefills title, summary (from description), description, duration, location, provider images (`DealMedia` source=`provider`), price options (`original_price_source=provider`), and booking URL via `adapter.buildBookingUrl`. PATCH of pre-filled content fields appends to `overridden_fields`; `POST .../operator-deals/:id/revert-field {field}` restores the provider value. `GET` detail returns `provider_values` + `overridden_fields`. Product sync calls `refreshDealsFromExternalProduct` for draft/scheduled/live deals (skips overridden fields). Picker: `GET .../operators/:id/deal-products`. `importProviderImages` imports remaining provider image URLs.
+
+**Integrated pricing / discount verification (Chunk 33):** `web/lib/marketplace/deal-integrated-pricing.ts`. Integrated `original_price_minor` is read-only (PATCH rejected) and synced from the provider product. Mechanisms: `price_option` (select provider discounted option → `external_deal_price_option_id` + read-only `deal_price_minor`), `promo_code` (operator enters code + deal price; `adapter.verifyDiscount`), `separate_product` (second `ExternalProduct` referenced as `product:<uuid>` in `external_deal_price_option_id`). All prices still must pass `MIN_DISCOUNT_PCT`. `POST /api/marketplace/operator-deals/:id/verify-discount` → `{ status: verified|not_found|cannot_verify|failed, options[] }`; stores `discount_verification` on the deal. When status is `cannot_verify`, set `promo_code_confirmed_by_operator=true` (and pass Test link before publish — Chunk 35). `GET` detail also returns `provider_price_options` and `discount_verification`. Editor Step 4 shows read-only originals, mechanism picker, and verification status text ("Verified in Rezdy", "Not found", "Can't verify; confirm manually").
 
 ### 3.9 Operator and settings tables
 | Table | Fields | Notes |

@@ -52,6 +52,7 @@ import {
   updateDealSessionApi,
   updateOperatorDeal,
   uploadDealMediaApi,
+  verifyDealDiscountApi,
   type DealProductPickerItem,
   type OperatorDealTemplate,
 } from "@/lib/marketplace/operator-deals-client";
@@ -146,7 +147,6 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
   }, [initialDealId, operatorId, token]);
 
   useEffect(() => {
-    if (initialDealId) return;
     let cancelled = false;
     setProductsLoading(true);
     (async () => {
@@ -168,7 +168,7 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [initialDealId, operatorId, token]);
+  }, [operatorId, token]);
 
   async function withLiveConfirm(
     run: (confirm: boolean) => Promise<void>
@@ -512,7 +512,26 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
             <PricingStep
               deal={deal}
               options={detail.priceOptions}
+              providerPriceOptions={detail.provider_price_options}
+              discountVerification={detail.discount_verification}
+              separateProducts={products}
               onPatchDeal={(patch) => void patchDeal(patch)}
+              onVerifyDiscount={async (opts) => {
+                if (!dealId) return;
+                setError(null);
+                try {
+                  await verifyDealDiscountApi(dealId, opts ?? {}, token);
+                  await refreshAfterChildChange();
+                } catch (err) {
+                  setError(
+                    err instanceof OperatorDealsApiError
+                      ? err.message
+                      : err instanceof Error
+                        ? err.message
+                        : "Verify failed"
+                  );
+                }
+              }}
               onAddOption={async (body) => {
                 if (!dealId) return;
                 setError(null);

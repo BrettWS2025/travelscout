@@ -104,6 +104,8 @@ function incompleteDetail() {
     publish_button: "Submit for review" as const,
     provider_values: null,
     overridden_fields: [],
+    provider_price_options: null,
+    discount_verification: null,
   };
 }
 

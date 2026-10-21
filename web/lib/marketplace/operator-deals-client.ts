@@ -316,6 +316,30 @@ export function deleteDealPriceOptionApi(
   );
 }
 
+export function verifyDealDiscountApi(
+  dealId: string,
+  body: { promo_code_confirmed_by_operator?: boolean } = {},
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    deal: Deal;
+    verification: {
+      status: "verified" | "not_found" | "cannot_verify" | "failed";
+      checked_at: string;
+      options: Array<{
+        price_option_id: string;
+        status: "verified" | "not_found" | "cannot_verify" | "failed";
+        message?: string;
+        actual_price_minor?: number;
+      }>;
+    };
+    status: "verified" | "not_found" | "cannot_verify" | "failed";
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/verify-discount`,
+    { method: "POST", body, accessToken }
+  );
+}
+
 export function uploadDealMediaApi(
   dealId: string,
   files: File[],

@@ -261,6 +261,8 @@ export function makeDealFixture(
     currency: "NZD",
     discountMechanism: null,
     promoCode: null,
+    promoCodeConfirmedByOperator: false,
+    discountVerification: null,
     discountInputMode: "deal_price",
     steppedDiscountEnabled: false,
     capacityMode: "manual_count",
