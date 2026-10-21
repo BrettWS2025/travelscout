@@ -34,10 +34,12 @@ import {
   createDealFromTemplateApi,
   createDealPriceOptionApi,
   createDealSessionApi,
+  createDiscountStepApi,
   createOperatorDeal,
   deleteDealMediaApi,
   deleteDealPriceOptionApi,
   deleteDealSessionApi,
+  deleteDiscountStepApi,
   duplicateOperatorDeal,
   getOperatorDeal,
   importProviderImagesApi,
@@ -52,6 +54,7 @@ import {
   updateDealMediaApi,
   updateDealPriceOptionApi,
   updateDealSessionApi,
+  updateDiscountStepApi,
   updateOperatorDeal,
   uploadDealMediaApi,
   verifyDealDiscountApi,
@@ -545,6 +548,7 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
             <PricingStep
               deal={deal}
               options={detail.priceOptions}
+              discountSteps={detail.discountSteps}
               providerPriceOptions={detail.provider_price_options}
               discountVerification={detail.discount_verification}
               separateProducts={products}
@@ -599,6 +603,64 @@ export function DealEditor({ operatorId, dealId: initialDealId }: Props) {
                       dealId,
                       id,
                       { ...body, confirm },
+                      token
+                    );
+                    await refreshAfterChildChange();
+                  });
+                } catch (err) {
+                  if (err instanceof OperatorDealsApiError) {
+                    setError(err.message);
+                  }
+                }
+              }}
+              onAddStep={async (body) => {
+                if (!dealId) return;
+                setError(null);
+                try {
+                  await withLiveConfirm(async (confirm) => {
+                    await createDiscountStepApi(
+                      dealId,
+                      { ...body, confirm },
+                      token
+                    );
+                    await refreshAfterChildChange();
+                  });
+                } catch (err) {
+                  setError(
+                    err instanceof OperatorDealsApiError
+                      ? err.message
+                      : err instanceof Error
+                        ? err.message
+                        : "Step failed"
+                  );
+                }
+              }}
+              onUpdateStep={async (id, body) => {
+                if (!dealId) return;
+                try {
+                  await withLiveConfirm(async (confirm) => {
+                    await updateDiscountStepApi(
+                      dealId,
+                      id,
+                      { ...body, confirm },
+                      token
+                    );
+                    await refreshAfterChildChange();
+                  });
+                } catch (err) {
+                  if (err instanceof OperatorDealsApiError) {
+                    setError(err.message);
+                  }
+                }
+              }}
+              onDeleteStep={async (id) => {
+                if (!dealId) return;
+                try {
+                  await withLiveConfirm(async (confirm) => {
+                    await deleteDiscountStepApi(
+                      dealId,
+                      id,
+                      { confirm },
                       token
                     );
                     await refreshAfterChildChange();

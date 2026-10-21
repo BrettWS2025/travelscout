@@ -31,6 +31,7 @@ import {
   type DealActor,
   type DealStatusStore,
 } from "./deal-status";
+import { bookingPromoForSession } from "./deal-stepped-discounts";
 import {
   isIntegratedDealType,
   isManualDealType,
@@ -374,7 +375,8 @@ function buildDestinationUrl(
   store: DealDraftStore,
   deal: Deal,
   session: DealSession | null,
-  clickId: string
+  clickId: string,
+  now?: string
 ): string | null {
   const type = deal.bookingDestinationType;
   if (type === "phone" && deal.bookingPhone) {
@@ -388,6 +390,15 @@ function buildDestinationUrl(
   }
 
   let baseUrl: string | null = deal.bookingUrl;
+  const promoCode =
+    session != null
+      ? bookingPromoForSession(
+          store,
+          deal,
+          session,
+          now ?? new Date().toISOString()
+        )
+      : deal.promoCode;
 
   if (
     type === "provider_booking_page" &&
@@ -411,7 +422,7 @@ function buildDestinationUrl(
           extSessionExternalId
             ? { external_id: extSessionExternalId }
             : undefined,
-          deal.promoCode
+          promoCode
         );
       } catch {
         // fall through to deal.bookingUrl
@@ -681,7 +692,7 @@ async function handleIntegratedBookNow(
     recheckResult = "available";
   }
 
-  const url = buildDestinationUrl(store, deal, session, clickId);
+  const url = buildDestinationUrl(store, deal, session, clickId, now);
   if (!url) {
     patchClickEvent(store, click, { recheckResult });
     return {
@@ -739,7 +750,7 @@ function handleManualBookNow(
     };
   }
 
-  const url = buildDestinationUrl(store, deal, session, clickId);
+  const url = buildDestinationUrl(store, deal, session, clickId, now);
   patchClickEvent(store, click, {
     recheckResult: null,
     redirectUrl: url,

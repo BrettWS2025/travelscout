@@ -7,6 +7,7 @@ import type { Deal } from "./deal";
 import { DEAL_FIELD_LIMITS } from "./deal";
 import type { DealDetail } from "./deal-draft";
 import type { DealPriceOption, DealSession } from "./deal-session";
+import { lowestCurrentPriceOption } from "./deal-stepped-discounts";
 import {
   EDITOR_STEPS,
   type EditorStep,
@@ -45,8 +46,9 @@ export type DealEditorSummary = {
 export function summarizeDealEditor(
   detail: Pick<
     DealDetail,
-    "priceOptions" | "sessions" | "validation"
-  > | null
+    "deal" | "priceOptions" | "discountSteps" | "sessions" | "validation"
+  > | null,
+  now?: string
 ): DealEditorSummary {
   if (!detail) {
     return {
@@ -60,12 +62,21 @@ export function summarizeDealEditor(
   }
 
   const options = detail.priceOptions ?? [];
-  let lowest: DealPriceOption | null = null;
-  for (const opt of options) {
-    if (lowest == null || opt.dealPriceMinor < lowest.dealPriceMinor) {
-      lowest = opt;
-    }
-  }
+  const sessions = detail.sessions ?? [];
+  const nowIso = now ?? new Date().toISOString();
+  const nextSession =
+    [...sessions]
+      .filter((s) => Date.parse(s.startAt) >= Date.parse(nowIso))
+      .sort((a, b) => a.startAt.localeCompare(b.startAt))[0] ??
+    sessions[0] ??
+    null;
+  const { option: lowest, current } = lowestCurrentPriceOption(
+    options,
+    nextSession,
+    nowIso,
+    detail.discountSteps ?? [],
+    detail.deal
+  );
 
   const checks =
     "checks" in detail.validation && Array.isArray(detail.validation.checks)
@@ -79,12 +90,13 @@ export function summarizeDealEditor(
 
   return {
     lowestOriginalMinor: lowest?.originalPriceMinor ?? null,
-    lowestDealMinor: lowest?.dealPriceMinor ?? null,
+    lowestDealMinor: current?.dealPriceMinor ?? lowest?.dealPriceMinor ?? null,
     discountPct:
-      lowest != null
+      current?.discountPct ??
+      (lowest != null
         ? discountPct(lowest.originalPriceMinor, lowest.dealPriceMinor)
-        : null,
-    sessionCount: detail.sessions?.length ?? 0,
+        : null),
+    sessionCount: sessions.length,
     validationOk,
     failingChecks,
   };

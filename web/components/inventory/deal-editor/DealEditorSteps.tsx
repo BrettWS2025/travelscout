@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import type { Deal } from "@/lib/marketplace/deal";
 import type { DealMedia } from "@/lib/marketplace/deal-media";
-import type { DealPriceOption, DealSession } from "@/lib/marketplace/deal-session";
+import type {
+  DealPriceOption,
+  DealSession,
+  DiscountStep,
+} from "@/lib/marketplace/deal-session";
 import type { FieldError } from "@/lib/marketplace/deal";
 import type { ProviderContentValues } from "@/lib/marketplace/deal-integrated";
 import {
@@ -928,6 +932,7 @@ export function ImagesStep({
 export function PricingStep({
   deal,
   options,
+  discountSteps = [],
   providerPriceOptions = null,
   discountVerification = null,
   separateProducts = [],
@@ -935,10 +940,14 @@ export function PricingStep({
   onAddOption,
   onUpdateOption,
   onDeleteOption,
+  onAddStep,
+  onUpdateStep,
+  onDeleteStep,
   onVerifyDiscount,
 }: {
   deal: Deal;
   options: DealPriceOption[];
+  discountSteps?: DiscountStep[];
   providerPriceOptions?: NormalisedPriceOption[] | null;
   discountVerification?: DiscountVerification | null;
   /** Other enabled products on the same integration (separate_product). */
@@ -947,6 +956,9 @@ export function PricingStep({
   onAddOption: (body: Record<string, unknown>) => void;
   onUpdateOption: (id: string, body: Record<string, unknown>) => void;
   onDeleteOption: (id: string) => void;
+  onAddStep?: (body: Record<string, unknown>) => void;
+  onUpdateStep?: (id: string, body: Record<string, unknown>) => void;
+  onDeleteStep?: (id: string) => void;
   onVerifyDiscount?: (opts?: {
     promo_code_confirmed_by_operator?: boolean;
   }) => void;
@@ -1333,6 +1345,200 @@ export function PricingStep({
           Add price option
         </button>
       )}
+
+      <div className="rounded-xl border border-[var(--ts-ink)]/10 bg-white/50 px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
+              Stepped discount timeline
+            </h4>
+            <p className="mt-1 text-xs text-[var(--ts-muted)]">
+              Deepen the discount as departure approaches (still ≥50% off).
+            </p>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--ts-ink)]">
+            <input
+              type="checkbox"
+              checked={deal.steppedDiscountEnabled}
+              onChange={(e) =>
+                onPatchDeal({ stepped_discount_enabled: e.target.checked })
+              }
+            />
+            Enable stepped discounts
+          </label>
+        </div>
+
+        {deal.steppedDiscountEnabled &&
+          options.map((opt) => {
+            const optionSteps = discountSteps
+              .filter((s) => s.priceOptionId === opt.id)
+              .sort((a, b) => b.hoursBeforeStart - a.hoursBeforeStart);
+            return (
+              <div key={opt.id} className="mt-4 border-t border-[var(--ts-ink)]/10 pt-4">
+                <p className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-wide text-[var(--ts-muted)]">
+                  {opt.label || "Option"} — base{" "}
+                  {formatMinorAsDollars(opt.dealPriceMinor)}
+                </p>
+                <ol className="mt-3 space-y-3">
+                  {optionSteps.map((step) => {
+                    const status = clientPriceRowStatus(
+                      opt.originalPriceMinor,
+                      step.dealPriceMinor
+                    );
+                    return (
+                      <li
+                        key={step.id}
+                        className="grid gap-2 sm:grid-cols-[7rem_7rem_1fr_auto] sm:items-end"
+                      >
+                        <div>
+                          <label className={labelClass}>Hours before</label>
+                          <input
+                            className={fieldClass}
+                            type="number"
+                            min={1}
+                            max={72}
+                            value={step.hoursBeforeStart}
+                            onChange={(e) => {
+                              const n = Number(e.target.value);
+                              if (!Number.isInteger(n)) return;
+                              onUpdateStep?.(step.id, {
+                                hours_before_start: n,
+                              });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Deal price</label>
+                          <input
+                            className={fieldClass}
+                            value={minorToDollarsInput(step.dealPriceMinor)}
+                            onChange={(e) => {
+                              const minor = dollarsToMinor(e.target.value);
+                              if (minor == null) return;
+                              onUpdateStep?.(step.id, {
+                                deal_price_minor: minor,
+                              });
+                            }}
+                          />
+                        </div>
+                        {(deal.discountMechanism === "promo_code" ||
+                          deal.discountMechanism === "quote_code" ||
+                          !integrated) && (
+                          <div>
+                            <label className={labelClass}>Step promo code</label>
+                            <input
+                              className={fieldClass}
+                              value={step.promoCode ?? ""}
+                              onChange={(e) =>
+                                onUpdateStep?.(step.id, {
+                                  promo_code: e.target.value
+                                    .toUpperCase()
+                                    .replace(/\s/g, ""),
+                                })
+                              }
+                            />
+                          </div>
+                        )}
+                        {integrated &&
+                          deal.discountMechanism === "price_option" && (
+                            <div>
+                              <label className={labelClass}>
+                                Provider discounted option
+                              </label>
+                              <select
+                                className={fieldClass}
+                                value={step.externalDealPriceOptionId ?? ""}
+                                onChange={(e) => {
+                                  const extId = e.target.value || null;
+                                  const provider = (
+                                    providerPriceOptions ?? []
+                                  ).find((p) => p.external_id === extId);
+                                  onUpdateStep?.(step.id, {
+                                    external_deal_price_option_id: extId,
+                                    ...(provider
+                                      ? {
+                                          deal_price_minor: provider.price_minor,
+                                        }
+                                      : {}),
+                                  });
+                                }}
+                              >
+                                <option value="">Select…</option>
+                                {(providerPriceOptions ?? []).map((p) => (
+                                  <option key={p.external_id} value={p.external_id}>
+                                    {p.label} — {formatMinorAsDollars(p.price_minor)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        <div className="flex items-center gap-3 pb-2">
+                          <span
+                            className={`text-xs font-semibold ${
+                              status.passes
+                                ? "text-emerald-700"
+                                : "text-red-700"
+                            }`}
+                          >
+                            {status.discountPct != null
+                              ? `${status.discountPct}%`
+                              : "—"}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-red-700"
+                            onClick={() => onDeleteStep?.(step.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <button
+                  type="button"
+                  className="mt-3 rounded-xl border border-[var(--ts-ink)]/15 bg-white px-3 py-2 text-xs font-semibold text-[var(--ts-ink)]"
+                  onClick={() => {
+                    const deeper =
+                      optionSteps.length > 0
+                        ? Math.max(
+                            1,
+                            Math.min(
+                              ...optionSteps.map((s) => s.hoursBeforeStart)
+                            ) - 6
+                          )
+                        : 72;
+                    const nextPrice =
+                      optionSteps.length > 0
+                        ? Math.max(
+                            0,
+                            Math.min(...optionSteps.map((s) => s.dealPriceMinor)) -
+                              Math.floor(opt.originalPriceMinor * 0.1)
+                          )
+                        : opt.dealPriceMinor;
+                    onAddStep?.({
+                      price_option_id: opt.id,
+                      hours_before_start: deeper,
+                      deal_price_minor: nextPrice,
+                      promo_code:
+                        deal.discountMechanism === "promo_code" ||
+                        deal.discountMechanism === "quote_code"
+                          ? `${(deal.promoCode ?? "STEP").slice(0, 20)}${deeper}`
+                          : undefined,
+                      external_deal_price_option_id:
+                        deal.discountMechanism === "price_option"
+                          ? opt.externalDealPriceOptionId
+                          : undefined,
+                    });
+                  }}
+                >
+                  Add step
+                </button>
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
 }

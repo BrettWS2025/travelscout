@@ -227,6 +227,14 @@ export type DealDraftStore = {
   >;
   /** Chunk 42: billing accounts (one per operator). */
   billingAccounts?: Map<string, import("./settings").BillingAccount>;
+  /**
+   * Chunk 43: last applied stepped-discount display price per price option
+   * (status ticker activation events + cached list/Book now price).
+   */
+  discountDisplayCache?: Map<
+    string,
+    import("./deal-stepped-discounts").DiscountDisplayCacheEntry
+  >;
 };
 
 export function createDealDraftStore(
@@ -257,6 +265,7 @@ export function createDealDraftStore(
     complianceDocuments: new Map(),
     complianceReminders: new Map(),
     billingAccounts: new Map(),
+    discountDisplayCache: new Map(),
   };
 }
 
@@ -1376,18 +1385,36 @@ export function duplicateDeal(
     );
   }
 
-  // Price options (new ids); steps intentionally not copied (Chunk 43).
+  // Price options (new ids) + discount steps remapped to new option ids.
+  const optionIdMap = new Map<string, string>();
   for (const opt of [...store.priceOptions.values()].filter(
     (p) => p.dealId === sourceDealId
   )) {
+    const newOptId = crypto.randomUUID();
+    optionIdMap.set(opt.id, newOptId);
     const newOpt: DealPriceOption = {
       ...opt,
-      id: crypto.randomUUID(),
+      id: newOptId,
       dealId: id,
       createdAt: now,
       updatedAt: now,
     };
     store.priceOptions.set(newOpt.id, newOpt);
+  }
+  for (const st of [...store.discountSteps.values()].filter(
+    (s) => s.dealId === sourceDealId
+  )) {
+    const newOptionId = optionIdMap.get(st.priceOptionId);
+    if (!newOptionId) continue;
+    const newStep: DiscountStep = {
+      ...st,
+      id: crypto.randomUUID(),
+      dealId: id,
+      priceOptionId: newOptionId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.discountSteps.set(newStep.id, newStep);
   }
 
   logDealEvent(

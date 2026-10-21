@@ -11,6 +11,7 @@ import type { Deal } from "./deal";
 import type { DealDraftStore } from "./deal-draft";
 import { getDealCoverImage } from "./deal-media";
 import type { DealPriceOption, DealSession } from "./deal-session";
+import { lowestCurrentPriceOption } from "./deal-stepped-discounts";
 import type { Integration } from "./integration";
 import {
   isCategory,
@@ -544,13 +545,32 @@ export function listOperatorDeals(
     deal: Deal;
     next: DealSession | null;
     lowest: DealPriceOption | null;
+    currentDealPriceMinor: number | null;
+    currentDiscountPct: number | null;
   };
 
   let enriched: Enriched[] = filtered.map((deal) => {
     const sessions = sessionsForDeal(store, deal.id);
     const next = nextSessionForDeal(sessions, now);
-    const lowest = lowestPriceOption(priceOptionsForDeal(store, deal.id));
-    return { deal, next, lowest };
+    const options = priceOptionsForDeal(store, deal.id);
+    const steps = [...store.discountSteps.values()].filter(
+      (s) => s.dealId === deal.id
+    );
+    const { option: lowest, current } = lowestCurrentPriceOption(
+      options,
+      next,
+      now,
+      steps,
+      deal
+    );
+    return {
+      deal,
+      next,
+      lowest,
+      currentDealPriceMinor: current?.dealPriceMinor ?? lowest?.dealPriceMinor ?? null,
+      currentDiscountPct:
+        current?.discountPct ?? lowest?.discountPct ?? null,
+    };
   });
 
   if (dateFromMs != null || dateToMs != null) {
@@ -594,7 +614,8 @@ export function listOperatorDeals(
   const start = (page - 1) * pageSize;
   const pageRows = enriched.slice(start, start + pageSize);
 
-  const deals: DealListRow[] = pageRows.map(({ deal, next, lowest }) => ({
+  const deals: DealListRow[] = pageRows.map(
+    ({ deal, next, lowest, currentDealPriceMinor, currentDiscountPct }) => ({
     id: deal.id,
     cover_thumbnail_url: coverThumbnailUrl(store, deal.id),
     title: deal.title,
@@ -606,8 +627,8 @@ export function listOperatorDeals(
       ? formatLocalDateTime(next.startAt, timeZone)
       : null,
     original_price_minor: lowest?.originalPriceMinor ?? null,
-    deal_price_minor: lowest?.dealPriceMinor ?? null,
-    discount_pct: lowest?.discountPct ?? null,
+    deal_price_minor: currentDealPriceMinor,
+    discount_pct: currentDiscountPct,
     seats_displayed: next?.seatsDisplayed ?? null,
     cutoff_at: next
       ? cutoffAtForSession(next, deal.salesCutoffMinutes)
@@ -626,7 +647,8 @@ export function listOperatorDeals(
       query.permissionUser,
       operatorId
     ),
-  }));
+  })
+  );
 
   const integrations = integrationsForOperator(
     store,
@@ -768,7 +790,17 @@ export function getOperatorDealsCalendar(
 
     const deal = store.deals.get(session.dealId);
     if (!deal) continue;
-    const lowest = lowestPriceOption(priceOptionsForDeal(store, deal.id));
+    const options = priceOptionsForDeal(store, deal.id);
+    const steps = [...store.discountSteps.values()].filter(
+      (s) => s.dealId === deal.id
+    );
+    const { option: lowest, current } = lowestCurrentPriceOption(
+      options,
+      session,
+      now,
+      steps,
+      deal
+    );
 
     byDay.get(dayKey)!.push({
       session_id: session.id,
@@ -785,9 +817,10 @@ export function getOperatorDealsCalendar(
         source_provider: deal.sourceProvider,
         status: deal.status,
         cover_thumbnail_url: coverThumbnailUrl(store, deal.id),
-        deal_price_minor: lowest?.dealPriceMinor ?? null,
+        deal_price_minor:
+          current?.dealPriceMinor ?? lowest?.dealPriceMinor ?? null,
         original_price_minor: lowest?.originalPriceMinor ?? null,
-        discount_pct: lowest?.discountPct ?? null,
+        discount_pct: current?.discountPct ?? lowest?.discountPct ?? null,
       },
     });
   }
