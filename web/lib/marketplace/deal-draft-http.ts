@@ -175,23 +175,36 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
   if (err instanceof BookingLinkError) {
     return Response.json({ error: err.message }, { status: err.status });
   }
-  if (err instanceof LiveDealConfirmRequiredError) {
+  if (
+    err instanceof LiveDealConfirmRequiredError ||
+    (err instanceof Error &&
+      err.name === "LiveDealConfirmRequiredError" &&
+      "validation" in err &&
+      "warnings" in err)
+  ) {
+    const liveErr = err as LiveDealConfirmRequiredError;
     return Response.json(
       {
-        error: err.message,
+        error: liveErr.message,
         needs_confirm: true,
-        warnings: err.warnings,
-        validation: err.validation,
+        warnings: liveErr.warnings,
+        validation: liveErr.validation,
       },
       { status: 409 }
     );
   }
-  if (err instanceof MinDiscountError) {
+  if (
+    err instanceof MinDiscountError ||
+    (err instanceof Error &&
+      err.name === "MinDiscountError" &&
+      "maxDealPriceMinor" in err)
+  ) {
+    const minErr = err as MinDiscountError;
     return Response.json(
       {
-        error: err.message,
-        max_deal_price_minor: err.maxDealPriceMinor,
-        errors: err.errors ?? [],
+        error: minErr.message,
+        max_deal_price_minor: minErr.maxDealPriceMinor,
+        errors: minErr.errors ?? [],
       },
       { status: 400 }
     );

@@ -310,7 +310,8 @@ function productImageUrls(product: ExternalProduct): string[] {
   return out;
 }
 
-function parseProviderPriceOptions(
+/** Parse normalised price options from an ExternalProduct payload. */
+export function parseProviderPriceOptions(
   product: ExternalProduct
 ): NormalisedPriceOption[] {
   const out: NormalisedPriceOption[] = [];

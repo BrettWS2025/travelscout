@@ -90,6 +90,25 @@ export type Deal = {
   currency: string | null;
   discountMechanism: DiscountMechanism | null;
   promoCode: string | null;
+  /**
+   * Chunk 33: when adapter.verifyDiscount returns cannot_verify, operator
+   * must confirm the code/discount exists (and pass Test link before publish).
+   */
+  promoCodeConfirmedByOperator: boolean;
+  /**
+   * Chunk 33: last POST .../verify-discount result (null until verified).
+   * Shape: { status, checked_at, options[] }.
+   */
+  discountVerification: {
+    status: "verified" | "not_found" | "cannot_verify" | "failed";
+    checked_at: string;
+    options: Array<{
+      price_option_id: string;
+      status: "verified" | "not_found" | "cannot_verify" | "failed";
+      message?: string;
+      actual_price_minor?: number;
+    }>;
+  } | null;
   discountInputMode: DiscountInputMode;
   steppedDiscountEnabled: boolean;
   capacityMode: CapacityMode | null;
@@ -164,6 +183,7 @@ export type DealFieldInput = {
   currency?: string | null;
   discountMechanism?: DiscountMechanism | null;
   promoCode?: string | null;
+  promoCodeConfirmedByOperator?: boolean | null;
   discountInputMode?: DiscountInputMode | null;
   steppedDiscountEnabled?: boolean | null;
   capacityMode?: CapacityMode | null;

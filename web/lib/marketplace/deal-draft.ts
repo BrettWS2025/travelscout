@@ -86,6 +86,7 @@ import {
   integratedPrefillDealFields,
   listIntegratedProductsForPicker,
   mergeOverriddenFieldsFromPatch,
+  parseProviderPriceOptions,
   providerValuesForDeal,
   requireEnabledProductForDeal,
   revertDealContentField,
@@ -93,6 +94,19 @@ import {
   type ProviderContentValues,
   type IntegratedProductPickerItem,
 } from "./deal-integrated";
+import type { NormalisedPriceOption } from "./providers/types";
+import type { DiscountVerification } from "./deal-integrated-pricing-shared";
+
+export type { DiscountVerification };
+
+function clearDiscountVerificationOnDeal(deal: Deal, now?: string): Deal {
+  return {
+    ...deal,
+    discountVerification: null,
+    promoCodeConfirmedByOperator: false,
+    updatedAt: now ?? new Date().toISOString(),
+  };
+}
 import {
   createOperatorStore,
   getBookingDefaults,
@@ -434,6 +448,18 @@ export function dealFieldInputFromClient(
   assign("currency", get("currency"));
   assign("discountMechanism", get("discountMechanism", "discount_mechanism"));
   assign("promoCode", get("promoCode", "promo_code"));
+  {
+    const rawConfirmed = get(
+      "promoCodeConfirmedByOperator",
+      "promo_code_confirmed_by_operator"
+    );
+    if (rawConfirmed !== undefined) {
+      assign(
+        "promoCodeConfirmedByOperator",
+        rawConfirmed === true || rawConfirmed === "true"
+      );
+    }
+  }
   assign("discountInputMode", get("discountInputMode", "discount_input_mode"));
   assign(
     "steppedDiscountEnabled",
@@ -505,6 +531,7 @@ const DUPLICATE_CONTENT_KEYS: ReadonlyArray<keyof Deal> = [
   "currency",
   "discountMechanism",
   "promoCode",
+  "promoCodeConfirmedByOperator",
   "discountInputMode",
   "steppedDiscountEnabled",
   "capacityMode",
@@ -889,6 +916,13 @@ export type DealDetail = {
   provider_values: ProviderContentValues | null;
   /** Chunk 32: snake_case content fields the operator has overridden. */
   overridden_fields: string[];
+  /**
+   * Chunk 33: provider price options for the linked product (integrated picker).
+   * Null for manual deals.
+   */
+  provider_price_options: NormalisedPriceOption[] | null;
+  /** Chunk 33: last verify-discount result (also on deal.discountVerification). */
+  discount_verification: DiscountVerification | null;
 };
 
 export type GetDealDetailOptions = {
@@ -934,6 +968,15 @@ export async function getDealDetail(
         : undefined,
   });
 
+  let providerPriceOptions: NormalisedPriceOption[] | null = null;
+  if (
+    isIntegratedDealType(freshDeal.dealType) &&
+    freshDeal.externalProductId
+  ) {
+    const product = store.externalProducts?.get(freshDeal.externalProductId);
+    providerPriceOptions = product ? parseProviderPriceOptions(product) : [];
+  }
+
   return {
     deal: freshDeal,
     sessions,
@@ -944,6 +987,8 @@ export async function getDealDetail(
     publish_button,
     provider_values: providerValuesForDeal(store, freshDeal),
     overridden_fields: [...(freshDeal.overriddenFields ?? [])],
+    provider_price_options: providerPriceOptions,
+    discount_verification: freshDeal.discountVerification ?? null,
   };
 }
 
@@ -1054,6 +1099,29 @@ export function updateDraftDeal(
         store,
         slugifyDealTitle(updated.title),
         dealId
+      ),
+    };
+  }
+
+  // Chunk 33: mechanism / promo changes invalidate prior verification.
+  const mechanismChanged =
+    patch.discountMechanism !== undefined &&
+    patch.discountMechanism !== existing.discountMechanism;
+  const promoChanged =
+    patch.promoCode !== undefined && patch.promoCode !== existing.promoCode;
+  if (
+    isIntegratedDealType(updated.dealType) &&
+    (mechanismChanged || promoChanged)
+  ) {
+    updated = clearDiscountVerificationOnDeal(updated, now);
+  }
+
+  // Clients may set promo_code_confirmed_by_operator when cannot_verify.
+  if (validated.promoCodeConfirmedByOperator !== undefined) {
+    updated = {
+      ...updated,
+      promoCodeConfirmedByOperator: Boolean(
+        validated.promoCodeConfirmedByOperator
       ),
     };
   }

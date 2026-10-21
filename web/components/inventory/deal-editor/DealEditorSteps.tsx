@@ -21,6 +21,7 @@ import {
   CANCELLATION_POLICY_TYPES,
   CATEGORIES,
   FITNESS_LEVELS,
+  INTEGRATED_MECHANISMS,
   MANUAL_MECHANISMS,
   PRICE_OPTION_TYPES,
   type BookingDestinationType,
@@ -31,6 +32,14 @@ import {
   type FitnessLevel,
   type PriceOptionType,
 } from "@/lib/marketplace/enums";
+import {
+  formatDiscountVerificationStatusText,
+  formatSeparateProductRef,
+  parseSeparateProductRef,
+  type DiscountVerification,
+} from "@/lib/marketplace/deal-integrated-pricing-shared";
+import type { DealProductPickerItem } from "@/lib/marketplace/operator-deals-client";
+import type { NormalisedPriceOption } from "@/lib/marketplace/providers/types";
 import { PLATFORM_REGIONS } from "@/lib/marketplace/settings";
 import type { PublishValidationCheckKeyed } from "@/lib/marketplace/deal-publish-validation";
 import type { PublishButtonLabel } from "@/lib/marketplace/deal-publish";
@@ -919,19 +928,43 @@ export function ImagesStep({
 export function PricingStep({
   deal,
   options,
+  providerPriceOptions = null,
+  discountVerification = null,
+  separateProducts = [],
   onPatchDeal,
   onAddOption,
   onUpdateOption,
   onDeleteOption,
+  onVerifyDiscount,
 }: {
   deal: Deal;
   options: DealPriceOption[];
+  providerPriceOptions?: NormalisedPriceOption[] | null;
+  discountVerification?: DiscountVerification | null;
+  /** Other enabled products on the same integration (separate_product). */
+  separateProducts?: DealProductPickerItem[];
   onPatchDeal: (patch: Record<string, unknown>) => void;
   onAddOption: (body: Record<string, unknown>) => void;
   onUpdateOption: (id: string, body: Record<string, unknown>) => void;
   onDeleteOption: (id: string) => void;
+  onVerifyDiscount?: (opts?: {
+    promo_code_confirmed_by_operator?: boolean;
+  }) => void;
 }) {
+  const integrated = isIntegratedDealType(deal.dealType);
   const mode = (deal.discountInputMode ?? "deal_price") as DiscountInputMode;
+  const mechanisms = integrated ? INTEGRATED_MECHANISMS : MANUAL_MECHANISMS;
+  const defaultMechanism = integrated ? "promo_code" : "manual_price";
+  const verification =
+    discountVerification ?? deal.discountVerification ?? null;
+  const providerName = deal.sourceProvider === "manual" ? "provider" : deal.sourceProvider;
+  const statusText = formatDiscountVerificationStatusText(
+    providerName,
+    verification?.status
+  );
+
+  const optionVerifyMsg = (optionId: string) =>
+    verification?.options.find((o) => o.price_option_id === optionId);
 
   return (
     <div className="space-y-4">
@@ -944,35 +977,40 @@ export function PricingStep({
           <label className={labelClass}>Discount mechanism</label>
           <select
             className={fieldClass}
-            value={deal.discountMechanism ?? "manual_price"}
+            value={deal.discountMechanism ?? defaultMechanism}
             onChange={(e) =>
               onPatchDeal({
                 discount_mechanism: e.target.value as DiscountMechanism,
               })
             }
           >
-            {MANUAL_MECHANISMS.map((m) => (
+            {mechanisms.map((m) => (
               <option key={m} value={m}>
                 {m.replace(/_/g, " ")}
               </option>
             ))}
           </select>
         </div>
-        <div>
-          <label className={labelClass}>Input mode</label>
-          <select
-            className={fieldClass}
-            value={mode}
-            onChange={(e) =>
-              onPatchDeal({
-                discount_input_mode: e.target.value as DiscountInputMode,
-              })
-            }
-          >
-            <option value="deal_price">Deal price</option>
-            <option value="percentage">Percentage off</option>
-          </select>
-        </div>
+        {(deal.discountMechanism === "promo_code" ||
+          deal.discountMechanism === "manual_price" ||
+          deal.discountMechanism === "quote_code" ||
+          !integrated) && (
+          <div>
+            <label className={labelClass}>Input mode</label>
+            <select
+              className={fieldClass}
+              value={mode}
+              onChange={(e) =>
+                onPatchDeal({
+                  discount_input_mode: e.target.value as DiscountInputMode,
+                })
+              }
+            >
+              <option value="deal_price">Deal price</option>
+              <option value="percentage">Percentage off</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {(deal.discountMechanism === "quote_code" ||
@@ -991,6 +1029,53 @@ export function PricingStep({
         </div>
       )}
 
+      {integrated && (
+        <div className="rounded-xl border border-[var(--ts-ink)]/10 bg-white/60 px-4 py-3">
+          <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
+            Verification:{" "}
+            <span className="font-semibold">{statusText}</span>
+          </p>
+          {verification?.options.map((o) =>
+            o.message ? (
+              <p
+                key={o.price_option_id}
+                className="mt-1 text-xs text-[var(--ts-muted)]"
+              >
+                {o.message}
+              </p>
+            ) : null
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="rounded-xl bg-[var(--ts-teal)] px-4 py-2 text-sm font-semibold text-white"
+              onClick={() => onVerifyDiscount?.()}
+            >
+              Verify discount
+            </button>
+            {verification?.status === "cannot_verify" && (
+              <label className="flex items-center gap-2 text-sm text-[var(--ts-ink)]">
+                <input
+                  type="checkbox"
+                  checked={deal.promoCodeConfirmedByOperator}
+                  onChange={(e) => {
+                    onPatchDeal({
+                      promo_code_confirmed_by_operator: e.target.checked,
+                    });
+                    if (e.target.checked) {
+                      onVerifyDiscount?.({
+                        promo_code_confirmed_by_operator: true,
+                      });
+                    }
+                  }}
+                />
+                This code exists in my booking system
+              </label>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left font-[family-name:var(--font-sora)] text-sm">
           <thead>
@@ -998,12 +1083,22 @@ export function PricingStep({
               <th className="py-2 pr-2">Label</th>
               <th className="py-2 pr-2">Type</th>
               <th className="py-2 pr-2">Original</th>
+              {integrated && deal.discountMechanism === "price_option" && (
+                <th className="py-2 pr-2">Discounted option</th>
+              )}
+              {integrated && deal.discountMechanism === "separate_product" && (
+                <th className="py-2 pr-2">Deal product</th>
+              )}
               <th className="py-2 pr-2">
-                {mode === "percentage" ? "% off" : "Deal"}
+                {mode === "percentage" &&
+                deal.discountMechanism === "promo_code"
+                  ? "% off"
+                  : "Deal"}
               </th>
               <th className="py-2 pr-2">Discount</th>
-              <th className="py-2 pr-2">Evidence URL</th>
-              <th className="py-2" />
+              {!integrated && <th className="py-2 pr-2">Evidence URL</th>}
+              {integrated && <th className="py-2 pr-2">Status</th>}
+              {!integrated && <th className="py-2" />}
             </tr>
           </thead>
           <tbody>
@@ -1012,49 +1107,125 @@ export function PricingStep({
                 opt.originalPriceMinor,
                 opt.dealPriceMinor
               );
+              const v = optionVerifyMsg(opt.id);
+              const dealPriceReadOnly =
+                integrated &&
+                (deal.discountMechanism === "price_option" ||
+                  deal.discountMechanism === "separate_product");
               return (
                 <tr key={opt.id} className="border-b border-[var(--ts-ink)]/5">
                   <td className="py-2 pr-2">
-                    <input
-                      className={fieldClass}
-                      value={opt.label}
-                      onChange={(e) =>
-                        onUpdateOption(opt.id, { label: e.target.value })
-                      }
-                    />
+                    {integrated ? (
+                      <span>{opt.label}</span>
+                    ) : (
+                      <input
+                        className={fieldClass}
+                        value={opt.label}
+                        onChange={(e) =>
+                          onUpdateOption(opt.id, { label: e.target.value })
+                        }
+                      />
+                    )}
                   </td>
                   <td className="py-2 pr-2">
-                    <select
-                      className={fieldClass}
-                      value={opt.type}
-                      onChange={(e) =>
-                        onUpdateOption(opt.id, {
-                          type: e.target.value as PriceOptionType,
-                        })
-                      }
-                    >
-                      {PRICE_OPTION_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
+                    {integrated ? (
+                      <span>{opt.type}</span>
+                    ) : (
+                      <select
+                        className={fieldClass}
+                        value={opt.type}
+                        onChange={(e) =>
+                          onUpdateOption(opt.id, {
+                            type: e.target.value as PriceOptionType,
+                          })
+                        }
+                      >
+                        {PRICE_OPTION_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </td>
                   <td className="py-2 pr-2">
-                    <input
-                      className={fieldClass}
-                      value={minorToDollarsInput(opt.originalPriceMinor)}
-                      onChange={(e) => {
-                        const minor = dollarsToMinor(e.target.value);
-                        if (minor == null) return;
-                        onUpdateOption(opt.id, {
-                          original_price_minor: minor,
-                        });
-                      }}
-                    />
+                    {integrated ? (
+                      <span className="text-[var(--ts-muted)]">
+                        {minorToDollarsInput(opt.originalPriceMinor)}
+                        <span className="ml-1 text-xs">(from provider)</span>
+                      </span>
+                    ) : (
+                      <input
+                        className={fieldClass}
+                        value={minorToDollarsInput(opt.originalPriceMinor)}
+                        onChange={(e) => {
+                          const minor = dollarsToMinor(e.target.value);
+                          if (minor == null) return;
+                          onUpdateOption(opt.id, {
+                            original_price_minor: minor,
+                          });
+                        }}
+                      />
+                    )}
                   </td>
+                  {integrated && deal.discountMechanism === "price_option" && (
+                    <td className="py-2 pr-2">
+                      <select
+                        className={fieldClass}
+                        value={opt.externalDealPriceOptionId ?? ""}
+                        onChange={(e) =>
+                          onUpdateOption(opt.id, {
+                            external_deal_price_option_id:
+                              e.target.value || null,
+                          })
+                        }
+                      >
+                        <option value="">Select…</option>
+                        {(providerPriceOptions ?? [])
+                          .filter(
+                            (p) => p.external_id !== opt.externalPriceOptionId
+                          )
+                          .map((p) => (
+                            <option key={p.external_id} value={p.external_id}>
+                              {p.label} ({formatMinorAsDollars(p.price_minor)})
+                            </option>
+                          ))}
+                      </select>
+                    </td>
+                  )}
+                  {integrated &&
+                    deal.discountMechanism === "separate_product" && (
+                      <td className="py-2 pr-2">
+                        <select
+                          className={fieldClass}
+                          value={
+                            parseSeparateProductRef(
+                              opt.externalDealPriceOptionId
+                            ) ?? ""
+                          }
+                          onChange={(e) =>
+                            onUpdateOption(opt.id, {
+                              external_deal_price_option_id: e.target.value
+                                ? formatSeparateProductRef(e.target.value)
+                                : null,
+                            })
+                          }
+                        >
+                          <option value="">Select…</option>
+                          {separateProducts
+                            .filter((p) => p.id !== deal.externalProductId)
+                            .map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                        </select>
+                      </td>
+                    )}
                   <td className="py-2 pr-2">
-                    {mode === "percentage" ? (
+                    {dealPriceReadOnly ? (
+                      <span>{minorToDollarsInput(opt.dealPriceMinor)}</span>
+                    ) : mode === "percentage" ? (
                       <input
                         className={fieldClass}
                         defaultValue={String(status.discountPct ?? 50)}
@@ -1103,27 +1274,41 @@ export function PricingStep({
                       </p>
                     )}
                   </td>
-                  <td className="py-2 pr-2">
-                    <input
-                      className={fieldClass}
-                      value={opt.originalPriceEvidenceUrl ?? ""}
-                      placeholder="https://…"
-                      onChange={(e) =>
-                        onUpdateOption(opt.id, {
-                          original_price_evidence_url: e.target.value,
-                        })
-                      }
-                    />
-                  </td>
-                  <td className="py-2">
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-red-700"
-                      onClick={() => onDeleteOption(opt.id)}
-                    >
-                      Remove
-                    </button>
-                  </td>
+                  {!integrated && (
+                    <td className="py-2 pr-2">
+                      <input
+                        className={fieldClass}
+                        value={opt.originalPriceEvidenceUrl ?? ""}
+                        placeholder="https://…"
+                        onChange={(e) =>
+                          onUpdateOption(opt.id, {
+                            original_price_evidence_url: e.target.value,
+                          })
+                        }
+                      />
+                    </td>
+                  )}
+                  {integrated && (
+                    <td className="py-2 pr-2 text-xs text-[var(--ts-muted)]">
+                      {v
+                        ? formatDiscountVerificationStatusText(
+                            providerName,
+                            v.status
+                          )
+                        : "—"}
+                    </td>
+                  )}
+                  {!integrated && (
+                    <td className="py-2">
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-red-700"
+                        onClick={() => onDeleteOption(opt.id)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -1131,21 +1316,23 @@ export function PricingStep({
         </table>
       </div>
 
-      <button
-        type="button"
-        className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white"
-        onClick={() =>
-          onAddOption({
-            label: "Adult",
-            type: "adult",
-            original_price_minor: 20000,
-            deal_price_minor: 9000,
-            original_price_evidence_url: "https://example.com/prices",
-          })
-        }
-      >
-        Add price option
-      </button>
+      {!integrated && (
+        <button
+          type="button"
+          className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white"
+          onClick={() =>
+            onAddOption({
+              label: "Adult",
+              type: "adult",
+              original_price_minor: 20000,
+              deal_price_minor: 9000,
+              original_price_evidence_url: "https://example.com/prices",
+            })
+          }
+        >
+          Add price option
+        </button>
+      )}
     </div>
   );
 }

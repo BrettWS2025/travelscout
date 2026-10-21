@@ -31,6 +31,7 @@ import {
   type ValidateForPublishFn,
 } from "./deal-status";
 import {
+  isIntegratedDealType,
   isManualDealType,
   isPriceOptionType,
   type PriceOptionType,
@@ -875,6 +876,13 @@ export async function createDealPriceOption(
   options: InventoryMutationOptions
 ): Promise<PriceOptionMutationResult> {
   const deal = requireDeal(store, dealId);
+  if (isIntegratedDealType(deal.dealType)) {
+    throw new DealDraftError(
+      "Integrated deals get price options from the provider product; create is not allowed",
+      400,
+      [{ field: "deal_type", message: "integrated price options are seeded from the product" }]
+    );
+  }
   requireManualDeal(deal);
   const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
@@ -982,6 +990,13 @@ export async function updateDealPriceOption(
   options: InventoryMutationOptions
 ): Promise<PriceOptionMutationResult> {
   const deal = requireDeal(store, dealId);
+  if (isIntegratedDealType(deal.dealType)) {
+    // Dynamic import avoids a load-time cycle with deal-integrated-pricing.
+    const { updateIntegratedPriceOption } = await import(
+      "./deal-integrated-pricing"
+    );
+    return updateIntegratedPriceOption(store, dealId, optionId, raw, options);
+  }
   requireManualDeal(deal);
   const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
@@ -1117,6 +1132,13 @@ export async function deleteDealPriceOption(
   options: InventoryMutationOptions
 ): Promise<{ validation: PublishValidationResult }> {
   const deal = requireDeal(store, dealId);
+  if (isIntegratedDealType(deal.dealType)) {
+    throw new DealDraftError(
+      "Integrated deal price options cannot be deleted (they mirror the provider product)",
+      400,
+      [{ field: "deal_type", message: "integrated price options are provider-owned" }]
+    );
+  }
   requireManualDeal(deal);
   const validation = await assertLiveConfirmOrThrow(store, deal, options);
 
