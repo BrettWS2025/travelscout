@@ -340,6 +340,58 @@ export function verifyDealDiscountApi(
   );
 }
 
+export type AvailableExternalSessionRow = {
+  id: string;
+  external_id: string;
+  start_at: string;
+  end_at: string | null;
+  seats_available: number | null;
+  status: string;
+  last_synced_at: string | null;
+  selected: boolean;
+  deal_session_id: string | null;
+  seat_cap: number | null;
+  seats_displayed: number | null;
+};
+
+export function listAvailableSessionsApi(
+  dealId: string,
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    sessions: AvailableExternalSessionRow[];
+    capacity_mode: string | null;
+    seat_cap: number | null;
+    note: string;
+    max_lead_hours: number;
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/available-sessions`,
+    { method: "GET", accessToken }
+  );
+}
+
+export function selectIntegratedSessionsApi(
+  dealId: string,
+  body: {
+    external_session_ids: string[];
+    capacity_mode?: "live_provider" | "live_provider_capped";
+    seat_cap?: number | null;
+    session_seat_caps?: Record<string, number | null>;
+    confirm?: boolean;
+  },
+  accessToken?: string | null
+) {
+  return operatorDealsFetch<{
+    deal: Deal;
+    sessions: DealSession[];
+    validation: PublishValidationOutcome | null;
+    note: string;
+  }>(
+    `/api/marketplace/operator-deals/${encodeURIComponent(dealId)}/available-sessions`,
+    { method: "PUT", body, accessToken }
+  );
+}
+
 export function uploadDealMediaApi(
   dealId: string,
   files: File[],

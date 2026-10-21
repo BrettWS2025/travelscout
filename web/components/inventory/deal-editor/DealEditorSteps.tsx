@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Deal } from "@/lib/marketplace/deal";
 import type { DealMedia } from "@/lib/marketplace/deal-media";
 import type { DealPriceOption, DealSession } from "@/lib/marketplace/deal-session";
@@ -1341,22 +1341,91 @@ export function PricingStep({
 // Step 5 — Availability
 // ---------------------------------------------------------------------------
 
+export type AvailableSessionRow = {
+  id: string;
+  external_id: string;
+  start_at: string;
+  end_at: string | null;
+  seats_available: number | null;
+  status: string;
+  last_synced_at: string | null;
+  selected: boolean;
+  deal_session_id: string | null;
+  seat_cap: number | null;
+  seats_displayed: number | null;
+};
+
 export function AvailabilityStep({
   deal,
   sessions,
+  availableSessions = null,
+  capacityNote = null,
   onPatchDeal,
   onAddSession,
   onUpdateSession,
   onDeleteSession,
+  onSelectIntegratedSessions,
 }: {
   deal: Deal;
   sessions: DealSession[];
+  availableSessions?: AvailableSessionRow[] | null;
+  capacityNote?: string | null;
   onPatchDeal: (patch: Record<string, unknown>) => void;
   onAddSession: (body: Record<string, unknown>) => void;
   onUpdateSession: (id: string, body: Record<string, unknown>) => void;
   onDeleteSession: (id: string) => void;
+  onSelectIntegratedSessions?: (body: {
+    external_session_ids: string[];
+    capacity_mode?: "live_provider" | "live_provider_capped";
+    seat_cap?: number | null;
+    session_seat_caps?: Record<string, number | null>;
+  }) => void;
 }) {
+  const integrated = isIntegratedDealType(deal.dealType);
   const isOpenWindow = deal.dealType === "manual_open_window";
+  const isMulti = deal.dealType === "integrated_multi_session";
+  const capped = deal.capacityMode === "live_provider_capped";
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sessionCaps, setSessionCaps] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!availableSessions) return;
+    setSelectedIds(availableSessions.filter((s) => s.selected).map((s) => s.id));
+    const caps: Record<string, string> = {};
+    for (const s of availableSessions) {
+      if (s.seat_cap != null) caps[s.id] = String(s.seat_cap);
+    }
+    setSessionCaps(caps);
+  }, [availableSessions]);
+
+  const toggleSession = (id: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (!isMulti) return [id];
+      return [...prev, id];
+    });
+  };
+
+  const applySelection = () => {
+    if (!onSelectIntegratedSessions) return;
+    const caps: Record<string, number | null> = {};
+    for (const id of selectedIds) {
+      const raw = sessionCaps[id];
+      if (raw != null && raw !== "") {
+        caps[id] = Number(raw);
+      }
+    }
+    onSelectIntegratedSessions({
+      external_session_ids: selectedIds,
+      capacity_mode:
+        deal.capacityMode === "live_provider_capped"
+          ? "live_provider_capped"
+          : "live_provider",
+      seat_cap: capped ? deal.seatCap : null,
+      session_seat_caps: Object.keys(caps).length > 0 ? caps : undefined,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -1364,9 +1433,13 @@ export function AvailabilityStep({
         Availability
       </h3>
       <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-        {isOpenWindow
-          ? "Up to 3 days with seats per day."
-          : "Add sessions with start time and seats."}
+        {integrated
+          ? isMulti
+            ? "Select one or more provider sessions in the next 72 hours."
+            : "Select exactly one provider session in the next 72 hours."
+          : isOpenWindow
+            ? "Up to 3 days with seats per day."
+            : "Add sessions with start time and seats."}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -1433,88 +1506,229 @@ export function AvailabilityStep({
         </div>
       </div>
 
-      <ul className="space-y-3">
-        {sessions.map((s) => (
-          <li
-            key={s.id}
-            className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--ts-ink)]/10 bg-white p-3"
-          >
+      {integrated && (
+        <div className="space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Start</label>
-              <input
-                type="datetime-local"
+              <label className={labelClass}>Capacity mode</label>
+              <select
                 className={fieldClass}
-                value={s.startAt.slice(0, 16)}
-                onChange={(e) =>
-                  onUpdateSession(s.id, {
-                    start_at: new Date(e.target.value).toISOString(),
-                  })
-                }
-              />
+                value={deal.capacityMode ?? "live_provider"}
+                onChange={(e) => {
+                  const mode = e.target.value as
+                    | "live_provider"
+                    | "live_provider_capped";
+                  onPatchDeal({
+                    capacity_mode: mode,
+                    seat_cap:
+                      mode === "live_provider_capped"
+                        ? deal.seatCap ?? 4
+                        : null,
+                  });
+                }}
+              >
+                <option value="live_provider">Live from provider</option>
+                <option value="live_provider_capped">
+                  Live from provider (capped)
+                </option>
+              </select>
             </div>
-            {isOpenWindow && (
+            {capped && (
               <div>
-                <label className={labelClass}>End</label>
+                <label className={labelClass}>Deal seat cap (1–999)</label>
                 <input
-                  type="datetime-local"
+                  type="number"
                   className={fieldClass}
-                  value={(s.endAt ?? s.startAt).slice(0, 16)}
+                  min={1}
+                  max={999}
+                  value={deal.seatCap ?? ""}
                   onChange={(e) =>
-                    onUpdateSession(s.id, {
-                      end_at: new Date(e.target.value).toISOString(),
+                    onPatchDeal({
+                      seat_cap:
+                        e.target.value === ""
+                          ? null
+                          : Number(e.target.value),
                     })
                   }
                 />
               </div>
             )}
-            <div>
-              <label className={labelClass}>Seats</label>
-              <input
-                type="number"
-                className={fieldClass}
-                value={s.manualSeatsAvailable ?? 0}
-                onChange={(e) =>
-                  onUpdateSession(s.id, {
-                    manual_seats_available: Number(e.target.value),
-                  })
-                }
-              />
-            </div>
-            <button
-              type="button"
-              className="text-xs font-semibold text-red-700"
-              onClick={() => onDeleteSession(s.id)}
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
+          </div>
+          {capped && capacityNote && (
+            <p className="font-[family-name:var(--font-sora)] text-xs text-[var(--ts-muted)]">
+              {capacityNote}
+            </p>
+          )}
 
-      <button
-        type="button"
-        disabled={isOpenWindow && sessions.length >= 3}
-        className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-        onClick={() => {
-          const start = new Date();
-          start.setHours(start.getHours() + 24);
-          start.setMinutes(0, 0, 0);
-          if (isOpenWindow) {
-            const day = start.toISOString().slice(0, 10);
-            onAddSession({
-              local_date: day,
-              manual_seats_available: 4,
-            });
-          } else {
-            onAddSession({
-              start_at: start.toISOString(),
-              manual_seats_available: 4,
-            });
-          }
-        }}
-      >
-        {isOpenWindow ? "Add day" : "Add session"}
-      </button>
+          <ul className="space-y-2">
+            {(availableSessions ?? []).length === 0 && (
+              <li className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+                No provider sessions in the next 72 hours. Sync the integration
+                and try again.
+              </li>
+            )}
+            {(availableSessions ?? []).map((s) => {
+              const checked = selectedIds.includes(s.id);
+              return (
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--ts-ink)]/10 bg-white p-3"
+                >
+                  <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+                    <input
+                      type={isMulti ? "checkbox" : "radio"}
+                      name="integrated-session"
+                      className="mt-1"
+                      checked={checked}
+                      onChange={() => toggleSession(s.id)}
+                    />
+                    <span className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
+                      <span className="font-semibold">
+                        {new Date(s.start_at).toUTCString()}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-[var(--ts-muted)]">
+                        {s.seats_available ?? 0} seats · {s.status}
+                        {s.last_synced_at
+                          ? ` · synced ${new Date(s.last_synced_at).toUTCString()}`
+                          : ""}
+                        {s.seats_displayed != null
+                          ? ` · showing ${s.seats_displayed}`
+                          : ""}
+                      </span>
+                    </span>
+                  </label>
+                  {capped && checked && (
+                    <div className="w-28">
+                      <label className={labelClass}>Session cap</label>
+                      <input
+                        type="number"
+                        className={fieldClass}
+                        min={1}
+                        max={999}
+                        placeholder="Override"
+                        value={sessionCaps[s.id] ?? ""}
+                        onChange={(e) =>
+                          setSessionCaps((prev) => ({
+                            ...prev,
+                            [s.id]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          <button
+            type="button"
+            disabled={
+              selectedIds.length === 0 ||
+              (!isMulti && selectedIds.length !== 1) ||
+              !onSelectIntegratedSessions
+            }
+            className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            onClick={applySelection}
+          >
+            Save session selection
+          </button>
+
+          {sessions.length > 0 && (
+            <p className="font-[family-name:var(--font-sora)] text-xs text-[var(--ts-muted)]">
+              {sessions.length} session{sessions.length === 1 ? "" : "s"} linked
+              on this deal.
+            </p>
+          )}
+        </div>
+      )}
+
+      {!integrated && (
+        <>
+          <ul className="space-y-3">
+            {sessions.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-end gap-3 rounded-xl border border-[var(--ts-ink)]/10 bg-white p-3"
+              >
+                <div>
+                  <label className={labelClass}>Start</label>
+                  <input
+                    type="datetime-local"
+                    className={fieldClass}
+                    value={s.startAt.slice(0, 16)}
+                    onChange={(e) =>
+                      onUpdateSession(s.id, {
+                        start_at: new Date(e.target.value).toISOString(),
+                      })
+                    }
+                  />
+                </div>
+                {isOpenWindow && (
+                  <div>
+                    <label className={labelClass}>End</label>
+                    <input
+                      type="datetime-local"
+                      className={fieldClass}
+                      value={(s.endAt ?? s.startAt).slice(0, 16)}
+                      onChange={(e) =>
+                        onUpdateSession(s.id, {
+                          end_at: new Date(e.target.value).toISOString(),
+                        })
+                      }
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className={labelClass}>Seats</label>
+                  <input
+                    type="number"
+                    className={fieldClass}
+                    value={s.manualSeatsAvailable ?? 0}
+                    onChange={(e) =>
+                      onUpdateSession(s.id, {
+                        manual_seats_available: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-red-700"
+                  onClick={() => onDeleteSession(s.id)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            disabled={isOpenWindow && sessions.length >= 3}
+            className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            onClick={() => {
+              const start = new Date();
+              start.setHours(start.getHours() + 24);
+              start.setMinutes(0, 0, 0);
+              if (isOpenWindow) {
+                const day = start.toISOString().slice(0, 10);
+                onAddSession({
+                  local_date: day,
+                  manual_seats_available: 4,
+                });
+              } else {
+                onAddSession({
+                  start_at: start.toISOString(),
+                  manual_seats_available: 4,
+                });
+              }
+            }}
+          >
+            {isOpenWindow ? "Add day" : "Add session"}
+          </button>
+        </>
+      )}
     </div>
   );
 }
