@@ -96,7 +96,6 @@ function createInitialState(now = new Date()): RezdyFixtureState {
         totalAmount: 54,
         totalCurrency: "NZD",
         coupon: "HALFKAKE",
-        sourceChannel: null,
         items: [{ productCode: "PHARB1", amount: 54 }],
       },
     ],
