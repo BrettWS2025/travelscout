@@ -34,6 +34,7 @@ const ALLOWED: Array<[DealStatus, DealStatus]> = [
   ["pending_review", "draft"],
   ["scheduled", "live"],
   ["scheduled", "paused"],
+  ["scheduled", "auto_paused"],
   ["live", "paused"],
   ["paused", "live"],
   ["paused", "scheduled"],

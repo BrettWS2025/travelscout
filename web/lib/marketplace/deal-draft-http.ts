@@ -22,6 +22,7 @@ import { DealActionsError } from "./deal-actions";
 import { DealAttestationError } from "./deal-attestation";
 import { DealListError } from "./deal-list";
 import { DealPublishError } from "./deal-publish";
+import { IntegrationConnectError } from "./integration-connect";
 import {
   LiveDealConfirmRequiredError,
   MinDiscountError,
@@ -81,6 +82,10 @@ export function getDealDraftHttpStore(): DealDraftStore {
   if (!processStore) {
     const seeded = seedDevMarketplace();
     processStore = createDealDraftStore(seeded.store);
+    processStore.integrations = new Map(
+      seeded.integrations.map((i) => [i.id, i])
+    );
+    processStore.syncLogs = new Map();
   }
   return processStore;
 }
@@ -216,6 +221,17 @@ export function dealDraftErrorResponse(err: unknown, context: string): Response 
   }
   if (err instanceof DealDeleteNotAllowedError) {
     return Response.json({ error: err.message }, { status: 409 });
+  }
+  if (err instanceof IntegrationConnectError) {
+    if (err.status === 403) return forbidden(err.message);
+    if (err.status === 404) return notFound(err.message);
+    return Response.json(
+      {
+        error: err.message,
+        ...(err.code ? { code: err.code } : {}),
+      },
+      { status: err.status }
+    );
   }
   if (err instanceof DealDraftError || err instanceof DealTemplatesError) {
     if (err.status === 403) return forbidden(err.message);

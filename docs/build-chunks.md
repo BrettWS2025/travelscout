@@ -40,7 +40,7 @@ Cursor ticks these as chunks are finished.
 
 **Phase C: Integrations and Rezdy**
 - [x] 26. Provider adapter interface and mock provider — Notes: `web/lib/marketplace/providers/` (`ProviderAdapter`, `getAdapter`, coming-soon FH/Bókun/Checkfront, mock backs rezdy until Chunk 31); contract tests in `providers/__tests__/provider-adapter.contract.test.ts`.
-- [ ] 27. Connect, test and disconnect integrations
+- [x] 27. Connect, test and disconnect integrations — Notes: `integration-connect.ts` + routes under `operators/:id/integrations`; stub full sync until Chunk 28; disconnect auto-pauses live/scheduled (`scheduled→auto_paused`); reconnect clears `integration_disconnected` after sync.
 - [ ] 28. Sync engine and sync log
 - [ ] 29. Stale-sync monitor and integration auto-pause
 - [ ] 30. Rezdy research (answer open decisions)
