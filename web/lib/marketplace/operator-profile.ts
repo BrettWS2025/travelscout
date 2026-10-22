@@ -169,6 +169,15 @@ export const ADMIN_ONLY_OPERATOR_FIELDS = [
   "requiresManualReview",
 ] as const;
 
+/**
+ * Security S3: snake_case columns locked at the DB (service_role only).
+ * Must stay aligned with `enforce_operator_admin_columns` migration.
+ */
+export const DB_LOCKED_OPERATOR_ADMIN_COLUMNS = [
+  "account_status",
+  "requires_manual_review",
+] as const;
+
 export type OperatorProfilePatch = Partial<
   Omit<
     CreateOperatorInput,
