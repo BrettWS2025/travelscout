@@ -173,7 +173,7 @@ describe("can() role × action matrix", () => {
 });
 
 describe("isPlatformAdminUser", () => {
-  it("reads app_metadata, user_metadata and profile flag", () => {
+  it("grants admin from app_metadata or profile flag only", () => {
     const base = fakeAuthUser("u");
 
     expect(isPlatformAdminUser(base)).toBe(false);
@@ -186,10 +186,37 @@ describe("isPlatformAdminUser", () => {
     expect(
       isPlatformAdminUser({
         ...base,
-        user_metadata: { is_platform_admin: "true" },
+        app_metadata: { is_platform_admin: "true" },
       })
     ).toBe(true);
     expect(isPlatformAdminUser(base, true)).toBe(true);
+  });
+
+  it("does not grant admin from client-writable user_metadata alone", () => {
+    const base = fakeAuthUser("u");
+
+    expect(
+      isPlatformAdminUser({
+        ...base,
+        user_metadata: { is_platform_admin: true },
+      })
+    ).toBe(false);
+    expect(
+      isPlatformAdminUser({
+        ...base,
+        user_metadata: { is_platform_admin: "true" },
+      })
+    ).toBe(false);
+    // user_metadata must not override a false/absent profile flag
+    expect(
+      isPlatformAdminUser(
+        {
+          ...base,
+          user_metadata: { is_platform_admin: true },
+        },
+        false
+      )
+    ).toBe(false);
   });
 });
 
