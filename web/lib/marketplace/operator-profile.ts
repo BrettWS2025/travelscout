@@ -108,7 +108,10 @@ export function serializeOperator(op: Operator): Record<string, unknown> {
   };
 }
 
-/** Public operator page payload — no internal contacts or admin flags. */
+/**
+ * Public operator page payload — no internal contacts, tax IDs, or admin flags.
+ * Must stay aligned with `marketplace.operators_public` / OPERATOR_PUBLIC_COLUMNS (S8).
+ */
 export function serializeOperatorPreview(
   op: Operator
 ): Record<string, unknown> {
@@ -176,6 +179,46 @@ export const ADMIN_ONLY_OPERATOR_FIELDS = [
 export const DB_LOCKED_OPERATOR_ADMIN_COLUMNS = [
   "account_status",
   "requires_manual_review",
+] as const;
+
+/**
+ * Security S8: columns on `marketplace.operators_public` and in
+ * `serializeOperatorPreview`. Must stay aligned with migration
+ * `20261031000001_narrow_public_operators_select.sql`.
+ */
+export const OPERATOR_PUBLIC_COLUMNS = [
+  "id",
+  "trading_name",
+  "slug",
+  "logo",
+  "cover_image",
+  "short_description",
+  "long_description",
+  "website",
+  "public_email",
+  "public_phone",
+  "address",
+  "regions_served",
+  "timezone",
+  "currency",
+  "languages",
+  "social_links",
+] as const;
+
+/**
+ * Security S8: base-table columns that must not be readable by anon via
+ * PostgREST (revoked SELECT on base; omitted from operators_public).
+ */
+export const OPERATOR_INTERNAL_COLUMNS = [
+  "legal_name",
+  "internal_email",
+  "internal_phone",
+  "gst_number",
+  "nzbn",
+  "account_status",
+  "requires_manual_review",
+  "created_at",
+  "updated_at",
 ] as const;
 
 export type OperatorProfilePatch = Partial<
