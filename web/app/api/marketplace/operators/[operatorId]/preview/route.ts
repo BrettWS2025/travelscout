@@ -2,6 +2,9 @@
  * GET /api/marketplace/operators/:operatorId/preview
  * Public-shaped operator page data for Settings → Business profile Preview (Chunk 38).
  * Requires settings.profile.read (staff may preview).
+ * Payload matches security S8 `marketplace.operators_public` /
+ * `serializeOperatorPreview` (no internal PII / tax IDs). Anon PostgREST
+ * must use that view, not the base `operators` table.
  */
 
 import { badRequest, unauthorized } from "@/lib/marketplace/auth";
