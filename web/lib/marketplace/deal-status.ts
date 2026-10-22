@@ -5,6 +5,13 @@
  * All changes go through transitionDeal / applyAutoPause / clearAutoPause, which
  * write a DealEvent in the same logical transaction.
  *
+ * Database (security S2): `marketplace.operator_deals` BEFORE UPDATE trigger
+ * rejects client changes to status / pause_reason / pause_detail /
+ * discount_verification unless the session is service_role (or postgres /
+ * supabase_admin). Persist status transitions with a service-role client or
+ * SECURITY DEFINER writer. See migration
+ * `20261024000001_lock_system_owned_deal_columns.sql`.
+ *
  * Spec: docs/deals-spec.md §4.2–4.3.
  */
 
@@ -597,6 +604,23 @@ export const SYSTEM_OWNED_DEAL_FIELDS = [
 ] as const;
 
 export type SystemOwnedDealField = (typeof SYSTEM_OWNED_DEAL_FIELDS)[number];
+
+/**
+ * Snake_case columns locked by DB trigger on `marketplace.operator_deals`
+ * (security S2). Must stay in sync with
+ * `enforce_operator_deal_system_columns` in
+ * `supabase/migrations/20261024000001_lock_system_owned_deal_columns.sql`.
+ * Legacy `marketplace.deals` locks `status` only.
+ */
+export const DB_LOCKED_OPERATOR_DEAL_COLUMNS = [
+  "status",
+  "pause_reason",
+  "pause_detail",
+  "discount_verification",
+] as const;
+
+export type DbLockedOperatorDealColumn =
+  (typeof DB_LOCKED_OPERATOR_DEAL_COLUMNS)[number];
 
 /**
  * Strip system-owned fields from a client payload.
