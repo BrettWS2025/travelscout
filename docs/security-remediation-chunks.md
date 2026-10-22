@@ -32,7 +32,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 
 **Phase C: Public data exposure**
 - [x] S8. Narrow public SELECT on operators (no internal PII / tax IDs) — Notes: migration `20261031000001_narrow_public_operators_select.sql` adds `marketplace.operators_public` (safe columns for active ops), drops `"Public can view active operators"`, revokes anon SELECT on base `operators`; `OPERATOR_PUBLIC_COLUMNS` / `OPERATOR_INTERNAL_COLUMNS` + tests in `operators-public-select-db.test.ts`; preview API stays on `serializeOperatorPreview`; spec §3.9 / §6.2 / Project context. Deferred: none (app has no PostgREST public operator reads today).
-- [ ] S9. Narrow public SELECT on live deals (hide promo codes and internal fields)
+- [x] S9. Narrow public SELECT on live deals (hide promo codes and internal fields) — Notes: migration `20261032000001_narrow_public_deals_select.sql` adds `operator_deals_public` / `deal_price_options_public` / `discount_steps_public`, drops wide public SELECT policies, revokes anon SELECT on those base tables; `is_live_operator_deal` for sessions/media public RLS; constants in `deal-public.ts`; tests in `deals-public-select-db.test.ts`; spec §3 / §4.4 / Project context. Deferred: none (app inventory still in-memory; Book now already applies promo server-side).
 - [ ] S10. Align public deal RLS with fail-closed traveller visibility (or force public reads through API)
 
 **Phase D: Integrations, tokens, webhooks**
