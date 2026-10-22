@@ -31,7 +31,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 - [x] S7. Harden `profiles` INSERT so `is_platform_admin` cannot be set by clients — Notes: migration `20261030000001_harden_profiles_insert_platform_admin.sql` INSERT policy `auth.uid() = id AND is_platform_admin IS NOT TRUE`; tests in `profiles-platform-admin-insert-db.test.ts` + `profiles.test.ts`; spec §5.9. Deferred: none (signup trigger / ensureUserProfile already omit the flag).
 
 **Phase C: Public data exposure**
-- [ ] S8. Narrow public SELECT on operators (no internal PII / tax IDs)
+- [x] S8. Narrow public SELECT on operators (no internal PII / tax IDs) — Notes: migration `20261031000001_narrow_public_operators_select.sql` adds `marketplace.operators_public` (safe columns for active ops), drops `"Public can view active operators"`, revokes anon SELECT on base `operators`; `OPERATOR_PUBLIC_COLUMNS` / `OPERATOR_INTERNAL_COLUMNS` + tests in `operators-public-select-db.test.ts`; preview API stays on `serializeOperatorPreview`; spec §3.9 / §6.2 / Project context. Deferred: none (app has no PostgREST public operator reads today).
 - [ ] S9. Narrow public SELECT on live deals (hide promo codes and internal fields)
 - [ ] S10. Align public deal RLS with fail-closed traveller visibility (or force public reads through API)
 
