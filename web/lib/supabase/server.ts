@@ -82,18 +82,18 @@ export async function getServerUser(authToken?: string) {
       return user;
     }
 
-    // Otherwise, try to get user from session (cookies)
+    // Cookie path: revalidate JWT with Auth (getUser), never trust getSession().user
     const supabase = createServerClient();
     const {
-      data: { session },
+      data: { user },
       error,
-    } = await supabase.auth.getSession();
+    } = await supabase.auth.getUser();
 
-    if (error || !session?.user) {
+    if (error || !user) {
       return null;
     }
 
-    return session.user;
+    return user;
   } catch (error) {
     console.error("Error getting server user:", error);
     return null;
