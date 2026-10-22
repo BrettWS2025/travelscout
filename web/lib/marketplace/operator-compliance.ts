@@ -69,6 +69,33 @@ export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
   expired: "Expired",
 };
 
+/**
+ * Review fields clients must never set (camelCase app model).
+ * Approve / reject / expiry job own these; operator CRUD strips them.
+ */
+export const SYSTEM_OWNED_COMPLIANCE_REVIEW_FIELDS = [
+  "reviewStatus",
+  "reviewerNotes",
+] as const;
+
+export type SystemOwnedComplianceReviewField =
+  (typeof SYSTEM_OWNED_COMPLIANCE_REVIEW_FIELDS)[number];
+
+/**
+ * Snake_case columns locked by DB trigger on `marketplace.compliance_documents`
+ * (security S6). Must stay in sync with
+ * `enforce_compliance_review_columns` in
+ * `supabase/migrations/20261029000001_lock_compliance_review_status.sql`.
+ * No `reviewed_at` column exists today.
+ */
+export const DB_LOCKED_COMPLIANCE_REVIEW_COLUMNS = [
+  "review_status",
+  "reviewer_notes",
+] as const;
+
+export type DbLockedComplianceReviewColumn =
+  (typeof DB_LOCKED_COMPLIANCE_REVIEW_COLUMNS)[number];
+
 // ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
