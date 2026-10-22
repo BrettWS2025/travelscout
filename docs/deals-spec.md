@@ -464,7 +464,9 @@ All operator API routes enforce access via `can(user, operatorId, action)` in `w
 | `settings.account` | ✓ | | |
 | `admin.*` | platform admin only (`profiles.is_platform_admin` / auth `app_metadata.is_platform_admin`) | | |
 
-Membership must be `invite_status = accepted`. Non-members and pending invites fail closed. Platform admin does **not** grant operator inventory/settings actions by itself.
+Membership must be `invite_status = accepted`. Non-members and pending invites fail closed. Platform admin does **not** grant operator inventory/settings actions by itself. Never grant platform admin from client-writable `user.user_metadata` (Auth `updateUser` data); only `profiles.is_platform_admin` and/or server-set `app_metadata.is_platform_admin`.
+
+**Server auth:** `getMarketplaceAuth` / `getServerUser` must revalidate the JWT with Supabase Auth via `getUser()` (Bearer header token or cookie). Never authorize from unverified `getSession().user` alone; `getSession()` may only supply the access token after `getUser()` succeeds.
 
 ---
 
@@ -618,7 +620,7 @@ TravelScout monorepo; the active app is under `web/`.
 | File storage | Supabase Storage (deal media uploads will use this; some deal rows still hold plain image URLs today) |
 | Email / SMS provider | Email: Resend (e.g. password resets); SMS: none yet |
 | Domain types / DB access | `web/lib/marketplace/types.ts`, `db.ts`, `deal.ts` (`operator_deals`), `deal-session.ts`, `deal-media.ts`, `deal-media-api.ts` (Chunk 14 upload/embed/cover), `media-storage.ts`, `image-dimensions.ts`, `deal-audit.ts`, `deal-status.ts` (§4.2 transitions), `deal-status-ticker.ts` (Chunk 18 status ticker + `isVisibleToTravellers`), `deal-actions.ts` (Chunk 19 pause/resume/end/seats/bulk), `deal-attestation.ts` (Chunk 20 expiry job, reminders, quick-update token, dashboard attest), `deal-list.ts` (Chunk 21 list/calendar/tabs/banners), `deals-list-ui.ts` / deals-list components (Chunk 23 list UI), `deal-editor.ts` / `operator-deals-client.ts` (Chunks 22–23 editor + list browser client), `deal-draft.ts` (Chunk 12 create/update/duplicate), `deal-inventory.ts` (Chunk 13 manual sessions / price options), `booking-destination.ts` / `booking-link.ts` (Chunk 15 link check + tracked URLs), `deal-publish-validation.ts` (§4.1 publish checks), `deal-publish.ts` (Chunk 17 publish/schedule/review/attest), `deal-book-now.ts` (Chunk 36 Book now + ClickEvent tracking), `notifications.ts` (Chunk 39 prefs + `notify` + in-app + daily summary), `team.ts` (Chunk 40 invites + last owner + last_active), `operator-compliance.ts` (Chunk 41 compliance CRUD + expiry job), `billing.ts` / `account.ts` (Chunk 42 billing + export/close), `timezone.ts` (operator-local ↔ UTC), `integration.ts`, `integration-connect.ts` (Chunk 27 connect/test/disconnect/settings), `secrets.ts`, `providers/` (Chunk 26 `ProviderAdapter` + registry + mock; Chunk 31 `providers/rezdy/` RezdyAdapter), `operators.ts`, `operator-profile.ts` (Chunk 38 business profile + booking defaults), `settings.ts`, `seed-dev.ts`, `permissions.ts`, `pricing.ts` (§4.0 maths) (plus `web/lib/supabase/`) |
-| Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` |
+| Permissions | `can(user, operatorId, action)` / `requirePermission` in `permissions.ts`; platform admin via `profiles.is_platform_admin` and/or `app_metadata.is_platform_admin` (never `user_metadata`); server cookie/header auth via `getUser()` (`auth.ts` / `supabase/server.ts`), never unverified `getSession().user` |
 | Inventory Deal table | `marketplace.operator_deals` (not legacy `marketplace.deals`) |
 | Settings tables | `notification_preferences`, `in_app_notifications` (Chunk 39), `team_invite_tokens` (Chunk 40), `compliance_documents`, `billing_accounts` |
 | Dev seed | `supabase/seeds/deals_platform_dev.sql` + `seed-dev.ts` (Harbour Kayaks / Bay Cruises) |

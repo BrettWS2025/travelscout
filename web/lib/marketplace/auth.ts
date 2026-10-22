@@ -13,14 +13,22 @@ export async function getMarketplaceAuth(req: Request): Promise<{
     return { user, accessToken: headerToken };
   }
 
-  // Fall back to cookie session so browser clients work without Authorization header
+  // Cookie path: verify JWT with Auth via getUser() — never trust getSession().user alone
   try {
     const supabase = createServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) {
+      return { user: null };
+    }
+    // Access token is only returned after Auth verified the user (RLS-aware clients need it)
     const {
       data: { session },
     } = await supabase.auth.getSession();
     return {
-      user: session?.user ?? null,
+      user,
       accessToken: session?.access_token,
     };
   } catch {

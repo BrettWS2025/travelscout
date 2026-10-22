@@ -19,8 +19,8 @@
 Tick these as chunks are finished. Add one line of notes (files touched, anything deferred).
 
 **Phase A: Privilege escalation (do first)**
-- [ ] S0. Stop trusting `user_metadata` for platform admin
-- [ ] S1. Cookie auth: validate session with `getUser()` not `getSession()`
+- [x] S0. Stop trusting `user_metadata` for platform admin — Notes: `isPlatformAdminUser` in `web/lib/marketplace/permissions.ts` no longer reads `user_metadata`; tests in `permissions.test.ts`; spec §5 clarified. App-only; no migration. Deferred: backfill `app_metadata` for any admins who relied on `user_metadata` only (use profile flag / Auth Admin API).
+- [x] S1. Cookie auth: validate session with `getUser()` not `getSession()` — Notes: `getMarketplaceAuth` + `getServerUser` cookie paths use `auth.getUser()`; session token only after verify; tests in `auth.test.ts`; spec §5.9 + Project context. App-only; no migration. Deferred: none.
 
 **Phase B: Database locks (RLS / system-owned fields)**
 - [ ] S2. Lock system-owned deal columns at the database

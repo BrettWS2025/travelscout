@@ -161,8 +161,11 @@ function truthyFlag(value: unknown): boolean {
 }
 
 /**
- * Platform admin flag from auth metadata and/or profiles.is_platform_admin.
- * Metadata alone is enough for `can`; profile lookup is used by requirePermission.
+ * Platform admin from server-controlled sources only:
+ * - `profiles.is_platform_admin` (DB; passed as `profileFlag`), and/or
+ * - `user.app_metadata.is_platform_admin` (service role / Auth admin only).
+ *
+ * Never trust `user.user_metadata` — clients can set that via Auth updateUser.
  */
 export function isPlatformAdminUser(
   user: User,
@@ -170,7 +173,6 @@ export function isPlatformAdminUser(
 ): boolean {
   if (profileFlag === true) return true;
   if (truthyFlag(user.app_metadata?.is_platform_admin)) return true;
-  if (truthyFlag(user.user_metadata?.is_platform_admin)) return true;
   return false;
 }
 
