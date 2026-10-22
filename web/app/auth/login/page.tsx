@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
+import { operatorHref } from "@/lib/hosts";
+import { ensureOperatorOrganization } from "@/lib/marketplace/operator-signup";
 import {
   AuthPageFrame,
   authInputClassName,
@@ -21,7 +23,7 @@ export default function LoginPage() {
 
   const [mode, setMode] = useState<"login" | "signup">("login");
 
-  // Signup-only
+  // Signup-only (traveler / main site)
   const [fullName, setFullName] = useState("");
 
   // Login/signup
@@ -47,7 +49,16 @@ export default function LoginPage() {
     const modeParam = params.get("mode");
     const signedOut = params.get("signedOut");
 
-    if (modeParam === "signup" || modeParam === "login") {
+    // Operator accounts are created only via /operator/signup (business + org).
+    // Never allow a traveler-only signup on the operator host.
+    if (onOperatorHost && modeParam === "signup") {
+      router.replace(operatorHref("/operator/signup", true));
+      return;
+    }
+
+    if (onOperatorHost) {
+      setMode("login");
+    } else if (modeParam === "signup" || modeParam === "login") {
       setMode(modeParam);
     }
     if (returnTo) {
@@ -70,7 +81,7 @@ export default function LoginPage() {
         window.history.replaceState({}, "", url.toString());
       })();
     }
-  }, []);
+  }, [onOperatorHost, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,17 +91,43 @@ export default function LoginPage() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
 
-        // Small delay to ensure auth state is updated
-        setTimeout(() => {
-          router.push(redirectTo);
-        }, 100);
+        const token = data.session?.access_token;
+        const meta = data.user?.user_metadata as
+          | Record<string, unknown>
+          | undefined;
+        let destination = redirectTo;
+
+        // Operator signup metadata → ensure org exists after email confirm.
+        if (token && meta?.account_type === "operator") {
+          try {
+            const organization = await ensureOperatorOrganization(token, {
+              userMetadata: meta,
+            });
+            if (organization && redirectTo === "/account/details") {
+              destination = operatorHref(
+                `/operator/organizations/${organization.id}`,
+                onOperatorHost
+              );
+            }
+          } catch (err) {
+            console.error("Failed to ensure operator organisation on login", err);
+          }
+        }
+
+        router.push(destination);
       } else {
+        // Traveler signup only (main site). No organization is created.
+        if (onOperatorHost) {
+          router.replace(operatorHref("/operator/signup", true));
+          return;
+        }
+
         const name = fullName.trim();
         if (!name) throw new Error("Please enter your full name.");
 
@@ -163,12 +200,10 @@ export default function LoginPage() {
   }
 
   const description = onOperatorHost
-    ? mode === "login"
-      ? "Sign in to manage your operator organizations and last-minute deals."
-      : "Create an operator account to publish deals on TravelScout."
+    ? "Sign in to manage your operator organizations and last-minute deals."
     : mode === "login"
       ? "Use your email and password to sign in."
-      : "Create an account with your name, email and password.";
+      : "Create a traveler account with your name, email and password.";
 
   return (
     <AuthPageFrame
@@ -325,20 +360,32 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center">
         {mode === "login" ? (
-          <button
-            type="button"
-            onClick={() => {
-              setMode("signup");
-              setError(null);
-              setInfo(null);
-              setForgotOpen(false);
-              setForgotMsg(null);
-              setForgotError(null);
-            }}
-            className={authLinkClassName}
-          >
-            Don&apos;t have an account? Create one
-          </button>
+          onOperatorHost ? (
+            <button
+              type="button"
+              onClick={() => {
+                router.push(operatorHref("/operator/signup", true));
+              }}
+              className={authLinkClassName}
+            >
+              Don&apos;t have an account? Create an operator account
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setError(null);
+                setInfo(null);
+                setForgotOpen(false);
+                setForgotMsg(null);
+                setForgotError(null);
+              }}
+              className={authLinkClassName}
+            >
+              Don&apos;t have an account? Create one
+            </button>
+          )
         ) : (
           <button
             type="button"

@@ -9,7 +9,12 @@ import { useAuth } from "@/components/AuthProvider";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 import { operatorHref } from "@/lib/hosts";
 import { createOrganization } from "@/lib/marketplace/client";
-import type { CreateOrganizationInput } from "@/lib/marketplace/types";
+import {
+  ensureOperatorOrganization,
+  normalizeOperatorBusinessDetails,
+  operatorSignupUserMetadata,
+  type OperatorBusinessDetails,
+} from "@/lib/marketplace/operator-signup";
 import {
   authInputClassName,
   authLabelClassName,
@@ -17,39 +22,8 @@ import {
   authPrimaryButtonClassName,
 } from "@/components/auth/AuthPageFrame";
 import { RegionPicker } from "@/components/RegionPicker";
-import { canonicalizeRegion } from "@/lib/regions";
-
-const PENDING_ORG_KEY = "ts_pending_operator_org";
 
 type Mode = "new" | "existing";
-
-type PendingOrg = Pick<
-  CreateOrganizationInput,
-  "name" | "phone" | "website" | "region"
->;
-
-function readPendingOrg(): PendingOrg | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(PENDING_ORG_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PendingOrg;
-    if (!parsed?.name || !parsed?.phone || !parsed?.website || !parsed?.region) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function writePendingOrg(org: PendingOrg) {
-  sessionStorage.setItem(PENDING_ORG_KEY, JSON.stringify(org));
-}
-
-function clearPendingOrg() {
-  sessionStorage.removeItem(PENDING_ORG_KEY);
-}
 
 export default function OperatorSignupPage() {
   const router = useRouter();
@@ -67,7 +41,6 @@ export default function OperatorSignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [finishingPending, setFinishingPending] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -75,25 +48,20 @@ export default function OperatorSignupPage() {
     if (params.get("mode") === "existing") setMode("existing");
   }, []);
 
+  /** After email confirm + login, finish routing into the operator portal. */
   useEffect(() => {
-    if (authLoading || finishingPending) return;
+    if (authLoading || loading || info) return;
     if (!user || !session?.access_token) return;
-
-    const pending = readPendingOrg();
-    if (!pending) return;
+    if (mode !== "new") return;
 
     let cancelled = false;
     (async () => {
-      setFinishingPending(true);
-      setError(null);
-      setInfo(null);
       try {
-        const { organization } = await createOrganization(
-          pending,
-          session.access_token
+        const organization = await ensureOperatorOrganization(
+          session.access_token,
+          { userMetadata: user.user_metadata as Record<string, unknown> }
         );
-        clearPendingOrg();
-        if (!cancelled) {
+        if (!cancelled && organization) {
           router.replace(
             operatorHref(
               `/operator/organizations/${organization.id}`,
@@ -101,15 +69,8 @@ export default function OperatorSignupPage() {
             )
           );
         }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Could not finish setting up your business."
-          );
-          setFinishingPending(false);
-        }
+      } catch {
+        // Stay on the form; user can submit or sign in again.
       }
     })();
 
@@ -120,27 +81,25 @@ export default function OperatorSignupPage() {
     authLoading,
     user,
     session?.access_token,
-    finishingPending,
+    loading,
+    info,
+    mode,
     router,
     onOperatorHost,
   ]);
 
-  function businessPayload(): PendingOrg | null {
-    const canonicalRegion = canonicalizeRegion(region);
-    if (!canonicalRegion) return null;
-    return {
-      name: businessName.trim(),
-      phone: phone.trim(),
-      website: website.trim(),
-      region: canonicalRegion,
-    };
+  function businessPayload(): OperatorBusinessDetails | null {
+    return normalizeOperatorBusinessDetails({
+      name: businessName,
+      phone,
+      website,
+      region,
+    });
   }
 
-  async function createOrgAndGo(accessToken: string, org: PendingOrg) {
-    const { organization } = await createOrganization(org, accessToken);
-    clearPendingOrg();
+  async function goToOrg(organizationId: string) {
     router.push(
-      operatorHref(`/operator/organizations/${organization.id}`, onOperatorHost)
+      operatorHref(`/operator/organizations/${organizationId}`, onOperatorHost)
     );
   }
 
@@ -151,7 +110,7 @@ export default function OperatorSignupPage() {
     setInfo(null);
 
     const org = businessPayload();
-    if (!org?.name || !org.phone || !org.website || !org.region) {
+    if (!org) {
       setError("Please fill in all business details, including a valid region.");
       setLoading(false);
       return;
@@ -164,7 +123,9 @@ export default function OperatorSignupPage() {
         if (signInError) throw signInError;
         const token = data.session?.access_token;
         if (!token) throw new Error("Signed in, but no session was returned.");
-        await createOrgAndGo(token, org);
+        // Existing traveler → operator: always attach this business as an org.
+        const { organization } = await createOrganization(org, token);
+        await goToOrg(organization.id);
         return;
       }
 
@@ -175,10 +136,7 @@ export default function OperatorSignupPage() {
         email,
         password,
         options: {
-          data: {
-            full_name: name,
-            account_type: "operator",
-          },
+          data: operatorSignupUserMetadata(name, org),
         },
       });
       if (signUpError) throw signUpError;
@@ -192,34 +150,46 @@ export default function OperatorSignupPage() {
 
       const token = data.session?.access_token;
       if (token) {
-        await createOrgAndGo(token, org);
+        // Trigger usually created the org already; ensure is idempotent.
+        const organization = await ensureOperatorOrganization(token, {
+          business: org,
+          userMetadata: data.user?.user_metadata as
+            | Record<string, unknown>
+            | undefined,
+        });
+        if (!organization) {
+          throw new Error("Could not set up your operator organisation.");
+        }
+        await goToOrg(organization.id);
         return;
       }
 
-      // Email confirmation required — finish org setup after verify + login.
-      writePendingOrg(org);
+      // Email confirmation required — org is created by the signup trigger from
+      // user_metadata. User administers after verifying and signing in.
       setInfo(
-        "Account created. Check your inbox to verify your email, then sign in with the link below to finish operator setup."
+        "Account and business created. Check your inbox to verify your email, then sign in to open your operator dashboard."
       );
       setMode("existing");
       setPassword("");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
-      // Strip duplicated "Failed to create organization:" prefix if present
       setError(message.replace(/^Failed to create organization:\s*/i, ""));
     } finally {
       setLoading(false);
     }
   }
 
-  const existingHref = operatorHref("/operator/signup?mode=existing", onOperatorHost);
+  const existingHref = operatorHref(
+    "/operator/signup?mode=existing",
+    onOperatorHost
+  );
   const newHref = operatorHref("/operator/signup", onOperatorHost);
+  const loginHref = operatorHref("/auth/login", onOperatorHost);
 
   return (
     <div className="ts-page relative min-h-[100svh] bg-[var(--ts-ink)]">
       <div className="grid min-h-[100svh] lg:grid-cols-2">
-        {/* Left: hero visual */}
         <div className="relative hidden min-h-[40vh] overflow-hidden lg:block lg:min-h-[100svh]">
           <Image
             src="/Main_Page_Pic.jpg"
@@ -242,7 +212,6 @@ export default function OperatorSignupPage() {
           </div>
         </div>
 
-        {/* Right: form */}
         <div className="relative flex min-h-[100svh] flex-col justify-center bg-[var(--ts-mist)] px-5 py-28 md:px-10 lg:px-12 xl:px-16">
           <div className="pointer-events-none absolute inset-0" aria-hidden>
             <div className="absolute -right-10 top-24 h-56 w-56 rounded-full bg-[var(--ts-lime)]/20 blur-3xl" />
@@ -260,7 +229,7 @@ export default function OperatorSignupPage() {
             </h2>
             <p className="mt-3 font-[family-name:var(--font-sora)] text-sm leading-relaxed text-[var(--ts-muted)]">
               {mode === "new"
-                ? "Your login and business are set up together — ready to publish deals."
+                ? "Your login and business are set up together — one step, then verify your email."
                 : "Sign in with your traveler account, then we’ll attach your business."}
             </p>
 
@@ -272,7 +241,10 @@ export default function OperatorSignupPage() {
               )}
               {info && (
                 <p className="rounded-xl border border-[var(--ts-teal)]/25 bg-white px-3 py-2 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
-                  {info}
+                  {info}{" "}
+                  <Link href={loginHref} className={authLinkClassName}>
+                    Sign in
+                  </Link>
                 </p>
               )}
 
@@ -372,10 +344,10 @@ export default function OperatorSignupPage() {
 
               <button
                 type="submit"
-                disabled={loading || finishingPending}
+                disabled={loading}
                 className={authPrimaryButtonClassName}
               >
-                {loading || finishingPending
+                {loading
                   ? "Setting up…"
                   : mode === "new"
                     ? "Create operator account"
@@ -387,14 +359,22 @@ export default function OperatorSignupPage() {
               {mode === "new" ? (
                 <>
                   Already a user?{" "}
-                  <Link href={existingHref} className={authLinkClassName} onClick={() => setMode("existing")}>
+                  <Link
+                    href={existingHref}
+                    className={authLinkClassName}
+                    onClick={() => setMode("existing")}
+                  >
                     Sign up as an operator as well
                   </Link>
                 </>
               ) : (
                 <>
                   Need a new account?{" "}
-                  <Link href={newHref} className={authLinkClassName} onClick={() => setMode("new")}>
+                  <Link
+                    href={newHref}
+                    className={authLinkClassName}
+                    onClick={() => setMode("new")}
+                  >
                     Create an operator account
                   </Link>
                 </>

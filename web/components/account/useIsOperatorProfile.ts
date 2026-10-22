@@ -12,8 +12,9 @@ type OperatorProfileState = {
 
 /**
  * Inventory / Settings require a real row in marketplace.organizations
- * (via organization_members). Signup metadata alone is not enough — that was
- * showing operator nav for accounts that never finished org creation.
+ * (via organization_members). Operator signup writes business_* metadata and a
+ * DB trigger creates the org at user insert; ensureOperatorOrganization is the
+ * client safety net after email confirm. Metadata alone is not enough.
  */
 export function useIsOperatorProfile(): OperatorProfileState {
   const { user, session, isLoading: authLoading } = useAuth();
