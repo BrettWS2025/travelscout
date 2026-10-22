@@ -23,7 +23,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 - [x] S1. Cookie auth: validate session with `getUser()` not `getSession()` — Notes: `getMarketplaceAuth` + `getServerUser` cookie paths use `auth.getUser()`; session token only after verify; tests in `auth.test.ts`; spec §5.9 + Project context. App-only; no migration. Deferred: none.
 
 **Phase B: Database locks (RLS / system-owned fields)**
-- [ ] S2. Lock system-owned deal columns at the database
+- [x] S2. Lock system-owned deal columns at the database — Notes: migration `20261024000001_lock_system_owned_deal_columns.sql` BEFORE UPDATE triggers on `operator_deals` (status/pause_*/discount_verification) and legacy `deals` (status); service_role/postgres/supabase_admin only; tests in `deal-system-columns-db.test.ts`; spec §4.2. Deferred: legacy `updateDeal` still sends `status` with user JWT (fails at DB until S14); wire inventory status persistence through service-role when leaving in-memory stores.
 - [ ] S3. Lock operator admin fields and team role escalation at RLS
 - [ ] S4. Enable RLS on token / reminder tables (fail closed)
 - [ ] S5. Fix `operator_booking_defaults` INSERT policy
