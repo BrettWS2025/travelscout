@@ -149,12 +149,21 @@ Without these, password reset / magic links can fail on the operator host even i
 
 ---
 
+## Operator vs traveler signup
+
+- **Operators** sign up only at `/operator/signup` (on the operator host: `/signup`). That single form creates the auth user, `profiles` row, and `marketplace.organizations` membership together. Business fields are stored on auth `user_metadata`; a DB trigger (`bootstrap_operator_organization_from_signup`) creates the organisation even when email confirmation means `signUp` returns no session. After they verify email and sign in, they already have operator access.
+- **Travelers** sign up from the main site (`/auth/login?mode=signup`). That path never sets `account_type=operator` and never creates an organisation.
+- On the operator host, “Create account” links go to operator signup — not traveler signup.
+
+Apply migration `supabase/migrations/20261025000001_bootstrap_operator_org_on_signup.sql` so confirm-email cannot leave an operator without an org.
+
 ## Verify it works
 
 1. Open `https://operators.travelscout.co.nz` → operator portal (slim header, not full marketing nav).
 2. Open `https://travelscout.co.nz/operator` → should **308 redirect** to the operators subdomain (after env redeploy).
 3. On the main site footer, **For operators** should open the subdomain.
 4. Sign in on the operator host; you should land on the operator dashboard.
+5. Operator signup with confirm-email on: after verify + sign in, Account → Details shows the organisation (not “No organisation is linked”).
 
 ---
 
