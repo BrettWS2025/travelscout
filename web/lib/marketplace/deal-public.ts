@@ -1,18 +1,32 @@
 /**
- * Public / traveller-safe inventory deal surfaces (security S9).
+ * Public / traveller-safe inventory deal surfaces (security S9 + S10).
  *
  * Anon must not read promo codes or internal fields via PostgREST on
  * marketplace.operator_deals / deal_price_options / discount_steps.
- * Prefer marketplace.*_public views (migration
- * 20261032000001_narrow_public_deals_select.sql) or Next.js Book now /
+ * Prefer marketplace.*_public views (migrations
+ * 20261032000001_narrow_public_deals_select.sql and
+ * 20261033000001_align_public_deal_visibility.sql) or Next.js Book now /
  * listing APIs. Book now applies promo_code server-side via
  * bookingPromoForSession → buildBookingUrl; it is not returned in the
  * Book now JSON response.
+ *
+ * S10: public views / sessions / media only expose deals that pass
+ * marketplace.is_visible_to_travellers (parity with isVisibleToTravellers:
+ * live + sellable session within MAX_LEAD_HOURS, not past sales cutoff).
  */
 
+import { PLATFORM_DEFAULTS } from "./config";
+
 /**
- * Columns on `marketplace.operator_deals_public` (live deals only).
- * Must stay aligned with the S9 migration view SELECT list.
+ * Lead window used by marketplace.is_visible_to_travellers in SQL (S10).
+ * Matches PLATFORM_DEFAULTS.MAX_LEAD_HOURS; keep the migration INTERVAL in sync.
+ */
+export const PUBLIC_DEAL_VISIBILITY_MAX_LEAD_HOURS =
+  PLATFORM_DEFAULTS.MAX_LEAD_HOURS;
+
+/**
+ * Columns on `marketplace.operator_deals_public` (traveller-visible deals).
+ * Must stay aligned with the S9/S10 migration view SELECT list.
  */
 export const OPERATOR_DEAL_PUBLIC_COLUMNS = [
   "id",
