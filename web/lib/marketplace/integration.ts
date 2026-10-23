@@ -165,6 +165,48 @@ export type PublicIntegration = Omit<
   "credentialsRef" | "webhookSecretRef"
 >;
 
+/**
+ * DB columns on `marketplace.integrations` that are secret-store refs.
+ * Security S13: never SELECT/INSERT/UPDATE these via client JWT; omit from
+ * `integrations_member` and from API serializers.
+ */
+export const INTEGRATION_SECRET_REF_COLUMNS = [
+  "credentials_ref",
+  "webhook_secret_ref",
+] as const;
+
+/**
+ * Columns on `marketplace.integrations_member` (member-safe, no secret refs).
+ * Must stay aligned with migration
+ * `20261034000001_strip_integration_secret_refs.sql` and with
+ * `serializeIntegrationPublic` keys.
+ */
+export const INTEGRATION_MEMBER_COLUMNS = [
+  "id",
+  "operator_id",
+  "provider",
+  "status",
+  "auth_type",
+  "external_account_id",
+  "external_account_name",
+  "sync_mode",
+  "poll_interval_seconds",
+  "webhook_last_received_at",
+  "last_sync_at",
+  "last_successful_sync_at",
+  "last_error_code",
+  "last_error_message",
+  "default_booking_destination_type",
+  "booking_base_url",
+  "conversion_tracking_method",
+  "booking_source_label",
+  "auto_enable_new_products",
+  "connected_at",
+  "connected_by",
+  "created_at",
+  "updated_at",
+] as const;
+
 /** Fields that must never appear in client-facing payloads. */
 export const INTEGRATION_SECRET_FIELDS = [
   "credentialsRef",
