@@ -150,7 +150,7 @@ export function IntegrationsGrid() {
                 List deals without a booking system
               </p>
               <p className="mt-1 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-                Manual deals work today with seat attestation and review.
+                Deals you enter yourself work today with seat reconfirm and review.
                 Connecting Rezdy unlocks live availability, automatic pauses when
                 inventory changes, and Book now redirects to your provider page.
               </p>

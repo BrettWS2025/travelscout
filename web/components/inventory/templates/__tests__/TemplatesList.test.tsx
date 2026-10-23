@@ -83,7 +83,7 @@ describe("TemplatesList", () => {
       expect(screen.getByText("Kayak evening")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Create deal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Deal" }));
 
     await waitFor(() => {
       expect(createDealFromTemplateApi).toHaveBeenCalledWith(

@@ -66,6 +66,9 @@ Cursor ticks these as chunks are finished.
 - [x] 44. Auto-deal rules — Notes: `deal-rules.ts` CRUD/preview/`runDealRulesJob` (15m); routes `…/deal-rules` + `GET /deal-rules/:id/preview`; UI `/account/inventory/auto-deal-rules`; list `from_rule` already wired; tests in `deal-rules.test.ts`.
 - [x] 45. Metrics rollup and deal stats — Notes: `deal-metrics.ts` (track impressions/detail_views, hourly `runMetricsRollupJob`, attribution via `ProviderAdapter.listBookings`, `getDealStats`); routes `POST /track/impressions|detail-view`, `GET …/operator-deals/:id/stats`; UI `/account/inventory/deals/[id]/stats`; tests in `deal-metrics.test.ts`.
 
+**UX polish**
+- [x] Layman labels + Title Case options — Notes: central `web/lib/marketplace/display-labels.ts`; option lists / actions / statuses use plain language (e.g. attestation → Seat Reconfirm, integrated → From Booking System); dropdowns Title Case; wired through editor, deals list, settings, notifications.
+
 ---
 
 ## Chunk 0. Set up reference files

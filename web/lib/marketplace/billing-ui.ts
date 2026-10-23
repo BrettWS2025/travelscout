@@ -4,21 +4,13 @@
  * (store + usage helpers).
  */
 
-import type { BillingModel } from "./enums";
 import type { UserRole } from "./enums";
+import {
+  BILLING_ACCOUNT_STATUS_LABELS,
+  BILLING_MODEL_LABELS,
+} from "./display-labels";
 
-export const BILLING_MODEL_LABELS: Record<BillingModel, string> = {
-  subscription: "Subscription",
-  per_click: "Per booking click",
-  commission: "Commission",
-};
-
-export const BILLING_ACCOUNT_STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  past_due: "Past due",
-  cancelled: "Cancelled",
-  none: "None",
-};
+export { BILLING_ACCOUNT_STATUS_LABELS, BILLING_MODEL_LABELS };
 
 export function canManageBilling(
   role: string | null | undefined

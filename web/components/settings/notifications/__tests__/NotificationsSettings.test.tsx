@@ -70,8 +70,8 @@ describe("NotificationsSettings", () => {
           sms: false,
           in_app: true,
           mandatory: true,
-          label: "Deal auto-paused",
-          description: "When the platform auto-pauses a deal.",
+          label: "Deal Paused Automatically",
+          description: "When the platform pauses a deal for you.",
           created_at: "2026-10-21T00:00:00.000Z",
           updated_at: "2026-10-21T00:00:00.000Z",
         },
@@ -96,12 +96,12 @@ describe("NotificationsSettings", () => {
   it("renders the event × channel grid", async () => {
     render(<NotificationsSettings />);
     await waitFor(() => {
-      expect(screen.getByText("Deal auto-paused")).toBeInTheDocument();
+      expect(screen.getByText("Deal Paused Automatically")).toBeInTheDocument();
     });
     expect(screen.getByText("Deal lifecycle")).toBeInTheDocument();
     expect(screen.getByText(/Starred events/i)).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/Email for Deal auto-paused/i)
+      screen.getByLabelText(/Email for Deal Paused Automatically/i)
     ).toBeInTheDocument();
   });
 });

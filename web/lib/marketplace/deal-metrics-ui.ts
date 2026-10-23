@@ -27,12 +27,6 @@ export function formatCount(n: number): string {
   return new Intl.NumberFormat("en-NZ").format(n);
 }
 
-export const STATS_METRIC_LABELS = {
-  impressions: "Impressions",
-  detail_views: "Detail views",
-  booking_clicks: "Book now clicks",
-  ctr: "CTR",
-  sold_out_on_click: "Sold out on click",
-  attributed_bookings: "Attributed bookings",
-  attributed_revenue_minor: "Attributed revenue",
-} as const;
+import { STATS_METRIC_LABELS as LABELS } from "./display-labels";
+
+export const STATS_METRIC_LABELS = LABELS;

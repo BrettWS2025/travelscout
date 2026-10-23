@@ -5,6 +5,7 @@ import {
   type DealEditorSummary,
 } from "@/lib/marketplace/deal-editor";
 import type { EditorStep } from "@/lib/marketplace/deal-publish-validation";
+import { statusLabel } from "@/lib/marketplace/display-labels";
 
 type Props = {
   summary: DealEditorSummary;
@@ -45,7 +46,7 @@ export function DealEditorSidebar({ summary, status, onFix }: Props) {
         <div>
           <dt className="text-[var(--ts-muted)]">Status</dt>
           <dd className="font-semibold capitalize text-[var(--ts-ink)]">
-            {status?.replace(/_/g, " ") ?? "—"}
+            {status ? statusLabel(status) : "—"}
           </dd>
         </div>
         <div>

@@ -212,7 +212,7 @@ export async function resumeDeal(
         checks: [
           {
             key: "attestation",
-            label: "Attestation",
+            label: "Seat Reconfirm",
             passed: false,
             message:
               "Confirm seats are available and you will honour this price",

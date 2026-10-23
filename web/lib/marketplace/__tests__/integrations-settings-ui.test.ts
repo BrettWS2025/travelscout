@@ -49,7 +49,7 @@ describe("integrations-settings-ui", () => {
 
   it("maps error codes to plain-language fix text", () => {
     const text = integrationErrorFixText("sync_failed", "boom", "Rezdy");
-    expect(text).toMatch(/Resync now/i);
+    expect(text).toMatch(/Sync Again/i);
     expect(text).toMatch(/Rezdy/);
 
     const auth = integrationErrorFixText("invalid_api_key", null, "Rezdy");

@@ -81,7 +81,9 @@ describe("DealDefaults", () => {
   it("shows the new-deals-only note and cutoff field", async () => {
     render(<DealDefaults />);
     await waitFor(() => {
-      expect(screen.getByLabelText(/sales cutoff/i)).toBeTruthy();
+      expect(
+        screen.getByLabelText(/stop selling this many minutes before start/i)
+      ).toBeTruthy();
     });
     expect(
       screen.getByText(/changes apply to new deals only/i)

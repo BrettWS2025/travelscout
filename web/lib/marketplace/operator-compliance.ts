@@ -24,6 +24,12 @@ import {
   type ComplianceDocument,
   type SettingsFieldError,
 } from "./settings";
+import {
+  COMPLIANCE_DOC_TYPE_LABELS,
+  REVIEW_STATUS_LABELS,
+} from "./display-labels";
+
+export { COMPLIANCE_DOC_TYPE_LABELS, REVIEW_STATUS_LABELS };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -52,22 +58,6 @@ export type ComplianceReminderDay = (typeof COMPLIANCE_REMINDER_DAYS)[number];
 export const DEFAULT_REQUIRED_COMPLIANCE_DOC_TYPES = [
   "public_liability_insurance",
 ] as const satisfies readonly ComplianceDocType[];
-
-export const COMPLIANCE_DOC_TYPE_LABELS: Record<ComplianceDocType, string> = {
-  public_liability_insurance: "Public liability insurance",
-  adventure_activities_certificate: "Adventure activities certificate",
-  maritime_licence: "Maritime licence",
-  business_licence: "Business licence",
-  food_licence: "Food licence",
-  other: "Other",
-};
-
-export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-  pending: "Pending review",
-  approved: "Approved",
-  rejected: "Rejected",
-  expired: "Expired",
-};
 
 /**
  * Review fields clients must never set (camelCase app model).

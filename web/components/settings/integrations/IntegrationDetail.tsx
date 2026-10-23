@@ -381,7 +381,7 @@ export function IntegrationDetail({ provider }: Props) {
   async function onResync() {
     await runAction(async () => {
       await resyncIntegrationApi(operator!.id, provider, token);
-    }, "Resync finished.");
+    }, "Sync finished.");
   }
 
   async function onTestBookingLink() {
@@ -588,7 +588,7 @@ export function IntegrationDetail({ provider }: Props) {
                   </div>
                   <div>
                     <dt className="font-[family-name:var(--font-sora)] text-xs text-[var(--ts-muted)]">
-                      Webhook last received
+                      Last Instant Update Received
                     </dt>
                     <dd className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
                       {formatSyncTime(
@@ -764,7 +764,7 @@ export function IntegrationDetail({ provider }: Props) {
                     onClick={() => void onResync()}
                     className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                   >
-                    Resync now
+                    Sync Again
                   </button>
                 </div>
               </Section>

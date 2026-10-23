@@ -10,7 +10,7 @@ import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile"
 const travelerNavItems = [
   {
     href: "/account/details",
-    label: "Account details",
+    label: "Account Details",
     icon: User,
   },
 ] as const;
@@ -18,7 +18,7 @@ const travelerNavItems = [
 const operatorNavItems = [
   {
     href: "/account/details",
-    label: "Account details",
+    label: "Account Details",
     icon: User,
   },
   {

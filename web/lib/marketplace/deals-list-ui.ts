@@ -9,71 +9,38 @@ import {
   isDealListTab,
   type DealListBanner,
   type DealListRow,
-  type DealListRowAction,
   type DealListTab,
 } from "./deal-list-shared";
 import type { Category, DealType, PauseReason, SourceProvider } from "./enums";
 import { CATEGORIES, DEAL_TYPES, SOURCE_PROVIDERS } from "./enums";
+import {
+  CATEGORY_LABELS,
+  DEAL_LIST_ROW_ACTION_LABELS,
+  DEAL_LIST_TAB_LABELS,
+  DEAL_TYPE_LABELS,
+  PAUSE_REASON_LABELS,
+  SOURCE_PROVIDER_LABELS,
+  statusLabel,
+} from "./display-labels";
 
 export { isDealListTab };
 export type { DealListTab };
+
+export {
+  CATEGORY_LABELS,
+  DEAL_LIST_ROW_ACTION_LABELS,
+  DEAL_LIST_TAB_LABELS,
+  DEAL_TYPE_LABELS,
+  PAUSE_REASON_LABELS,
+  SOURCE_PROVIDER_LABELS,
+  statusLabel,
+};
 
 /** Format minor units as dollars (client-safe; avoid importing deal-editor). */
 export function formatMinorAsDollars(minor: number | null | undefined): string {
   if (minor == null || !Number.isFinite(minor)) return "—";
   return `$${(minor / 100).toFixed(2)}`;
 }
-
-export const DEAL_LIST_TAB_LABELS: Record<DealListTab, string> = {
-  live: "Live",
-  scheduled: "Scheduled",
-  needs_attention: "Needs attention",
-  paused: "Paused",
-  drafts: "Drafts",
-  sold_out: "Sold out",
-  past: "Past",
-};
-
-export const DEAL_LIST_ROW_ACTION_LABELS: Record<DealListRowAction, string> = {
-  edit: "Edit",
-  duplicate: "Duplicate",
-  pause: "Pause",
-  resume: "Resume",
-  end: "End",
-  preview: "Preview",
-  view_stats: "View stats",
-  save_as_template: "Save as template",
-  update_seats: "Update seats",
-  mark_sold_out: "Mark sold out",
-};
-
-export const PAUSE_REASON_LABELS: Record<PauseReason, string> = {
-  operator: "Paused by operator",
-  admin: "Paused by admin",
-  sync_failure: "Provider sync failing",
-  session_cancelled: "Session cancelled",
-  capacity_zero: "No capacity",
-  price_below_threshold: "Price below 50% off",
-  attestation_expired: "Seats not reconfirmed",
-  link_broken: "Booking link broken",
-  cutoff_passed: "Cutoff passed",
-  integration_disconnected: "Integration disconnected",
-};
-
-export const DEAL_TYPE_LABELS: Record<DealType, string> = {
-  integrated_session: "Integrated session",
-  integrated_multi_session: "Integrated multi-session",
-  manual_session: "Manual session",
-  manual_open_window: "Open window",
-};
-
-export const SOURCE_PROVIDER_LABELS: Record<SourceProvider, string> = {
-  rezdy: "Rezdy",
-  fareharbor: "FareHarbor",
-  bokun: "Bókun",
-  checkfront: "Checkfront",
-  manual: "Manual",
-};
 
 export type DealsListViewMode = "table" | "calendar";
 
@@ -127,7 +94,7 @@ export function formatCutoffCountdown(
   const end = Date.parse(cutoffAt);
   if (!Number.isFinite(end)) return "—";
   const remaining = end - nowMs;
-  if (remaining <= 0) return "Cutoff passed";
+  if (remaining <= 0) return "Sales Window Closed";
 
   const totalSec = Math.floor(remaining / 1000);
   const days = Math.floor(totalSec / 86_400);
@@ -147,14 +114,10 @@ export function pauseTooltip(row: DealListRow): string | null {
   }
   const reason =
     row.pause_reason != null
-      ? PAUSE_REASON_LABELS[row.pause_reason] ?? row.pause_reason
+      ? PAUSE_REASON_LABELS[row.pause_reason as PauseReason] ?? row.pause_reason
       : null;
   if (reason && row.pause_detail) return `${reason}: ${row.pause_detail}`;
   return reason ?? row.pause_detail;
-}
-
-export function statusLabel(status: DealListRow["status"]): string {
-  return status.replace(/_/g, " ");
 }
 
 export function canWriteInventory(role: string | null | undefined): boolean {
@@ -191,16 +154,27 @@ export function emptyStateCopy(input: {
 }): { title: string; body: string; cta: string | null } {
   if (!input.hasAnyDeals) {
     return {
-      title: "Create your first deal",
+      title: "Create Your First Deal",
       body: input.hasIntegration
-        ? "List a last-minute deal from your inventory or create a manual deal."
-        : "Start with a manual deal, or connect a booking system in Settings to pull live inventory.",
-      cta: input.canWrite ? "Create deal" : null,
+        ? "List a last-minute deal from your inventory or create a deal by hand."
+        : "Start with a deal you enter yourself, or connect a booking system in Settings to pull live inventory.",
+      cta: input.canWrite ? "Create Deal" : null,
     };
   }
   return {
-    title: "No deals in this tab",
+    title: "No Deals In This Tab",
     body: "Try another status tab or clear filters.",
     cta: null,
   };
+}
+
+/** Bulk action button labels (Title Case). */
+export function bulkActionLabel(action: string): string {
+  const known: Record<string, string> = {
+    pause: "Pause",
+    resume: "Resume",
+    end: "End",
+    archive: "Archive",
+  };
+  return known[action] ?? statusLabel(action);
 }

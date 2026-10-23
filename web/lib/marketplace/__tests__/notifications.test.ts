@@ -200,7 +200,7 @@ describe("Chunk 39 notify fan-out", () => {
 
     const inbox = listMyInAppNotifications(store, operatorId, ownerId);
     expect(inbox).toHaveLength(1);
-    expect(inbox[0]!.title).toMatch(/auto-paused/i);
+    expect(inbox[0]!.title).toMatch(/Paused Automatically/i);
 
     const read = markInAppNotificationRead(
       store,

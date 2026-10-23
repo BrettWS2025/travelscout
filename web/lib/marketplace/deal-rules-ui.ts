@@ -3,12 +3,9 @@
  */
 
 import type { RuleType } from "./enums";
+import { RULE_TYPE_LABELS } from "./display-labels";
 
-export const RULE_TYPE_LABELS: Record<RuleType, string> = {
-  daily: "Daily",
-  weekly: "Weekly",
-  specific_dates: "Specific dates",
-};
+export { RULE_TYPE_LABELS };
 
 export const DAY_OF_WEEK_OPTIONS = [
   { value: 0, label: "Sun" },

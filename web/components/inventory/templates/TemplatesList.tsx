@@ -302,7 +302,7 @@ export function TemplatesList() {
                         onClick={() => void onCreateDeal(template)}
                         className="rounded-lg bg-[var(--ts-teal)] px-3 py-2 font-[family-name:var(--font-sora)] text-sm font-semibold text-white disabled:opacity-60"
                       >
-                        {busy ? "Working…" : "Create deal"}
+                        {busy ? "Working…" : "Create Deal"}
                       </button>
                       <button
                         type="button"

@@ -19,6 +19,7 @@ import {
   type QuickUpdateDealAction,
   type QuickUpdateDealView,
 } from "@/lib/marketplace/quick-update-client";
+import { statusLabel } from "@/lib/marketplace/display-labels";
 
 type Props = {
   token: string;
@@ -54,10 +55,10 @@ function initialDrafts(
 
 function statusBadge(deal: QuickUpdateDealView): string | null {
   if (deal.status === "auto_paused" && deal.pause_reason === "attestation_expired") {
-    return "Needs reconfirm";
+    return "Needs Reconfirm";
   }
   if (deal.status === "live") return "Live";
-  return deal.status.replace(/_/g, " ");
+  return statusLabel(deal.status);
 }
 
 export function QuickUpdatePage({ token }: Props) {

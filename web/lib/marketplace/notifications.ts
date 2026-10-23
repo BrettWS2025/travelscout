@@ -35,6 +35,12 @@ import {
   type NotificationPreference,
 } from "./settings";
 import { getZonedParts, localDateKey, zonedLocalToUtcIso } from "./timezone";
+import {
+  NOTIFICATION_EVENT_DESCRIPTIONS,
+  NOTIFICATION_EVENT_LABELS,
+} from "./display-labels";
+
+export { NOTIFICATION_EVENT_DESCRIPTIONS, NOTIFICATION_EVENT_LABELS };
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -137,34 +143,6 @@ export type NotificationChannelProviders = {
 // ---------------------------------------------------------------------------
 // Labels / copy
 // ---------------------------------------------------------------------------
-
-export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = {
-  integration_sync_failing: "Integration sync failing",
-  deal_auto_paused: "Deal auto-paused",
-  attestation_due: "Attestation due",
-  booking_link_broken: "Booking link broken",
-  deal_review_update: "Deal review update",
-  deal_lifecycle: "Deal lifecycle",
-  auto_rule_created_deals: "Auto-rule created deals",
-  daily_performance_summary: "Daily performance summary",
-  compliance_expiring: "Compliance expiring",
-};
-
-export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<
-  NotificationEventType,
-  string
-> = {
-  integration_sync_failing:
-    "When a connected booking system stops syncing and deals may be hidden.",
-  deal_auto_paused: "When the platform auto-pauses a deal (capacity, price, etc.).",
-  attestation_due: "Reminders to reconfirm seats on manual deals.",
-  booking_link_broken: "When a booking URL fails reachability checks twice.",
-  deal_review_update: "When a deal is submitted, approved, or rejected for review.",
-  deal_lifecycle: "When a deal goes live, sells out, or expires.",
-  auto_rule_created_deals: "When an auto-deal rule creates new draft or live deals.",
-  daily_performance_summary: "A morning email with yesterday’s deal performance.",
-  compliance_expiring: "When required compliance documents are nearing expiry.",
-};
 
 const MANDATORY_SET = new Set<string>(MANDATORY_NOTIFICATION_EVENTS);
 
@@ -923,7 +901,7 @@ export async function notifyDealAutoPaused(
     {
       now: payload.at,
       incidentKey: `deal_auto_paused:${payload.dealId}:${payload.reason}:${payload.at}`,
-      title: "Deal auto-paused",
+      title: "Deal Paused Automatically",
       body: payload.detail || `Paused: ${payload.reason}`,
     }
   );

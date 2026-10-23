@@ -3,12 +3,10 @@
  * Visual layout mirrors other Account screens; rules stay server-side.
  */
 
-import { SOURCE_PROVIDER_LABELS } from "./deals-list-ui";
 import type {
   BookingDestinationType,
   ConversionTrackingMethod,
   IntegrationProvider,
-  IntegrationStatus,
   SyncMode,
   SyncType,
 } from "./enums";
@@ -20,57 +18,24 @@ import {
 } from "./enums";
 import type { IntegrationProviderCard } from "./integration-connect";
 import type { SyncLogStatus } from "./integration";
+import {
+  BOOKING_DESTINATION_LABELS,
+  CONVERSION_TRACKING_LABELS,
+  INTEGRATION_STATUS_LABELS,
+  SOURCE_PROVIDER_LABELS,
+  SYNC_LOG_STATUS_LABELS,
+  SYNC_MODE_LABELS,
+  SYNC_TYPE_LABELS,
+} from "./display-labels";
 
-export { SOURCE_PROVIDER_LABELS };
-
-export const INTEGRATION_STATUS_LABELS: Record<
-  IntegrationStatus | "not_connected",
-  string
-> = {
-  not_connected: "Not connected",
-  connecting: "Connecting…",
-  connected: "Connected",
-  degraded: "Degraded",
-  error: "Error",
-  disconnected: "Disconnected",
-};
-
-export const SYNC_MODE_LABELS: Record<SyncMode, string> = {
-  webhook: "Webhook",
-  polling: "Polling",
-  hybrid: "Hybrid",
-};
-
-export const BOOKING_DESTINATION_LABELS: Record<BookingDestinationType, string> =
-  {
-    provider_booking_page: "Provider booking page",
-    operator_website: "Operator website",
-    phone: "Phone",
-    email: "Email",
-  };
-
-export const CONVERSION_TRACKING_LABELS: Record<
-  ConversionTrackingMethod,
-  string
-> = {
-  none: "None",
-  promo_code: "Promo code",
-  booking_source: "Booking source label",
-  webhook: "Webhook",
-};
-
-export const SYNC_TYPE_LABELS: Record<SyncType, string> = {
-  full: "Full",
-  incremental: "Incremental",
-  webhook: "Webhook",
-  click_recheck: "Click recheck",
-  manual: "Manual",
-};
-
-export const SYNC_LOG_STATUS_LABELS: Record<SyncLogStatus, string> = {
-  running: "Running",
-  success: "Success",
-  failed: "Failed",
+export {
+  BOOKING_DESTINATION_LABELS,
+  CONVERSION_TRACKING_LABELS,
+  INTEGRATION_STATUS_LABELS,
+  SOURCE_PROVIDER_LABELS,
+  SYNC_LOG_STATUS_LABELS,
+  SYNC_MODE_LABELS,
+  SYNC_TYPE_LABELS,
 };
 
 /** Settings subnav items. Integrations + profile/defaults + notifications + team + compliance live. */
@@ -82,12 +47,12 @@ export const SETTINGS_NAV_ITEMS = [
   },
   {
     href: "/account/settings/business-profile",
-    label: "Business profile",
+    label: "Business Profile",
     live: true,
   },
   {
     href: "/account/settings/deal-defaults",
-    label: "Deal defaults",
+    label: "Deal Defaults",
     live: true,
   },
   {
@@ -154,28 +119,28 @@ export function integrationErrorFixText(
 
   const code = (errorCode ?? "").toLowerCase();
   const known: Record<string, string> = {
-    sync_failed: `${providerLabelText} sync failed. Click Resync now. If it keeps failing, use Test connection and reconnect with a fresh API key.`,
-    sync_error: `${providerLabelText} returned an error during sync. Click Resync now, or disconnect and reconnect if the problem continues.`,
+    sync_failed: `${providerLabelText} sync failed. Click Sync Again. If it keeps failing, use Test Connection and reconnect with a fresh API key.`,
+    sync_error: `${providerLabelText} returned an error during sync. Click Sync Again, or disconnect and reconnect if the problem continues.`,
     sync_in_progress: `A sync is already running for ${providerLabelText}. Wait for it to finish, then try again.`,
     connect_failed: `Could not connect to ${providerLabelText}. Check the API key and try Connect again.`,
     not_implemented: `${providerLabelText} is coming soon and cannot be connected yet.`,
     not_connected: `${providerLabelText} is not connected. Enter your API key to connect.`,
     missing_credentials: `Stored credentials are missing. Disconnect and connect again with a valid API key.`,
     invalid_status: `This action is not available in the current connection state. Refresh the page and try again.`,
-    auth: `Authentication failed. Generate a new API key in ${providerLabelText} and reconnect.`,
-    unauthorized: `Authentication failed. Generate a new API key in ${providerLabelText} and reconnect.`,
+    auth: `Sign-in failed. Generate a new API key in ${providerLabelText} and reconnect.`,
+    unauthorized: `Sign-in failed. Generate a new API key in ${providerLabelText} and reconnect.`,
     invalid_api_key: `The API key was rejected. Generate a new key in ${providerLabelText} and reconnect.`,
-    rate_limit: `${providerLabelText} rate-limited us. Wait a few minutes, then Resync. You can also increase the poll interval.`,
-    timeout: `The request to ${providerLabelText} timed out. Try Resync now; if it persists, check ${providerLabelText} status.`,
-    network: `Could not reach ${providerLabelText}. Check your network and try Resync now.`,
+    rate_limit: `${providerLabelText} asked us to slow down. Wait a few minutes, then Sync Again. You can also check less often.`,
+    timeout: `The request to ${providerLabelText} timed out. Try Sync Again; if it keeps happening, check ${providerLabelText} status.`,
+    network: `Could not reach ${providerLabelText}. Check your network and try Sync Again.`,
   };
 
   if (code && known[code]) return known[code];
   if (errorMessage?.trim()) {
-    return `${errorMessage.trim()} — try Resync now or Test connection.`;
+    return `${errorMessage.trim()} — try Sync Again or Test Connection.`;
   }
   if (code) {
-    return `Error “${errorCode}”. Try Resync now or Test connection.`;
+    return `Error “${errorCode}”. Try Sync Again or Test Connection.`;
   }
   return null;
 }

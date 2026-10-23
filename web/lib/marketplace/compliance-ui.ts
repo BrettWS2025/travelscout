@@ -9,21 +9,12 @@ import {
   REVIEW_STATUSES,
 } from "./enums";
 
-export const COMPLIANCE_DOC_TYPE_LABELS: Record<ComplianceDocType, string> = {
-  public_liability_insurance: "Public liability insurance",
-  adventure_activities_certificate: "Adventure activities certificate",
-  maritime_licence: "Maritime licence",
-  business_licence: "Business licence",
-  food_licence: "Food licence",
-  other: "Other",
-};
+import {
+  COMPLIANCE_DOC_TYPE_LABELS,
+  REVIEW_STATUS_LABELS,
+} from "./display-labels";
 
-export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-  pending: "Pending review",
-  approved: "Approved",
-  rejected: "Rejected",
-  expired: "Expired",
-};
+export { COMPLIANCE_DOC_TYPE_LABELS, REVIEW_STATUS_LABELS };
 
 export const COMPLIANCE_FILE_LIMITS = {
   maxFileSizeBytes: 10 * 1024 * 1024,

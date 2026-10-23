@@ -37,6 +37,18 @@ import {
   type PriceOptionType,
 } from "@/lib/marketplace/enums";
 import {
+  BOOKING_DESTINATION_LABELS,
+  CANCELLATION_POLICY_LABELS,
+  CAPACITY_MODE_LABELS,
+  CATEGORY_LABELS,
+  DEAL_TYPE_LABELS,
+  DISCOUNT_INPUT_MODE_LABELS,
+  DISCOUNT_MECHANISM_LABELS,
+  FITNESS_LEVEL_LABELS,
+  PRICE_OPTION_TYPE_LABELS,
+  dealTypeLabel,
+} from "@/lib/marketplace/display-labels";
+import {
   formatDiscountVerificationStatusText,
   formatSeparateProductRef,
   parseSeparateProductRef,
@@ -162,11 +174,11 @@ export function TypeStep({
   return (
     <div className="space-y-4">
       <h3 className="font-[family-name:var(--font-instrument)] text-2xl text-[var(--ts-ink)]">
-        Deal type
+        Deal Type
       </h3>
       <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-        Manual deals are available now. Integrated types need a connected
-        booking system and an enabled product.
+        You can enter deals yourself today. Deals from a booking system need a
+        connected system and an enabled product.
       </p>
 
       {deal ? (
@@ -174,7 +186,7 @@ export function TypeStep({
           <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-ink)]">
             Type:{" "}
             <span className="font-semibold">
-              {deal.dealType.replace(/_/g, " ")}
+              {dealTypeLabel(deal.dealType)}
             </span>
           </p>
           <p className="mt-1 text-xs text-[var(--ts-muted)]">
@@ -186,16 +198,16 @@ export function TypeStep({
             onClick={onDuplicate}
             className="mt-3 rounded-lg border border-[var(--ts-ink)]/15 bg-white px-3 py-2 text-sm font-medium text-[var(--ts-ink)]"
           >
-            Duplicate as new draft
+            Duplicate As New Draft
           </button>
         </div>
       ) : pendingIntegrated ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-[family-name:var(--font-sora)] text-sm font-semibold text-[var(--ts-ink)]">
-              Choose a product
+              Choose A Product
               <span className="ml-2 font-normal text-[var(--ts-muted)]">
-                ({pendingIntegrated.replace(/_/g, " ")})
+                ({dealTypeLabel(pendingIntegrated)})
               </span>
             </p>
             <button
@@ -276,26 +288,26 @@ export function TypeStep({
             [
               {
                 type: "manual_session" as const,
-                title: "Manual session",
+                title: DEAL_TYPE_LABELS.manual_session,
                 blurb: "Fixed departure times you enter yourself.",
                 enabled: true,
               },
               {
                 type: "manual_open_window" as const,
-                title: "Manual open window",
+                title: DEAL_TYPE_LABELS.manual_open_window,
                 blurb: "Flexible days (rentals, accommodation).",
                 enabled: true,
               },
               {
                 type: "integrated_session" as const,
-                title: "Integrated session",
-                blurb: "Live from Rezdy or another provider.",
+                title: DEAL_TYPE_LABELS.integrated_session,
+                blurb: "Live from Rezdy or another booking system.",
                 enabled: hasConnectedIntegration,
               },
               {
                 type: "integrated_multi_session" as const,
-                title: "Integrated multi-session",
-                blurb: "Several provider departures as one deal.",
+                title: DEAL_TYPE_LABELS.integrated_multi_session,
+                blurb: "Several booking-system departures as one deal.",
                 enabled: hasConnectedIntegration,
               },
             ] as const
@@ -326,7 +338,7 @@ export function TypeStep({
               <p className="mt-1 text-xs text-[var(--ts-muted)]">{opt.blurb}</p>
               {!opt.enabled && (
                 <p className="mt-2 text-xs font-medium text-[var(--ts-teal)] underline">
-                  Connect an integration in Settings
+                  Connect A Booking System In Settings
                 </p>
               )}
             </button>
@@ -350,7 +362,7 @@ export function TypeStep({
                   {t.name}
                   {t.deal_type ? (
                     <span className="ml-2 text-xs text-[var(--ts-muted)]">
-                      ({t.deal_type.replace(/_/g, " ")})
+                      ({dealTypeLabel(t.deal_type)})
                     </span>
                   ) : null}
                 </span>
@@ -574,7 +586,7 @@ export function ContentStep({
             <option value="">Select…</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c.replace(/_/g, " ")}
+                {CATEGORY_LABELS[c]}
               </option>
             ))}
           </select>
@@ -723,14 +735,14 @@ export function ContentStep({
             <option value="">Select…</option>
             {CANCELLATION_POLICY_TYPES.map((c) => (
               <option key={c} value={c}>
-                {c.replace(/_/g, " ")}
+                {CANCELLATION_POLICY_LABELS[c]}
               </option>
             ))}
           </select>
         </div>
         <div>
           <label className={labelClass} htmlFor="deal-fitness">
-            Fitness level
+            Fitness Level
           </label>
           <select
             id="deal-fitness"
@@ -746,7 +758,7 @@ export function ContentStep({
             <option value="">Optional…</option>
             {FITNESS_LEVELS.map((f) => (
               <option key={f} value={f}>
-                {f}
+                {FITNESS_LEVEL_LABELS[f]}
               </option>
             ))}
           </select>
@@ -986,7 +998,7 @@ export function PricingStep({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Discount mechanism</label>
+          <label className={labelClass}>How The Discount Works</label>
           <select
             className={fieldClass}
             value={deal.discountMechanism ?? defaultMechanism}
@@ -998,7 +1010,7 @@ export function PricingStep({
           >
             {mechanisms.map((m) => (
               <option key={m} value={m}>
-                {m.replace(/_/g, " ")}
+                {DISCOUNT_MECHANISM_LABELS[m]}
               </option>
             ))}
           </select>
@@ -1008,7 +1020,7 @@ export function PricingStep({
           deal.discountMechanism === "quote_code" ||
           !integrated) && (
           <div>
-            <label className={labelClass}>Input mode</label>
+            <label className={labelClass}>How You Enter The Price</label>
             <select
               className={fieldClass}
               value={mode}
@@ -1018,8 +1030,12 @@ export function PricingStep({
                 })
               }
             >
-              <option value="deal_price">Deal price</option>
-              <option value="percentage">Percentage off</option>
+              <option value="deal_price">
+                {DISCOUNT_INPUT_MODE_LABELS.deal_price}
+              </option>
+              <option value="percentage">
+                {DISCOUNT_INPUT_MODE_LABELS.percentage}
+              </option>
             </select>
           </div>
         )}
@@ -1028,7 +1044,7 @@ export function PricingStep({
       {(deal.discountMechanism === "quote_code" ||
         deal.discountMechanism === "promo_code") && (
         <div>
-          <label className={labelClass}>Promo / quote code</label>
+          <label className={labelClass}>Discount Or Quote Code</label>
           <input
             className={fieldClass}
             value={deal.promoCode ?? ""}
@@ -1154,7 +1170,7 @@ export function PricingStep({
                       >
                         {PRICE_OPTION_TYPES.map((t) => (
                           <option key={t} value={t}>
-                            {t}
+                            {PRICE_OPTION_TYPE_LABELS[t]}
                           </option>
                         ))}
                       </select>
@@ -1650,7 +1666,9 @@ export function AvailabilityStep({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
-          <label className={labelClass}>Sales cutoff (minutes)</label>
+          <label className={labelClass}>
+            Stop Selling This Many Minutes Before Start
+          </label>
           <input
             type="number"
             className={fieldClass}
@@ -1733,9 +1751,11 @@ export function AvailabilityStep({
                   });
                 }}
               >
-                <option value="live_provider">Live from provider</option>
+                <option value="live_provider">
+                  {CAPACITY_MODE_LABELS.live_provider}
+                </option>
                 <option value="live_provider_capped">
-                  Live from provider (capped)
+                  {CAPACITY_MODE_LABELS.live_provider_capped}
                 </option>
               </select>
             </div>
@@ -1975,7 +1995,7 @@ export function DestinationStep({
           <option value="">Select…</option>
           {BOOKING_DESTINATION_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t.replace(/_/g, " ")}
+              {BOOKING_DESTINATION_LABELS[t]}
             </option>
           ))}
         </select>

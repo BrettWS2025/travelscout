@@ -154,10 +154,10 @@ describe("DealsList (chunk 23)", () => {
       expect(screen.getByText("Sunset Harbour Paddle")).toBeTruthy();
     });
 
-    expect(screen.getByText(/Live/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Live/ })).toBeTruthy();
     expect(screen.getByText("Pause")).toBeTruthy();
-    expect(screen.getByText("Update seats")).toBeTruthy();
-    expect(screen.getByText("Create deal")).toBeTruthy();
+    expect(screen.getByText("Update Seats")).toBeTruthy();
+    expect(screen.getByText("Create Deal")).toBeTruthy();
     expect(listOperatorDealsApi).toHaveBeenCalled();
   });
 
@@ -247,10 +247,10 @@ describe("DealsList (chunk 23)", () => {
       expect(screen.getByText("Sunset Harbour Paddle")).toBeTruthy();
     });
 
-    expect(screen.queryByText("Create deal")).toBeNull();
+    expect(screen.queryByText("Create Deal")).toBeNull();
     expect(screen.queryByText("Pause")).toBeNull();
     expect(screen.getByText("Preview")).toBeTruthy();
-    expect(screen.getByText("View stats")).toBeTruthy();
+    expect(screen.getByText("View Stats")).toBeTruthy();
     expect(screen.getByText(/read only/i)).toBeTruthy();
   });
 

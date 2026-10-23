@@ -50,6 +50,6 @@ describe("notifications-ui", () => {
   it("labels mandatory events", () => {
     expect(isMandatoryEvent("booking_link_broken")).toBe(true);
     expect(isMandatoryEvent("deal_lifecycle")).toBe(false);
-    expect(eventLabel("attestation_due")).toMatch(/Attestation/i);
+    expect(eventLabel("attestation_due")).toMatch(/Seat Reconfirm/i);
   });
 });
