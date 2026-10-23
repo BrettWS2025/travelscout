@@ -4,18 +4,12 @@
  */
 
 import { USER_ROLES, type InviteStatus, type UserRole } from "./enums";
+import {
+  INVITE_STATUS_LABELS,
+  USER_ROLE_LABELS,
+} from "./display-labels";
 
-export const USER_ROLE_LABELS: Record<UserRole, string> = {
-  owner: "Owner",
-  manager: "Manager",
-  staff: "Staff",
-};
-
-export const INVITE_STATUS_LABELS: Record<InviteStatus, string> = {
-  pending: "Pending",
-  accepted: "Accepted",
-  revoked: "Revoked",
-};
+export { INVITE_STATUS_LABELS, USER_ROLE_LABELS };
 
 export type TeamMemberRow = {
   id: string;

@@ -28,6 +28,12 @@ import {
   type NotificationPreference,
 } from "./settings";
 import { allowsDevSecretFallback } from "./secrets";
+import {
+  INVITE_STATUS_LABELS,
+  USER_ROLE_LABELS,
+} from "./display-labels";
+
+export { INVITE_STATUS_LABELS, USER_ROLE_LABELS };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -36,18 +42,6 @@ import { allowsDevSecretFallback } from "./secrets";
 export const TEAM_INVITE_TTL_DAYS = 7;
 export const LAST_ACTIVE_THROTTLE_MS = 5 * 60 * 1000;
 const TOKEN_BYTES = 32;
-
-export const USER_ROLE_LABELS: Record<UserRole, string> = {
-  owner: "Owner",
-  manager: "Manager",
-  staff: "Staff",
-};
-
-export const INVITE_STATUS_LABELS: Record<InviteStatus, string> = {
-  pending: "Pending",
-  accepted: "Accepted",
-  revoked: "Revoked",
-};
 
 // ---------------------------------------------------------------------------
 // Errors

@@ -36,7 +36,7 @@ describe("AccountNav", () => {
       isLoading: false,
     });
     render(<AccountNav />);
-    expect(screen.getAllByText("Account details").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Account Details").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Inventory").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Log out" }).length).toBeGreaterThan(0);
@@ -44,7 +44,7 @@ describe("AccountNav", () => {
 
   it("hides inventory and settings for regular traveler profiles", () => {
     render(<AccountNav />);
-    expect(screen.getAllByText("Account details").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Account Details").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Log out" }).length).toBeGreaterThan(0);
     expect(screen.queryByText("Inventory")).toBeNull();
     expect(screen.queryByText("Settings")).toBeNull();

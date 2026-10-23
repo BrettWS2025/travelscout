@@ -12,33 +12,19 @@ import {
 } from "./enums";
 import { BOOKING_DEFAULTS_NOTE } from "./operators";
 import { PLATFORM_REGIONS } from "./settings";
+import {
+  BOOKING_DESTINATION_LABELS,
+  CANCELLATION_POLICY_LABELS,
+  DISCOUNT_MECHANISM_LABELS,
+} from "./display-labels";
 
-export { BOOKING_DEFAULTS_NOTE, PLATFORM_REGIONS };
-
-export const DISCOUNT_MECHANISM_LABELS: Record<DiscountMechanism, string> = {
-  promo_code: "Promo code",
-  price_option: "Price option",
-  separate_product: "Separate product",
-  manual_price: "Manual price",
-  quote_code: "Quote code",
+export {
+  BOOKING_DEFAULTS_NOTE,
+  BOOKING_DESTINATION_LABELS,
+  CANCELLATION_POLICY_LABELS,
+  DISCOUNT_MECHANISM_LABELS,
+  PLATFORM_REGIONS,
 };
-
-export const CANCELLATION_POLICY_LABELS: Record<
-  CancellationPolicyType,
-  string
-> = {
-  non_refundable: "Non-refundable",
-  operator_standard: "Operator standard",
-  custom: "Custom",
-};
-
-export const BOOKING_DESTINATION_LABELS: Record<BookingDestinationType, string> =
-  {
-    provider_booking_page: "Provider booking page",
-    operator_website: "Operator website",
-    phone: "Phone",
-    email: "Email",
-  };
 
 export const COMMON_TIMEZONES = [
   "Pacific/Auckland",

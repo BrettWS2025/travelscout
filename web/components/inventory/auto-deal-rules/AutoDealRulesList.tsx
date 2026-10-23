@@ -212,7 +212,7 @@ export function AutoDealRulesList() {
             No auto-deal rules yet
           </p>
           <p className="mt-2 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-            Create a rule from an integrated product template to list unsold
+            Create a rule from a booking-system product template to list unsold
             seats automatically (e.g. 48 h before departure).
           </p>
           {canWrite ? (

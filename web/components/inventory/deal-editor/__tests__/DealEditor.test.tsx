@@ -134,7 +134,7 @@ describe("DealEditor (chunk 22)", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Manual session/i })
+      screen.getByRole("button", { name: /Fixed Times \(You Enter\)/i })
     );
 
     await waitFor(() => {
@@ -178,7 +178,7 @@ describe("DealEditor (chunk 22)", () => {
       <DealEditor operatorId={DEV_SEED_IDS.harbourKayaks.operatorId} />
     );
     const integrated = screen.getByRole("button", {
-      name: /Integrated session/i,
+      name: /From Booking System — One Departure/i,
     });
     expect(integrated).toBeDisabled();
     expect(

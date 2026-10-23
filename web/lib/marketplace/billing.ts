@@ -18,26 +18,16 @@ import {
   validateBillingAccountFields,
 } from "./settings";
 import { localDateKey } from "./timezone";
+import {
+  BILLING_ACCOUNT_STATUS_LABELS,
+  BILLING_MODEL_LABELS,
+} from "./display-labels";
+
+export { BILLING_ACCOUNT_STATUS_LABELS, BILLING_MODEL_LABELS };
 
 // ---------------------------------------------------------------------------
-// Labels
+// Labels (re-exported from display-labels above)
 // ---------------------------------------------------------------------------
-
-export const BILLING_MODEL_LABELS: Record<BillingModel, string> = {
-  subscription: "Subscription",
-  per_click: "Per booking click",
-  commission: "Commission",
-};
-
-export const BILLING_ACCOUNT_STATUS_LABELS: Record<
-  BillingAccount["status"],
-  string
-> = {
-  active: "Active",
-  past_due: "Past due",
-  cancelled: "Cancelled",
-  none: "None",
-};
 
 // ---------------------------------------------------------------------------
 // Errors

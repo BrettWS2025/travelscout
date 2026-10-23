@@ -55,7 +55,7 @@ describe("deals-list-ui helpers (chunk 23)", () => {
     expect(formatCutoffCountdown(null, now)).toBe("—");
     expect(
       formatCutoffCountdown("2026-10-20T11:59:00.000Z", now)
-    ).toBe("Cutoff passed");
+    ).toBe("Sales Window Closed");
     expect(
       formatCutoffCountdown("2026-10-20T14:30:00.000Z", now)
     ).toBe("2h 30m");
@@ -70,10 +70,10 @@ describe("deals-list-ui helpers (chunk 23)", () => {
       pauseTooltip(
         row({ pause_reason: "operator", pause_detail: "Taking a break" })
       )
-    ).toBe("Paused by operator: Taking a break");
+    ).toBe("You Paused This Deal: Taking a break");
     expect(
       pauseTooltip(row({ pause_reason: "attestation_expired" }))
-    ).toBe("Seats not reconfirmed");
+    ).toBe("Seats Need Reconfirming");
   });
 
   it("gates write UI by role", () => {
@@ -90,7 +90,7 @@ describe("deals-list-ui helpers (chunk 23)", () => {
       canWrite: true,
     });
     expect(empty.title).toMatch(/first deal/i);
-    expect(empty.cta).toBe("Create deal");
+    expect(empty.cta).toBe("Create Deal");
     expect(empty.body).toMatch(/connect/i);
 
     const staff = emptyStateCopy({

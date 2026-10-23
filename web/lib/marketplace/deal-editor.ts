@@ -24,15 +24,7 @@ import {
 export { EDITOR_STEPS };
 export type { EditorStep };
 
-export const EDITOR_STEP_LABELS: Record<EditorStep, string> = {
-  type: "Type",
-  content: "Content",
-  images: "Images",
-  pricing: "Pricing",
-  availability: "Availability",
-  destination: "Destination",
-  review: "Review",
-};
+export { EDITOR_STEP_LABELS } from "./display-labels";
 
 export type DealEditorSummary = {
   lowestOriginalMinor: number | null;
@@ -191,20 +183,7 @@ export function isLiveDeal(deal: Deal | null | undefined): boolean {
   return deal?.status === "live";
 }
 
-export function dealTypeLabel(dealType: string): string {
-  switch (dealType) {
-    case "manual_session":
-      return "Manual session";
-    case "manual_open_window":
-      return "Manual open window";
-    case "integrated_session":
-      return "Integrated session";
-    case "integrated_multi_session":
-      return "Integrated multi-session";
-    default:
-      return dealType;
-  }
-}
+export { dealTypeLabel } from "./display-labels";
 
 export function nextEditorStep(step: EditorStep): EditorStep | null {
   const i = EDITOR_STEPS.indexOf(step);

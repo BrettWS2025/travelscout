@@ -16,6 +16,7 @@ import type {
   ListOperatorDealsResult,
 } from "@/lib/marketplace/deal-list-shared";
 import {
+  CATEGORY_LABELS,
   DEAL_LIST_ROW_ACTION_LABELS,
   DEAL_LIST_TAB_LABELS,
   DEAL_TYPE_LABELS,
@@ -23,6 +24,7 @@ import {
   SOURCE_PROVIDER_LABELS,
   bannerFixHref,
   buildDealsListQuery,
+  bulkActionLabel,
   canWriteInventory,
   emptyStateCopy,
   filterOptions,
@@ -289,8 +291,8 @@ export function DealsList({ initialTab }: Props) {
       const fail = results.length - ok;
       setMessage(
         fail === 0
-          ? `Bulk ${action.replace(/_/g, " ")}: ${ok} succeeded.`
-          : `Bulk ${action.replace(/_/g, " ")}: ${ok} ok, ${fail} failed.`
+          ? `Bulk ${bulkActionLabel(action)}: ${ok} succeeded.`
+          : `Bulk ${bulkActionLabel(action)}: ${ok} ok, ${fail} failed.`
       );
       setSelected(new Set());
       bumpReload();
@@ -338,7 +340,7 @@ export function DealsList({ initialTab }: Props) {
             href="/account/inventory/deals/new"
             className="rounded-xl bg-[var(--ts-teal)] px-4 py-2.5 font-[family-name:var(--font-sora)] text-sm font-semibold text-white shadow-[0_12px_30px_rgba(14,124,102,0.25)]"
           >
-            Create deal
+            Create Deal
           </Link>
         ) : null}
       </div>
@@ -459,7 +461,7 @@ export function DealsList({ initialTab }: Props) {
             <option value="">All</option>
             {options.categories.map((c) => (
               <option key={c} value={c}>
-                {c.replace(/_/g, " ")}
+                {CATEGORY_LABELS[c]}
               </option>
             ))}
           </select>
@@ -547,7 +549,7 @@ export function DealsList({ initialTab }: Props) {
             onClick={() => void runBulk("mark_sold_out")}
             className="rounded-lg border border-[var(--ts-ink)]/15 px-3 py-1.5 text-sm"
           >
-            Mark sold out
+            Mark As Sold Out
           </button>
         </div>
       ) : null}

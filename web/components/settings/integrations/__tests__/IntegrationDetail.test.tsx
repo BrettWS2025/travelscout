@@ -194,8 +194,8 @@ describe("IntegrationDetail", () => {
     });
 
     expect(screen.getByText("Bay Cruises Rezdy")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Resync now/i })).toBeInTheDocument();
-    expect(screen.getByText(/Full · Success/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sync Again/i })).toBeInTheDocument();
+    expect(screen.getByText(/Full Sync · Success/i)).toBeInTheDocument();
 
     const enableToggle = screen.getByRole("checkbox", {
       name: /Enable Sunset Cruise for deals/i,
@@ -212,7 +212,7 @@ describe("IntegrationDetail", () => {
       );
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Resync now/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Sync Again/i }));
 
     await waitFor(() => {
       expect(resyncIntegrationApi).toHaveBeenCalledWith(

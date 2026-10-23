@@ -7,22 +7,16 @@ import {
   NOTIFICATION_EVENT_TYPES,
   type NotificationEventType,
 } from "./settings";
+import { isMandatoryNotificationEvent } from "./notifications";
 import {
+  NOTIFICATION_CHANNEL_LABELS,
   NOTIFICATION_EVENT_DESCRIPTIONS,
   NOTIFICATION_EVENT_LABELS,
-  isMandatoryNotificationEvent,
-} from "./notifications";
+} from "./display-labels";
 
 export type NotificationChannelKey = "email" | "sms" | "in_app";
 
-export const NOTIFICATION_CHANNEL_LABELS: Record<
-  NotificationChannelKey,
-  string
-> = {
-  email: "Email",
-  sms: "SMS",
-  in_app: "In-app",
-};
+export { NOTIFICATION_CHANNEL_LABELS };
 
 export type NotificationPrefRow = {
   event_type: NotificationEventType;

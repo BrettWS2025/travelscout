@@ -268,7 +268,7 @@ export function DealDefaults() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <FieldLabel htmlFor="default_sales_cutoff_minutes">
-                Sales cutoff (minutes)
+                Stop Selling This Many Minutes Before Start
               </FieldLabel>
               <input
                 id="default_sales_cutoff_minutes"
@@ -290,7 +290,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_seat_cap">
-                Seat cap (blank = none)
+                Seat Cap (Leave Blank For None)
               </FieldLabel>
               <input
                 id="default_seat_cap"
@@ -305,7 +305,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_discount_pct">
-                Default discount %
+                Default Discount %
               </FieldLabel>
               <input
                 id="default_discount_pct"
@@ -323,7 +323,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_discount_mechanism">
-                Discount mechanism
+                How The Discount Works
               </FieldLabel>
               <select
                 id="default_discount_mechanism"
@@ -343,7 +343,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_booking_destination_type">
-                Booking destination
+                Where Travellers Book
               </FieldLabel>
               <select
                 id="default_booking_destination_type"
@@ -365,7 +365,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_attestation_reminder_hours">
-                Attestation reminder (hours)
+                Seat Reconfirm Reminder (Hours)
               </FieldLabel>
               <input
                 id="default_attestation_reminder_hours"
@@ -429,7 +429,7 @@ export function DealDefaults() {
             </div>
             <div>
               <FieldLabel htmlFor="default_cancellation_policy_type">
-                Cancellation policy
+                Cancellation Policy
               </FieldLabel>
               <select
                 id="default_cancellation_policy_type"

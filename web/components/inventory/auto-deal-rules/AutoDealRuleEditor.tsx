@@ -388,7 +388,7 @@ export function AutoDealRuleEditor({ ruleId }: Props) {
               onChange={(e) => void onTemplateChange(e.target.value)}
               className="w-full rounded-lg border border-[var(--ts-ink)]/15 px-3 py-2 font-[family-name:var(--font-sora)] text-sm"
             >
-              <option value="">Select an integrated deal…</option>
+              <option value="">Select A Booking-System Deal…</option>
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
@@ -505,7 +505,7 @@ export function AutoDealRuleEditor({ ruleId }: Props) {
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block space-y-1">
               <span className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-wide text-[var(--ts-muted)]">
-                Min unsold seats
+                Min Unsold Seats
               </span>
               <input
                 type="number"
@@ -521,7 +521,7 @@ export function AutoDealRuleEditor({ ruleId }: Props) {
             </label>
             <label className="block space-y-1">
               <span className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-wide text-[var(--ts-muted)]">
-                Seat cap (optional)
+                Seat Cap (Optional)
               </span>
               <input
                 value={form.seat_cap}
@@ -553,7 +553,7 @@ export function AutoDealRuleEditor({ ruleId }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1">
               <span className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-wide text-[var(--ts-muted)]">
-                Provider price option id
+                Booking System Price Option Id
               </span>
               <input
                 required
@@ -568,7 +568,7 @@ export function AutoDealRuleEditor({ ruleId }: Props) {
             </label>
             <label className="block space-y-1">
               <span className="font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-wide text-[var(--ts-muted)]">
-                Promo code
+                Discount Code
               </span>
               <input
                 value={form.promo_code}

@@ -761,13 +761,13 @@ function checkAttestation(
   const passed = ctx.attested === true || currentAttestation;
   return check(
     "attestation",
-    "Attestation",
+    "Seat Reconfirm",
     passed,
     "review",
     passed
       ? currentAttestation && ctx.attested !== true
-        ? "Current attestation is still valid"
-        : "Seats attested for publish"
+        ? "Current seat reconfirm is still valid"
+        : "Seats reconfirmed for publish"
       : "Confirm seats are available and you will honour this price (required at publish)"
   );
 }
