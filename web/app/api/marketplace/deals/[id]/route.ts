@@ -6,7 +6,13 @@ import {
   serverError,
   unauthorized,
 } from "@/lib/marketplace/auth";
-import { deleteDeal, getDeal, updateDeal } from "@/lib/marketplace/db";
+import {
+  deleteDeal,
+  getDeal,
+  stripLegacyDealStatus,
+  transitionLegacyDealStatus,
+  updateDeal,
+} from "@/lib/marketplace/db";
 import type {
   BookingProvider,
   DealStatus,
@@ -37,7 +43,9 @@ export async function GET(req: Request, { params }: Params) {
 
 /**
  * PATCH /api/marketplace/deals/:id
- * Update a deal (org members only via RLS).
+ * Update a deal (org owners/admins via RLS).
+ * Security S14: client `status` is never applied via updateDeal; changes go
+ * through transitionLegacyDealStatus only.
  */
 export async function PATCH(req: Request, { params }: Params) {
   try {
@@ -51,11 +59,29 @@ export async function PATCH(req: Request, { params }: Params) {
     if (body.bookingProvider && !PROVIDERS.includes(body.bookingProvider)) {
       return badRequest(`bookingProvider must be one of: ${PROVIDERS.join(", ")}`);
     }
-    if (body.status && !STATUSES.includes(body.status)) {
-      return badRequest(`status must be one of: ${STATUSES.join(", ")}`);
+
+    let requestedStatus: DealStatus | undefined;
+    if (body.status !== undefined) {
+      if (!STATUSES.includes(body.status)) {
+        return badRequest(`status must be one of: ${STATUSES.join(", ")}`);
+      }
+      requestedStatus = body.status;
+    }
+    if (requestedStatus === "live" && body.bookingUrl !== undefined && !body.bookingUrl?.trim()) {
+      return badRequest("bookingUrl is required when status is live.");
     }
 
-    const deal = await updateDeal(accessToken, params.id, body);
+    const fieldPatch = stripLegacyDealStatus(body);
+    let deal = await updateDeal(accessToken, params.id, fieldPatch);
+
+    if (requestedStatus !== undefined && requestedStatus !== deal.status) {
+      deal = await transitionLegacyDealStatus(
+        accessToken,
+        params.id,
+        requestedStatus
+      );
+    }
+
     return Response.json({ deal });
   } catch (err) {
     return serverError("Failed to update deal.", err);

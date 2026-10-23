@@ -41,7 +41,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 - [x] S13. Strip `credentials_ref` / secret refs from any path that could leak (and consider column-level / view lockdown) — Notes: migration `20261034000001_strip_integration_secret_refs.sql` adds `integrations_member` (no refs, security_invoker), revokes SELECT/INSERT/UPDATE on `credentials_ref`/`webhook_secret_ref` from clients, re-asserts `encrypted_secrets` service_role-only; `INTEGRATION_MEMBER_COLUMNS` / `INTEGRATION_SECRET_REF_COLUMNS` + tests in `integrations-secret-refs-db.test.ts`; serializers already strip (regression covered); spec §3.8 / Project context. Deferred: wire DB persistence reads through `integrations_member` / service-role writes when leaving in-memory stores.
 
 **Phase E: Legacy / mass assignment / abuse**
-- [ ] S14. Legacy deals API: stop client-controlled `status` (or retire routes)
+- [x] S14. Legacy deals API: stop client-controlled `status` (or retire routes) — Notes: migration `20261035000001_legacy_deals_status_and_staff_write.sql` INSERT forces draft, owner/admin-only writes, `transition_legacy_deal_status` RPC; `createDeal`/`updateDeal`/`stripLegacyDealStatus` + routes route status via RPC; tests in `legacy-deals-status-db.test.ts` + `marketplace.test.ts`; spec §3 / §4.2 / Project context. Deferred: retire legacy org UI when unused; inventory status persistence still service-role when leaving in-memory.
 - [ ] S15. Strip system fields from inventory client patches (`link_status`, `slug`, etc.)
 - [ ] S16. Rate-limit book / click / track endpoints (IP-bound, fail closed under abuse)
 

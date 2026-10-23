@@ -349,12 +349,26 @@ export async function getDeal(
   return data ? dealFromDb(data as DbDeal) : null;
 }
 
+/**
+ * Security S14: legacy `marketplace.deals` status is system-owned.
+ * Clients never write `status` via INSERT/UPDATE with a user JWT.
+ * Creates always start as `draft`; status changes use
+ * {@link transitionLegacyDealStatus} (SECURITY DEFINER RPC).
+ */
+export function stripLegacyDealStatus<T extends { status?: DealStatus }>(
+  input: T
+): Omit<T, "status"> {
+  const { status: _status, ...rest } = input;
+  return rest;
+}
+
 export async function createDeal(
   accessToken: string,
   userId: string,
   input: CreateDealInput
 ): Promise<Deal> {
   const supabase = createMarketplaceClient(accessToken);
+  // Ignore client status — always draft (DB trigger also forces draft).
   const { data, error } = await supabase
     .from("deals")
     .insert({
@@ -371,7 +385,7 @@ export async function createDeal(
       original_price: input.originalPrice ?? null,
       deal_price: input.dealPrice,
       currency: input.currency || "NZD",
-      status: input.status || "draft",
+      status: "draft",
       booking_provider: input.bookingProvider || "manual",
       booking_url: input.bookingUrl?.trim() || null,
       affiliate_tracking_url: input.affiliateTrackingUrl?.trim() || null,
@@ -394,38 +408,45 @@ export async function updateDeal(
   input: UpdateDealInput
 ): Promise<Deal> {
   const supabase = createMarketplaceClient(accessToken);
+  const safe = stripLegacyDealStatus(input);
 
   const patch: Record<string, unknown> = {};
-  if (input.title !== undefined) patch.title = input.title.trim();
-  if (input.description !== undefined)
-    patch.description = input.description?.trim() || null;
-  if (input.category !== undefined) patch.category = input.category?.trim() || null;
-  if (input.placeId !== undefined) patch.place_id = input.placeId || null;
-  if (input.locationName !== undefined)
-    patch.location_name = input.locationName?.trim() || null;
-  if (input.latitude !== undefined) patch.latitude = input.latitude;
-  if (input.longitude !== undefined) patch.longitude = input.longitude;
-  if (input.departureAt !== undefined) patch.departure_at = input.departureAt;
-  if (input.spotsLeft !== undefined) patch.spots_left = input.spotsLeft;
-  if (input.originalPrice !== undefined)
-    patch.original_price = input.originalPrice;
-  if (input.dealPrice !== undefined) patch.deal_price = input.dealPrice;
-  if (input.currency !== undefined) patch.currency = input.currency;
-  if (input.status !== undefined) patch.status = input.status;
-  if (input.bookingProvider !== undefined)
-    patch.booking_provider = input.bookingProvider;
-  if (input.bookingUrl !== undefined)
-    patch.booking_url = input.bookingUrl?.trim() || null;
-  if (input.affiliateTrackingUrl !== undefined)
-    patch.affiliate_tracking_url = input.affiliateTrackingUrl?.trim() || null;
-  if (input.affiliateAsn !== undefined)
-    patch.affiliate_asn = input.affiliateAsn?.trim() || null;
-  if (input.affiliateAsnRef !== undefined)
-    patch.affiliate_asn_ref = input.affiliateAsnRef?.trim() || null;
-  if (input.affiliateRef !== undefined)
-    patch.affiliate_ref = input.affiliateRef?.trim() || null;
-  if (input.imageUrl !== undefined)
-    patch.image_url = input.imageUrl?.trim() || null;
+  if (safe.title !== undefined) patch.title = safe.title.trim();
+  if (safe.description !== undefined)
+    patch.description = safe.description?.trim() || null;
+  if (safe.category !== undefined) patch.category = safe.category?.trim() || null;
+  if (safe.placeId !== undefined) patch.place_id = safe.placeId || null;
+  if (safe.locationName !== undefined)
+    patch.location_name = safe.locationName?.trim() || null;
+  if (safe.latitude !== undefined) patch.latitude = safe.latitude;
+  if (safe.longitude !== undefined) patch.longitude = safe.longitude;
+  if (safe.departureAt !== undefined) patch.departure_at = safe.departureAt;
+  if (safe.spotsLeft !== undefined) patch.spots_left = safe.spotsLeft;
+  if (safe.originalPrice !== undefined)
+    patch.original_price = safe.originalPrice;
+  if (safe.dealPrice !== undefined) patch.deal_price = safe.dealPrice;
+  if (safe.currency !== undefined) patch.currency = safe.currency;
+  // status intentionally omitted — use transitionLegacyDealStatus
+  if (safe.bookingProvider !== undefined)
+    patch.booking_provider = safe.bookingProvider;
+  if (safe.bookingUrl !== undefined)
+    patch.booking_url = safe.bookingUrl?.trim() || null;
+  if (safe.affiliateTrackingUrl !== undefined)
+    patch.affiliate_tracking_url = safe.affiliateTrackingUrl?.trim() || null;
+  if (safe.affiliateAsn !== undefined)
+    patch.affiliate_asn = safe.affiliateAsn?.trim() || null;
+  if (safe.affiliateAsnRef !== undefined)
+    patch.affiliate_asn_ref = safe.affiliateAsnRef?.trim() || null;
+  if (safe.affiliateRef !== undefined)
+    patch.affiliate_ref = safe.affiliateRef?.trim() || null;
+  if (safe.imageUrl !== undefined)
+    patch.image_url = safe.imageUrl?.trim() || null;
+
+  if (Object.keys(patch).length === 0) {
+    const existing = await getDeal(accessToken, dealId);
+    if (!existing) throw new Error("Deal not found.");
+    return existing;
+  }
 
   const { data, error } = await supabase
     .from("deals")
@@ -436,6 +457,30 @@ export async function updateDeal(
 
   if (error) throw new Error(`Failed to update deal: ${error.message}`);
   return dealFromDb(data as DbDeal);
+}
+
+/**
+ * Change legacy deal status via SECURITY DEFINER RPC (S14).
+ * Owner/admin only; staff and raw PostgREST status patches cannot do this.
+ */
+export async function transitionLegacyDealStatus(
+  accessToken: string,
+  dealId: string,
+  status: DealStatus
+): Promise<Deal> {
+  const supabase = createUserRpcClient(accessToken);
+  const { data, error } = await supabase.rpc("transition_legacy_deal_status", {
+    p_deal_id: dealId,
+    p_new_status: status,
+  });
+
+  if (error) {
+    throw new Error(`Failed to transition deal status: ${error.message}`);
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("Failed to transition deal status: no row returned.");
+  return dealFromDb(row as DbDeal);
 }
 
 export async function deleteDeal(

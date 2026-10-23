@@ -25,6 +25,11 @@ const mockUpdateDeal = vi.fn();
 const mockDeleteDeal = vi.fn();
 const mockGetOrganization = vi.fn();
 const mockRecordDealClick = vi.fn();
+const mockTransitionLegacyDealStatus = vi.fn();
+const mockStripLegacyDealStatus = vi.fn((input: Record<string, unknown>) => {
+  const { status: _status, ...rest } = input;
+  return rest;
+});
 
 vi.mock("@/lib/marketplace/db", () => ({
   listMyOrganizations: (...args: unknown[]) => mockListMyOrganizations(...args),
@@ -37,6 +42,10 @@ vi.mock("@/lib/marketplace/db", () => ({
   deleteDeal: (...args: unknown[]) => mockDeleteDeal(...args),
   getOrganization: (...args: unknown[]) => mockGetOrganization(...args),
   recordDealClick: (...args: unknown[]) => mockRecordDealClick(...args),
+  transitionLegacyDealStatus: (...args: unknown[]) =>
+    mockTransitionLegacyDealStatus(...args),
+  stripLegacyDealStatus: (...args: unknown[]) =>
+    mockStripLegacyDealStatus(...(args as [Record<string, unknown>])),
   extractAccessToken: () => undefined,
 }));
 
@@ -152,22 +161,97 @@ describe("marketplace APIs", () => {
         })
       );
       expect(res.status).toBe(400);
+      expect(mockCreateDeal).not.toHaveBeenCalled();
+      expect(mockTransitionLegacyDealStatus).not.toHaveBeenCalled();
     });
 
-    it("PATCH updates deal", async () => {
+    it("POST creates as draft then transitions status via helper (S14)", async () => {
       mockGetMarketplaceAuth.mockResolvedValue({
         user: { id: "u1" },
         accessToken: "tok",
       });
-      mockUpdateDeal.mockResolvedValue({ id: "d1", status: "live" });
+      mockCreateDeal.mockResolvedValue({ id: "d1", status: "draft" });
+      mockTransitionLegacyDealStatus.mockResolvedValue({
+        id: "d1",
+        status: "live",
+      });
+      const res = await postDeal(
+        new Request("http://localhost/api/marketplace/deals", {
+          method: "POST",
+          body: JSON.stringify({
+            organizationId: "o1",
+            title: "Half-price jetboat",
+            departureAt: new Date(Date.now() + 3600_000).toISOString(),
+            dealPrice: 99,
+            status: "live",
+            bookingUrl: "https://book.example",
+          }),
+        })
+      );
+      expect(res.status).toBe(201);
+      expect(mockCreateDeal).toHaveBeenCalledWith(
+        "tok",
+        "u1",
+        expect.not.objectContaining({ status: expect.anything() })
+      );
+      expect(mockTransitionLegacyDealStatus).toHaveBeenCalledWith(
+        "tok",
+        "d1",
+        "live"
+      );
+      const data = await res.json();
+      expect(data.deal.status).toBe("live");
+    });
+
+    it("PATCH strips status from updateDeal and routes via transition (S14)", async () => {
+      mockGetMarketplaceAuth.mockResolvedValue({
+        user: { id: "u1" },
+        accessToken: "tok",
+      });
+      mockUpdateDeal.mockResolvedValue({ id: "d1", status: "draft" });
+      mockTransitionLegacyDealStatus.mockResolvedValue({
+        id: "d1",
+        status: "live",
+      });
       const res = await patchDeal(
         new Request("http://localhost/api/marketplace/deals/d1", {
           method: "PATCH",
-          body: JSON.stringify({ status: "live", bookingUrl: "https://book.example" }),
+          body: JSON.stringify({
+            status: "live",
+            bookingUrl: "https://book.example",
+          }),
         }),
         { params: { id: "d1" } }
       );
       expect(res.status).toBe(200);
+      expect(mockStripLegacyDealStatus).toHaveBeenCalled();
+      expect(mockUpdateDeal).toHaveBeenCalledWith(
+        "tok",
+        "d1",
+        expect.not.objectContaining({ status: expect.anything() })
+      );
+      expect(mockTransitionLegacyDealStatus).toHaveBeenCalledWith(
+        "tok",
+        "d1",
+        "live"
+      );
+    });
+
+    it("PATCH without status does not call transition", async () => {
+      mockGetMarketplaceAuth.mockResolvedValue({
+        user: { id: "u1" },
+        accessToken: "tok",
+      });
+      mockUpdateDeal.mockResolvedValue({ id: "d1", status: "draft", title: "T" });
+      const res = await patchDeal(
+        new Request("http://localhost/api/marketplace/deals/d1", {
+          method: "PATCH",
+          body: JSON.stringify({ title: "T" }),
+        }),
+        { params: { id: "d1" } }
+      );
+      expect(res.status).toBe(200);
+      expect(mockTransitionLegacyDealStatus).not.toHaveBeenCalled();
     });
 
     it("DELETE removes deal", async () => {
