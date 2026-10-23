@@ -42,6 +42,7 @@ import {
   type AttestationMethod,
 } from "./enums";
 import { getBookingDefaults } from "./operators";
+import { allowsDevSecretFallback } from "./secrets";
 
 // ---------------------------------------------------------------------------
 // Constants / errors
@@ -216,7 +217,13 @@ export function resolveQuickUpdateTokenSecret(
     env.QUICK_UPDATE_TOKEN_SECRET?.trim() ||
     env.SECRETS_ENCRYPTION_KEY?.trim();
   if (raw) return raw;
-  // Dev/test fallback — production must set QUICK_UPDATE_TOKEN_SECRET.
+  // Security S11: never use the hardcoded fallback in production.
+  if (!allowsDevSecretFallback(env)) {
+    throw new DealAttestationError(
+      "QUICK_UPDATE_TOKEN_SECRET (or SECRETS_ENCRYPTION_KEY) is required",
+      503
+    );
+  }
   return "dev-quick-update-token-secret";
 }
 

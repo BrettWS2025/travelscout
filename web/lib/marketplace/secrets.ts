@@ -45,6 +45,20 @@ export class SecretNotFoundError extends Error {
   }
 }
 
+/**
+ * Security S11: hardcoded HMAC / encryption fallbacks are allowed only in
+ * development, Vitest, or explicit seed mode — never in production.
+ */
+export function allowsDevSecretFallback(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return (
+    env.NODE_ENV === "test" ||
+    env.NODE_ENV === "development" ||
+    env.DEAL_PLATFORM_SEED === "1"
+  );
+}
+
 /** Decode SECRETS_ENCRYPTION_KEY (64 hex chars or 32-byte base64). */
 export function resolveSecretsKey(
   env: NodeJS.ProcessEnv = process.env

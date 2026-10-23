@@ -42,6 +42,7 @@ import {
   type ProviderCapabilities,
 } from "./providers";
 import {
+  allowsDevSecretFallback,
   configureSecrets,
   createMemorySecretBackend,
   createSecretsHelper,
@@ -69,6 +70,7 @@ export class IntegrationConnectError extends Error {
 // Secrets bootstrap (dev / test / HTTP store)
 // ---------------------------------------------------------------------------
 
+/** Fixed AES key for local/test only — never used when NODE_ENV=production. */
 const DEV_TEST_KEY_HEX =
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
@@ -78,20 +80,17 @@ let secretsBootstrapped = false;
  * Ensure storeSecret/readSecret/deleteSecret work for connect flows.
  * Uses SECRETS_ENCRYPTION_KEY when set; otherwise a fixed key in
  * development/test only (never production without an env key).
+ * Security S11: production missing key → 503, no DEV_TEST_KEY_HEX.
  */
 export function ensureIntegrationSecretsConfigured(
   env: NodeJS.ProcessEnv = process.env
 ): void {
   if (secretsBootstrapped) return;
   const hasKey = Boolean(env.SECRETS_ENCRYPTION_KEY?.trim());
-  const allowFallback =
-    env.NODE_ENV === "test" ||
-    env.NODE_ENV === "development" ||
-    env.DEAL_PLATFORM_SEED === "1";
-  if (!hasKey && !allowFallback) {
+  if (!hasKey && !allowsDevSecretFallback(env)) {
     throw new IntegrationConnectError(
       "SECRETS_ENCRYPTION_KEY is required to connect integrations",
-      500,
+      503,
       "secrets_not_configured"
     );
   }
