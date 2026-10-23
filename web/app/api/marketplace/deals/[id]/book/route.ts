@@ -2,7 +2,7 @@
  * POST /api/marketplace/deals/:slug/book
  *
  * Public Book now click flow (Chunk 36). Body: { session_id, visitor_id }.
- * No login. Rate-limited by visitor_id / IP.
+ * No login. Rate-limited by IP (and visitor_id) — security S16.
  *
  * Path param lives under the existing `[id]` segment (Next.js cannot have
  * sibling `[id]` and `[slug]` folders); the value is the deal **slug**.

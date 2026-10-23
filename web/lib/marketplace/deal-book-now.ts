@@ -40,45 +40,21 @@ import {
 import type { SyncLog } from "./integration";
 import { getAdapter } from "./providers";
 import { AdapterOperationError } from "./providers/errors";
+import {
+  BOOK_NOW_RATE_LIMIT_MAX,
+  BOOK_NOW_RATE_LIMIT_WINDOW_MS,
+  checkBookNowRateLimit,
+  enforceBookNowRateLimit,
+  resetBookNowRateLimit,
+} from "./public-rate-limit";
 
-// ---------------------------------------------------------------------------
-// Rate limit (in-memory; visitor_id preferred, else IP)
-// ---------------------------------------------------------------------------
-
-/** Max Book now requests per window per visitor/IP (not a platform constant). */
-export const BOOK_NOW_RATE_LIMIT_MAX = 30;
-/** Fixed window length in ms. */
-export const BOOK_NOW_RATE_LIMIT_WINDOW_MS = 60_000;
-
-type RateBucket = { count: number; windowStartMs: number };
-
-const rateBuckets = new Map<string, RateBucket>();
-
-export function resetBookNowRateLimit(): void {
-  rateBuckets.clear();
-}
-
-export function checkBookNowRateLimit(
-  key: string,
-  nowMs: number = Date.now(),
-  max: number = BOOK_NOW_RATE_LIMIT_MAX,
-  windowMs: number = BOOK_NOW_RATE_LIMIT_WINDOW_MS
-): { ok: true } | { ok: false; retryAfterSec: number } {
-  const existing = rateBuckets.get(key);
-  if (!existing || nowMs - existing.windowStartMs >= windowMs) {
-    rateBuckets.set(key, { count: 1, windowStartMs: nowMs });
-    return { ok: true };
-  }
-  if (existing.count >= max) {
-    const retryAfterSec = Math.max(
-      1,
-      Math.ceil((existing.windowStartMs + windowMs - nowMs) / 1000)
-    );
-    return { ok: false, retryAfterSec };
-  }
-  existing.count += 1;
-  return { ok: true };
-}
+// Re-export rate-limit helpers for existing Book now tests / callers.
+export {
+  BOOK_NOW_RATE_LIMIT_MAX,
+  BOOK_NOW_RATE_LIMIT_WINDOW_MS,
+  checkBookNowRateLimit,
+  resetBookNowRateLimit,
+};
 
 // ---------------------------------------------------------------------------
 // Errors / types
@@ -164,7 +140,7 @@ export type BookNowInput = {
 
 export type BookNowOptions = {
   now?: string;
-  /** Client IP for rate limiting when visitor_id is missing (should not happen). */
+  /** Client IP for IP-bound rate limiting (security S16; required for enforcement). */
   clientIp?: string | null;
   /** Skip rate limit (tests). */
   skipRateLimit?: boolean;
@@ -497,9 +473,12 @@ export async function bookDealNow(
   const nowMs = Date.parse(now);
   const config = options.config ?? getPlatformConfig();
 
-  const rateKey = input.visitor_id || options.clientIp || "unknown";
   if (!options.skipRateLimit) {
-    const rl = checkBookNowRateLimit(rateKey, nowMs);
+    const rl = enforceBookNowRateLimit({
+      clientIp: options.clientIp,
+      visitorId: input.visitor_id,
+      nowMs,
+    });
     if (!rl.ok) {
       throw new DealBookNowError("Too many Book now requests", 429, {
         code: "rate_limited",
