@@ -36,7 +36,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 - [x] S10. Align public deal RLS with fail-closed traveller visibility (or force public reads through API) — Notes: migration `20261033000001_align_public_deal_visibility.sql` adds `is_visible_to_travellers` (live + sellable session within MAX_LEAD_HOURS=72 default + cutoff); public views + sessions/media policies use it; `is_live_operator_deal` delegates; `PUBLIC_DEAL_VISIBILITY_MAX_LEAD_HOURS` + tests in `deals-public-visibility-db.test.ts`; spec §3 / Project context. Deferred: SQL lead window uses platform default 72 (not env `MAX_LEAD_HOURS` override); app inventory still in-memory.
 
 **Phase D: Integrations, tokens, webhooks**
-- [ ] S11. Fail closed when token HMAC secrets / encryption keys are unset in production
+- [x] S11. Fail closed when token HMAC secrets / encryption keys are unset in production — Notes: `allowsDevSecretFallback` in `secrets.ts`; `resolveQuickUpdateTokenSecret` / `resolveTeamInviteTokenSecret` / `ensureIntegrationSecretsConfigured` throw 503 (no `dev-…` / `DEV_TEST_KEY_HEX`) outside test/development/seed; `resolveSecretsKey` already required the env key; tests in `secrets-production-fail-closed.test.ts`; spec Project context env checklist. App-only; no migration. Deferred: none (confirm Dev/prod env vars are set before deploy).
 - [ ] S12. Require webhook secrets; reject unsigned provider webhooks
 - [ ] S13. Strip `credentials_ref` / secret refs from any path that could leak (and consider column-level / view lockdown)
 
