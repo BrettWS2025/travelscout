@@ -356,13 +356,15 @@ describe("applyAutoPause / clearAutoPause", () => {
   });
 });
 
-describe("client update ignores status / pause_*", () => {
-  it("stripSystemOwnedDealFields removes status and pause fields", () => {
+describe("client update ignores system-owned fields (S15)", () => {
+  it("stripSystemOwnedDealFields removes status, pause, slug, and linkStatus", () => {
     const stripped = stripSystemOwnedDealFields({
       title: "Harbour Kayak Morning",
       status: "live",
       pauseReason: "operator",
       pauseDetail: "nope",
+      slug: "forged-slug",
+      linkStatus: "ok",
       summary: "A morning paddle on the harbour",
     });
     expect(stripped).toEqual({
@@ -372,26 +374,34 @@ describe("client update ignores status / pause_*", () => {
     expect("status" in stripped).toBe(false);
     expect("pauseReason" in stripped).toBe(false);
     expect("pauseDetail" in stripped).toBe(false);
+    expect("slug" in stripped).toBe(false);
+    expect("linkStatus" in stripped).toBe(false);
   });
 
-  it("applyClientDealFieldPatch ignores client status changes", () => {
+  it("applyClientDealFieldPatch ignores client status / slug / linkStatus", () => {
     const deal = makeDealFixture({
       id: DEAL_ID,
       operatorId: OPERATOR_ID,
       status: "draft",
       title: "Old title xx",
+      slug: "old-title-xx",
+      linkStatus: "unchecked",
     });
     const patched = applyClientDealFieldPatch(deal, {
       title: "Harbour Kayak Morning",
       status: "live",
       pauseReason: "operator",
       pauseDetail: "hacked",
+      slug: "forged-slug",
+      linkStatus: "ok",
     });
 
     expect(patched.title).toBe("Harbour Kayak Morning");
     expect(patched.status).toBe("draft");
     expect(patched.pauseReason).toBeNull();
     expect(patched.pauseDetail).toBeNull();
+    expect(patched.slug).toBe("old-title-xx");
+    expect(patched.linkStatus).toBe("unchecked");
   });
 });
 

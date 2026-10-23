@@ -383,3 +383,77 @@ describe("min_discount on options", () => {
     expect(min.editorStep).toBe("pricing");
   });
 });
+
+describe("booking_destination link check (S15)", () => {
+  it("rejects forged link_status ok without a fresh link_last_checked_at", async () => {
+    const { store, dealId } = await seedCompleteManualDraft({
+      attested: true,
+    });
+    const deal = store.deals.get(dealId)!;
+    // Simulate mass-assignment: ok status but never actually checked
+    store.deals.set(dealId, {
+      ...deal,
+      linkStatus: "ok",
+      linkLastCheckedAt: null,
+    });
+
+    const result = await validateDealInStore(store, dealId, {
+      now: NOW,
+      attested: true,
+      refreshStaleLinks: false,
+    });
+
+    expect(result.ok).toBe(false);
+    const dest = result.checks.find((c) => c.key === "booking_destination")!;
+    expect(dest.passed).toBe(false);
+    expect(dest.message).toMatch(/not been checked|stale|Test link/i);
+  });
+
+  it("passes when link was freshly verified by the checker", async () => {
+    const { store, dealId } = await seedCompleteManualDraft({
+      attested: true,
+    });
+    const deal = store.deals.get(dealId)!;
+    expect(deal.linkStatus).toBe("ok");
+    expect(deal.linkLastCheckedAt).toBe(NOW);
+
+    const result = await validateDealInStore(store, dealId, {
+      now: NOW,
+      attested: true,
+      refreshStaleLinks: false,
+    });
+
+    expect(result.ok).toBe(true);
+    const dest = result.checks.find((c) => c.key === "booking_destination")!;
+    expect(dest.passed).toBe(true);
+  });
+
+  it("re-probes stale link_status on publish when fetchFn is provided", async () => {
+    const { store, dealId } = await seedCompleteManualDraft({
+      attested: true,
+    });
+    const deal = store.deals.get(dealId)!;
+    store.deals.set(dealId, {
+      ...deal,
+      linkStatus: "ok",
+      // Stale: older than LINK_CHECK_STALE_MS (6h)
+      linkLastCheckedAt: "2026-10-19T20:00:00.000Z",
+    });
+
+    const fetchFn = async () =>
+      new Response(null, { status: 200, statusText: "OK" });
+
+    const result = await validateDealInStore(store, dealId, {
+      now: NOW,
+      attested: true,
+      fetchFn,
+      refreshStaleLinks: true,
+    });
+
+    expect(result.ok).toBe(true);
+    const dest = result.checks.find((c) => c.key === "booking_destination")!;
+    expect(dest.passed).toBe(true);
+    expect(store.deals.get(dealId)!.linkStatus).toBe("ok");
+    expect(store.deals.get(dealId)!.linkLastCheckedAt).toBe(NOW);
+  });
+});

@@ -4,10 +4,11 @@
  * (not marketplace.deals — that is the legacy org-scoped lightweight feed).
  *
  * Field-level validation runs on every save. Publish required-ness is Chunk 16.
- * Status / pause_* are system-owned — only transitionDeal / applyAutoPause /
- * clearAutoPause may change them (see deal-status.ts). Client PATCH paths must
- * call stripSystemOwnedDealFields / applyClientDealFieldPatch so status,
- * pause_reason and pause_detail are ignored.
+ * Status / pause_* / slug / link_status are system-owned — only transitionDeal /
+ * applyAutoPause / clearAutoPause (status), slug helpers, or link checker may
+ * change them (see deal-status.ts). Client PATCH paths must call
+ * stripSystemOwnedDealFields / applyClientDealFieldPatch so those fields are
+ * ignored (security S15).
  */
 
 import { validateBookingDestinationFields } from "./booking-destination";
@@ -144,11 +145,12 @@ export type DealFieldInput = {
   integrationId?: string | null;
   externalProductId?: string | null;
   dealRuleId?: string | null;
-  /** System-owned; validated if present but clients must not set (Chunk 11). */
+  /** System-owned; validated if present but clients must not set (Chunk 11 / S15). */
   status?: DealStatus | null;
   pauseReason?: PauseReason | null;
   pauseDetail?: string | null;
   title?: string | null;
+  /** System-owned; generated from title — stripped from client patches (S15). */
   slug?: string | null;
   summary?: string | null;
   description?: string | null;
@@ -196,6 +198,7 @@ export type DealFieldInput = {
   bookingEmail?: string | null;
   bookingInstructions?: string | null;
   appendTrackingParams?: boolean | null;
+  /** System-owned; Test link / checker only — stripped from client patches (S15). */
   linkStatus?: LinkStatus | null;
   /** Schedule publish for later (null = immediate when approved). */
   publishAt?: string | null;

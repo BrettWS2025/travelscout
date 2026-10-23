@@ -198,7 +198,7 @@ describe("createDraftDeal", () => {
 });
 
 describe("updateDraftDeal", () => {
-  it("ignores status / pause_* from PATCH", () => {
+  it("ignores status / pause_* / forged slug / link_status from PATCH (S15)", () => {
     const { store } = harbourStore();
     const deal = createDraftDeal(store, {
       operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
@@ -206,6 +206,7 @@ describe("updateDraftDeal", () => {
       actor: ACTOR,
       now: NOW,
     });
+    expect(deal.linkStatus).toBe("unchecked");
 
     const updated = updateDraftDeal(
       store,
@@ -215,6 +216,9 @@ describe("updateDraftDeal", () => {
         status: "live",
         pause_reason: "operator",
         pause_detail: "hacked",
+        slug: "forged-hijack-slug",
+        link_status: "ok",
+        linkStatus: "ok",
       },
       { actor: ACTOR, now: "2026-10-20T06:00:00.000Z" }
     );
@@ -223,7 +227,10 @@ describe("updateDraftDeal", () => {
     expect(updated.status).toBe("draft");
     expect(updated.pauseReason).toBeNull();
     expect(updated.pauseDetail).toBeNull();
+    // Slug regenerates from title — never accepts client slug
     expect(updated.slug).toBe("harbour-kayak-morning");
+    expect(updated.slug).not.toBe("forged-hijack-slug");
+    expect(updated.linkStatus).toBe("unchecked");
 
     const events = store.audit.events;
     const updatedEvents = [...events.values()].filter(
@@ -233,6 +240,40 @@ describe("updateDraftDeal", () => {
     expect(updatedEvents[0].detail.fields).toEqual(
       expect.arrayContaining(["title", "slug"])
     );
+    expect(updatedEvents[0].detail.fields).not.toContain("linkStatus");
+  });
+
+  it("clears link check when booking URL changes (S15)", () => {
+    const { store } = harbourStore();
+    const deal = createDraftDeal(store, {
+      operatorId: DEV_SEED_IDS.harbourKayaks.operatorId,
+      dealType: "manual_session",
+      actor: ACTOR,
+      now: NOW,
+    });
+    store.deals.set(deal.id, {
+      ...deal,
+      bookingDestinationType: "operator_website",
+      bookingUrl: "https://harbour.example/old",
+      linkStatus: "ok",
+      linkLastCheckedAt: NOW,
+      linkConsecutiveFailures: 0,
+    });
+
+    const updated = updateDraftDeal(
+      store,
+      deal.id,
+      {
+        booking_url: "https://harbour.example/new",
+        link_status: "ok",
+      },
+      { actor: ACTOR, now: "2026-10-20T06:00:00.000Z" }
+    );
+
+    expect(updated.bookingUrl).toBe("https://harbour.example/new");
+    expect(updated.linkStatus).toBe("unchecked");
+    expect(updated.linkLastCheckedAt).toBeNull();
+    expect(updated.linkConsecutiveFailures).toBe(0);
   });
 
   it("rejects deal_type change after first publish", () => {
