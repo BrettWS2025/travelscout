@@ -27,6 +27,7 @@ import {
   buildDefaultNotificationPreferences,
   type NotificationPreference,
 } from "./settings";
+import { allowsDevSecretFallback } from "./secrets";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -208,6 +209,14 @@ export function resolveTeamInviteTokenSecret(
     env.QUICK_UPDATE_TOKEN_SECRET?.trim() ||
     env.SECRETS_ENCRYPTION_KEY?.trim();
   if (raw) return raw;
+  // Security S11: never use the hardcoded fallback in production.
+  if (!allowsDevSecretFallback(env)) {
+    throw new TeamError(
+      "TEAM_INVITE_TOKEN_SECRET (or QUICK_UPDATE_TOKEN_SECRET / SECRETS_ENCRYPTION_KEY) is required",
+      503,
+      { code: "secrets_not_configured" }
+    );
+  }
   return "dev-team-invite-token-secret";
 }
 
