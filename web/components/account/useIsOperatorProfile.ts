@@ -3,18 +3,23 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { listMyOrganizations } from "@/lib/marketplace/client";
+import { listMyOperators } from "@/lib/marketplace/operator-deals-client";
 
 type OperatorProfileState = {
-  /** True only when this user belongs to a marketplace organization. */
+  /**
+   * True when this user belongs to a marketplace organization (legacy) or an
+   * inventory operator (marketplace.operators + team_members).
+   */
   isOperatorProfile: boolean;
   isLoading: boolean;
 };
 
 /**
- * Inventory / Settings require a real row in marketplace.organizations
- * (via organization_members). Operator signup writes business_* metadata and a
- * DB trigger creates the org at user insert; ensureOperatorOrganization is the
- * client safety net after email confirm. Metadata alone is not enough.
+ * Inventory / Settings require a real inventory operator membership. Nav also
+ * treats legacy organisation membership as operator so existing accounts keep
+ * access while both systems coexist. Operator signup writes business_* metadata
+ * and a DB trigger creates org + operator at user insert; ensureOperatorAfterAuth
+ * is the client safety net after email confirm.
  */
 export function useIsOperatorProfile(): OperatorProfileState {
   const { user, session, isLoading: authLoading } = useAuth();
@@ -38,17 +43,26 @@ export function useIsOperatorProfile(): OperatorProfileState {
       if (!cancelled) setIsLoading(true);
 
       try {
-        const { organizations } = await listMyOrganizations(
-          session?.access_token
-        );
+        const token = session?.access_token;
+        const [orgsResult, operatorsResult] = await Promise.allSettled([
+          listMyOrganizations(token),
+          listMyOperators(token),
+        ]);
+
+        const hasOrg =
+          orgsResult.status === "fulfilled" &&
+          (orgsResult.value.organizations?.length ?? 0) > 0;
+        const hasOperator =
+          operatorsResult.status === "fulfilled" &&
+          (operatorsResult.value.operators?.length ?? 0) > 0;
+
         if (!cancelled) {
-          setIsOperatorProfile(organizations.length > 0);
+          setIsOperatorProfile(hasOrg || hasOperator);
           setIsLoading(false);
         }
       } catch (err) {
         console.error("Failed to resolve operator profile", err);
         if (!cancelled) {
-          // Fail closed: no org list ⇒ not an operator for nav purposes.
           setIsOperatorProfile(false);
           setIsLoading(false);
         }

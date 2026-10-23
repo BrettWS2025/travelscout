@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 import { operatorHref } from "@/lib/hosts";
-import { ensureOperatorOrganization } from "@/lib/marketplace/operator-signup";
+import { ensureOperatorAfterAuth } from "@/lib/marketplace/operator-signup";
 import {
   AuthPageFrame,
   authInputClassName,
@@ -103,20 +103,17 @@ export default function LoginPage() {
           | undefined;
         let destination = redirectTo;
 
-        // Operator signup metadata → ensure org exists after email confirm.
+        // Operator signup metadata → ensure org + inventory operator after confirm.
         if (token && meta?.account_type === "operator") {
           try {
-            const organization = await ensureOperatorOrganization(token, {
+            const { operator } = await ensureOperatorAfterAuth(token, {
               userMetadata: meta,
             });
-            if (organization && redirectTo === "/account/details") {
-              destination = operatorHref(
-                `/operator/organizations/${organization.id}`,
-                onOperatorHost
-              );
+            if (operator && redirectTo === "/account/details") {
+              destination = operatorHref("/account/inventory", onOperatorHost);
             }
           } catch (err) {
-            console.error("Failed to ensure operator organisation on login", err);
+            console.error("Failed to ensure operator inventory on login", err);
           }
         }
 

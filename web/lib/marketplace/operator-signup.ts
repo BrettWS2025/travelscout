@@ -3,13 +3,15 @@
  *
  * Traveler signup must not set account_type=operator. Operator signup always
  * stores business_* on user_metadata so a DB trigger can create the
- * marketplace organization even when email confirmation yields no session.
+ * marketplace organization (legacy) and marketplace.operators + team_members
+ * (inventory) even when email confirmation yields no session.
  */
 
 import {
   createOrganization,
   listMyOrganizations,
 } from "@/lib/marketplace/client";
+import type { ListedOperator } from "@/lib/marketplace/deal-draft-http";
 import type { Organization } from "@/lib/marketplace/types";
 import { canonicalizeRegion } from "@/lib/regions";
 
@@ -100,4 +102,92 @@ export async function ensureOperatorOrganization(
 
   const { organization } = await createOrganization(details, accessToken);
   return organization;
+}
+
+async function createInventoryOperator(
+  accessToken: string,
+  business: OperatorBusinessDetails
+): Promise<ListedOperator | null> {
+  const res = await fetch("/api/marketplace/operators", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      name: business.name,
+      phone: business.phone,
+      website: business.website,
+      region: business.region,
+    }),
+    credentials: "same-origin",
+  });
+  const text = await res.text();
+  let data: { operator?: ListedOperator; error?: string } = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as typeof data;
+    } catch {
+      data = { error: text };
+    }
+  }
+  if (!res.ok) {
+    throw new Error(data.error || `Failed to create operator (${res.status})`);
+  }
+  return data.operator ?? null;
+}
+
+/**
+ * Ensure inventory operator membership (marketplace.operators + team_members).
+ * Prefers GET /operators/me (auto-ensure from metadata), then POST create when
+ * explicit business details are available.
+ */
+export async function ensureOperatorInventoryClient(
+  accessToken: string,
+  options?: {
+    business?: OperatorBusinessDetails | null;
+    userMetadata?: Record<string, unknown> | null;
+  }
+): Promise<ListedOperator | null> {
+  const listRes = await fetch("/api/marketplace/operators/me", {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    credentials: "same-origin",
+  });
+  if (listRes.ok) {
+    const listed = (await listRes.json()) as { operators?: ListedOperator[] };
+    if (listed.operators && listed.operators.length > 0) {
+      return listed.operators[0] ?? null;
+    }
+  }
+
+  const details =
+    normalizeOperatorBusinessDetails(options?.business) ??
+    businessDetailsFromUserMetadata(options?.userMetadata ?? null);
+  if (!details) return null;
+
+  return createInventoryOperator(accessToken, details);
+}
+
+/**
+ * Bootstrap both legacy organisation and inventory operator after signup/login.
+ */
+export async function ensureOperatorAfterAuth(
+  accessToken: string,
+  options?: {
+    business?: OperatorBusinessDetails | null;
+    userMetadata?: Record<string, unknown> | null;
+  }
+): Promise<{
+  organization: Organization | null;
+  operator: ListedOperator | null;
+}> {
+  const [organization, operator] = await Promise.all([
+    ensureOperatorOrganization(accessToken, options),
+    ensureOperatorInventoryClient(accessToken, options),
+  ]);
+  return { organization, operator };
 }

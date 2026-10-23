@@ -4,6 +4,7 @@ import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile"
 
 const authMock = vi.fn();
 const listOrgsMock = vi.fn();
+const listOperatorsMock = vi.fn();
 
 vi.mock("@/components/AuthProvider", () => ({
   useAuth: () => authMock(),
@@ -13,10 +14,16 @@ vi.mock("@/lib/marketplace/client", () => ({
   listMyOrganizations: (...args: unknown[]) => listOrgsMock(...args),
 }));
 
+vi.mock("@/lib/marketplace/operator-deals-client", () => ({
+  listMyOperators: (...args: unknown[]) => listOperatorsMock(...args),
+}));
+
 describe("useIsOperatorProfile", () => {
   beforeEach(() => {
     authMock.mockReset();
     listOrgsMock.mockReset();
+    listOperatorsMock.mockReset();
+    listOperatorsMock.mockResolvedValue({ operators: [] });
   });
 
   it("treats users with organizations as operators", async () => {
@@ -34,7 +41,23 @@ describe("useIsOperatorProfile", () => {
     expect(result.current.isOperatorProfile).toBe(true);
   });
 
-  it("keeps travelers without orgs as regular profiles", async () => {
+  it("treats users with inventory operator membership as operators", async () => {
+    authMock.mockReturnValue({
+      user: { id: "u1b", user_metadata: {} },
+      session: { access_token: "tok" },
+      isLoading: false,
+    });
+    listOrgsMock.mockResolvedValue({ organizations: [] });
+    listOperatorsMock.mockResolvedValue({
+      operators: [{ id: "op1", tradingName: "Jetboat Co", role: "owner" }],
+    });
+
+    const { result } = renderHook(() => useIsOperatorProfile());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isOperatorProfile).toBe(true);
+  });
+
+  it("keeps travelers without orgs or operators as regular profiles", async () => {
     authMock.mockReturnValue({
       user: { id: "u2", user_metadata: {} },
       session: { access_token: "tok" },

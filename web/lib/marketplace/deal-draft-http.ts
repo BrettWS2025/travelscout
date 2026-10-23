@@ -213,18 +213,23 @@ export async function requirePermissionForDeal(
   return { ...auth, operatorId: deal.operatorId };
 }
 
-/** Operators the given user (or matching seed email) belongs to. */
-export function listOperatorsForUser(
-  userId: string,
-  email?: string | null
-): Array<{
+export type ListedOperator = {
   id: string;
   tradingName: string;
   slug: string;
   role: UserRole;
   timezone: string;
   currency: string;
-}> {
+};
+
+/**
+ * Operators from the in-memory HTTP store only (seed + hydrated rows).
+ * Prefer `resolveOperatorsForUser` in operator-bootstrap for live requests.
+ */
+export function listOperatorsForUserFromMemory(
+  userId: string,
+  email?: string | null
+): ListedOperator[] {
   const store = getDealDraftHttpStore();
   const seedMatch = email
     ? DEV_SEED_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase())
@@ -232,14 +237,7 @@ export function listOperatorsForUser(
   const candidateIds = new Set<string>([userId]);
   if (seedMatch) candidateIds.add(seedMatch.userId);
 
-  const out: Array<{
-    id: string;
-    tradingName: string;
-    slug: string;
-    role: UserRole;
-    timezone: string;
-    currency: string;
-  }> = [];
+  const out: ListedOperator[] = [];
 
   for (const m of store.operators.teamMembers.values()) {
     if (
@@ -262,6 +260,14 @@ export function listOperatorsForUser(
     });
   }
   return out;
+}
+
+/** @deprecated Prefer listOperatorsForUserFromMemory / resolveOperatorsForUser */
+export function listOperatorsForUser(
+  userId: string,
+  email?: string | null
+): ListedOperator[] {
+  return listOperatorsForUserFromMemory(userId, email);
 }
 
 export function dealDraftErrorResponse(err: unknown, context: string): Response {
