@@ -478,7 +478,34 @@ describe("Chunk 36 Book now click flow", () => {
     expect(result.url).toBe("tel:+64211234567");
   });
 
-  it("rate-limits by visitor_id", async () => {
+  it("S16: rate-limits Book now by IP (not visitor_id alone)", async () => {
+    const { store, deal, session } = await createLiveIntegratedDeal();
+    const clientIp = "203.0.113.50";
+
+    for (let i = 0; i < 30; i++) {
+      await bookDealNow(
+        store,
+        deal.slug,
+        { session_id: session.id, visitor_id: `visitor-${i}` },
+        { now: NOW, clientIp }
+      );
+    }
+
+    await expect(
+      bookDealNow(
+        store,
+        deal.slug,
+        { session_id: session.id, visitor_id: "visitor-fresh" },
+        { now: NOW, clientIp }
+      )
+    ).rejects.toMatchObject({
+      name: "DealBookNowError",
+      status: 429,
+      code: "rate_limited",
+    } satisfies Partial<DealBookNowError>);
+  });
+
+  it("S16: rate-limits Book now by visitor_id across IPs", async () => {
     const { store, deal, session } = await createLiveIntegratedDeal();
 
     for (let i = 0; i < 30; i++) {
@@ -486,7 +513,7 @@ describe("Chunk 36 Book now click flow", () => {
         store,
         deal.slug,
         { session_id: session.id, visitor_id: "same-visitor" },
-        { now: NOW }
+        { now: NOW, clientIp: `198.51.100.${i}` }
       );
     }
 
@@ -495,11 +522,12 @@ describe("Chunk 36 Book now click flow", () => {
         store,
         deal.slug,
         { session_id: session.id, visitor_id: "same-visitor" },
-        { now: NOW }
+        { now: NOW, clientIp: "198.51.100.250" }
       )
     ).rejects.toMatchObject({
       name: "DealBookNowError",
       status: 429,
+      code: "rate_limited",
     } satisfies Partial<DealBookNowError>);
   });
 
