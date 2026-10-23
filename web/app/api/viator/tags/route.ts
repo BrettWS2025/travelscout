@@ -5,6 +5,10 @@ import {
   parentTagIdsFromMetadata,
 } from "@/lib/viator/tag-metadata";
 import { enforceBffRateLimit } from "@/lib/bff-rate-limit";
+import {
+  exposesErrorDetailsToClient,
+  serverError,
+} from "@/lib/marketplace/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -125,17 +129,7 @@ export async function GET(req: Request) {
     });
     
     if (testError) {
-      console.error("[Viator Tags API] Cannot access viator_tags table:", testError);
-      return NextResponse.json(
-        {
-          error: "Cannot access tags table",
-          message: testError.message,
-          details: testError.details,
-          hint: testError.hint,
-          code: testError.code,
-        },
-        { status: 500 }
-      );
+      return serverError("Cannot access tags table", testError);
     }
 
     // Use SQL to find parent tags (tags that are referenced in other tags' parentTagIds)
@@ -183,15 +177,7 @@ export async function GET(req: Request) {
     );
 
     if (fetchAllError) {
-      console.error("[Viator Tags API] Error fetching tags:", fetchAllError);
-      return NextResponse.json(
-        {
-          error: "Failed to fetch tags",
-          message: fetchAllError.message,
-          details: fetchAllError,
-        },
-        { status: 500 }
-      );
+      return serverError("Failed to fetch tags", fetchAllError);
     }
 
     const finalTags = allTagsRows;
@@ -214,16 +200,20 @@ export async function GET(req: Request) {
         canAccessTable: !testError && testData && testData.length > 0
       });
       
-      return NextResponse.json({
+      // Security S17: never return raw DB error messages to clients in production
+      const body: Record<string, unknown> = {
         success: true,
         count: 0,
         tags: [],
-        debug: {
+      };
+      if (exposesErrorDetailsToClient()) {
+        body.debug = {
           error: error || null,
           testQuery: testError ? testError.message : "success",
-          testDataCount: testData?.length || 0
-        }
-      });
+          testDataCount: testData?.length || 0,
+        };
+      }
+      return NextResponse.json(body);
     }
 
     // Debug: Check what we actually got
@@ -456,15 +446,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json(responseData);
   } catch (error) {
-    console.error("[Viator Tags API] Unhandled error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
+    return serverError("Internal server error", error);
   }
 }

@@ -17,7 +17,12 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-import { getMarketplaceAuth } from "@/lib/marketplace/auth";
+import {
+  exposesErrorDetailsToClient,
+  getMarketplaceAuth,
+  publicServerErrorBody,
+  serverError,
+} from "@/lib/marketplace/auth";
 
 const AUTH_SOURCE = path.resolve(__dirname, "../auth.ts");
 const SERVER_SOURCE = path.resolve(__dirname, "../../supabase/server.ts");
@@ -138,5 +143,102 @@ describe("server cookie auth source (S1)", () => {
     expect(cookieBranch).toMatch(/auth\.getUser\(\)/);
     expect(cookieBranch).not.toMatch(/auth\.getSession\(\)/);
     expect(cookieBranch).not.toMatch(/session\.user/);
+  });
+});
+
+describe("serverError production sanitization (S17)", () => {
+  it("hides Error.message and stacks from clients when NODE_ENV=production", () => {
+    expect(exposesErrorDetailsToClient({ NODE_ENV: "production" })).toBe(false);
+
+    const err = new Error("relation marketplace.operator_deals does not exist");
+    err.stack = "Error: secret\n    at /app/lib/db.ts:12:3";
+
+    const body = publicServerErrorBody("Failed to list deals.", err, {
+      env: { NODE_ENV: "production" },
+      includeStack: true,
+    });
+
+    expect(body).toEqual({
+      error: "Failed to list deals.",
+      code: "internal_error",
+    });
+    expect(body).not.toHaveProperty("message");
+    expect(body).not.toHaveProperty("stack");
+    expect(JSON.stringify(body)).not.toContain("operator_deals");
+    expect(JSON.stringify(body)).not.toContain("secret");
+  });
+
+  it("includes detail (and optional stack) outside production for debugging", () => {
+    expect(exposesErrorDetailsToClient({ NODE_ENV: "development" })).toBe(true);
+    expect(exposesErrorDetailsToClient({ NODE_ENV: "test" })).toBe(true);
+
+    const err = new Error("boom detail");
+    err.stack = "Error: boom detail\n    at test.ts:1:1";
+
+    expect(
+      publicServerErrorBody("Failed to list deals.", err, {
+        env: { NODE_ENV: "development" },
+      })
+    ).toEqual({
+      error: "boom detail",
+      code: "internal_error",
+      message: "boom detail",
+      context: "Failed to list deals.",
+    });
+
+    expect(
+      publicServerErrorBody("Internal server error", err, {
+        env: { NODE_ENV: "development" },
+        includeStack: true,
+      }).stack
+    ).toContain("test.ts:1:1");
+  });
+
+  it("serverError returns 500 JSON and still logs the full error", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const err = new Error("db connection refused at 10.0.0.5");
+
+    const res = serverError("Failed to get deal.", err, {
+      NODE_ENV: "production",
+    });
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({
+      error: "Failed to get deal.",
+      code: "internal_error",
+    });
+    expect(spy).toHaveBeenCalledWith("Failed to get deal.", err);
+
+    const devRes = serverError("Failed to get deal.", err, {
+      NODE_ENV: "development",
+    });
+    await expect(devRes.json()).resolves.toMatchObject({
+      error: "db connection refused at 10.0.0.5",
+      message: "db connection refused at 10.0.0.5",
+      context: "Failed to get deal.",
+      code: "internal_error",
+    });
+
+    spy.mockRestore();
+  });
+
+  it("Viator sync/tags routes use serverError (no raw stack/message in production path)", () => {
+    const syncSrc = readFileSync(
+      path.resolve(__dirname, "../../../app/api/viator/tags/sync/route.ts"),
+      "utf8"
+    );
+    const tagsSrc = readFileSync(
+      path.resolve(__dirname, "../../../app/api/viator/tags/route.ts"),
+      "utf8"
+    );
+    expect(syncSrc).toMatch(/from "@\/lib\/marketplace\/auth"/);
+    expect(syncSrc).toMatch(/serverError\(/);
+    expect(syncSrc).not.toMatch(/stack:\s*process\.env\.NODE_ENV/);
+    expect(tagsSrc).toMatch(/return serverError\(/);
+    expect(tagsSrc).toMatch(/exposesErrorDetailsToClient/);
+    // Client JSON must not re-emit PostgREST error fields (server logs may still)
+    expect(tagsSrc).not.toMatch(/message:\s*fetchAllError\.message/);
+    expect(tagsSrc).not.toMatch(
+      /return NextResponse\.json\(\s*\{[^}]*details:\s*testError/
+    );
   });
 });

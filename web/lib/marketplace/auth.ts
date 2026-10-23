@@ -52,16 +52,65 @@ export function notFound(message = "Not found.") {
   return Response.json({ error: message }, { status: 404 });
 }
 
-export function serverError(context: string, err: unknown) {
+/**
+ * Security S17: raw Error.message / stacks stay in server logs only when
+ * NODE_ENV=production. Development and test may still return details.
+ */
+export function exposesErrorDetailsToClient(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return env.NODE_ENV !== "production";
+}
+
+export type PublicServerErrorBody = {
+  error: string;
+  code: "internal_error";
+  message?: string;
+  context?: string;
+  stack?: string;
+};
+
+/**
+ * Stable client body for unexpected 500s. Always log `err` before calling.
+ * Pass `includeStack: true` only for local debug surfaces (never production).
+ */
+export function publicServerErrorBody(
+  context: string,
+  err: unknown,
+  options: {
+    env?: NodeJS.ProcessEnv;
+    includeStack?: boolean;
+  } = {}
+): PublicServerErrorBody {
+  const env = options.env ?? process.env;
+  if (!exposesErrorDetailsToClient(env)) {
+    return { error: context, code: "internal_error" };
+  }
+  const detail =
+    err instanceof Error
+      ? err.message || "Unknown error"
+      : err != null && String(err)
+        ? String(err)
+        : "Unknown error";
+  const body: PublicServerErrorBody = {
+    error: detail && detail !== context ? detail : context,
+    code: "internal_error",
+    message: detail,
+    context,
+  };
+  if (options.includeStack && err instanceof Error && err.stack) {
+    body.stack = err.stack;
+  }
+  return body;
+}
+
+export function serverError(
+  context: string,
+  err: unknown,
+  env: NodeJS.ProcessEnv = process.env
+) {
   console.error(context, err);
-  const detail = err instanceof Error ? err.message : "Unknown error";
-  // Prefer the underlying detail so clients (and operators) see the real cause.
-  return Response.json(
-    {
-      error: detail && detail !== context ? detail : context,
-      message: detail,
-      context,
-    },
-    { status: 500 }
-  );
+  return Response.json(publicServerErrorBody(context, err, { env }), {
+    status: 500,
+  });
 }
