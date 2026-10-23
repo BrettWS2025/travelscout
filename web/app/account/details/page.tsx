@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
@@ -8,11 +9,12 @@ import {
   ensureUserProfile,
   type ProfileRow,
 } from "@/lib/profiles";
+import { listMyOperators } from "@/lib/marketplace/operator-deals-client";
 import {
-  listMyOrganizations,
-  updateOrganization,
-} from "@/lib/marketplace/client";
-import type { Organization } from "@/lib/marketplace/types";
+  getOperatorProfileApi,
+  patchOperatorProfileApi,
+  type OperatorProfileRow,
+} from "@/lib/marketplace/operator-profile-client";
 import {
   authInputClassName,
   authLabelClassName,
@@ -29,11 +31,12 @@ export default function AccountDetailsPage() {
     useIsOperatorProfile();
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [operator, setOperator] = useState<OperatorProfileRow | null>(null);
+  const [operatorReadOnly, setOperatorReadOnly] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [orgName, setOrgName] = useState("");
-  const [orgPhone, setOrgPhone] = useState("");
-  const [orgRegion, setOrgRegion] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [businessRegion, setBusinessRegion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -61,26 +64,38 @@ export default function AccountDetailsPage() {
         setFullName(p.display_name ?? metaName ?? "");
 
         if (isOperatorProfile) {
-          const { organizations } = await listMyOrganizations(
-            session?.access_token
-          );
-          const org = organizations[0] ?? null;
-          setOrganization(org);
-          setOrgName(org?.name ?? "");
-          setOrgPhone(org?.phone ?? "");
-          setOrgRegion(org?.region ?? "");
+          const { operators } = await listMyOperators(session?.access_token);
+          const first = operators[0] ?? null;
+          if (first) {
+            const { operator: op, read_only } = await getOperatorProfileApi(
+              first.id,
+              session?.access_token
+            );
+            setOperator(op);
+            setOperatorReadOnly(read_only);
+            setBusinessName(op.trading_name ?? "");
+            setBusinessPhone(op.public_phone ?? "");
+            setBusinessRegion(op.regions_served?.[0] ?? "");
+          } else {
+            setOperator(null);
+            setOperatorReadOnly(false);
+            setBusinessName("");
+            setBusinessPhone("");
+            setBusinessRegion("");
+          }
         } else {
-          setOrganization(null);
-          setOrgName("");
-          setOrgPhone("");
-          setOrgRegion("");
+          setOperator(null);
+          setOperatorReadOnly(false);
+          setBusinessName("");
+          setBusinessPhone("");
+          setBusinessRegion("");
         }
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Could not load your profile."
         );
         setProfile(null);
-        setOrganization(null);
+        setOperator(null);
       } finally {
         setLoading(false);
       }
@@ -122,29 +137,36 @@ export default function AccountDetailsPage() {
             }
       );
 
-      if (isOperatorProfile && organization) {
-        const trimmedName = orgName.trim();
+      if (isOperatorProfile && operator && !operatorReadOnly) {
+        const trimmedName = businessName.trim();
         if (!trimmedName) {
-          throw new Error("Organisation name is required.");
+          throw new Error("Business name is required.");
         }
-        const canonicalRegion = canonicalizeRegion(orgRegion);
+        const canonicalRegion = canonicalizeRegion(businessRegion);
         if (!canonicalRegion) {
           throw new Error("Please select a valid New Zealand region.");
         }
 
-        const { organization: updated } = await updateOrganization(
-          organization.id,
+        // Operator profile requires E.164 (+6421…); strip spaces/dashes from entry.
+        const rawPhone = businessPhone.trim();
+        const normalizedPhone = rawPhone
+          ? rawPhone.replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "")
+          : "";
+
+        const { operator: updated } = await patchOperatorProfileApi(
+          operator.id,
           {
-            name: trimmedName,
-            phone: orgPhone.trim(),
-            region: canonicalRegion,
+            trading_name: trimmedName,
+            legal_name: trimmedName,
+            public_phone: normalizedPhone || null,
+            regions_served: [canonicalRegion],
           },
           session?.access_token
         );
-        setOrganization(updated);
-        setOrgName(updated.name);
-        setOrgPhone(updated.phone ?? "");
-        setOrgRegion(updated.region ?? "");
+        setOperator(updated);
+        setBusinessName(updated.trading_name);
+        setBusinessPhone(updated.public_phone ?? "");
+        setBusinessRegion(updated.regions_served?.[0] ?? "");
       }
 
       setSaved(true);
@@ -197,6 +219,7 @@ export default function AccountDetailsPage() {
   }
 
   const busy = loading || isLoading || operatorLoading;
+  const businessDisabled = busy || !operator || operatorReadOnly;
 
   return (
     <div className="space-y-6">
@@ -229,59 +252,75 @@ export default function AccountDetailsPage() {
           <>
             <div className="border-t border-[var(--ts-ink)]/8 pt-4">
               <p className="mb-4 font-[family-name:var(--font-sora)] text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ts-teal)]">
-                Organisation
+                Business
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className={authLabelClassName} htmlFor="orgName">
-                    Organisation name
+                  <label className={authLabelClassName} htmlFor="businessName">
+                    Business name
                   </label>
                   <input
-                    id="orgName"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
+                    id="businessName"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
                     className={authInputClassName}
-                    disabled={busy || !organization}
+                    disabled={businessDisabled}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={authLabelClassName} htmlFor="orgPhone">
+                  <label className={authLabelClassName} htmlFor="businessPhone">
                     Phone
                   </label>
                   <input
-                    id="orgPhone"
+                    id="businessPhone"
                     type="tel"
-                    value={orgPhone}
-                    onChange={(e) => setOrgPhone(e.target.value)}
+                    value={businessPhone}
+                    onChange={(e) => setBusinessPhone(e.target.value)}
                     className={authInputClassName}
-                    disabled={busy || !organization}
+                    disabled={businessDisabled}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={authLabelClassName} htmlFor="orgRegion">
+                  <label className={authLabelClassName} htmlFor="businessRegion">
                     Region
                   </label>
                   <div
                     className={`${authInputClassName} !p-0 overflow-hidden ${
-                      busy || !organization ? "opacity-60" : ""
+                      businessDisabled ? "opacity-60" : ""
                     }`}
                   >
                     <RegionPicker
-                      id="orgRegion"
-                      value={orgRegion}
-                      onChange={setOrgRegion}
+                      id="businessRegion"
+                      value={businessRegion}
+                      onChange={setBusinessRegion}
                       variant="light"
-                      disabled={busy || !organization}
+                      disabled={businessDisabled}
                       required
                       placeholder="Select your operating region"
                     />
                   </div>
                 </div>
               </div>
+              <p className="mt-3 font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+                For logo, website, and the full public profile, use{" "}
+                <Link
+                  href="/account/settings/business-profile"
+                  className="text-[var(--ts-teal)] underline-offset-2 hover:underline"
+                >
+                  Settings → Business profile
+                </Link>
+                .
+              </p>
             </div>
-            {!organization && !busy && (
+            {!operator && !busy && (
               <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
-                No organisation is linked to this account yet.
+                No business profile is linked to this account yet. Sign in again
+                from the operator signup page if setup did not finish.
+              </p>
+            )}
+            {operator && operatorReadOnly && !busy && (
+              <p className="font-[family-name:var(--font-sora)] text-sm text-[var(--ts-muted)]">
+                Your role can view business details but not edit them.
               </p>
             )}
           </>
@@ -301,7 +340,7 @@ export default function AccountDetailsPage() {
         <button
           type="button"
           onClick={handleSaveProfile}
-          disabled={busy}
+          disabled={busy || (isOperatorProfile && operatorReadOnly)}
           className={authPrimaryButtonClassName}
         >
           {loading ? "Saving…" : "Save changes"}

@@ -115,7 +115,7 @@ export default function OperatorSignupPage() {
         if (signInError) throw signInError;
         const token = data.session?.access_token;
         if (!token) throw new Error("Signed in, but no session was returned.");
-        // Existing traveler → operator: bootstrap org + inventory operator.
+        // Existing traveler → operator: bootstrap inventory operator.
         const { operator } = await ensureOperatorAfterAuth(token, {
           business: org,
           userMetadata: data.user?.user_metadata as
@@ -150,7 +150,7 @@ export default function OperatorSignupPage() {
 
       const token = data.session?.access_token;
       if (token) {
-        // Trigger usually created org + operator already; ensure is idempotent.
+        // Trigger usually created the operator already; ensure is idempotent.
         const { operator } = await ensureOperatorAfterAuth(token, {
           business: org,
           userMetadata: data.user?.user_metadata as
@@ -164,7 +164,7 @@ export default function OperatorSignupPage() {
         return;
       }
 
-      // Email confirmation required — org + operator are created by the signup
+      // Email confirmation required — operator is created by the signup
       // trigger from user_metadata. User opens Inventory after verifying.
       setInfo(
         "Account and business created. Check your inbox to verify your email, then sign in to open Inventory."
