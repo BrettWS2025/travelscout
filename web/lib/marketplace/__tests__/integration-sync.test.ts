@@ -392,6 +392,111 @@ describe("Chunk 28 sync engine", () => {
     void bayOwnerId;
   });
 
+  it("S12: rejects webhook when webhookSecretRef is missing", async () => {
+    const { store, bayOperatorId, bayOwnerId } = freshStore();
+    ensureIntegrationSecretsConfigured();
+    const connected = await connectBay(store, bayOperatorId, bayOwnerId);
+
+    const integration = store.integrations!.get(
+      connected.integration.id
+    ) as Integration;
+    expect(integration.webhookSecretRef).toBeNull();
+
+    await expect(
+      handleIntegrationWebhook(
+        store,
+        "rezdy",
+        {
+          headers: {},
+          body: { product_external_id: "prod-harbour-kayak" },
+        },
+        { now: "2026-10-20T04:15:00.000Z" }
+      )
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "webhook_secret_missing",
+    });
+
+    expect(
+      store.integrations!.get(integration.id)?.webhookLastReceivedAt
+    ).toBeNull();
+
+    void bayOperatorId;
+    void bayOwnerId;
+  });
+
+  it("S12: rejects webhook with invalid HMAC signature", async () => {
+    const { store, bayOperatorId, bayOwnerId } = freshStore();
+    ensureIntegrationSecretsConfigured();
+    const connected = await connectBay(store, bayOperatorId, bayOwnerId);
+
+    const secret = "whsec_test_456";
+    const ref = await storeSecret(secret, "webhook");
+    const integration = store.integrations!.get(
+      connected.integration.id
+    ) as Integration;
+    store.integrations!.set(integration.id, {
+      ...integration,
+      webhookSecretRef: ref,
+    });
+
+    await expect(
+      handleIntegrationWebhook(
+        store,
+        "rezdy",
+        {
+          headers: { "x-webhook-signature": "deadbeef".repeat(8) },
+          body: { product_external_id: "prod-harbour-kayak" },
+        },
+        { now: "2026-10-20T04:16:00.000Z" }
+      )
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "invalid_signature",
+    });
+
+    expect(
+      store.integrations!.get(integration.id)?.webhookLastReceivedAt
+    ).toBeNull();
+
+    void bayOperatorId;
+    void bayOwnerId;
+  });
+
+  it("S12: accepts webhook with valid opaque token (Rezdy-style)", async () => {
+    const { store, bayOperatorId, bayOwnerId } = freshStore();
+    ensureIntegrationSecretsConfigured();
+    const connected = await connectBay(store, bayOperatorId, bayOwnerId);
+
+    const secret = "opaque_token_rezdy_abc";
+    const ref = await storeSecret(secret, "webhook");
+    const integration = store.integrations!.get(
+      connected.integration.id
+    ) as Integration;
+    store.integrations!.set(integration.id, {
+      ...integration,
+      webhookSecretRef: ref,
+    });
+
+    const result = await handleIntegrationWebhook(
+      store,
+      "rezdy",
+      {
+        headers: { "x-webhook-token": secret },
+        body: { product_external_id: "prod-harbour-kayak" },
+      },
+      { now: "2026-10-20T04:17:00.000Z" }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(
+      store.integrations!.get(integration.id)?.webhookLastReceivedAt
+    ).toBe("2026-10-20T04:17:00.000Z");
+
+    void bayOperatorId;
+    void bayOwnerId;
+  });
+
   it("auto_enable_new_products enables newly discovered products", async () => {
     const { store, bayOperatorId, bayOwnerId } = freshStore();
     const connected = await connectBay(store, bayOperatorId, bayOwnerId);
