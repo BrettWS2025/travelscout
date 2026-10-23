@@ -2,24 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { listMyOrganizations } from "@/lib/marketplace/client";
 import { listMyOperators } from "@/lib/marketplace/operator-deals-client";
 
 type OperatorProfileState = {
   /**
-   * True when this user belongs to a marketplace organization (legacy) or an
-   * inventory operator (marketplace.operators + team_members).
+   * True when this user belongs to an inventory operator
+   * (marketplace.operators + accepted team_members).
    */
   isOperatorProfile: boolean;
   isLoading: boolean;
 };
 
 /**
- * Inventory / Settings require a real inventory operator membership. Nav also
- * treats legacy organisation membership as operator so existing accounts keep
- * access while both systems coexist. Operator signup writes business_* metadata
- * and a DB trigger creates org + operator at user insert; ensureOperatorAfterAuth
- * is the client safety net after email confirm.
+ * Inventory / Settings require a real inventory operator membership.
+ * Operator signup writes business_* metadata and a DB trigger creates the
+ * operator at user insert; ensureOperatorAfterAuth is the client safety net
+ * after email confirm. Legacy organisations are not used for this check.
  */
 export function useIsOperatorProfile(): OperatorProfileState {
   const { user, session, isLoading: authLoading } = useAuth();
@@ -44,20 +42,11 @@ export function useIsOperatorProfile(): OperatorProfileState {
 
       try {
         const token = session?.access_token;
-        const [orgsResult, operatorsResult] = await Promise.allSettled([
-          listMyOrganizations(token),
-          listMyOperators(token),
-        ]);
-
-        const hasOrg =
-          orgsResult.status === "fulfilled" &&
-          (orgsResult.value.organizations?.length ?? 0) > 0;
-        const hasOperator =
-          operatorsResult.status === "fulfilled" &&
-          (operatorsResult.value.operators?.length ?? 0) > 0;
+        const listed = await listMyOperators(token);
+        const hasOperator = (listed.operators?.length ?? 0) > 0;
 
         if (!cancelled) {
-          setIsOperatorProfile(hasOrg || hasOperator);
+          setIsOperatorProfile(hasOperator);
           setIsLoading(false);
         }
       } catch (err) {

@@ -1,18 +1,13 @@
 /**
- * Operator signup helpers: business metadata + idempotent org bootstrap.
+ * Operator signup helpers: business metadata + idempotent operator bootstrap.
  *
  * Traveler signup must not set account_type=operator. Operator signup always
- * stores business_* on user_metadata so a DB trigger can create the
- * marketplace organization (legacy) and marketplace.operators + team_members
- * (inventory) even when email confirmation yields no session.
+ * stores business_* on user_metadata so a DB trigger can create
+ * marketplace.operators + team_members even when email confirmation yields no
+ * session. Legacy marketplace.organizations are no longer created on signup.
  */
 
-import {
-  createOrganization,
-  listMyOrganizations,
-} from "@/lib/marketplace/client";
 import type { ListedOperator } from "@/lib/marketplace/deal-draft-http";
-import type { Organization } from "@/lib/marketplace/types";
 import { canonicalizeRegion } from "@/lib/regions";
 
 export const OPERATOR_ACCOUNT_TYPE = "operator";
@@ -77,31 +72,6 @@ export function businessDetailsFromUserMetadata(
         ? meta.business_region
         : undefined,
   });
-}
-
-/**
- * Return the user's first org, creating one from explicit business details or
- * operator signup metadata when none exists yet.
- */
-export async function ensureOperatorOrganization(
-  accessToken: string,
-  options?: {
-    business?: OperatorBusinessDetails | null;
-    userMetadata?: Record<string, unknown> | null;
-  }
-): Promise<Organization | null> {
-  const { organizations } = await listMyOrganizations(accessToken);
-  if (organizations.length > 0) {
-    return organizations[0] ?? null;
-  }
-
-  const details =
-    normalizeOperatorBusinessDetails(options?.business) ??
-    businessDetailsFromUserMetadata(options?.userMetadata ?? null);
-  if (!details) return null;
-
-  const { organization } = await createOrganization(details, accessToken);
-  return organization;
 }
 
 async function createInventoryOperator(
@@ -173,7 +143,8 @@ export async function ensureOperatorInventoryClient(
 }
 
 /**
- * Bootstrap both legacy organisation and inventory operator after signup/login.
+ * Bootstrap inventory operator after signup/login.
+ * Legacy organisations are not created or required.
  */
 export async function ensureOperatorAfterAuth(
   accessToken: string,
@@ -182,12 +153,8 @@ export async function ensureOperatorAfterAuth(
     userMetadata?: Record<string, unknown> | null;
   }
 ): Promise<{
-  organization: Organization | null;
   operator: ListedOperator | null;
 }> {
-  const [organization, operator] = await Promise.all([
-    ensureOperatorOrganization(accessToken, options),
-    ensureOperatorInventoryClient(accessToken, options),
-  ]);
-  return { organization, operator };
+  const operator = await ensureOperatorInventoryClient(accessToken, options);
+  return { operator };
 }

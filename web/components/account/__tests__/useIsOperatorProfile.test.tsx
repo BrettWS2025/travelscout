@@ -3,15 +3,10 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useIsOperatorProfile } from "@/components/account/useIsOperatorProfile";
 
 const authMock = vi.fn();
-const listOrgsMock = vi.fn();
 const listOperatorsMock = vi.fn();
 
 vi.mock("@/components/AuthProvider", () => ({
   useAuth: () => authMock(),
-}));
-
-vi.mock("@/lib/marketplace/client", () => ({
-  listMyOrganizations: (...args: unknown[]) => listOrgsMock(...args),
 }));
 
 vi.mock("@/lib/marketplace/operator-deals-client", () => ({
@@ -21,24 +16,22 @@ vi.mock("@/lib/marketplace/operator-deals-client", () => ({
 describe("useIsOperatorProfile", () => {
   beforeEach(() => {
     authMock.mockReset();
-    listOrgsMock.mockReset();
     listOperatorsMock.mockReset();
     listOperatorsMock.mockResolvedValue({ operators: [] });
   });
 
-  it("treats users with organizations as operators", async () => {
+  it("does not treat legacy organisation membership alone as an operator", async () => {
     authMock.mockReturnValue({
       user: { id: "u1", user_metadata: {} },
       session: { access_token: "tok" },
       isLoading: false,
     });
-    listOrgsMock.mockResolvedValue({
-      organizations: [{ id: "org1", name: "Jetboat Co" }],
-    });
+    // No inventory operator — org-only accounts are no longer treated as operators.
+    listOperatorsMock.mockResolvedValue({ operators: [] });
 
     const { result } = renderHook(() => useIsOperatorProfile());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.isOperatorProfile).toBe(true);
+    expect(result.current.isOperatorProfile).toBe(false);
   });
 
   it("treats users with inventory operator membership as operators", async () => {
@@ -47,7 +40,6 @@ describe("useIsOperatorProfile", () => {
       session: { access_token: "tok" },
       isLoading: false,
     });
-    listOrgsMock.mockResolvedValue({ organizations: [] });
     listOperatorsMock.mockResolvedValue({
       operators: [{ id: "op1", tradingName: "Jetboat Co", role: "owner" }],
     });
@@ -57,13 +49,12 @@ describe("useIsOperatorProfile", () => {
     expect(result.current.isOperatorProfile).toBe(true);
   });
 
-  it("keeps travelers without orgs or operators as regular profiles", async () => {
+  it("keeps travelers without operators as regular profiles", async () => {
     authMock.mockReturnValue({
       user: { id: "u2", user_metadata: {} },
       session: { access_token: "tok" },
       isLoading: false,
     });
-    listOrgsMock.mockResolvedValue({ organizations: [] });
 
     const { result } = renderHook(() => useIsOperatorProfile());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -76,7 +67,6 @@ describe("useIsOperatorProfile", () => {
       session: { access_token: "tok" },
       isLoading: false,
     });
-    listOrgsMock.mockResolvedValue({ organizations: [] });
 
     const { result } = renderHook(() => useIsOperatorProfile());
     await waitFor(() => expect(result.current.isLoading).toBe(false));

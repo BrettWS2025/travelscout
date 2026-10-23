@@ -197,7 +197,7 @@ export default function LoginPage() {
   }
 
   const description = onOperatorHost
-    ? "Sign in to manage your operator organizations and last-minute deals."
+    ? "Sign in to manage your business profile and last-minute deals."
     : mode === "login"
       ? "Use your email and password to sign in."
       : "Create a traveler account with your name, email and password.";
