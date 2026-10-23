@@ -2,6 +2,7 @@
  * POST /api/marketplace/webhooks/providers/:provider
  * Provider webhook: verify signature (webhook_secret_ref), bump
  * webhook_last_received_at, run incremental sync for affected products.
+ * Security S12: missing webhook secret → 401 (unsigned webhooks rejected).
  */
 
 import { badRequest } from "@/lib/marketplace/auth";

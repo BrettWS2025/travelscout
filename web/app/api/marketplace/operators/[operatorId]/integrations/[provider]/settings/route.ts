@@ -38,7 +38,7 @@ export async function PATCH(req: Request, { params }: Params) {
       return badRequest("Request body must be JSON.");
     }
 
-    const result = updateIntegrationSettings(
+    const result = await updateIntegrationSettings(
       getDealDraftHttpStore(),
       operatorId,
       provider,

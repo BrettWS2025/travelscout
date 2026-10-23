@@ -1185,6 +1185,7 @@ export type HandleWebhookResult = {
 /**
  * Provider webhook: verify signature via webhook_secret_ref, bump
  * webhook_last_received_at, run incremental sync for affected products.
+ * Security S12: missing webhookSecretRef → 401 (do not process body).
  */
 export async function handleIntegrationWebhook(
   store: DealDraftStore,
@@ -1214,32 +1215,56 @@ export async function handleIntegrationWebhook(
     );
   }
 
-  // Prefer the integration that has a webhook secret; otherwise first match
+  // Prefer an integration that has a webhook secret configured.
   const integration =
     candidates.find((c) => c.webhookSecretRef) ?? candidates[0]!;
 
-  if (integration.webhookSecretRef) {
-    const secret = await readSecret(integration.webhookSecretRef);
-    const sig =
-      headerValue(request.headers, "x-webhook-signature") ??
-      headerValue(request.headers, "x-signature");
-    const token =
-      headerValue(request.headers, "x-webhook-token") ??
-      headerValue(request.headers, "x-rezdy-webhook-token") ??
-      webhookTokenFromBody(request.body);
-    const hmacOk = verifyWebhookSignature(secret, request.body, sig);
-    // Rezdy has no HMAC (§7.4) — opaque token in URL/header matches webhook_secret_ref.
-    const tokenOk =
-      typeof token === "string" &&
-      token.length > 0 &&
-      timingSafeStringEqual(token, secret);
-    if (!hmacOk && !tokenOk) {
-      throw new IntegrationSyncError(
-        "Invalid webhook signature.",
-        401,
-        "invalid_signature"
-      );
-    }
+  // Security S12: fail closed — never process unsigned / unconfigured webhooks.
+  if (!integration.webhookSecretRef) {
+    throw new IntegrationSyncError(
+      "Webhook secret is not configured for this integration.",
+      401,
+      "webhook_secret_missing"
+    );
+  }
+
+  let secret: string;
+  try {
+    secret = await readSecret(integration.webhookSecretRef);
+  } catch {
+    throw new IntegrationSyncError(
+      "Webhook secret is not configured for this integration.",
+      503,
+      "webhook_secret_unavailable"
+    );
+  }
+  if (!secret || secret.trim().length === 0) {
+    throw new IntegrationSyncError(
+      "Webhook secret is not configured for this integration.",
+      503,
+      "webhook_secret_unavailable"
+    );
+  }
+
+  const sig =
+    headerValue(request.headers, "x-webhook-signature") ??
+    headerValue(request.headers, "x-signature");
+  const token =
+    headerValue(request.headers, "x-webhook-token") ??
+    headerValue(request.headers, "x-rezdy-webhook-token") ??
+    webhookTokenFromBody(request.body);
+  const hmacOk = verifyWebhookSignature(secret, request.body, sig);
+  // Rezdy has no HMAC (§7.4) — opaque token in URL/header matches webhook_secret_ref.
+  const tokenOk =
+    typeof token === "string" &&
+    token.length > 0 &&
+    timingSafeStringEqual(token, secret);
+  if (!hmacOk && !tokenOk) {
+    throw new IntegrationSyncError(
+      "Invalid webhook signature.",
+      401,
+      "invalid_signature"
+    );
   }
 
   const now = options?.now ?? new Date().toISOString();
