@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createViatorClient } from "@/lib/viator";
 import { createClient } from "@supabase/supabase-js";
 import { requireViatorTagsSyncAuth } from "@/lib/viator-tags-sync-auth";
+import { serverError } from "@/lib/marketplace/auth";
 
 export const dynamic = "force-dynamic";
 /** Viator tag sync does many DB round-trips; default Vercel limit is too low. Pro supports up to 300s. */
@@ -64,14 +65,7 @@ export async function GET(req: Request) {
     try {
       tagsResponse = await viatorClient.getTags();
     } catch (error) {
-      console.error("[Viator Tags Sync] Error fetching tags from Viator:", error);
-      return NextResponse.json(
-        {
-          error: "Failed to fetch tags from Viator API",
-          message: error instanceof Error ? error.message : String(error),
-        },
-        { status: 500 }
-      );
+      return serverError("Failed to fetch tags from Viator API", error);
     }
 
     // Parse tags from response (handle different response structures)
@@ -206,17 +200,6 @@ export async function GET(req: Request) {
       message: `Synced ${successCount} tags successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`,
     });
   } catch (error) {
-    console.error("[Viator Tags Sync] Unhandled error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        message: errorMessage,
-        stack: process.env.NODE_ENV === "development" ? errorStack : undefined,
-      },
-      { status: 500 }
-    );
+    return serverError("Internal server error", error);
   }
 }

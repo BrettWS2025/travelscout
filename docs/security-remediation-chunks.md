@@ -46,7 +46,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 - [x] S16. Rate-limit book / click / track endpoints (IP-bound, fail closed under abuse) — Notes: `public-rate-limit.ts` in-process fixed-window (IP + optional visitor for Book now; IP for legacy click + track impressions/detail-view); wired in `deal-book-now.ts` + click/track routes; tests in `public-rate-limit.test.ts`, `deal-book-now.test.ts`, `marketplace.test.ts`, `track-rate-limit.test.ts`; spec §4.4 / Chunk 45 / Project context. App-only; no migration. Deferred: Redis/shared multi-instance store.
 
 **Phase F: Hygiene (lower priority)**
-- [ ] S17. Stop returning raw `err.message` / stacks to clients in production
+- [x] S17. Stop returning raw `err.message` / stacks to clients in production — Notes: `exposesErrorDetailsToClient` / `publicServerErrorBody` / `serverError` in `web/lib/marketplace/auth.ts` return only `{ error, code: "internal_error" }` when `NODE_ENV=production`; Viator tags + sync 500s use `serverError`; empty tags debug payload gated to non-production; tests in `auth.test.ts`; spec Project context. App-only; no migration. Deferred: intentional 4xx product messages unchanged.
 - [ ] S18. Tighten unnecessary GRANTs and SECURITY DEFINER EXECUTE on helpers
 - [ ] S19. Deal ID oracle / error timing (auth before existence where practical)
 
