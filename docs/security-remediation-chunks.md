@@ -42,7 +42,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 
 **Phase E: Legacy / mass assignment / abuse**
 - [x] S14. Legacy deals API: stop client-controlled `status` (or retire routes) — Notes: migration `20261035000001_legacy_deals_status_and_staff_write.sql` INSERT forces draft, owner/admin-only writes, `transition_legacy_deal_status` RPC; `createDeal`/`updateDeal`/`stripLegacyDealStatus` + routes route status via RPC; tests in `legacy-deals-status-db.test.ts` + `marketplace.test.ts`; spec §3 / §4.2 / Project context. Deferred: retire legacy org UI when unused; inventory status persistence still service-role when leaving in-memory.
-- [ ] S15. Strip system fields from inventory client patches (`link_status`, `slug`, etc.)
+- [x] S15. Strip system fields from inventory client patches (`link_status`, `slug`, etc.) — Notes: `SYSTEM_OWNED_DEAL_FIELDS` + `stripSystemOwnedDealFields` / `applyClientDealFieldPatch` also strip `slug`/`linkStatus`; `updateDraftDeal` clears `link_*` on booking URL/type change; publish `booking_destination` fails closed unless fresh check or successful probe; tests in `deal-status.test.ts`, `deal-draft.test.ts`, `deal-publish-validation.test.ts`; spec §3.1 / §4.1 / §4.2. App-only; no migration. Deferred: DB column lock for `slug`/`link_*` (optional; inventory still in-memory).
 - [ ] S16. Rate-limit book / click / track endpoints (IP-bound, fail closed under abuse)
 
 **Phase F: Hygiene (lower priority)**

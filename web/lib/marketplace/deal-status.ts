@@ -1,9 +1,10 @@
 /**
  * Deal event logger and status transition function (deals platform Chunk 11).
  *
- * Status, pause_reason and pause_detail are system-owned: clients never set them.
- * All changes go through transitionDeal / applyAutoPause / clearAutoPause, which
- * write a DealEvent in the same logical transaction.
+ * Status, pause_reason, pause_detail, slug, and link_status are system-owned:
+ * clients never set them. Status/pause changes go through transitionDeal /
+ * applyAutoPause / clearAutoPause (which write a DealEvent). Slug is generated
+ * from title; link_* are set only by Test link / link checker / publish probe.
  *
  * Database (security S2): `marketplace.operator_deals` BEFORE UPDATE trigger
  * rejects client changes to status / pause_reason / pause_detail /
@@ -596,11 +597,18 @@ export async function clearAutoPause(
 // Client-facing updates: status / pause_* are read-only
 // ---------------------------------------------------------------------------
 
-/** Fields clients must never set on create/update/PATCH. */
+/**
+ * Fields clients must never set on create/update/PATCH (security S15).
+ * status / pause_* — transition helpers only.
+ * slug — generated from title (ensureUniqueDealSlug).
+ * linkStatus — Test link / link checker / publish probe only.
+ */
 export const SYSTEM_OWNED_DEAL_FIELDS = [
   "status",
   "pauseReason",
   "pauseDetail",
+  "slug",
+  "linkStatus",
 ] as const;
 
 export type SystemOwnedDealField = (typeof SYSTEM_OWNED_DEAL_FIELDS)[number];
@@ -611,6 +619,8 @@ export type SystemOwnedDealField = (typeof SYSTEM_OWNED_DEAL_FIELDS)[number];
  * `enforce_operator_deal_system_columns` in
  * `supabase/migrations/20261024000001_lock_system_owned_deal_columns.sql`.
  * Legacy `marketplace.deals` locks `status` only.
+ * App-layer also strips `slug` / `link_status` (S15); those are not in this
+ * DB trigger list.
  */
 export const DB_LOCKED_OPERATOR_DEAL_COLUMNS = [
   "status",
@@ -624,8 +634,7 @@ export type DbLockedOperatorDealColumn =
 
 /**
  * Strip system-owned fields from a client payload.
- * status / pause_reason / pause_detail are ignored (not rejected with 400)
- * so accidental client sends cannot change them.
+ * Ignored (not rejected with 400) so accidental client sends cannot change them.
  */
 export function stripSystemOwnedDealFields(
   input: DealFieldInput
@@ -634,13 +643,15 @@ export function stripSystemOwnedDealFields(
     status: _status,
     pauseReason: _pauseReason,
     pauseDetail: _pauseDetail,
+    slug: _slug,
+    linkStatus: _linkStatus,
     ...rest
   } = input;
   return rest;
 }
 
 /**
- * Apply a client field patch onto a deal, ignoring status / pause_*.
+ * Apply a client field patch onto a deal, ignoring system-owned fields.
  * Overlapping camelCase keys from DealFieldInput are merged; system-owned
  * columns are always preserved from the existing deal.
  */
@@ -667,6 +678,8 @@ export function applyClientDealFieldPatch(
     status: deal.status,
     pauseReason: deal.pauseReason,
     pauseDetail: deal.pauseDetail,
+    slug: deal.slug,
+    linkStatus: deal.linkStatus,
     updatedAt: now,
   };
 }

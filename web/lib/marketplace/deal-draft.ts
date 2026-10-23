@@ -2,8 +2,8 @@
  * Deal draft API (deals platform Chunk 12).
  *
  * Create / get / update / duplicate / delete drafts for marketplace.operator_deals.
- * Status / pause_* remain system-owned (deal-status.ts). Publish validation via
- * deal-publish-validation.ts (Chunk 16).
+ * Status / pause_* / slug / link_status remain system-owned (deal-status.ts,
+ * security S15). Publish validation via deal-publish-validation.ts (Chunk 16).
  *
  * Persistence: in-memory store (same pattern as Chunks 3–11). HTTP routes under
  * /api/marketplace/operators/... and /api/marketplace/operator-deals/... call
@@ -756,6 +756,7 @@ export function createDraftDeal(
     delete templatePatch.pauseReason;
     delete templatePatch.pauseDetail;
     delete templatePatch.slug;
+    delete templatePatch.linkStatus;
   }
 
   if (
@@ -1073,9 +1074,10 @@ export type UpdateDraftDealOptions = {
 };
 
 /**
- * Partial update. Runs field-level validator; strips status/pause_*;
- * rejects deal_type change after first publish; rejects invalid mechanisms;
- * regenerates slug when title changes while still draft.
+ * Partial update. Runs field-level validator; strips system-owned fields
+ * (status, pause_*, slug, link_status — S15); rejects deal_type change after
+ * first publish; rejects invalid mechanisms; regenerates slug when title
+ * changes while still draft; clears link_* when booking URL/type changes.
  */
 export function updateDraftDeal(
   store: DealDraftStore,
@@ -1140,6 +1142,12 @@ export function updateDraftDeal(
     patch.title !== existing.title &&
     existing.status === "draft";
 
+  const bookingDestinationChanging =
+    (patch.bookingUrl !== undefined &&
+      patch.bookingUrl !== existing.bookingUrl) ||
+    (patch.bookingDestinationType !== undefined &&
+      patch.bookingDestinationType !== existing.bookingDestinationType);
+
   let validated: DealFieldInput;
   try {
     validated = assertValidDealFields(patch);
@@ -1171,6 +1179,16 @@ export function updateDraftDeal(
         slugifyDealTitle(updated.title),
         dealId
       ),
+    };
+  }
+
+  // Changing destination invalidates any prior link check (S15).
+  if (bookingDestinationChanging) {
+    updated = {
+      ...updated,
+      linkStatus: "unchecked",
+      linkLastCheckedAt: null,
+      linkConsecutiveFailures: 0,
     };
   }
 

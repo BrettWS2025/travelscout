@@ -636,17 +636,9 @@ async function checkBookingDestination(
     );
   }
 
-  // No probe available — use stored status
-  if (deal.linkStatus === "ok") {
-    return check(
-      "booking_destination",
-      "Booking destination",
-      true,
-      "destination",
-      "Booking URL previously checked ok"
-    );
-  }
-
+  // No probe and not freshly verified — fail closed (security S15).
+  // Never trust a bare link_status === "ok" without link_last_checked_at
+  // within LINK_CHECK_STALE_MS (clients cannot forge those fields).
   return check(
     "booking_destination",
     "Booking destination",
