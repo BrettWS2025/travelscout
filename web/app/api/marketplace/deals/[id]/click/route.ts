@@ -1,6 +1,7 @@
 // app/api/marketplace/deals/[id]/click/route.ts
 // Records attribution and redirects the traveler to the operator booking URL.
 
+import { getClientIp } from "@/lib/bff-rate-limit";
 import { buildDealRedirectUrl } from "@/lib/marketplace/affiliates";
 import {
   getMarketplaceAuth,
@@ -8,12 +9,24 @@ import {
   serverError,
 } from "@/lib/marketplace/auth";
 import { getDeal, getOrganization, recordDealClick } from "@/lib/marketplace/db";
+import {
+  enforcePublicIpRateLimit,
+  publicRateLimitedResponse,
+} from "@/lib/marketplace/public-rate-limit";
 
 export const runtime = "nodejs";
 
 type Params = { params: { id: string } };
 
 async function handleClick(req: Request, dealId: string) {
+  const rl = enforcePublicIpRateLimit("dealClick", getClientIp(req));
+  if (!rl.ok) {
+    return publicRateLimitedResponse(
+      rl.retryAfterSec,
+      "Too many deal click requests"
+    );
+  }
+
   const { user, accessToken } = await getMarketplaceAuth(req);
   const deal = await getDeal(accessToken, dealId);
 

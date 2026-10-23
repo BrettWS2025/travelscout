@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET as getOrgs, POST as postOrg } from "../organizations/route";
 import { GET as getDeals, POST as postDeal } from "../deals/route";
 import { GET as getDeal, PATCH as patchDeal, DELETE as deleteDeal } from "../deals/[id]/route";
 import { GET as clickDeal } from "../deals/[id]/click/route";
+import {
+  PUBLIC_RATE_LIMIT_DEFAULTS,
+  resetPublicRateLimits,
+} from "@/lib/marketplace/public-rate-limit";
 
 const mockGetMarketplaceAuth = vi.fn();
 vi.mock("@/lib/marketplace/auth", async () => {
@@ -278,6 +282,14 @@ describe("marketplace APIs", () => {
   });
 
   describe("click redirect", () => {
+    beforeEach(() => {
+      resetPublicRateLimits();
+    });
+
+    afterEach(() => {
+      resetPublicRateLimits();
+    });
+
     it("redirects live deals and records click", async () => {
       mockGetMarketplaceAuth.mockResolvedValue({ user: null });
       mockGetDeal.mockResolvedValue({
@@ -316,6 +328,49 @@ describe("marketplace APIs", () => {
         { params: { id: "d1" } }
       );
       expect(res.status).toBe(404);
+    });
+
+    it("S16: rate-limits legacy click by IP with 429", async () => {
+      mockGetMarketplaceAuth.mockResolvedValue({ user: null });
+      mockGetDeal.mockResolvedValue({
+        id: "d1",
+        status: "live",
+        organizationId: "o1",
+        bookingProvider: "manual",
+        bookingUrl: "https://operator.example/book",
+        dealPrice: 50,
+        currency: "NZD",
+        title: "Deal",
+        departureAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockGetOrganization.mockResolvedValue({ id: "o1", name: "Op" });
+      mockRecordDealClick.mockResolvedValue({ clickId: "c1" });
+
+      const max = PUBLIC_RATE_LIMIT_DEFAULTS.dealClick.max;
+      const headers = { "x-forwarded-for": "203.0.113.77" };
+      for (let i = 0; i < max; i++) {
+        const res = await clickDeal(
+          new Request("http://localhost/api/marketplace/deals/d1/click", {
+            headers,
+          }),
+          { params: { id: "d1" } }
+        );
+        expect(res.status).toBe(302);
+      }
+
+      const limited = await clickDeal(
+        new Request("http://localhost/api/marketplace/deals/d1/click", {
+          headers,
+        }),
+        { params: { id: "d1" } }
+      );
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get("Retry-After")).toBeTruthy();
+      await expect(limited.json()).resolves.toMatchObject({
+        code: "rate_limited",
+      });
     });
   });
 });
