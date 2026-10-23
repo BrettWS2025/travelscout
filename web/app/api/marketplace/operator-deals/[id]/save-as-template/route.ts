@@ -8,13 +8,12 @@ import { badRequest } from "@/lib/marketplace/auth";
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
 import {
   saveDealAsTemplate,
   serializeDealTemplate,
 } from "@/lib/marketplace/deal-templates";
-import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
@@ -25,13 +24,9 @@ export async function POST(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const source = store.deals.get(dealId);
-    if (!source) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(
+    const auth = await requirePermissionForDeal(
       req,
-      source.operatorId,
+      dealId,
       "inventory.write"
     );
     if (!auth.ok) return auth.response;
@@ -50,9 +45,14 @@ export async function POST(req: Request, { params }: Params) {
           ? body.template_name
           : "";
 
-    const template = saveDealAsTemplate(store, dealId, name, {
-      actor: { type: "user", id: auth.user.id },
-    });
+    const template = saveDealAsTemplate(
+      getDealDraftHttpStore(),
+      dealId,
+      name,
+      {
+        actor: { type: "user", id: auth.user.id },
+      }
+    );
 
     return Response.json(
       { template: serializeDealTemplate(template) },

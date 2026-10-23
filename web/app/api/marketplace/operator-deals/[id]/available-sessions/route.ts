@@ -23,9 +23,8 @@ import {
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
-import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
@@ -36,14 +35,13 @@ export async function GET(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const deal = store.deals.get(dealId);
-    if (!deal) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(req, deal.operatorId, "inventory.read");
+    const auth = await requirePermissionForDeal(req, dealId, "inventory.read");
     if (!auth.ok) return auth.response;
 
-    const result = listAvailableSessionsForDeal(store, dealId);
+    const result = listAvailableSessionsForDeal(
+      getDealDraftHttpStore(),
+      dealId
+    );
 
     return Response.json({
       sessions: result.sessions,
@@ -62,13 +60,9 @@ export async function PUT(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const deal = store.deals.get(dealId);
-    if (!deal) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(
+    const auth = await requirePermissionForDeal(
       req,
-      deal.operatorId,
+      dealId,
       "inventory.write"
     );
     if (!auth.ok) return auth.response;
@@ -80,10 +74,15 @@ export async function PUT(req: Request, { params }: Params) {
       return badRequest("Request body must be JSON.");
     }
 
-    const result = await selectIntegratedSessions(store, dealId, body, {
-      actor: { type: "user", id: auth.user.id },
-      confirm: body.confirm === true,
-    });
+    const result = await selectIntegratedSessions(
+      getDealDraftHttpStore(),
+      dealId,
+      body,
+      {
+        actor: { type: "user", id: auth.user.id },
+        confirm: body.confirm === true,
+      }
+    );
 
     return Response.json({
       deal: result.deal,

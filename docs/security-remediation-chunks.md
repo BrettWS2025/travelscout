@@ -48,7 +48,7 @@ Tick these as chunks are finished. Add one line of notes (files touched, anythin
 **Phase F: Hygiene (lower priority)**
 - [x] S17. Stop returning raw `err.message` / stacks to clients in production — Notes: `exposesErrorDetailsToClient` / `publicServerErrorBody` / `serverError` in `web/lib/marketplace/auth.ts` return only `{ error, code: "internal_error" }` when `NODE_ENV=production`; Viator tags + sync 500s use `serverError`; empty tags debug payload gated to non-production; tests in `auth.test.ts`; spec Project context. App-only; no migration. Deferred: intentional 4xx product messages unchanged.
 - [x] S18. Tighten unnecessary GRANTs and SECURITY DEFINER EXECUTE on helpers — Notes: migration `20261036000001_tighten_helper_and_audit_grants.sql` revokes anon/PUBLIC EXECUTE on `is_operator_*` + `operator_id_for_*` (keeps authenticated + service_role for RLS); revokes anon SELECT on `deal_events` and anon INSERT on `click_events`; documents intentional anon grants (`is_visible_to_travellers` / public views); tests in `helper-grants-db.test.ts`; spec §3 + Project context. Deferred: legacy `is_org_member` anon EXECUTE; trigger-only `enforce_*` / `create_operator_booking_defaults` client EXECUTE hygiene.
-- [ ] S19. Deal ID oracle / error timing (auth before existence where practical)
+- [x] S19. Deal ID oracle / error timing (auth before existence where practical) — Notes: `requirePermissionForDeal` in `deal-draft-http.ts` (auth → existence → permission); wired through operator-deals + admin deals `/:id` routes; tests in `deal-id-oracle.test.ts`; spec §5.9 + Project context. App-only; no migration. Deferred: none (public traveller/legacy book-click paths unchanged).
 
 ---
 

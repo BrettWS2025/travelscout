@@ -10,9 +10,8 @@ import { revertDealField } from "@/lib/marketplace/deal-draft";
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
-import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
@@ -23,13 +22,9 @@ export async function POST(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const existing = store.deals.get(dealId);
-    if (!existing) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(
+    const auth = await requirePermissionForDeal(
       req,
-      existing.operatorId,
+      dealId,
       "inventory.write"
     );
     if (!auth.ok) return auth.response;
@@ -46,9 +41,14 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("field is required.");
     }
 
-    const deal = revertDealField(store, dealId, field.trim(), {
-      actor: { type: "user", id: auth.user.id },
-    });
+    const deal = revertDealField(
+      getDealDraftHttpStore(),
+      dealId,
+      field.trim(),
+      {
+        actor: { type: "user", id: auth.user.id },
+      }
+    );
     return Response.json({ deal });
   } catch (err) {
     return dealDraftErrorResponse(err, "Failed to revert field.");

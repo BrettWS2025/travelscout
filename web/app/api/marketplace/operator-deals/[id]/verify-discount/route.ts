@@ -9,10 +9,9 @@ import { badRequest } from "@/lib/marketplace/auth";
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
 import { verifyDealDiscount } from "@/lib/marketplace/deal-integrated-pricing";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
-import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
@@ -23,13 +22,9 @@ export async function POST(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const deal = store.deals.get(dealId);
-    if (!deal) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(
+    const auth = await requirePermissionForDeal(
       req,
-      deal.operatorId,
+      dealId,
       "inventory.write"
     );
     if (!auth.ok) return auth.response;
@@ -45,7 +40,7 @@ export async function POST(req: Request, { params }: Params) {
     }
 
     const confirmed = body.promo_code_confirmed_by_operator;
-    const result = await verifyDealDiscount(store, dealId, {
+    const result = await verifyDealDiscount(getDealDraftHttpStore(), dealId, {
       actor: { type: "user", id: auth.user.id },
       promo_code_confirmed_by_operator:
         confirmed === true ? true : confirmed === false ? false : undefined,
