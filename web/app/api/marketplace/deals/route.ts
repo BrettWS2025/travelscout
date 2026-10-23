@@ -9,6 +9,7 @@ import {
   createDeal,
   listLiveDeals,
   listOrganizationDeals,
+  transitionLegacyDealStatus,
 } from "@/lib/marketplace/db";
 import type {
   BookingProvider,
@@ -59,6 +60,8 @@ export async function GET(req: Request) {
 /**
  * POST /api/marketplace/deals
  * Create a deal for an organization the user belongs to.
+ * Security S14: always created as draft; optional status is applied only via
+ * transitionLegacyDealStatus (never written with the user JWT insert).
  */
 export async function POST(req: Request) {
   try {
@@ -82,14 +85,19 @@ export async function POST(req: Request) {
     if (body.bookingProvider && !PROVIDERS.includes(body.bookingProvider)) {
       return badRequest(`bookingProvider must be one of: ${PROVIDERS.join(", ")}`);
     }
-    if (body.status && !STATUSES.includes(body.status)) {
-      return badRequest(`status must be one of: ${STATUSES.join(", ")}`);
+
+    let requestedStatus: DealStatus | undefined;
+    if (body.status !== undefined) {
+      if (!STATUSES.includes(body.status)) {
+        return badRequest(`status must be one of: ${STATUSES.join(", ")}`);
+      }
+      requestedStatus = body.status;
     }
-    if (body.status === "live" && !body.bookingUrl?.trim()) {
+    if (requestedStatus === "live" && !body.bookingUrl?.trim()) {
       return badRequest("bookingUrl is required when status is live.");
     }
 
-    const deal = await createDeal(accessToken, user.id, {
+    let deal = await createDeal(accessToken, user.id, {
       organizationId: body.organizationId,
       title: body.title,
       description: body.description,
@@ -103,7 +111,6 @@ export async function POST(req: Request) {
       originalPrice: body.originalPrice,
       dealPrice: body.dealPrice,
       currency: body.currency,
-      status: body.status,
       bookingProvider: body.bookingProvider,
       bookingUrl: body.bookingUrl,
       affiliateTrackingUrl: body.affiliateTrackingUrl,
@@ -112,6 +119,14 @@ export async function POST(req: Request) {
       affiliateRef: body.affiliateRef,
       imageUrl: body.imageUrl,
     });
+
+    if (requestedStatus && requestedStatus !== "draft") {
+      deal = await transitionLegacyDealStatus(
+        accessToken,
+        deal.id,
+        requestedStatus
+      );
+    }
 
     return Response.json({ deal }, { status: 201 });
   } catch (err) {
