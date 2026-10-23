@@ -9,6 +9,7 @@
  * Connect kicks off a full sync via kickOffFullSync after credentials are stored.
  */
 
+import { randomBytes } from "crypto";
 import type { DealDraftStore } from "./deal-draft";
 import type { Deal } from "./deal";
 import {
@@ -48,6 +49,7 @@ import {
   createSecretsHelper,
   deleteSecret,
   resetSecretsConfig,
+  storeSecret,
 } from "./secrets";
 
 // ---------------------------------------------------------------------------
@@ -381,6 +383,23 @@ function defaultSyncMode(caps: ProviderCapabilities): SyncMode {
   return caps.webhooks_availability ? "hybrid" : "polling";
 }
 
+/** Webhook or hybrid sync requires a per-integration webhook secret (S12). */
+export function syncModeUsesWebhooks(mode: SyncMode | null | undefined): boolean {
+  return mode === "webhook" || mode === "hybrid";
+}
+
+/**
+ * Ensure a webhook_secret_ref exists when webhooks are enabled.
+ * Adapters may already return one (e.g. Rezdy); otherwise mint an opaque token.
+ */
+async function ensureWebhookSecretRef(
+  existing: string | null | undefined
+): Promise<string> {
+  if (existing && existing.trim().length > 0) return existing;
+  const token = randomBytes(24).toString("hex");
+  return storeSecret(token, "provider-webhook-token");
+}
+
 function defaultPollInterval(caps: ProviderCapabilities): number {
   const preferred = Math.max(caps.min_poll_seconds, 300);
   return Math.min(preferred, caps.max_poll_seconds);
@@ -506,20 +525,27 @@ export async function connectIntegration(
       }
     }
 
+    const syncMode = row.syncMode ?? defaultSyncMode(caps);
+    // Security S12: when webhooks are enabled, always store a webhook secret.
+    let webhookSecretRef =
+      connected.webhook_secret_ref ?? row.webhookSecretRef ?? null;
+    if (syncModeUsesWebhooks(syncMode)) {
+      webhookSecretRef = await ensureWebhookSecretRef(webhookSecretRef);
+    }
+
     row = {
       ...row,
       status: "connected",
       authType: options.authType ?? "api_key",
       credentialsRef: connected.credentials_ref,
-      webhookSecretRef:
-        connected.webhook_secret_ref ?? row.webhookSecretRef ?? null,
+      webhookSecretRef,
       externalAccountId: connected.external_account_id,
       externalAccountName: connected.external_account_name,
       bookingBaseUrl:
         row.bookingBaseUrl ??
         connected.booking_base_url ??
         null,
-      syncMode: row.syncMode ?? defaultSyncMode(caps),
+      syncMode,
       pollIntervalSeconds:
         row.pollIntervalSeconds != null
           ? clampPollInterval(row.pollIntervalSeconds, caps)
@@ -880,13 +906,13 @@ function parseSettingsBody(
   return patch;
 }
 
-export function updateIntegrationSettings(
+export async function updateIntegrationSettings(
   store: DealDraftStore,
   operatorId: string,
   provider: string,
   body: Record<string, unknown>,
   options?: { now?: string }
-): { integration: Integration; public: Record<string, unknown> } {
+): Promise<{ integration: Integration; public: Record<string, unknown> }> {
   if (!isIntegrationProvider(provider)) {
     throw new IntegrationConnectError(
       `Unknown provider: ${provider}`,
@@ -913,6 +939,8 @@ export function updateIntegrationSettings(
     );
   }
 
+  ensureIntegrationSecretsConfigured();
+
   const patch = parseSettingsBody(body);
   const caps = getAdapter(provider).capabilities();
   const now = options?.now ?? new Date().toISOString();
@@ -926,12 +954,18 @@ export function updateIntegrationSettings(
     }
   }
 
+  const nextSyncMode =
+    patch.sync_mode !== undefined ? patch.sync_mode : integration.syncMode;
+  // Security S12: enabling webhook/hybrid sync must mint a secret if missing.
+  let webhookSecretRef = integration.webhookSecretRef;
+  if (syncModeUsesWebhooks(nextSyncMode) && !webhookSecretRef) {
+    webhookSecretRef = await ensureWebhookSecretRef(null);
+  }
+
   const updated: Integration = {
     ...integration,
-    syncMode:
-      patch.sync_mode !== undefined
-        ? patch.sync_mode
-        : integration.syncMode,
+    syncMode: nextSyncMode,
+    webhookSecretRef,
     pollIntervalSeconds: poll,
     defaultBookingDestinationType:
       patch.default_booking_destination_type !== undefined

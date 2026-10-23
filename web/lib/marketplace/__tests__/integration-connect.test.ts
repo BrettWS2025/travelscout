@@ -313,7 +313,7 @@ describe("Chunk 27 integration connect / disconnect", () => {
       { actor: { type: "user", id: bayOwnerId }, now: NOW }
     );
 
-    const updated = updateIntegrationSettings(
+    const updated = await updateIntegrationSettings(
       store,
       bayOperatorId,
       "rezdy",
@@ -336,10 +336,17 @@ describe("Chunk 27 integration connect / disconnect", () => {
     );
     expect(updated.integration.conversionTrackingMethod).toBe("promo_code");
     expect(updated.integration.autoEnableNewProducts).toBe(true);
+    // S12: enabling hybrid mints a webhook secret when the adapter omitted one
+    expect(updated.integration.webhookSecretRef).toBeTruthy();
 
-    const tooHigh = updateIntegrationSettings(store, bayOperatorId, "rezdy", {
-      poll_interval_seconds: 999999,
-    });
+    const tooHigh = await updateIntegrationSettings(
+      store,
+      bayOperatorId,
+      "rezdy",
+      {
+        poll_interval_seconds: 999999,
+      }
+    );
     expect(tooHigh.integration.pollIntervalSeconds).toBe(3600);
   });
 
@@ -394,7 +401,7 @@ describe("Chunk 27 integration connect / disconnect", () => {
       { api_key: "link-key" },
       { actor: { type: "user", id: bayOwnerId }, now: NOW }
     );
-    updateIntegrationSettings(store, bayOperatorId, "rezdy", {
+    await updateIntegrationSettings(store, bayOperatorId, "rezdy", {
       booking_base_url: "https://book.example.test",
     });
 
