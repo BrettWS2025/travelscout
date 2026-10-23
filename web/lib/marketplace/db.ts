@@ -226,7 +226,7 @@ export async function updateOrganization(
 }
 
 /** Public-schema client (for RPCs) authenticated as the user. */
-function createUserRpcClient(accessToken: string) {
+export function createUserRpcClient(accessToken: string) {
   const { supabaseUrl, supabaseAnonKey } = requireEnv();
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {

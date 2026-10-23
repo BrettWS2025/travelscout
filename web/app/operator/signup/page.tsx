@@ -8,9 +8,8 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useOnOperatorHost } from "@/hooks/useOperatorSurface";
 import { operatorHref } from "@/lib/hosts";
-import { createOrganization } from "@/lib/marketplace/client";
 import {
-  ensureOperatorOrganization,
+  ensureOperatorAfterAuth,
   normalizeOperatorBusinessDetails,
   operatorSignupUserMetadata,
   type OperatorBusinessDetails,
@@ -48,7 +47,7 @@ export default function OperatorSignupPage() {
     if (params.get("mode") === "existing") setMode("existing");
   }, []);
 
-  /** After email confirm + login, finish routing into the operator portal. */
+  /** After email confirm + login, finish routing into Inventory. */
   useEffect(() => {
     if (authLoading || loading || info) return;
     if (!user || !session?.access_token) return;
@@ -57,17 +56,12 @@ export default function OperatorSignupPage() {
     let cancelled = false;
     (async () => {
       try {
-        const organization = await ensureOperatorOrganization(
+        const { operator } = await ensureOperatorAfterAuth(
           session.access_token,
           { userMetadata: user.user_metadata as Record<string, unknown> }
         );
-        if (!cancelled && organization) {
-          router.replace(
-            operatorHref(
-              `/operator/organizations/${organization.id}`,
-              onOperatorHost
-            )
-          );
+        if (!cancelled && operator) {
+          router.replace(operatorHref("/account/inventory", onOperatorHost));
         }
       } catch {
         // Stay on the form; user can submit or sign in again.
@@ -97,10 +91,8 @@ export default function OperatorSignupPage() {
     });
   }
 
-  async function goToOrg(organizationId: string) {
-    router.push(
-      operatorHref(`/operator/organizations/${organizationId}`, onOperatorHost)
-    );
+  async function goToInventory() {
+    router.push(operatorHref("/account/inventory", onOperatorHost));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -123,9 +115,17 @@ export default function OperatorSignupPage() {
         if (signInError) throw signInError;
         const token = data.session?.access_token;
         if (!token) throw new Error("Signed in, but no session was returned.");
-        // Existing traveler → operator: always attach this business as an org.
-        const { organization } = await createOrganization(org, token);
-        await goToOrg(organization.id);
+        // Existing traveler → operator: bootstrap org + inventory operator.
+        const { operator } = await ensureOperatorAfterAuth(token, {
+          business: org,
+          userMetadata: data.user?.user_metadata as
+            | Record<string, unknown>
+            | undefined,
+        });
+        if (!operator) {
+          throw new Error("Could not set up your operator inventory account.");
+        }
+        await goToInventory();
         return;
       }
 
@@ -150,31 +150,35 @@ export default function OperatorSignupPage() {
 
       const token = data.session?.access_token;
       if (token) {
-        // Trigger usually created the org already; ensure is idempotent.
-        const organization = await ensureOperatorOrganization(token, {
+        // Trigger usually created org + operator already; ensure is idempotent.
+        const { operator } = await ensureOperatorAfterAuth(token, {
           business: org,
           userMetadata: data.user?.user_metadata as
             | Record<string, unknown>
             | undefined,
         });
-        if (!organization) {
-          throw new Error("Could not set up your operator organisation.");
+        if (!operator) {
+          throw new Error("Could not set up your operator inventory account.");
         }
-        await goToOrg(organization.id);
+        await goToInventory();
         return;
       }
 
-      // Email confirmation required — org is created by the signup trigger from
-      // user_metadata. User administers after verifying and signing in.
+      // Email confirmation required — org + operator are created by the signup
+      // trigger from user_metadata. User opens Inventory after verifying.
       setInfo(
-        "Account and business created. Check your inbox to verify your email, then sign in to open your operator dashboard."
+        "Account and business created. Check your inbox to verify your email, then sign in to open Inventory."
       );
       setMode("existing");
       setPassword("");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
-      setError(message.replace(/^Failed to create organization:\s*/i, ""));
+      setError(
+        message
+          .replace(/^Failed to create organization:\s*/i, "")
+          .replace(/^Failed to create operator:\s*/i, "")
+      );
     } finally {
       setLoading(false);
     }
