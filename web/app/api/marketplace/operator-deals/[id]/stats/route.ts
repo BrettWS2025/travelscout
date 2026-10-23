@@ -14,9 +14,8 @@ import {
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
-import { requirePermission } from "@/lib/marketplace/permissions";
 import { localDateKey } from "@/lib/marketplace/timezone";
 
 export const runtime = "nodejs";
@@ -28,16 +27,14 @@ export async function GET(req: Request, { params }: Params) {
     const dealId = params.id;
     if (!dealId) return badRequest("Deal id is required.");
 
-    const store = getDealDraftHttpStore();
-    const deal = store.deals.get(dealId);
-    if (!deal) throw new DealNotFoundError(dealId);
-
-    const auth = await requirePermission(
+    const auth = await requirePermissionForDeal(
       req,
-      deal.operatorId,
+      dealId,
       "inventory.read"
     );
     if (!auth.ok) return auth.response;
+    const store = getDealDraftHttpStore();
+    const deal = store.deals.get(dealId)!;
 
     const url = new URL(req.url);
     const operator = store.operators.operators.get(deal.operatorId);

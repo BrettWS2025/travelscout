@@ -7,8 +7,10 @@
 import {
   badRequest,
   forbidden,
+  getMarketplaceAuth,
   notFound,
   serverError,
+  unauthorized,
 } from "./auth";
 import {
   BookingLinkError,
@@ -46,7 +48,14 @@ import { setNotifyDealLifecycle } from "./deal-status-ticker";
 import { DealValidationError } from "./deal";
 import { isUserRole, type UserRole } from "./enums";
 import { OperatorValidationError } from "./operators";
-import { setMemoryOperatorRoleLookup } from "./permissions";
+import {
+  requirePermission,
+  setMemoryOperatorRoleLookup,
+  type PermissionAction,
+  type RequirePermissionOk,
+  type RequirePermissionOptions,
+  type RequirePermissionResult,
+} from "./permissions";
 import {
   NotificationError,
   notifyBookingLinkBroken,
@@ -155,6 +164,53 @@ export function setDealDraftHttpStore(store: DealDraftStore | null): void {
   ensureNotificationHooks();
   ensureLastActiveHook();
   processStore = store;
+}
+
+export type RequirePermissionForDealOk = RequirePermissionOk & {
+  operatorId: string;
+};
+
+export type RequirePermissionForDealResult =
+  | RequirePermissionForDealOk
+  | { ok: false; response: Response };
+
+/**
+ * Security S19: auth before deal existence on operator/admin deal-id routes.
+ *
+ * Unauthenticated callers always get 401 whether the deal id exists or not
+ * (no existence oracle). Authenticated callers still get 404 for missing
+ * deals and 403 when membership/admin permission fails.
+ */
+export async function requirePermissionForDeal(
+  req: Request,
+  dealId: string,
+  action: PermissionAction,
+  options?: RequirePermissionOptions
+): Promise<RequirePermissionForDealResult> {
+  const getAuth = options?.getAuth ?? getMarketplaceAuth;
+  const { user, accessToken } = await getAuth(req);
+  if (!user || !accessToken) {
+    return { ok: false, response: unauthorized() };
+  }
+
+  const store = getDealDraftHttpStore();
+  const deal = store.deals.get(dealId);
+  if (!deal) {
+    return { ok: false, response: notFound("Deal not found.") };
+  }
+
+  const auth: RequirePermissionResult = await requirePermission(
+    req,
+    deal.operatorId,
+    action,
+    {
+      ...options,
+      getAuth: async () => ({ user, accessToken }),
+    }
+  );
+  if (!auth.ok) return auth;
+
+  return { ...auth, operatorId: deal.operatorId };
 }
 
 /** Operators the given user (or matching seed email) belongs to. */

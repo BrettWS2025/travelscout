@@ -7,21 +7,14 @@ import { badRequest } from "@/lib/marketplace/auth";
 import {
   dealDraftErrorResponse,
   getDealDraftHttpStore,
+  requirePermissionForDeal,
 } from "@/lib/marketplace/deal-draft-http";
 import { setCoverMedia } from "@/lib/marketplace/deal-media-api";
-import { DealNotFoundError } from "@/lib/marketplace/deal-status";
-import { requirePermission } from "@/lib/marketplace/permissions";
 
 export const runtime = "nodejs";
 
 type Params = { params: { id: string; mediaId: string } };
 
-async function loadDealOperatorId(dealId: string): Promise<string> {
-  const store = getDealDraftHttpStore();
-  const deal = store.deals.get(dealId);
-  if (!deal) throw new DealNotFoundError(dealId);
-  return deal.operatorId;
-}
 
 export async function POST(req: Request, { params }: Params) {
   try {
@@ -31,8 +24,7 @@ export async function POST(req: Request, { params }: Params) {
       return badRequest("Deal id and media id are required.");
     }
 
-    const operatorId = await loadDealOperatorId(dealId);
-    const auth = await requirePermission(req, operatorId, "inventory.write");
+    const auth = await requirePermissionForDeal(req, dealId, "inventory.write");
     if (!auth.ok) return auth.response;
 
     const media = await setCoverMedia(
